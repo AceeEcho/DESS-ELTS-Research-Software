@@ -104,6 +104,7 @@ public sealed class SyntheticTrackingSource : ITrackingSource
     private long sampleNumber;
     private long sequence;
     private long nextDueTicks;
+    private long lastAcquisitionTicks;
     private bool hasAcquisition;
     private bool previousPressed;
     private MonotonicTimestamp lastTrigger = MonotonicTimestamp.Zero;
@@ -136,13 +137,16 @@ public sealed class SyntheticTrackingSource : ITrackingSource
         var intervalTicks = Math.Max(1L, (long)Math.Ceiling(TimeSpan.TicksPerSecond / settings.SampleRateHz));
         var candidateStamp = TrackingAcquisitionStamp.Capture(settings.Clock, checked(sequence + 1));
         var now = candidateStamp.Timestamp;
-        if (hasAcquisition && now.Ticks < nextDueTicks) return false;
+        // Also gate an unchanged terminal timestamp after nextDue saturates.
+        // A finite deterministic clock must never permit an infinite drain.
+        if (hasAcquisition && (now.Ticks <= lastAcquisitionTicks || now.Ticks < nextDueTicks)) return false;
         if (hasAcquisition && now.Ticks > nextDueTicks)
         {
             var elapsed = now.Ticks - nextDueTicks;
             SkippedAcquisitionCount += elapsed / intervalTicks;
         }
         hasAcquisition = true;
+        lastAcquisitionTicks = now.Ticks;
         nextDueTicks = now.Ticks > long.MaxValue - intervalTicks ? long.MaxValue : now.Ticks + intervalTicks;
         sampleNumber++; sequence++;
         var stamp = candidateStamp;

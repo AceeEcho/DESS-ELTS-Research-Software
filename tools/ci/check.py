@@ -15,6 +15,10 @@ def policy():
     tracked = set(filter(None, files))
     forbidden = ("unity/Library/", "unity/Temp/", "unity/Logs/", "data/", "config/local/", "build/", "release/")
     for name in tracked:
+        if name.startswith("unity/Assets/") and name.endswith(".meta"):
+            metadata = (ROOT / name).read_bytes()
+            if (metadata.endswith(b":") or not re.search(rb"(?m)^guid: [a-f0-9]{32}\r?$", metadata)):
+                raise ValueError("Unity metadata needs a GUID and terminated empty fields: " + name)
         if name == ".gitmodules" or name == "config/local.json" or name.startswith(forbidden):
             raise ValueError("Forbidden source-control path: " + name)
         if Path(name).suffix.lower() in {".ulf", ".pfx", ".pem"} or Path(name).name == ".env":

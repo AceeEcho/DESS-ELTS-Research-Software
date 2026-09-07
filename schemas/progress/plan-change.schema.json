@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ELTS plan-change v1",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^(?:P\\d+\\.\\d+(?:\\.[SV]\\d{3})?|BOOT\\.S\\d{3}|DEV-\\d{2}(?:\\.[SV]\\d{3})?|G\\d(?:\\.\\d{2})?|D-\\d{2}|PC-\\d{3})$"
+    },
+    "status": {
+      "enum": [
+        "proposed",
+        "accepted",
+        "rejected",
+        "superseded"
+      ]
+    },
+    "affectedIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(?:P\\d+\\.\\d+(?:\\.[SV]\\d{3})?|BOOT\\.S\\d{3}|DEV-\\d{2}(?:\\.[SV]\\d{3})?|G\\d(?:\\.\\d{2})?|D-\\d{2}|PC-\\d{3})$"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proposal": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorityReference": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "approval": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "authorityId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "recordPath": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+            },
+            "recordSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^(?:P\\d+\\.\\d+(?:\\.[SV]\\d{3})?|BOOT\\.S\\d{3}|DEV-\\d{2}(?:\\.[SV]\\d{3})?|G\\d(?:\\.\\d{2})?|D-\\d{2}|PC-\\d{3})$"
+            },
+            "approvedAtUtc": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "authorityId",
+            "recordPath",
+            "recordSha256",
+            "targetId",
+            "approvedAtUtc"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "status",
+    "affectedIds",
+    "reason",
+    "proposal",
+    "authorityReference",
+    "approval"
+  ],
+  "additionalProperties": false
+}

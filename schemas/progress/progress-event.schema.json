@@ -1,0 +1,317 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ELTS progress-event v1",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "eventId": {
+      "type": "string",
+      "pattern": "^[0-9a-f-]{36}$"
+    },
+    "eventType": {
+      "enum": [
+        "step_ready",
+        "task_started",
+        "verification_pending",
+        "step_completed",
+        "task_completed",
+        "blocked",
+        "unblocked",
+        "reopened",
+        "handoff",
+        "gate_verification_pending",
+        "gate_passed",
+        "gate_failed",
+        "gate_reopened",
+        "decision_in_review",
+        "decision_decided",
+        "decision_reopened"
+      ]
+    },
+    "recordedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "occurredAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actor": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "agent",
+            "human"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tool": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "tool"
+      ],
+      "additionalProperties": false
+    },
+    "planVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "catalogSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "atomic_step",
+            "task",
+            "gate",
+            "decision"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^(?:P\\d+\\.\\d+(?:\\.[SV]\\d{3})?|BOOT\\.S\\d{3}|DEV-\\d{2}(?:\\.[SV]\\d{3})?|G\\d(?:\\.\\d{2})?|D-\\d{2}|PC-\\d{3})$"
+        }
+      },
+      "required": [
+        "kind",
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "taskId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "fromStatus": {
+      "type": "string",
+      "minLength": 1
+    },
+    "toStatus": {
+      "type": "string",
+      "minLength": 1
+    },
+    "taskRevision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "previousTaskEventHash": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "causalEventHashes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "branch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "claimedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "expectedChecks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "stopConditions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "evidence.schema.json"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requiredAction": {
+            "type": "string",
+            "minLength": 1
+          },
+          "responsibleRole": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "reason",
+          "requiredAction",
+          "responsibleRole"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approval": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "authorityId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "recordPath": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+            },
+            "recordSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^(?:P\\d+\\.\\d+(?:\\.[SV]\\d{3})?|BOOT\\.S\\d{3}|DEV-\\d{2}(?:\\.[SV]\\d{3})?|G\\d(?:\\.\\d{2})?|D-\\d{2}|PC-\\d{3})$"
+            },
+            "approvedAtUtc": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "authorityId",
+            "recordPath",
+            "recordSha256",
+            "targetId",
+            "approvedAtUtc"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "handoffTo": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": [
+                "agent",
+                "human"
+              ]
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tool": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "type",
+            "id",
+            "tool"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "eventId",
+    "eventType",
+    "recordedAtUtc",
+    "occurredAtUtc",
+    "actor",
+    "planVersion",
+    "catalogSha256",
+    "target",
+    "taskId",
+    "fromStatus",
+    "toStatus",
+    "taskRevision",
+    "previousTaskEventHash",
+    "causalEventHashes",
+    "branch",
+    "claimedPaths",
+    "expectedChecks",
+    "stopConditions",
+    "evidence",
+    "blockers",
+    "note",
+    "approval",
+    "handoffTo"
+  ],
+  "additionalProperties": false
+}

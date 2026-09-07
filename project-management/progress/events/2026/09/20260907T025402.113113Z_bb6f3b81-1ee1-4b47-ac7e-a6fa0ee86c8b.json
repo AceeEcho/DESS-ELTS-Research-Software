@@ -1,0 +1,69 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "bb6f3b81-1ee1-4b47-ac7e-a6fa0ee86c8b",
+  "eventType": "verification_pending",
+  "recordedAtUtc": "2026-09-07T02:54:02.113113+00:00",
+  "occurredAtUtc": "2026-09-07T02:54:02.113113+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "DEV-04.S001"
+  },
+  "taskId": "DEV-04",
+  "fromStatus": "in_progress",
+  "toStatus": "verification_pending",
+  "taskRevision": 2,
+  "previousTaskEventHash": "a13b48c990029ad9018e570d32d312d78f2390f4b3b4db7df8bc4f1488e471d8",
+  "causalEventHashes": [
+    "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "a13b48c990029ad9018e570d32d312d78f2390f4b3b4db7df8bc4f1488e471d8",
+    "b456cff38d75cf98ff4a0017df409acc3f081e2f63c9346ba259914888548a5f",
+    "ff89ba440bf29decf3a60303ff022dc84b2cdcb84244aa4a4dfd9c100d94740b"
+  ],
+  "branch": "work/dev04-logging",
+  "claimedPaths": [
+    "unity/Assets/ELTS/Logging/",
+    "schemas/logs/",
+    "tools/runtime-tests/LoggingChecks.cs",
+    "tools/runtime-tests/LoggingChecks.csproj",
+    "tools/logging/",
+    "docs/modules/logging.md"
+  ],
+  "expectedChecks": [],
+  "stopConditions": [],
+  "evidence": [
+    {
+      "id": "DEV04-implementation",
+      "path": "project-management/progress/evidence/DEV-04.S001.json",
+      "sha256": "d663fb1d44e7c7f27385a03ecc90054e3a0a92d1c6d7528792e03c0130e279ee",
+      "targetIds": [
+        "DEV-04.S001"
+      ],
+      "criteria": [
+        "outcome",
+        "verification"
+      ],
+      "class": "synthetic_test",
+      "command": "dotnet LoggingChecks; dotnet LoggingThroughputChecks; python -m unittest tools.logging.test_verify_run; python -m tools.logging.verify_run short run; actual Unity EditMode import regression",
+      "result": "pass",
+      "sourceRevision": "3c09902e72c46eeca47b306fcda79ab117e3a7c9",
+      "recordedAtUtc": "2026-09-07T02:53:59.982287+00:00",
+      "limitations": [
+        "Measured1800-second soak is still running and not yet accepted",
+        "No Study-PC full-load disk,real-device,physical or study gate acceptance"
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "Versioned logging implementation and focused tests are complete; sustained-soak acceptance is the separate DEV-04.V001 verification step.",
+  "approval": null,
+  "handoffTo": null
+}

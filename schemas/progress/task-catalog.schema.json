@@ -1,0 +1,405 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ELTS task-catalog v1",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "project": {
+      "type": "string",
+      "minLength": 1
+    },
+    "planVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "sourceHashes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "amendmentId": {
+          "const": "PC-001"
+        },
+        "amendmentRulesSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "approvedPlanSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "sourceHashes",
+        "amendmentId",
+        "amendmentRulesSha256",
+        "approvedPlanSha256"
+      ],
+      "additionalProperties": false
+    },
+    "activeCounts": {
+      "type": "object",
+      "properties": {
+        "workItems": {
+          "const": 103
+        },
+        "atomicSteps": {
+          "const": 267
+        }
+      },
+      "required": [
+        "workItems",
+        "atomicSteps"
+      ],
+      "additionalProperties": false
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "phase",
+          "lane",
+          "eligibility"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^(?:P\\d+\\.\\d+(?:\\.[SV]\\d{3})?|BOOT\\.S\\d{3}|DEV-\\d{2}(?:\\.[SV]\\d{3})?|G\\d(?:\\.\\d{2})?|D-\\d{2}|PC-\\d{3})$"
+          },
+          "phase": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lane": {
+            "type": "string",
+            "minLength": 1
+          },
+          "eligibility": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^(?:P\\d+\\.\\d+(?:\\.[SV]\\d{3})?|BOOT\\.S\\d{3}|DEV-\\d{2}(?:\\.[SV]\\d{3})?|G\\d(?:\\.\\d{2})?|D-\\d{2}|PC-\\d{3})$"
+                  },
+                  "state": {
+                    "enum": [
+                      "done",
+                      "passed",
+                      "decided"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "state"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "allOf": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/predicate"
+                    },
+                    "minItems": 0,
+                    "uniqueItems": true
+                  }
+                },
+                "required": [
+                  "allOf"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "anyOf": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/predicate"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                },
+                "required": [
+                  "anyOf"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      },
+      "minItems": 103,
+      "uniqueItems": true
+    },
+    "atomicSteps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "phase",
+          "lane",
+          "eligibility"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^(?:P\\d+\\.\\d+(?:\\.[SV]\\d{3})?|BOOT\\.S\\d{3}|DEV-\\d{2}(?:\\.[SV]\\d{3})?|G\\d(?:\\.\\d{2})?|D-\\d{2}|PC-\\d{3})$"
+          },
+          "phase": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lane": {
+            "type": "string",
+            "minLength": 1
+          },
+          "eligibility": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^(?:P\\d+\\.\\d+(?:\\.[SV]\\d{3})?|BOOT\\.S\\d{3}|DEV-\\d{2}(?:\\.[SV]\\d{3})?|G\\d(?:\\.\\d{2})?|D-\\d{2}|PC-\\d{3})$"
+                  },
+                  "state": {
+                    "enum": [
+                      "done",
+                      "passed",
+                      "decided"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "state"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "allOf": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/predicate"
+                    },
+                    "minItems": 0,
+                    "uniqueItems": true
+                  }
+                },
+                "required": [
+                  "allOf"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "anyOf": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/predicate"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                },
+                "required": [
+                  "anyOf"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      },
+      "minItems": 267,
+      "uniqueItems": true
+    },
+    "phases": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 9,
+      "uniqueItems": true
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 18,
+      "uniqueItems": true
+    },
+    "gateCriteria": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 62,
+      "uniqueItems": true
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 108,
+      "uniqueItems": true
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 27,
+      "uniqueItems": true
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 26,
+      "uniqueItems": true
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "bootstrapMappings": {
+      "type": "object"
+    },
+    "supersededBootstrapIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(?:P\\d+\\.\\d+(?:\\.[SV]\\d{3})?|BOOT\\.S\\d{3}|DEV-\\d{2}(?:\\.[SV]\\d{3})?|G\\d(?:\\.\\d{2})?|D-\\d{2}|PC-\\d{3})$"
+      },
+      "minItems": 25,
+      "uniqueItems": true
+    },
+    "replacedDependencyIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "progressSelection": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "project",
+    "planVersion",
+    "provenance",
+    "activeCounts",
+    "tasks",
+    "atomicSteps",
+    "phases",
+    "decisions",
+    "gateCriteria",
+    "requirements",
+    "artifacts",
+    "risks",
+    "dependencies",
+    "bootstrapMappings",
+    "supersededBootstrapIds",
+    "replacedDependencyIds",
+    "progressSelection"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "predicate": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^(?:P\\d+\\.\\d+(?:\\.[SV]\\d{3})?|BOOT\\.S\\d{3}|DEV-\\d{2}(?:\\.[SV]\\d{3})?|G\\d(?:\\.\\d{2})?|D-\\d{2}|PC-\\d{3})$"
+            },
+            "state": {
+              "enum": [
+                "done",
+                "passed",
+                "decided"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "state"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "allOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/predicate"
+              },
+              "minItems": 0,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "allOf"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "anyOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/predicate"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "anyOf"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

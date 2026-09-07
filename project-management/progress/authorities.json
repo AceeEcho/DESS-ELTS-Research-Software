@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "description": "No gate or decision approval identity is enrolled. A repository maintainer must add evidence-backed human authority before an approval can be accepted. Agent-written enrollment is not human authorization.",
+  "humans": {}
+}

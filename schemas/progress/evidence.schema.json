@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ELTS evidence v1",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "targetIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(?:P\\d+\\.\\d+(?:\\.[SV]\\d{3})?|BOOT\\.S\\d{3}|DEV-\\d{2}(?:\\.[SV]\\d{3})?|G\\d(?:\\.\\d{2})?|D-\\d{2}|PC-\\d{3})$"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "criteria": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "class": {
+      "enum": [
+        "document",
+        "source",
+        "automated_test",
+        "synthetic_test",
+        "toolchain_runtime",
+        "physical_test",
+        "human_approval"
+      ]
+    },
+    "command": {
+      "type": "string",
+      "minLength": 1
+    },
+    "result": {
+      "enum": [
+        "pass",
+        "fail",
+        "deferred"
+      ]
+    },
+    "sourceRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recordedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "id",
+    "path",
+    "sha256",
+    "targetIds",
+    "criteria",
+    "class",
+    "command",
+    "result",
+    "sourceRevision",
+    "recordedAtUtc",
+    "limitations"
+  ],
+  "additionalProperties": false
+}

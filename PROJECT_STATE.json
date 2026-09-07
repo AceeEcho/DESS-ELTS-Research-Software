@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T02:23:03.247271+00:00",
+  "generatedAtUtc": "2026-09-07T02:29:52.728692+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,14 +11,14 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 99,
-    "eventSetSha256": "400ab9194d6c7784c22826f2d41082505e73631cc60c2dc3a5a8cc859e908b9e"
+    "eventCount": 102,
+    "eventSetSha256": "65849a44cff8481edc6cf38be879246d9774fd2f94c2e94246e5dda24d1eafec"
   },
   "current": {
     "mode": "working",
-    "primaryStepId": "BOOT.S024",
+    "primaryStepId": "BOOT.S025",
     "activeStepIds": [
-      "BOOT.S024"
+      "BOOT.S025"
     ],
     "nextEligibleStepIds": [
       "P0.2.S001",
@@ -26,7 +26,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S024",
       "BOOT.S025",
       "D-01",
       "D-02",
@@ -47,9 +46,9 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "BOOT.S024",
+    "primaryStepId": "BOOT.S025",
     "activeStepIds": [
-      "BOOT.S024",
+      "BOOT.S025",
       "DEV-04.S001"
     ],
     "nextEligibleStepIds": [
@@ -58,7 +57,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S024",
       "BOOT.S025",
       "D-01",
       "D-02",
@@ -304,12 +302,12 @@
     {
       "owner": "agent:codex-astra",
       "taskId": "P0.3",
-      "atomicStepId": "BOOT.S024",
+      "atomicStepId": "BOOT.S025",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        ".github/workflows",
-        "tools/ci",
-        "docs/modules/ci.md"
+        ".github/CODEOWNERS",
+        ".github/PULL_REQUEST_TEMPLATE.md",
+        "docs/governance/repository-rules.md"
       ]
     },
     {
@@ -350,14 +348,14 @@
     },
     "P0.3": {
       "status": "in_progress",
-      "revision": 75,
-      "lastEventHash": "b6dd761f409fd877834ffb3e0eb7844df218899eb41c9dd7241c8dcb45f43ad8",
+      "revision": 78,
+      "lastEventHash": "929e78c1acf56b5a721cde50ba0c2fc3230c685ded73a06a1a3070677da37a6c",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        ".github/workflows",
-        "docs/modules/ci.md",
-        "tools/ci"
+        ".github/CODEOWNERS",
+        ".github/PULL_REQUEST_TEMPLATE.md",
+        "docs/governance/repository-rules.md"
       ],
       "evidence": [],
       "blockers": []
@@ -2313,9 +2311,9 @@
       "blockers": []
     },
     "BOOT.S024": {
-      "status": "in_progress",
-      "revision": 75,
-      "lastEventHash": "b6dd761f409fd877834ffb3e0eb7844df218899eb41c9dd7241c8dcb45f43ad8",
+      "status": "done",
+      "revision": 77,
+      "lastEventHash": "a494a22f3d27c6822cb7b39c7a79c5430d6a9c4523a46951a02cda9c15b9da67",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
@@ -2323,16 +2321,44 @@
         "tools/ci",
         "docs/modules/ci.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "BOOT.S024-BOOT.S024",
+          "path": "project-management/progress/evidence/BOOT.S024.json",
+          "sha256": "b72f30b739bdbc212d16b54a8c35ef7cd505a8cd82c5bf9f2fadd8ce6871431d",
+          "targetIds": [
+            "BOOT.S024"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "document",
+          "command": "python tools/ci/check.py --baseline; python tools/ci/check.py; git ls-remote actions/checkout refs/tags/v4 and actions/setup-python refs/tags/v5",
+          "result": "pass",
+          "sourceRevision": "c623764e12f993cea4e5066b48adb775ef30996b",
+          "recordedAtUtc": "2026-09-07T02:29:47.011161+00:00",
+          "limitations": [
+            "No GitHub remote workflow run or self-hosted runner registration has occurred",
+            "Ubuntu execution and Python3.12.14 CI execution remain unverified here; local baseline ran Windows Python3.14.3",
+            "Unity workflow requires provisioned/licensed exact Editor and is manual; check names remain advisory",
+            "No physical, safety, study or release gate acceptance"
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S025": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 78,
+      "lastEventHash": "929e78c1acf56b5a721cde50ba0c2fc3230c685ded73a06a1a3070677da37a6c",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        ".github/CODEOWNERS",
+        ".github/PULL_REQUEST_TEMPLATE.md",
+        "docs/governance/repository-rules.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -5227,8 +5253,8 @@
   },
   "chains": {
     "task:P0.3": {
-      "revision": 75,
-      "hash": "b6dd761f409fd877834ffb3e0eb7844df218899eb41c9dd7241c8dcb45f43ad8"
+      "revision": 78,
+      "hash": "929e78c1acf56b5a721cde50ba0c2fc3230c685ded73a06a1a3070677da37a6c"
     },
     "task:DEV-01": {
       "revision": 7,

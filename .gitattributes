@@ -1,0 +1,12 @@
+# Portable source/generated text. Hashed accepted planning inputs retain their
+# original bytes (including their original CRLF) on every operating system.
+* text=auto eol=lf
+docs/plan/amendment-rules.json -text
+docs/plan/approved-plan.json -text
+*.docx -text
+*.xlsx -text
+*.pdf -text
+*.png -text
+*.dll -text
+*.exe -text
+*.zip -text

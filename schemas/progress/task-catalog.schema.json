@@ -117,9 +117,7 @@
                     "type": "array",
                     "items": {
                       "$ref": "#/$defs/predicate"
-                    },
-                    "minItems": 0,
-                    "uniqueItems": true
+                    }
                   }
                 },
                 "required": [
@@ -135,8 +133,7 @@
                     "items": {
                       "$ref": "#/$defs/predicate"
                     },
-                    "minItems": 1,
-                    "uniqueItems": true
+                    "minItems": 1
                   }
                 },
                 "required": [
@@ -204,9 +201,7 @@
                     "type": "array",
                     "items": {
                       "$ref": "#/$defs/predicate"
-                    },
-                    "minItems": 0,
-                    "uniqueItems": true
+                    }
                   }
                 },
                 "required": [
@@ -222,8 +217,7 @@
                     "items": {
                       "$ref": "#/$defs/predicate"
                     },
-                    "minItems": 1,
-                    "uniqueItems": true
+                    "minItems": 1
                   }
                 },
                 "required": [
@@ -372,9 +366,7 @@
               "type": "array",
               "items": {
                 "$ref": "#/$defs/predicate"
-              },
-              "minItems": 0,
-              "uniqueItems": true
+              }
             }
           },
           "required": [
@@ -390,8 +382,7 @@
               "items": {
                 "$ref": "#/$defs/predicate"
               },
-              "minItems": 1,
-              "uniqueItems": true
+              "minItems": 1
             }
           },
           "required": [

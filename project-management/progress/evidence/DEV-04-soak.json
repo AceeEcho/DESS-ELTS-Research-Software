@@ -1,0 +1,130 @@
+{
+  "targetId": "DEV-04-soak",
+  "result": "pass",
+  "evidenceClass": "synthetic_test",
+  "command": "dotnet run --project tools/runtime-tests/LoggingChecks.csproj -- --soak-seconds 1800 --output test-results/dev04-soak; python -m tools.logging.verify_run test-results/dev04-soak/synthetic-soak --report diagnostics/dev04-soak-verification.json",
+  "summary": "Measured1800-second synthetic recording retained439867pairedsamples withzeroqueue drops; all443385stream records passed schemas/order/counts/checksums. This is recording-integrity evidence, not timing or final task acceptance.",
+  "checks": [
+    "Elapsed1800.0012733 seconds;439867attempted/written samplepairs;zeroqueue drops",
+    "1759events and1759canonicalworldtarget records verified",
+    "All443385NDJSONrecords validated withcachedv1schemas, strictJSON, valid/nullposes, sequences/timestamps andexactbyteSHA256",
+    "Summarycounts andprovenance match actualsource-boundsoak outputs"
+  ],
+  "limitations": [
+    "Configured250Hz butmeasured244.37038269Hz duringconcurrentUnitycompilation: cadence target was not met",
+    "Observed2269reschedules; maxinterval175.6475ms andmaxenqueueelapsed54.6249ms includehost scheduling; notStudyPCtiming acceptance",
+    "Run source was22c32d1 plusrecordedruntime/harnesshashes, beforethe pending-summary publication correction",
+    "DoesnotcoverfullUnitydisplayload,realtracking,physicaldevice/diskcriteria orstudy gates",
+    "Zeroqueue drops doesnotmean allnominal250Hzacquisition opportunities occurred;439867attempts vs450000nominal"
+  ],
+  "timing": {
+    "requestedSeconds": 1800,
+    "elapsedSeconds": 1800.0012733,
+    "attemptedSamples": 439867,
+    "effectiveRateHz": 244.37038269066204,
+    "droppedSamples": 0,
+    "reschedules": 2269,
+    "intervalP50Milliseconds": 4,
+    "intervalP95Milliseconds": 4.0337,
+    "intervalMaxMilliseconds": 175.6475,
+    "enqueueP95Milliseconds": 0.0687,
+    "enqueueMaxMilliseconds": 54.6249,
+    "sourceRevision": "22c32d1f0e1945830fa627ff4364dc2301c7009f",
+    "sourceHashes": {
+      "unity/Assets/ELTS/Clock/SharedMonotonicClock.cs": "1618ca38154d8e3ddee8a617c96b2cc34be36ff7c50ad2cbc0276065f46d5fac",
+      "unity/Assets/ELTS/Geometry/Geometry.cs": "debcfd59ab17e40500674784f2797bb95d32a0a10c73da1a04cbc21f65b9af3f",
+      "unity/Assets/ELTS/Tracking/SyntheticTrackingSource.cs": "a542d74b34d030bf5bd5a6f649edf35e82b58e4e666727b07738885302f43b9b",
+      "unity/Assets/ELTS/Tracking/TrackingContracts.cs": "c89d38ceced018431834dca16c4e393a936f76875315546a545fa44fd228f93d",
+      "unity/Assets/ELTS/Logging/LoggingContracts.cs": "6555f15124882d97ba6c766c1f4bb42c98b58b173dfc84cd9968c2b5344b634c",
+      "unity/Assets/ELTS/Logging/LogJson.cs": "e01522808e30fb5c16eab6e99477662f882b3300f0d53e1ce2f6fee403aa2004",
+      "unity/Assets/ELTS/Logging/SessionLogWriter.cs": "08ecc3460b7d182016fd413f3b476c092e54e9e50bfdcb261b080075937bd1be",
+      "tools/runtime-tests/LoggingChecks.cs": "d73edcc10376c0c4a6a53e6a2a5949e0a54e5104b439a80be91b30b3edb5dfe9"
+    },
+    "executableSha256": "8b0c674b1b386aee9fea8261c49ce8a595a90bcf4280733b059798a2962533ee",
+    "configuration": "{\"sampleRateHz\":250,\"sampleCapacity\":8192,\"criticalCapacity\":512,\"seconds\":1800,\"flushIntervalMilliseconds\":250}",
+    "fixture": "{\"mode\":\"synthetic\",\"head\":\"x=sequence%10,y=0,z=1 metres\",\"weapon\":\"connected,out-of-range,no-pose\",\"target\":\"stationary at (0,0,2) metres\"}",
+    "complete": true,
+    "limitation": "Synthetic console producer on development PC; no Unity display load, tracking hardware, physical or study acceptance"
+  },
+  "streamVerification": {
+    "complete": true,
+    "products": [
+      {
+        "checksum_sha256": "6e9fdd7dad37df0162622e76c9b4a13a32bae073689d584bacbdc684352e6705",
+        "first_monotonic_ticks": 1798481,
+        "first_sequence": 1,
+        "last_monotonic_ticks": 18001765876,
+        "last_sequence": 439867,
+        "lines": 439867,
+        "product": "samples"
+      },
+      {
+        "checksum_sha256": "e5036868593412780d608a85699fcd9d02917f04970e52b879848996e10851e9",
+        "first_monotonic_ticks": 11801600,
+        "first_sequence": 1,
+        "last_monotonic_ticks": 17997086066,
+        "last_sequence": 1759,
+        "lines": 1759,
+        "product": "events"
+      },
+      {
+        "checksum_sha256": "e083353f81eb8cb7aaa78fbe294ef00194e6a5adb243d7be4982f3e47b7f14ac",
+        "first_monotonic_ticks": 11801600,
+        "first_sequence": 1,
+        "last_monotonic_ticks": 17997086066,
+        "last_sequence": 1759,
+        "lines": 1759,
+        "product": "targets"
+      }
+    ],
+    "runId": "synthetic-soak",
+    "schemaVersion": "elts.session-summary.v1",
+    "sourceRevision": "22c32d1f0e1945830fa627ff4364dc2301c7009f",
+    "synthetic": true
+  },
+  "sessionSummary": {
+    "schemaVersion": "elts.session-summary.v1",
+    "runId": "synthetic-soak",
+    "complete": true,
+    "error": null,
+    "provenance": {
+      "applicationVersion": "dev04-soak",
+      "sourceRevision": "22c32d1f0e1945830fa627ff4364dc2301c7009f",
+      "configurationHash": "500c769bcede8f3d4708c2920ff0777bafe4d89328dcc53f04030a6e4365c5c5",
+      "scenarioHash": "345d96da7a98ecd8f1a0a2c003857f512322088e45af421462cacbc037606199",
+      "fixtureHash": "345d96da7a98ecd8f1a0a2c003857f512322088e45af421462cacbc037606199",
+      "synthetic": true,
+      "utcStartupAnchor": "2026-09-07T02:34:08.2251054+00:00"
+    },
+    "counts": {
+      "droppedSamples": 0,
+      "writtenSamples": 439867,
+      "writtenEvents": 1759,
+      "writtenTargets": 1759
+    },
+    "checksumsSha256": {
+      "samples.ndjson": "6e9fdd7dad37df0162622e76c9b4a13a32bae073689d584bacbdc684352e6705",
+      "events.ndjson": "e5036868593412780d608a85699fcd9d02917f04970e52b879848996e10851e9",
+      "targets.ndjson": "e083353f81eb8cb7aaa78fbe294ef00194e6a5adb243d7be4982f3e47b7f14ac"
+    }
+  },
+  "productByteSizes": {
+    "events.ndjson": 215942,
+    "samples.ndjson": 155334308,
+    "targets.ndjson": 500900
+  },
+  "schemaVersion": 1,
+  "sourceRevision": "f46d31b59c390ea3a1bbde5e8d13540e6ee7490d",
+  "recordedAtUtc": "2026-09-07T03:06:57.162006+00:00",
+  "artifactSnapshotSha256": {
+    "test-results/dev04-soak/synthetic-soak-soak-evidence.json": "3a7070d58e11e8d93f9ec7f79a726409c89c456ea809ba3540777a0b0ace1723",
+    "test-results/dev04-soak/synthetic-soak/session-summary.json": "eadcf8590e896253d3ae4a1e8b12d1698c5775291f4600f00cf6029a5b63d55f",
+    "diagnostics/dev04-soak-verification.json": "8f1a4bb2e69cdb30dc5621fd2804386965f7434eaad3e06ab75f1d748530ed43",
+    "tools/logging/verify_run.py": "31eb36e9f616fbc89a7c392eb7bda3ef707c73c10031ceea3fffad41ac0df974",
+    "schemas/logs/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "schemas/logs/events.v1.schema.json": "ea19f8636dfd164959cbd7f1c0eab0f265fbd9eef9e28244636f79e2a8f668ba",
+    "schemas/logs/samples.v1.schema.json": "02c6b3dec8fb9db36c57cdd689a7c90654a34be9d2d2f05c8644397b7a5a2191",
+    "schemas/logs/session-summary.v1.schema.json": "8813c3b2694c3e7c80ebe63a3f9dce1664f5d6268eaa96b21f2c459e38fe62db",
+    "schemas/logs/targets.v1.schema.json": "7e4d9ae6d1e7791fa9f2c7711fad95d4027430846943b960528e2a16baf67028"
+  }
+}

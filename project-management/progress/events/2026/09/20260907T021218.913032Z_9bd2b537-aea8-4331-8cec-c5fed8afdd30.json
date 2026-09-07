@@ -1,0 +1,50 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "9bd2b537-aea8-4331-8cec-c5fed8afdd30",
+  "eventType": "task_started",
+  "recordedAtUtc": "2026-09-07T02:12:18.913032+00:00",
+  "occurredAtUtc": "2026-09-07T02:12:18.913032+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S022"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "ready",
+  "toStatus": "in_progress",
+  "taskRevision": 69,
+  "previousTaskEventHash": "5ef57091f22f9b85d39a5f9d2a472a073bbd8401f0e28e69b8d1d2c0b583d518",
+  "causalEventHashes": [
+    "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d",
+    "5ef57091f22f9b85d39a5f9d2a472a073bbd8401f0e28e69b8d1d2c0b583d518",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "a13b48c990029ad9018e570d32d312d78f2390f4b3b4db7df8bc4f1488e471d8",
+    "b456cff38d75cf98ff4a0017df409acc3f081e2f63c9346ba259914888548a5f"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "unity/Assets/Tests/",
+    "tools/bootstrap/driver.py",
+    "docs/modules/unity-tests.md"
+  ],
+  "expectedChecks": [
+    "Verify the assigned approved-plan outcome with source-bound evidence"
+  ],
+  "stopConditions": [
+    "Contract or authority conflict",
+    "Required input unavailable",
+    "Verification fails"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "Begin exact approved atomic step; preserve pending physical gates.",
+  "approval": null,
+  "handoffTo": null
+}

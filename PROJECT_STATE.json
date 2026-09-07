@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T02:08:26.566541+00:00",
+  "generatedAtUtc": "2026-09-07T02:12:18.913032+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,14 +11,14 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 90,
-    "eventSetSha256": "3650d9c0878fe09ceaf2d180e8741883a23767b65a52d8add4d83b58ae30fac3"
+    "eventCount": 93,
+    "eventSetSha256": "b18f4e38e430b6e5b7f4753ffa21a8017b678ccd0a397d5a13d513f07ebb6aaa"
   },
   "current": {
     "mode": "working",
-    "primaryStepId": "BOOT.S021",
+    "primaryStepId": "BOOT.S022",
     "activeStepIds": [
-      "BOOT.S021"
+      "BOOT.S022"
     ],
     "nextEligibleStepIds": [
       "P0.2.S001",
@@ -26,7 +26,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S021",
       "BOOT.S022",
       "BOOT.S023",
       "BOOT.S024",
@@ -50,9 +49,9 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "BOOT.S021",
+    "primaryStepId": "BOOT.S022",
     "activeStepIds": [
-      "BOOT.S021",
+      "BOOT.S022",
       "DEV-04.S001"
     ],
     "nextEligibleStepIds": [
@@ -61,7 +60,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S021",
       "BOOT.S022",
       "BOOT.S023",
       "BOOT.S024",
@@ -310,15 +308,12 @@
     {
       "owner": "agent:codex-astra",
       "taskId": "P0.3",
-      "atomicStepId": "BOOT.S021",
+      "atomicStepId": "BOOT.S022",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        "config/unity-packages.json",
-        "schemas/build/unity-packages.schema.json",
-        "unity/Packages/",
-        "unity/Assets/Editor/ProjectBootstrap/",
-        "tools/dependencies/verify_unity_packages.py",
-        "docs/modules/unity-packages.md"
+        "unity/Assets/Tests/",
+        "tools/bootstrap/driver.py",
+        "docs/modules/unity-tests.md"
       ]
     },
     {
@@ -359,17 +354,14 @@
     },
     "P0.3": {
       "status": "in_progress",
-      "revision": 66,
-      "lastEventHash": "0179fadda6bd748fc32b828bdadc02da4172a7c5c0738df4d906fbdb2ebb4293",
+      "revision": 69,
+      "lastEventHash": "0cde2d020a0b1e9a260e1601859a62bc27988dd31454dc097f6307bcacd02027",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        "config/unity-packages.json",
-        "docs/modules/unity-packages.md",
-        "schemas/build/unity-packages.schema.json",
-        "tools/dependencies/verify_unity_packages.py",
-        "unity/Assets/Editor/ProjectBootstrap/",
-        "unity/Packages/"
+        "docs/modules/unity-tests.md",
+        "tools/bootstrap/driver.py",
+        "unity/Assets/Tests/"
       ],
       "evidence": [],
       "blockers": []
@@ -2211,9 +2203,9 @@
       "blockers": []
     },
     "BOOT.S021": {
-      "status": "in_progress",
-      "revision": 66,
-      "lastEventHash": "0179fadda6bd748fc32b828bdadc02da4172a7c5c0738df4d906fbdb2ebb4293",
+      "status": "done",
+      "revision": 68,
+      "lastEventHash": "5ef57091f22f9b85d39a5f9d2a472a073bbd8401f0e28e69b8d1d2c0b583d518",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
@@ -2224,16 +2216,42 @@
         "tools/dependencies/verify_unity_packages.py",
         "docs/modules/unity-packages.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "BOOT.S021-BOOT.S021",
+          "path": "project-management/progress/evidence/BOOT.S021.json",
+          "sha256": "87c18b64d2cdcea19ea798e8d4b39d45416d09d1e084a38b6fa167e38d502771",
+          "targetIds": [
+            "BOOT.S021"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "toolchain_runtime",
+          "command": "Unity -batchmode -executeMethod Elts.Editor.PackageSetup.InstallRequired; python tools/dependencies/verify_unity_packages.py; Unity -batchmode -quit -executeMethod Elts.Editor.ProjectSetup.Configure; scripts/test.ps1 -Suite runtime",
+          "result": "pass",
+          "sourceRevision": "771d214634943dfe9c3543daf7f440599d7c7f64",
+          "recordedAtUtc": "2026-09-07T02:12:13.258092+00:00",
+          "limitations": [
+            "Unity EditMode/PlayMode tests and Windows build are separate next bootstrap steps",
+            "No physical equipment, calibration or study gate acceptance"
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S022": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 69,
+      "lastEventHash": "0cde2d020a0b1e9a260e1601859a62bc27988dd31454dc097f6307bcacd02027",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "unity/Assets/Tests/",
+        "tools/bootstrap/driver.py",
+        "docs/modules/unity-tests.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -5158,8 +5176,8 @@
   },
   "chains": {
     "task:P0.3": {
-      "revision": 66,
-      "hash": "0179fadda6bd748fc32b828bdadc02da4172a7c5c0738df4d906fbdb2ebb4293"
+      "revision": 69,
+      "hash": "0cde2d020a0b1e9a260e1601859a62bc27988dd31454dc097f6307bcacd02027"
     },
     "task:DEV-01": {
       "revision": 7,

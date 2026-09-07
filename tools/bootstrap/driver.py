@@ -27,7 +27,7 @@ from tools.progress.schema import load_json, validate_file
 # Engineering timeouts, not study timing or exposure limits.
 PYTHON_TEST_TIMEOUT_SECONDS = 600
 UNITY_TIMEOUT_SECONDS = 1800
-ACTIONS = ("bootstrap", "doctor", "test", "build", "stage", "package-study", "setup-study-machine")
+ACTIONS = ("bootstrap", "doctor", "test", "build", "stage", "package-study", "setup-study-machine", "start-study")
 
 
 def _has_reparse_component(path: Path) -> bool:
@@ -229,7 +229,7 @@ def run(args) -> tuple[dict, Path]:
                         json_dll = candidates[0]
                     command("runtime-config", [dotnet, "run", "--project", "tools/runtime-tests/ConfigChecks.csproj",
                             "-p:NewtonsoftPath=" + str(json_dll), "--", str(ROOT / "unity/Assets/StreamingAssets/config-generated")], expected_output=" configuration checks")
-                    for project, banner in (("TrackingChecks", " tracking checks"), ("SyntheticTrackingChecks", " synthetic tracking checks"), ("Dev03ReviewChecks", "DEV-03 review regressions")):
+                    for project, banner in (("TrackingChecks", " tracking checks"), ("SyntheticTrackingChecks", " synthetic tracking checks"), ("Dev03ReviewChecks", "DEV-03 review regressions"), ("LoggingChecks", " logging checks"), ("LoggingThroughputChecks", " logging throughput checks")):
                         if (ROOT / "tools/runtime-tests" / (project + ".csproj")).is_file():
                             command(project, [dotnet, "run", "--project", "tools/runtime-tests/" + project + ".csproj"], expected_output=banner)
             if selected in {"all", "unity-edit", "unity-play"}:
@@ -267,7 +267,7 @@ def run(args) -> tuple[dict, Path]:
             finalize(output, provenance)
 
         else:
-            raise ValueError("Study provisioning/packaging is unavailable: approved study configuration, physical acceptance and release gates remain pending. Use development instructions.")
+            raise ValueError("Study provisioning/packaging/startup is unavailable: approved study configuration, physical acceptance and release gates remain pending. Use development instructions.")
     except Exception as exc:
         report["result"] = "fail"
         check("failure", "fail", str(exc), remediation="Reconcile the stated input/check, preserve diagnostics, and rerun. Do not change progress manually.")

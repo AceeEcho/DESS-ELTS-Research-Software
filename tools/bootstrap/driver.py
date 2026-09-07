@@ -76,7 +76,7 @@ def validate_unity_results(path: Path, started_at: float) -> None:
         raise ValueError("Unity test results are not valid XML") from exc
     if root.tag.rsplit("}", 1)[-1] != "test-run" or root.attrib.get("result") not in {"Passed", "passed"}:
         raise ValueError("Unity test results did not report Passed")
-    cases = list(root.iter("test-case"))
+    cases = [case for case in root.iter() if case.tag.rsplit("}", 1)[-1] == "test-case"]
     if not cases or not any(case.attrib.get("result") == "Passed" for case in cases):
         raise ValueError("Unity test results contain no passing test cases")
     if any(case.attrib.get("result") in {"Failed", "Inconclusive"} for case in cases):

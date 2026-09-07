@@ -20,6 +20,8 @@ class DriverTests(unittest.TestCase):
             path.write_text('<test-run result="Passed"><test-case result="Passed" /></test-run>', encoding="utf-8")
             started = time.time() - 1
             validate_unity_results(path, started)
+            path.write_text('<test-run xmlns="urn:unity" result="Passed"><test-case result="Passed" /></test-run>', encoding="utf-8")
+            validate_unity_results(path, started)
             path.write_text('<test-run result="Passed" />', encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "no passing"):
                 validate_unity_results(path, started)

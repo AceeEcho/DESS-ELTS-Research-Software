@@ -1,0 +1,235 @@
+{
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "unity": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^6000\\.3\\.23f1$"
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "projectPath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scriptingBackend": {
+          "type": "string",
+          "minLength": 1
+        },
+        "packageManifest": {
+          "type": "string",
+          "minLength": 1
+        },
+        "packageLock": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiredPackages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "forbiddenPackagePrefixes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "version",
+        "revision",
+        "projectPath",
+        "target",
+        "scriptingBackend",
+        "packageManifest",
+        "packageLock",
+        "requiredPackages",
+        "forbiddenPackagePrefixes"
+      ],
+      "additionalProperties": false
+    },
+    "python": {
+      "type": "object",
+      "properties": {
+        "minimumVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "maximumExclusiveVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "testedVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "externalDependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "minimumVersion",
+        "maximumExclusiveVersion",
+        "testedVersion",
+        "externalDependencies"
+      ],
+      "additionalProperties": false
+    },
+    "git": {
+      "type": "object",
+      "properties": {
+        "minimumVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "testedVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "minimumVersion",
+        "testedVersion"
+      ],
+      "additionalProperties": false
+    },
+    "standaloneTests": {
+      "type": "object",
+      "properties": {
+        "dotnetSdkVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "targetFramework": {
+          "type": "string",
+          "minLength": 1
+        },
+        "csharpLanguageVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiredForUnityRuntime": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "dotnetSdkVersion",
+        "targetFramework",
+        "csharpLanguageVersion",
+        "requiredForUnityRuntime"
+      ],
+      "additionalProperties": false
+    },
+    "optionalUnityCli": {
+      "type": "object",
+      "properties": {
+        "testedVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiredForExistingCheckout": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "testedVersion",
+        "requiredForExistingCheckout"
+      ],
+      "additionalProperties": false
+    },
+    "dependencies": {
+      "type": "object",
+      "properties": {
+        "openvrManifest": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pythonManifest": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pythonLock": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "openvrManifest",
+        "pythonManifest",
+        "pythonLock"
+      ],
+      "additionalProperties": false
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "editorInstallation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "editorRuntime": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unityTests": {
+          "type": "string",
+          "minLength": 1
+        },
+        "windowsBuild": {
+          "type": "string",
+          "minLength": 1
+        },
+        "studyMachineBaseline": {
+          "type": "string",
+          "minLength": 1
+        },
+        "jetsonBaseline": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "editorInstallation",
+        "editorRuntime",
+        "unityTests",
+        "windowsBuild",
+        "studyMachineBaseline",
+        "jetsonBaseline"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "unity",
+    "python",
+    "git",
+    "standaloneTests",
+    "optionalUnityCli",
+    "dependencies",
+    "validation"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ELTS toolchain manifest v1"
+}

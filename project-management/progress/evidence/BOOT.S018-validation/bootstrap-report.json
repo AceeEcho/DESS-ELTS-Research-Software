@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "action": "bootstrap",
+  "recordedAtUtc": "2026-09-07T01:33:52.946861+00:00",
+  "result": "pass",
+  "sourceRevision": "259861f800a82465f0415663edb6cbc8e502c33a",
+  "environment": {
+    "os": "Windows",
+    "python": "3.12.14",
+    "unityVersion": "6000.3.23f1"
+  },
+  "checks": [
+    {
+      "id": "python",
+      "result": "pass",
+      "message": "3.12.14",
+      "details": {}
+    },
+    {
+      "id": "unity-installation",
+      "result": "pass",
+      "message": "6000.3.23f1",
+      "details": {}
+    },
+    {
+      "id": "plan",
+      "result": "pass",
+      "message": "exit 0",
+      "details": {
+        "command": [
+          "C:\\Users\\cadet\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+          "-X",
+          "utf8",
+          "tools/plan/build_plan.py",
+          "--check"
+        ],
+        "output": "diagnostics/bootstrap-plan.log"
+      }
+    },
+    {
+      "id": "progress",
+      "result": "pass",
+      "message": "exit 0",
+      "details": {
+        "command": [
+          "C:\\Users\\cadet\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+          "-X",
+          "utf8",
+          "tools/progress/validate.py"
+        ],
+        "output": "diagnostics/bootstrap-progress.log"
+      }
+    },
+    {
+      "id": "local-config",
+      "result": "pass",
+      "message": "Preserved existing config/local.json",
+      "details": {}
+    },
+    {
+      "id": "staging",
+      "result": "pass",
+      "message": "Synthetic configuration validated and staged",
+      "details": {}
+    },
+    {
+      "id": "unity-project",
+      "result": "deferred",
+      "message": "Unity project creation/import is a later bootstrap step",
+      "details": {}
+    }
+  ],
+  "limitations": [
+    "Development diagnostics only; no physical, safety or gate acceptance."
+  ]
+}

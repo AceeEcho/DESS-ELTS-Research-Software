@@ -45,8 +45,8 @@
   "validation": {
     "editorInstallation": "verified",
     "editorRuntime": "verified: implemented ELTS assemblies compile with pinned Unity packages",
-    "unityTests": "verified: batch EditMode 2 passed and PlayMode 1 passed on selected Editor",
-    "windowsBuild": "verified: Windows x64 Mono development player built and checksums verified; interactive player validation pending",
+    "unityTests": "verified: batch EditMode and PlayMode, including independent logging assembly import",
+    "windowsBuild": "verified: clean-clone Windows x64 Mono development build, checksums and non-graphical startup before and after copy",
     "studyMachineBaseline": "pending physical commissioning",
     "jetsonBaseline": "pending device inspection"
   }

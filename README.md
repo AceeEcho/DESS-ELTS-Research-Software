@@ -38,6 +38,10 @@ Windows build, clean-copy validation, and physical acceptance have separate evid
 Unity must be exactly **6000.3.23f1 LTS**. Toolchain and portable script setup are
 tracked by the active bootstrap steps rather than assumed complete here.
 
+The [verified bootstrap checkpoint](docs/ai/bootstrap-handoff.md) records the
+completed clean-clone, Unity test, Windows build and copied-player startup checks.
+It also identifies the validation limits and pending physical/remote controls.
+
 ## Configuration and contribution
 
 `config/` is the sole hand-edited configuration namespace. Units, placement,

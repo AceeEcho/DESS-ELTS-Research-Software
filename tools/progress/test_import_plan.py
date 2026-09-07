@@ -13,6 +13,15 @@ from tools.progress.import_plan import _verify_sources, build_catalog, export_ou
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def copy_import_inputs(destination: Path) -> Path:
+    """Copy only the importer contract inputs into a path containing spaces."""
+    root = destination / "project copy with spaces"
+    for relative in ("deliverables", "project-management/baseline", "docs/plan",
+                     "tools/plan", "schemas/progress"):
+        shutil.copytree(ROOT / relative, root / relative)
+    return root
+
+
 class ImportPlanTests(unittest.TestCase):
     def test_catalog_counts_ids_and_does_not_import_status_as_progress(self):
         catalog = build_catalog(ROOT)
@@ -21,6 +30,9 @@ class ImportPlanTests(unittest.TestCase):
         self.assertEqual(len({x["id"] for x in catalog["atomicSteps"]}), 267)
         self.assertTrue(all("Status" not in x for x in catalog["tasks"]))
         self.assertEqual(catalog["provenance"]["amendmentId"], "PC-001")
+        approved = json.loads((ROOT / "docs/plan/approved-plan.json").read_text(encoding="utf-8"))
+        self.assertEqual(catalog["tasks"], approved["taskDefinitions"])
+        self.assertEqual(catalog["atomicSteps"], approved["atomicStepDefinitions"])
 
     def test_source_and_baseline_tamper_rejected(self):
         rules = json.loads((ROOT / "docs/plan/amendment-rules.json").read_text(encoding="utf-8"))
@@ -46,8 +58,7 @@ class ImportPlanTests(unittest.TestCase):
 
     def test_exports_are_repeatable_and_formulas_are_preserved(self):
         with tempfile.TemporaryDirectory(prefix="catalog importer ") as temporary:
-            root = Path(temporary) / "project copy with spaces"
-            shutil.copytree(ROOT, root, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+            root = copy_import_inputs(Path(temporary))
             first = export_outputs(root)
             snapshots = {path: path.read_bytes() for path in first}
             second = export_outputs(root, check=True)
@@ -66,8 +77,7 @@ class ImportPlanTests(unittest.TestCase):
 
     def test_missing_and_stale_exports_are_rejected(self):
         with tempfile.TemporaryDirectory(prefix="catalog importer ") as temporary:
-            root = Path(temporary) / "project copy"
-            shutil.copytree(ROOT, root, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+            root = copy_import_inputs(Path(temporary))
             outputs = export_outputs(root)
             outputs[0].unlink()
             with self.assertRaisesRegex(ValueError, "Export drift"):
@@ -79,8 +89,7 @@ class ImportPlanTests(unittest.TestCase):
 
     def test_approved_plan_and_rules_drift_are_rejected(self):
         with tempfile.TemporaryDirectory(prefix="catalog importer ") as temporary:
-            root = Path(temporary) / "project copy"
-            shutil.copytree(ROOT, root, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+            root = copy_import_inputs(Path(temporary))
             plan = root / "docs/plan/approved-plan.json"
             plan.write_bytes(plan.read_bytes() + b" ")
             with self.assertRaisesRegex(ValueError, "Approved plan output is stale"):

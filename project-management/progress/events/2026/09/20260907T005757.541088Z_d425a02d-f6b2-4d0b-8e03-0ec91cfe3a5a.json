@@ -1,0 +1,61 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "d425a02d-f6b2-4d0b-8e03-0ec91cfe3a5a",
+  "eventType": "verification_pending",
+  "recordedAtUtc": "2026-09-07T00:57:57.541088+00:00",
+  "occurredAtUtc": "2026-09-07T00:57:57.541088+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S015"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "in_progress",
+  "toStatus": "verification_pending",
+  "taskRevision": 44,
+  "previousTaskEventHash": "ebb56577fe112e2d874fd67f3fef306b7b0472265a35f66826bf88734019fc68",
+  "causalEventHashes": [
+    "9dd0e60e40e368e777b7628ead17ec932106650a77ce363f92152e7fe7e6d868",
+    "ebb56577fe112e2d874fd67f3fef306b7b0472265a35f66826bf88734019fc68"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "docs/templates/",
+    "docs/ai/handoff-template.md"
+  ],
+  "expectedChecks": [],
+  "stopConditions": [],
+  "evidence": [
+    {
+      "id": "BOOT.S015-BOOT.S015",
+      "path": "project-management/progress/evidence/BOOT.S015.json",
+      "sha256": "7964cfb01d057e52d094dae1fa12428c749e19473ffcc048ea3d74b7fdd42f35",
+      "targetIds": [
+        "BOOT.S015"
+      ],
+      "criteria": [
+        "outcome",
+        "verification"
+      ],
+      "class": "document",
+      "command": "Inspect six template purposes and required module/handoff/evidence metadata against specification and schemas",
+      "result": "pass",
+      "sourceRevision": "9b4ca2b743f3de609f114aff2ae49feedd20b83e",
+      "recordedAtUtc": "2026-09-07T00:57:56.597745+00:00",
+      "limitations": [
+        "Templates are guidance and contain no approval or completion record."
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "Added ADR, module-contract, handoff, evidence, validation and operator-document templates.",
+  "approval": null,
+  "handoffTo": null
+}

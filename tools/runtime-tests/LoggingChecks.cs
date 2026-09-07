@@ -153,18 +153,45 @@ internal static class LoggingChecks
         string root = output ?? CreateRoot();
         Directory.CreateDirectory(root);
         var clock = new SharedMonotonicClock();
-        var writer = new SessionLogWriter(LoggingRunDirectory.ReserveUnique(root, "synthetic-soak"), Provenance(clock), new LoggingConfiguration(8192, 512));
+        const int sampleRateHz = 250;
+        const int sampleCapacity = 8192;
+        const int criticalCapacity = 512;
+        var start = new ProcessStartInfo("git", "rev-parse HEAD") { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true };
+        using var git = Process.Start(start) ?? throw new Exception("Cannot resolve source revision");
+        string revision = git.StandardOutput.ReadToEnd().Trim(); git.WaitForExit();
+        if (git.ExitCode != 0 || revision.Length != 40) throw new Exception("Run the soak from the repository root");
+        string configJson = JsonSerializer.Serialize(new { sampleRateHz, sampleCapacity, criticalCapacity, seconds, flushIntervalMilliseconds = 250 });
+        string fixtureJson = "{\"mode\":\"synthetic\",\"head\":\"x=sequence%10,y=0,z=1 metres\",\"weapon\":\"connected,out-of-range,no-pose\",\"target\":\"stationary at (0,0,2) metres\"}";
+        string fixtureHash = Sha256(Encoding.UTF8.GetBytes(fixtureJson));
+        var provenance = new SessionProvenance("dev04-soak", revision, Sha256(Encoding.UTF8.GetBytes(configJson)), fixtureHash, fixtureHash, true, clock.UtcStartupAnchor);
+        var writer = new SessionLogWriter(LoggingRunDirectory.ReserveUnique(root, "synthetic-soak"), provenance, new LoggingConfiguration(sampleCapacity, criticalCapacity));
+        var sourceHashes = new Dictionary<string, string>();
+        foreach (string folder in new[] { "unity/Assets/ELTS/Clock", "unity/Assets/ELTS/Geometry", "unity/Assets/ELTS/Tracking", "unity/Assets/ELTS/Logging" })
+            foreach (string file in Directory.GetFiles(folder, "*.cs")) sourceHashes[file.Replace('\\', '/')] = Sha256(File.ReadAllBytes(file));
+        sourceHashes["tools/runtime-tests/LoggingChecks.cs"] = Sha256(File.ReadAllBytes("tools/runtime-tests/LoggingChecks.cs"));
+        var intervals = new List<double>();
+        var enqueueTimes = new List<double>();
+        long previousTick = -1;
+        long reschedules = 0;
         writer.Start();
         Stopwatch wall = Stopwatch.StartNew();
         long sequence = 1;
-        const int sampleRateHz = 250;
         long cadenceTicks = Stopwatch.Frequency / sampleRateHz;
         long nextDueTick = Stopwatch.GetTimestamp();
         while (wall.Elapsed < TimeSpan.FromSeconds(seconds))
         {
             TrackingAcquisitionStamp stamp = TrackingAcquisitionStamp.Capture(clock, sequence);
-            writer.TryLogSample(new TrackingSamplePair(TrackingSample.Valid(stamp, new TrackerId("SYNTHETIC-HEAD"), new RigidPose(new Vector3d(sequence % 10, 0, 1), Quaterniond.Identity)), TrackingSample.Invalid(stamp, new TrackerId("SYNTHETIC-WEAPON"), TrackingConnectionState.Connected, TrackingValidity.OutOfRange)));
-            if (sequence % 250 == 0) writer.TryLogEvent(new SessionEvent(sequence / 250, stamp.Timestamp, "synthetic-second"));
+            if (previousTick >= 0) intervals.Add((stamp.Timestamp.Ticks - previousTick) / (double)TimeSpan.TicksPerMillisecond);
+            previousTick = stamp.Timestamp.Ticks;
+            long enqueueStart = Stopwatch.GetTimestamp();
+            bool accepted = writer.TryLogSample(new TrackingSamplePair(TrackingSample.Valid(stamp, new TrackerId("SYNTHETIC-HEAD"), new RigidPose(new Vector3d(sequence % 10, 0, 1), Quaterniond.Identity)), TrackingSample.Invalid(stamp, new TrackerId("SYNTHETIC-WEAPON"), TrackingConnectionState.Connected, TrackingValidity.OutOfRange)));
+            enqueueTimes.Add((Stopwatch.GetTimestamp() - enqueueStart) * 1000.0 / Stopwatch.Frequency);
+            if (!accepted || !writer.Health.IsHealthy) throw new Exception("Soak logger rejected a sample: " + writer.Health.Failure);
+            if (sequence % sampleRateHz == 0)
+            {
+                if (!writer.TryLogEvent(new SessionEvent(sequence / sampleRateHz, stamp.Timestamp, "synthetic-second"))) throw new Exception("Soak event rejected");
+                if (!writer.TryLogTarget(new TargetSnapshot(sequence / sampleRateHz, stamp.Timestamp, "target-1", "block-1", TargetLifecycle.Spawned, new Vector3d(0, 0, 2), Vector3d.Zero, 1729, "soak-v1"))) throw new Exception("Soak target rejected");
+            }
             sequence++;
             nextDueTick += cadenceTicks;
             // Busy waiting preserves the configured 250 Hz cadence on Windows, where Sleep(1) can be 15 ms.
@@ -172,12 +199,25 @@ internal static class LoggingChecks
             while (true)
             {
                 long remainingTicks = nextDueTick - Stopwatch.GetTimestamp();
-                if (remainingTicks <= 0) { if (-remainingTicks > cadenceTicks) nextDueTick = Stopwatch.GetTimestamp(); break; }
+                if (remainingTicks <= 0) { if (-remainingTicks > cadenceTicks) { nextDueTick = Stopwatch.GetTimestamp(); reschedules++; } break; }
                 Thread.SpinWait(256);
             }
         }
+        double elapsedSeconds = wall.Elapsed.TotalSeconds;
         LogCloseResult close = writer.Close(TimeSpan.FromSeconds(30));
         if (!close.CompleteOutput) throw new Exception("Soak close failed: " + close.Error);
+        intervals.Sort(); enqueueTimes.Sort();
+        double Percentile(List<double> values, double p) => values.Count == 0 ? 0 : values[(int)Math.Min(values.Count - 1, Math.Ceiling(values.Count * p) - 1)];
+        string evidence = JsonSerializer.Serialize(new {
+            requestedSeconds = seconds, elapsedSeconds, attemptedSamples = sequence - 1, effectiveRateHz = (sequence - 1) / elapsedSeconds,
+            droppedSamples = writer.DroppedSampleCount, reschedules,
+            intervalP50Milliseconds = Percentile(intervals, .5), intervalP95Milliseconds = Percentile(intervals, .95), intervalMaxMilliseconds = Percentile(intervals, 1),
+            enqueueP95Milliseconds = Percentile(enqueueTimes, .95), enqueueMaxMilliseconds = Percentile(enqueueTimes, 1),
+            sourceRevision = revision, sourceHashes, executableSha256 = Sha256(File.ReadAllBytes(typeof(LoggingChecks).Assembly.Location)),
+            configuration = configJson, fixture = fixtureJson, complete = close.CompleteOutput,
+            limitation = "Synthetic console producer on development PC; no Unity display load, tracking hardware, physical or study acceptance"
+        }, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(Path.Combine(root, writer.Lease.RunId + "-soak-evidence.json"), evidence, new UTF8Encoding(false));
         Console.WriteLine("SOAK: seconds=" + seconds + " attemptedSamples=" + (sequence - 1) + " droppedSamples=" + writer.DroppedSampleCount + " run=" + writer.Lease.DirectoryPath);
         passed++;
     }
@@ -188,7 +228,7 @@ internal static class LoggingChecks
         TrackingAcquisitionStamp stamp = TrackingAcquisitionStamp.Capture(clock, sequence);
         return new TrackingSamplePair(TrackingSample.Valid(stamp, new TrackerId("H"), new RigidPose(Vector3d.Zero, Quaterniond.Identity)), TrackingSample.Valid(stamp, new TrackerId("W"), new RigidPose(Vector3d.Zero, Quaterniond.Identity)));
     }
-    private static SessionProvenance Provenance(ISharedClock clock) => new SessionProvenance("dev04-test", "c4133c9", Hash, Hash, Hash, true, clock.UtcStartupAnchor);
+    private static SessionProvenance Provenance(ISharedClock clock) => new SessionProvenance("dev04-unit-fixture", "unit-fixture", Hash, Hash, Hash, true, clock.UtcStartupAnchor);
     private static string Sha256(byte[] bytes) { using SHA256 sha = SHA256.Create(); return Convert.ToHexString(sha.ComputeHash(bytes)).ToLowerInvariant(); }
     private static string CreateRoot() { string path = Path.Combine(Path.GetTempPath(), "elts-logging-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(path); return path; }
     private static void DeleteRoot(string path) { try { Directory.Delete(path, true); } catch { } }
@@ -214,3 +254,4 @@ internal static class LoggingChecks
         public override void Flush(bool durable) { entered.Set(); release.Wait(); }
     }
 }
+

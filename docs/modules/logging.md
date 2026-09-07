@@ -31,3 +31,5 @@ dotnet run --project tools/runtime-tests/LoggingChecks.csproj -- --soak-seconds 
 The normal harness validates output JSON round-trips and file checksums, run-ID/no-overwrite behavior, sample drops, critical-event fail-closed behavior, injected write failure, and injected stalled close. The soak entry point produces samples at the configured 250 Hz cadence for real wall-clock duration, prints its output directory and counters, and does not claim physical device or Study-PC disk validation.
 
 The test seam is `ILogSinkFactory`. It is for deterministic failure/stall tests only; production uses `FileLogSinkFactory` and does not permit a caller to supply log-file paths.
+
+Soak evidence also records the actual Git revision, runtime-source hashes, compiled harness hash, fixture/configuration hashes, elapsed duration, effective cadence, scheduling delays and producer enqueue timings. Fixture unit tests use explicit fixture provenance; the sustained run records its actual inputs. Busy waiting in this diagnostic producer aims for 250 Hz on Windows and can use one CPU core. It does not establish full Unity/display-load or hardware timing acceptance.

@@ -17,7 +17,6 @@ from typing import Any
 
 # Permit direct CLI execution from any working directory.
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from tools.plan import build_plan
 from tools.progress.schema import validate_file
 
 SCHEMA_VERSION = 1

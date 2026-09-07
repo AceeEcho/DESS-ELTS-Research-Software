@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T02:17:29.409345+00:00",
+  "generatedAtUtc": "2026-09-07T02:23:03.247271+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,14 +11,14 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 96,
-    "eventSetSha256": "aaa83107b122ed419d7009c8a5ddc72bbfe9ac02b8e9cd8f1296f0c02b7c3ffa"
+    "eventCount": 99,
+    "eventSetSha256": "400ab9194d6c7784c22826f2d41082505e73631cc60c2dc3a5a8cc859e908b9e"
   },
   "current": {
     "mode": "working",
-    "primaryStepId": "BOOT.S023",
+    "primaryStepId": "BOOT.S024",
     "activeStepIds": [
-      "BOOT.S023"
+      "BOOT.S024"
     ],
     "nextEligibleStepIds": [
       "P0.2.S001",
@@ -26,7 +26,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S023",
       "BOOT.S024",
       "BOOT.S025",
       "D-01",
@@ -48,9 +47,9 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "BOOT.S023",
+    "primaryStepId": "BOOT.S024",
     "activeStepIds": [
-      "BOOT.S023",
+      "BOOT.S024",
       "DEV-04.S001"
     ],
     "nextEligibleStepIds": [
@@ -59,7 +58,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S023",
       "BOOT.S024",
       "BOOT.S025",
       "D-01",
@@ -306,13 +304,12 @@
     {
       "owner": "agent:codex-astra",
       "taskId": "P0.3",
-      "atomicStepId": "BOOT.S023",
+      "atomicStepId": "BOOT.S024",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        "unity/Assets/Editor/EltsBuild",
-        "tools/build",
-        "schemas/build",
-        "docs/modules/windows-build.md"
+        ".github/workflows",
+        "tools/ci",
+        "docs/modules/ci.md"
       ]
     },
     {
@@ -353,15 +350,14 @@
     },
     "P0.3": {
       "status": "in_progress",
-      "revision": 72,
-      "lastEventHash": "86399758c0796e018000074aaf602891f25df951a01eb334f235f5147a1c6406",
+      "revision": 75,
+      "lastEventHash": "b6dd761f409fd877834ffb3e0eb7844df218899eb41c9dd7241c8dcb45f43ad8",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        "docs/modules/windows-build.md",
-        "schemas/build",
-        "tools/build",
-        "unity/Assets/Editor/EltsBuild"
+        ".github/workflows",
+        "docs/modules/ci.md",
+        "tools/ci"
       ],
       "evidence": [],
       "blockers": []
@@ -2278,9 +2274,9 @@
       "blockers": []
     },
     "BOOT.S023": {
-      "status": "in_progress",
-      "revision": 72,
-      "lastEventHash": "86399758c0796e018000074aaf602891f25df951a01eb334f235f5147a1c6406",
+      "status": "done",
+      "revision": 74,
+      "lastEventHash": "7980fa454543c7cfefe4249036c3444c431fa9fe4be061c4c2f7e06a0ef0294a",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
@@ -2289,16 +2285,44 @@
         "schemas/build",
         "docs/modules/windows-build.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "BOOT.S023-BOOT.S023",
+          "path": "project-management/progress/evidence/BOOT.S023.json",
+          "sha256": "7aa867c1d4e0e4549195ef9c684c1b69b3ab4fbb3c2785e01f9fb7a252560f00",
+          "targetIds": [
+            "BOOT.S023"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "toolchain_runtime",
+          "command": "scripts/build.ps1 -Output build/bootstrap-windows-01; python -m tools.build.verify build/bootstrap-windows-01; python -m unittest tools.build.test_provenance tools.bootstrap.test_driver",
+          "result": "pass",
+          "sourceRevision": "afa6b483d838858dbed84ab46a961893a53ed671",
+          "recordedAtUtc": "2026-09-07T02:22:57.594970+00:00",
+          "limitations": [
+            "First build is explicitly dirty dev-f0e9d0acc3ee-dirty; metadata preserves initial source diff hash and untracked source hashes",
+            "Interactive player behavior and clean-clone build verification are not claimed by this step",
+            "Unity-generated metadata contains normal serializer whitespace; git diff whitespace check flags it",
+            "No physical equipment or study/release gate acceptance"
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S024": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 75,
+      "lastEventHash": "b6dd761f409fd877834ffb3e0eb7844df218899eb41c9dd7241c8dcb45f43ad8",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        ".github/workflows",
+        "tools/ci",
+        "docs/modules/ci.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -5203,8 +5227,8 @@
   },
   "chains": {
     "task:P0.3": {
-      "revision": 72,
-      "hash": "86399758c0796e018000074aaf602891f25df951a01eb334f235f5147a1c6406"
+      "revision": 75,
+      "hash": "b6dd761f409fd877834ffb3e0eb7844df218899eb41c9dd7241c8dcb45f43ad8"
     },
     "task:DEV-01": {
       "revision": 7,

@@ -71,9 +71,9 @@ public readonly struct TrackingSamplePair
 {
     public TrackingSamplePair(TrackingSample head, TrackingSample weapon)
     {
+        if (!IsLoggable(head) || !IsLoggable(weapon)) throw new ArgumentException("Paired samples must be explicit valid or invalid tracking observations.");
         if (head.Timestamp != weapon.Timestamp || head.Sequence != weapon.Sequence)
             throw new ArgumentException("Head and weapon samples must share one acquisition stamp.");
-        if (head.Timestamp.Ticks < 0 || head.Sequence < 1) throw new ArgumentException("Capture stamp is invalid.");
         Head = head;
         Weapon = weapon;
     }
@@ -81,6 +81,14 @@ public readonly struct TrackingSamplePair
     public TrackingSample Weapon { get; }
     public MonotonicTimestamp Timestamp => Head.Timestamp;
     public long Sequence => Head.Sequence;
+    public bool IsValid => IsLoggable(Head) && IsLoggable(Weapon) && Head.Timestamp == Weapon.Timestamp && Head.Sequence == Weapon.Sequence;
+
+    private static bool IsLoggable(TrackingSample sample)
+    {
+        if (!sample.Acquisition.IsAssigned || !sample.Tracker.IsAssigned || !LoggingValidation.IsIdentifier(sample.Tracker.Value, 256) || !Enum.IsDefined(typeof(TrackingConnectionState), sample.Connection) || !Enum.IsDefined(typeof(TrackingValidity), sample.Validity)) return false;
+        if (sample.Validity == TrackingValidity.Valid) return sample.Connection == TrackingConnectionState.Connected && sample.Pose.HasValue && sample.Pose.Value.Orientation.IsUnit;
+        return !sample.Pose.HasValue;
+    }
 }
 
 public enum TargetLifecycle
@@ -187,13 +195,18 @@ internal static class LoggingValidation
     }
     public static string Identifier(string value, string name)
     {
-        RequiredToken(value, name);
+        if (!IsIdentifier(value, 256)) throw new ArgumentException("Identifiers use 1-256 ASCII letters, digits, hyphen, underscore, and period only.", name);
+        return value;
+    }
+    public static bool IsIdentifier(string? value, int maximumLength)
+    {
+        if (String.IsNullOrEmpty(value) || value.Length > maximumLength) return false;
         for (int i = 0; i < value.Length; i++)
         {
             char c = value[i];
-            if (!(char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == '.')) throw new ArgumentException("Identifiers use letters, digits, hyphen, underscore, and period only.", name);
+            if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.')) return false;
         }
-        return value;
+        return true;
     }
     public static string Sha256(string value, string name)
     {

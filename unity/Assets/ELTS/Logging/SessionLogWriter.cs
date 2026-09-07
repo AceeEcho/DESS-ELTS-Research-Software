@@ -38,7 +38,9 @@ public static class LoggingRunDirectory
 
         for (int suffix = 0; suffix <= MaxUniqueSuffix; suffix++)
         {
-            string runId = suffix == 0 ? baseId : baseId + "-r" + suffix.ToString("D4", CultureInfo.InvariantCulture);
+            // The suffix is part of the schema-bound 80-character ID, so reserve six characters for it.
+            string suffixedBase = baseId.Length > 74 ? baseId.Substring(0, 74) : baseId;
+            string runId = suffix == 0 ? baseId : suffixedBase + "-r" + suffix.ToString("D4", CultureInfo.InvariantCulture);
             string directory = CombineChild(root, runId);
             // An existing directory is never adopted, even if it appears empty.
             if (Directory.Exists(directory) || File.Exists(directory)) continue;
@@ -73,7 +75,7 @@ public static class LoggingRunDirectory
         for (int i = 0; i < runId.Length; i++)
         {
             char c = runId[i];
-            if (!(char.IsLetterOrDigit(c) || c == '-' || c == '_')) throw new ArgumentException("Run ID may contain only letters, digits, hyphen, and underscore.", nameof(runId));
+            if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_')) throw new ArgumentException("Run ID may contain only ASCII letters, digits, hyphen, and underscore.", nameof(runId));
         }
         return runId;
     }
@@ -171,6 +173,8 @@ internal sealed class FileLogSink : ILogSink
 /// <summary>Single-writer session recorder. Samples can drop under pressure; target and event failures make the session unhealthy.</summary>
 public sealed class SessionLogWriter : IDisposable
 {
+    // A critical-event flood cannot starve streaming samples indefinitely.
+    private const int MaximumConsecutiveCriticalItems = 32;
     private readonly LoggingRunLease lease;
     private readonly SessionProvenance provenance;
     private readonly LoggingConfiguration configuration;
@@ -211,6 +215,7 @@ public sealed class SessionLogWriter : IDisposable
     }
     public bool TryLogSample(TrackingSamplePair sample)
     {
+        if (!sample.IsValid) throw new ArgumentException("A complete paired tracking observation is required.", nameof(sample));
         if (!Accepting()) return false;
         try
         {
@@ -261,10 +266,39 @@ public sealed class SessionLogWriter : IDisposable
         {
             sink = sinkFactory.Open(lease);
             Stopwatch flushClock = Stopwatch.StartNew();
+            int consecutiveCriticalItems = 0;
             while (!critical.IsCompleted || !samples.IsCompleted)
             {
                 WriterItem item;
-                if (!critical.TryTake(out item, 10) && !samples.TryTake(out item, 10)) { FlushIfDue(sink, flushClock); continue; }
+                bool found = false;
+                // Both fast paths are nonblocking. Waiting on an empty critical queue here
+                // would silently limit the 250 Hz sample stream to the scheduler timeout.
+                if (consecutiveCriticalItems < MaximumConsecutiveCriticalItems && critical.TryTake(out item))
+                {
+                    consecutiveCriticalItems++;
+                    found = true;
+                }
+                else if (samples.TryTake(out item))
+                {
+                    consecutiveCriticalItems = 0;
+                    found = true;
+                }
+                else if (critical.TryTake(out item))
+                {
+                    consecutiveCriticalItems = 1;
+                    found = true;
+                }
+                else
+                {
+                    // This is the only blocking wait and it observes both queues.
+                    int source = BlockingCollection<WriterItem>.TryTakeFromAny(new[] { critical, samples }, out item, 10);
+                    if (source >= 0)
+                    {
+                        consecutiveCriticalItems = source == 0 ? consecutiveCriticalItems + 1 : 0;
+                        found = true;
+                    }
+                }
+                if (!found) { FlushIfDue(sink, flushClock); continue; }
                 WriteItem(sink, item);
                 FlushIfDue(sink, flushClock);
             }

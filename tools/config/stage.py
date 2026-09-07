@@ -144,7 +144,7 @@ def stage(root: Path, output: Path | None = None, check: bool = False) -> list[P
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__); group = parser.add_mutually_exclusive_group(); group.add_argument("--write", action="store_true"); group.add_argument("--check", action="store_true"); parser.add_argument("--output")
-    args = parser.parse_args(); root = ROOT; output = Path(args.output) if args.output else None; stage(root, output, args.check); print("PASS: synthetic configuration validated and staged")
+    args = parser.parse_args(); root = ROOT; output = (root / args.output) if args.output and not Path(args.output).is_absolute() else (Path(args.output) if args.output else None); stage(root, output, args.check); print("PASS: synthetic configuration validated and staged")
 
 
 if __name__ == "__main__": main()

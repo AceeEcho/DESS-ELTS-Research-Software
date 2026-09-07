@@ -205,7 +205,7 @@ def run(args) -> tuple[dict, Path]:
 
         elif args.action == "test":
             selected = args.suite
-            for suite, folder in (("plan", "tools/plan"), ("progress", "tools/progress"), ("config", "tools/config"), ("bootstrap", "tools/bootstrap"), ("dependencies", "tools/dependencies"), ("build-provenance", "tools/build")):
+            for suite, folder in (("plan", "tools/plan"), ("progress", "tools/progress"), ("config", "tools/config"), ("bootstrap", "tools/bootstrap"), ("dependencies", "tools/dependencies"), ("build-provenance", "tools/build"), ("logging", "tools/logging")):
                 if selected in {"all", "baseline", suite}:
                     command(suite, py + ["-m", "unittest", "discover", "-s", folder, "-p", "test_*.py", "-v"])
             if selected in {"all", "geometry", "runtime"}:

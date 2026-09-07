@@ -18,3 +18,11 @@ bootstrap scene is a build shell; later development steps add session behavior.
 Raw Unity logs are excluded from the checksum product list because diagnostics
 can contain account or machine details. Keep them local. Study packaging remains
 blocked by release and physical acceptance requirements.
+
+For an actual Windows player startup check, run
+`python -m tools.build.smoke build/my-new-build --report diagnostics/player-smoke.json`.
+It verifies products first, then explicitly starts the player in non-graphical
+batch mode. The probe loads staged configuration after three Update frames,
+checks the synthetic/study boundary, emits its versioned completion marker and
+exits. Normal startup does not run the probe. This check does not validate the
+visible banner, display mapping, rendering latency or physical devices.

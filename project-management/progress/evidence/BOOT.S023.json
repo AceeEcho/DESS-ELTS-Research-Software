@@ -1,0 +1,39 @@
+{
+  "targetId": "BOOT.S023",
+  "result": "pass",
+  "evidenceClass": "toolchain_runtime",
+  "command": "scripts/build.ps1 -Output build/bootstrap-windows-01; python -m tools.build.verify build/bootstrap-windows-01; python -m unittest tools.build.test_provenance tools.bootstrap.test_driver",
+  "summary": "Explicit Windows x64 Mono development build succeeded with source/configuration/package provenance and verified artifact checksums.",
+  "checks": [
+    "Unity batch build exit0 with ELTS_WINDOWS_BUILD_PASS; expected player and UnityPlayer.dll emitted",
+    "Build manifest and metadata verification passed",
+    "5 provenance/driver tests passed including corruption, extra DLL and path escape rejection",
+    "Independent Luna read-only review found no concrete blocker in current implementation; Python compilation and focused tests passed",
+    "Inspected and retained Unity-written URP build migration fields; source bundleVersion restored after build"
+  ],
+  "limitations": [
+    "First build is explicitly dirty dev-f0e9d0acc3ee-dirty; metadata preserves initial source diff hash and untracked source hashes",
+    "Interactive player behavior and clean-clone build verification are not claimed by this step",
+    "Unity-generated metadata contains normal serializer whitespace; git diff whitespace check flags it",
+    "No physical equipment or study/release gate acceptance"
+  ],
+  "schemaVersion": 1,
+  "sourceRevision": "afa6b483d838858dbed84ab46a961893a53ed671",
+  "recordedAtUtc": "2026-09-07T02:22:57.594970+00:00",
+  "artifactSnapshotSha256": {
+    "unity/Assets/Editor/EltsBuild/BuildEntry.cs": "2a52863ed25251cefd8d3f0d20fe57a68077ef5a752f21fee2c23f4f488c26ab",
+    "unity/Assets/Editor/EltsBuild/BuildEntry.cs.meta": "146984e3ad449a3d6e274709e66f52fd595e31a639a91d2b468518b1daf2222c",
+    "unity/Assets/ELTS/Development/DevelopmentBanner.cs": "b369e1acdfad76c487481167d42a7095fcf61e8552d3ac02212a8f4a027e5238",
+    "unity/Assets/ELTS/Development/DevelopmentBanner.cs.meta": "4afcd87d8931229b607f3171d0260f53836e51261b36eb59a520830051d04b13",
+    "unity/Assets/ELTS/Development/Elts.Development.asmdef": "57ba68ce11a6bd13b91dafb3615db838653f037dc1c7a24fbb0ee887c9ae5932",
+    "unity/Assets/ELTS/Development/Elts.Development.asmdef.meta": "9de90e13c129186e6dbcdbd3d495586ea24e5920f4749075e4c08c513a4c3fb6",
+    "tools/build/provenance.py": "07e20e48cf858da10e43d2180b8a2ee145708ed0338403d7cfeb006e5b5aa6ca",
+    "tools/build/test_provenance.py": "e261a2dbdaa14d40122b609bd6ae9f1006067490dd37c9793b05d69e7848c1f4",
+    "tools/build/verify.py": "e8e3b675aa972bd5383d1cbe44e9980828dab7928047e8b54eab070a79f290d5",
+    "tools/bootstrap/driver.py": "9e311aa3c31bdc1fb71b52bcabf6d6e1967b91187ec719ebe1edf49a606a2345",
+    "docs/modules/windows-build.md": "06b70642226ec361ca12f9ae19efdbb14847143f381ec3a59a1a68e962de84e4",
+    "build/bootstrap-windows-01/build-info.json": "ddefc973f03702194b4da1b1e98a1540a511b6064de61ca5853deab67b08779a",
+    "build/bootstrap-windows-01/MANIFEST.sha256": "94d4192d63e8078ed9896d0abc09804b27639a63202036ade706aaace6791d59",
+    "diagnostics/windows-build-01-report.json": "abd7f267acc73e7fba587d6b00f85ff27849ef3f851ecdf42ef790c7fefcd86a"
+  }
+}

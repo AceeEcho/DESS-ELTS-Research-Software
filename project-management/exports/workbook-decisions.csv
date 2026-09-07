@@ -1,0 +1,23 @@
+Decision register
+D-01 through D-18 retain their original identifiers. Agents must not invent outcomes.
+,,,,,,,,,,
+
+Decision ID,Decision,Owner,Latest Blocking Point,Inputs and Criteria,Status,Decision Date UTC,Outcome,ADR or Evidence,Affected Work Items,Notes
+D-01,"Display type, size, refresh rate",Investigators,Phase 7 entry (Phase 3 works on any interim display),High-brightness direct-view panel preferred over projection (§8); size sets target angular sizes and the visible virtual volume; refresh rate ≥ 120 Hz preferred for perceived latency; must accept corner-rod mounts; measured luminance for D.2,open,,,,P0.7,
+D-02,"Room layout, mounting points, base station exact position",Investigators + developer,Phase 7 entry,"Base station above the display, both trackers facing it (§5.1); ELTS illuminates the participant without spilling onto the display (§8); participant standing zone; operator sightline to the E-stop; P0.7 survey",open,,,,"P0.7, P1.1, P7.1",
+D-03,Unity ↔ Jetson transport,Developer + ELTS code owner,Phase 6 entry,§14.3,open,,,,P6.2,
+D-04,Moving-target movement specification,Investigators,Phase 8 (P8.1),Expressed as IMovementBehaviour parameters; must remain easy to change (§6.3); seed logged per block,open,,,,"P4.3, P8.1",
+D-05,"Shot model parameters (ammo, reload, fire-rate cap, hits-to-destroy)",Investigators,Phase 8 (P8.1),"Scenario file values; defaults are ""unlimited / 1 hit"" until decided",open,,,,P4.5,
+D-06,"Participant-facing feedback (hit visuals, sound, score display)",Investigators,Phase 8 (P8.1),Stimulus design question; toggles exist for every option,open,,,,P4.7,
+D-07,"Practice session content (10 min, §3.3)",Investigators,Phase 8 (P8.1),Session template practice block(s),open,,,,P4.8,
+D-08,Block-order assignment method (full randomization vs. counterbalancing) and the assignment sheet for N = 55,Investigators,Phase 8 (P8.1),App accepts any permutation per participant; sheet generated outside the app,open,,,,"P4.9, P8.1",
+D-09,Mock weapon platform and sight type,Investigators + fabricator,Phase 1 (P1.11),§13.1.1,open,,,,P1.11,
+D-10,ELTS behavior during NE blocks (fully idle vs. armed without LEDs),Investigators,Phase 6 entry,Servo/turret noise as a possible cue; warm-up latency if idle,open,,,,P6.5,
+D-11,Display luminance measurement method (instrument; spot vs. continuous logging),Investigators + developer,Phase 7 entry,§8 asks for luminance to be logged during trials; minimum is spot measurements before/after each block recorded in the session notes; continuous logging needs a sensor and a small logging path,open,,,,"P0.1, P7.3",
+D-12,"Cross-device time synchronization with eye tracker, HRV, IMU","Collaborators (Liang, Park) + developer",Phase 8 (P8.4),App provides UTC at clock start and an operator SyncMarker event; a physical sync event visible to all systems is the usual solution (Appendix D.7),open,,,,"P0.5, P2.2, P4.11, P8.4",
+D-13,Photobiological safety classification / basis of exposure approval (IEC 62471),Investigators,Phase 7 (P7.8),Feeds the max on-time guard (P6.8),open,,,,"P0.6, P6.8, P7.8",
+D-14,"LED wattage, color temperature, beam angle, optics — documented",ELTS builder,Phase 7 (P7.8),Methods section and safety sheet,open,,,,"P0.6, P7.8",
+D-15,"Center camera turret: pans to keep the face framed, or fixed",ELTS builder,Informational,Document; affects nothing in the Unity build,informational,,,,,
+D-16,"Scenario parameters not covered above: target size/shape, count, distance band, lifetime, respawn delay, spawn volume",Investigators,Phase 8 (P8.1),Scenario file values,open,,,,,
+D-17,"Acceptance thresholds: pivot residual, corner-probe tolerances, 3×3 residual, occlusion fraction, washout %, link offset stability","Developer proposes, investigators approve",Phase 7 (P7.9),Provisional values in this plan (2 mm; 5 mm / 0.5°; 1.0°/2.0°; 5 %; 5 %; 20 ms) are replaced by rig-derived values and frozen,open,,,,"P5.3, P5.6, P5.8, P7.3, P7.9",
+D-18,Hardware procurement confirmation (which tracking items are already in hand),Investigators,Phase 0,Assumption A1,open,,,,,

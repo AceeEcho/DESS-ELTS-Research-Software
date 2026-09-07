@@ -1,0 +1,275 @@
+[
+  [
+    "Progress-state contract"
+  ],
+  [
+    "PROJECT_STATE.json is generated from the task catalog and append-only events; agents do not hand-edit it after bootstrap."
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  [],
+  [
+    "Field Path",
+    "Type",
+    "Required",
+    "Rule",
+    "Example"
+  ],
+  [
+    "$schema",
+    "string",
+    "yes",
+    "Relative path to schemas/progress/progress-state.schema.json",
+    "schemas/progress/progress-state.schema.json"
+  ],
+  [
+    "schemaVersion",
+    "integer",
+    "yes",
+    "Progress-state schema version",
+    "1"
+  ],
+  [
+    "project",
+    "string",
+    "yes",
+    "Stable project name",
+    "DESS-ELTS-Research-Software"
+  ],
+  [
+    "planVersion",
+    "string",
+    "yes",
+    "Workbook/build-plan baseline",
+    "ELTS-build-plan-1.0"
+  ],
+  [
+    "generatedAtUtc",
+    "date-time",
+    "yes",
+    "UTC time produced by reducer",
+    "<YYYY-MM-DDTHH:MM:SSZ>"
+  ],
+  [
+    "generatedFrom.workbookSha256",
+    "sha256",
+    "yes",
+    "Hash of preserved baseline workbook",
+    "<64 hex>"
+  ],
+  [
+    "generatedFrom.specificationSha256",
+    "sha256",
+    "yes",
+    "Hash of preserved specification",
+    "<64 hex>"
+  ],
+  [
+    "generatedFrom.taskCatalogSha256",
+    "sha256",
+    "yes",
+    "Hash of normalized catalog",
+    "<64 hex>"
+  ],
+  [
+    "generatedFrom.eventCount",
+    "integer",
+    "yes",
+    "Number of accepted progress events",
+    "1"
+  ],
+  [
+    "current.mode",
+    "enum",
+    "yes",
+    "working, blocked, verification, complete",
+    "working"
+  ],
+  [
+    "current.phaseId",
+    "ID",
+    "yes",
+    "Earliest phase whose gate has not passed",
+    "P0"
+  ],
+  [
+    "current.gateId",
+    "ID",
+    "yes",
+    "Gate associated with current phase",
+    "G0"
+  ],
+  [
+    "current.primaryStepId",
+    "ID",
+    "yes",
+    "Deterministic exact current atomic step",
+    "P0.3.S001"
+  ],
+  [
+    "current.activeStepIds",
+    "ID array",
+    "yes",
+    "All in-progress atomic steps in current phase",
+    "[P0.3.S001]"
+  ],
+  [
+    "current.nextEligibleStepIds",
+    "ID array",
+    "yes",
+    "Ready steps after dependency evaluation",
+    "[]"
+  ],
+  [
+    "current.blockingIds",
+    "ID array",
+    "yes",
+    "Exact task, decision, gate, or external blockers",
+    "[]"
+  ],
+  [
+    "activeWork[].owner",
+    "string",
+    "yes",
+    "Human or agent identity class and stable identifier",
+    "agent:codex"
+  ],
+  [
+    "activeWork[].branch",
+    "string",
+    "yes",
+    "Single task branch",
+    "bootstrap/repository-governance"
+  ],
+  [
+    "tasks.<id>.status",
+    "enum",
+    "yes",
+    "Status derived from events",
+    "in_progress"
+  ],
+  [
+    "tasks.<id>.evidence",
+    "array",
+    "yes",
+    "Resolvable evidence objects",
+    "[]"
+  ],
+  [
+    "decisions.<id>.status",
+    "enum",
+    "yes",
+    "Open, in review, decided, superseded, informational",
+    "open"
+  ],
+  [
+    "gates.<id>.status",
+    "enum",
+    "yes",
+    "Locked, open, verification pending, passed, failed",
+    "open"
+  ],
+  [
+    "integrity.reducerVersion",
+    "string",
+    "yes",
+    "Version or commit of deterministic reducer",
+    "1.0.0"
+  ],
+  [],
+  [],
+  [
+    "Allowed task transitions"
+  ],
+  [
+    "From",
+    "To",
+    "Condition"
+  ],
+  [
+    "not_started",
+    "ready",
+    "Dependencies and phase gate permit work"
+  ],
+  [
+    "ready",
+    "in_progress",
+    "One owner claims the task on one branch"
+  ],
+  [
+    "in_progress",
+    "verification_pending",
+    "Implementation is complete and evidence checks are running"
+  ],
+  [
+    "verification_pending",
+    "done",
+    "Every acceptance criterion has resolvable evidence"
+  ],
+  [
+    "verification_pending",
+    "in_progress",
+    "Verification failed and remediation resumes"
+  ],
+  [
+    "ready or in_progress or verification_pending",
+    "blocked",
+    "Exact blocker and next required action are recorded"
+  ],
+  [
+    "blocked",
+    "ready or in_progress",
+    "Blocker is resolved by an event"
+  ],
+  [
+    "done",
+    "in_progress",
+    "Explicit reopen event with reason and human authorization where required"
+  ],
+  [],
+  [],
+  [
+    "Deterministic exact-current-step algorithm"
+  ],
+  [
+    "Order",
+    "Rule"
+  ],
+  [
+    1,
+    "Choose the earliest phase whose gate has not passed."
+  ],
+  [
+    2,
+    "Within that phase, collect all valid in_progress atomic steps."
+  ],
+  [
+    3,
+    "Set primaryStepId to the lowest workbook sequence among active steps."
+  ],
+  [
+    4,
+    "If none are active, choose the lowest verification_pending step."
+  ],
+  [
+    5,
+    "If none await verification, choose the lowest ready step."
+  ],
+  [
+    6,
+    "If all eligible work is blocked, set mode to blocked and list the exact blocker IDs."
+  ],
+  [
+    7,
+    "After an explicit evidence-backed G8 pass event, set mode to complete."
+  ],
+  [
+    8,
+    "If two events claim the same previous task event, fail reduction and require reconciliation."
+  ]
+]

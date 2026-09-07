@@ -1,0 +1,12 @@
+Reference lists
+Controlled vocabulary used by workbook validation and repository schemas.
+,,,,,
+
+Task Status,Decision Status,Gate Status,Criterion Status,Execution Class,Requirement Level
+not_started,open,locked,not_evaluated,agent,MUST
+ready,in_review,open,pass,human,MUST NOT
+in_progress,decided,verification_pending,fail,mixed,SHOULD
+blocked,superseded,passed,blocked,lab_hardware,SHOULD NOT
+verification_pending,informational,failed,not_applicable,automated_check,MAY
+done,,,,,
+superseded,,,,,

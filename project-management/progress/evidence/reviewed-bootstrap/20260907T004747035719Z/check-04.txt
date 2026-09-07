@@ -1,0 +1,1 @@
+PASS: deterministic task catalog and normalized workbook exports

@@ -1,0 +1,46 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "331b33f1-da0e-45d5-9fe0-73f3ec9fae19",
+  "eventType": "task_started",
+  "recordedAtUtc": "2026-09-07T00:50:12.995405+00:00",
+  "occurredAtUtc": "2026-09-07T00:11:56.296006+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S003"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "ready",
+  "toStatus": "in_progress",
+  "taskRevision": 7,
+  "previousTaskEventHash": "a02122bb59c4625124def3b5aa97eb85de2f3cfdeb2cc0d1e2dc2581c70a3dd5",
+  "causalEventHashes": [
+    "a02122bb59c4625124def3b5aa97eb85de2f3cfdeb2cc0d1e2dc2581c70a3dd5"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "project-management/",
+    "schemas/progress/",
+    "tools/progress/",
+    "docs/modules/progress.md"
+  ],
+  "expectedChecks": [
+    "Inspected branch and claim"
+  ],
+  "stopConditions": [
+    "Evidence or ownership mismatch",
+    "Authority conflict"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "PC-001 journal 2c51146be0e7497217f6c34a26d1d65a2a0188468c39d693f40cd0739584ed1e: Created preservation main commit and bootstrap branch; declared ownership, scope and checks.",
+  "approval": null,
+  "handoffTo": null
+}

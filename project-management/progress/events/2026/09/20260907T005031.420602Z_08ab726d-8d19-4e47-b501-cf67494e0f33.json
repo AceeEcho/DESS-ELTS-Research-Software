@@ -1,0 +1,70 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "08ab726d-8d19-4e47-b501-cf67494e0f33",
+  "eventType": "verification_pending",
+  "recordedAtUtc": "2026-09-07T00:50:31.420602+00:00",
+  "occurredAtUtc": "2026-09-07T00:44:27.390933+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S008"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "in_progress",
+  "toStatus": "verification_pending",
+  "taskRevision": 23,
+  "previousTaskEventHash": "023ac890f029a4627df085a3e968a0337c0d77ec14c8bbe35e899ec45fa1ba8c",
+  "causalEventHashes": [
+    "023ac890f029a4627df085a3e968a0337c0d77ec14c8bbe35e899ec45fa1ba8c"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "tools/progress/",
+    "schemas/progress/",
+    "docs/modules/progress.md"
+  ],
+  "expectedChecks": [
+    "11 planner tests passed",
+    "32 progress tests passed",
+    "Plan, schema and catalog drift checks passed",
+    "Immutable verification report binds source snapshot 31931d8"
+  ],
+  "stopConditions": [
+    "Evidence or ownership mismatch",
+    "Authority conflict"
+  ],
+  "evidence": [
+    {
+      "id": "bootstrap-BOOT.S008",
+      "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S008.json",
+      "sha256": "a60564268333fbe2bf7f0cceeb11355879b428f0feda98e247732af2a5b70497",
+      "targetIds": [
+        "BOOT.S008"
+      ],
+      "criteria": [
+        "outcome",
+        "verification"
+      ],
+      "class": "automated_test",
+      "command": "Reviewed bootstrap journal and source-bound verification report",
+      "result": "pass",
+      "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+      "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+      "limitations": [
+        "Software/bootstrap observation only; no physical acceptance or gate passage.",
+        "Original journal observation times differ from event import times."
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "PC-001 journal a53cbdb4f815f5b8e022c13434801a99e5f0c43188b3efc08f50dea92c1584e0: Implemented deterministic causal reducer, baseline gate anchor and global PC-001 execution selection.",
+  "approval": null,
+  "handoffTo": null
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "9c3518b6-139a-42dc-bee3-176079eee7ab",
+  "eventType": "step_completed",
+  "recordedAtUtc": "2026-09-07T00:50:15.038824+00:00",
+  "occurredAtUtc": "2026-09-07T00:11:56.296006+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S003"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "verification_pending",
+  "toStatus": "done",
+  "taskRevision": 9,
+  "previousTaskEventHash": "dd724be35282754e0adc4feb6723e735356575836d00fd1b2486477934ae5213",
+  "causalEventHashes": [
+    "dd724be35282754e0adc4feb6723e735356575836d00fd1b2486477934ae5213"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "project-management/",
+    "schemas/progress/",
+    "tools/progress/",
+    "docs/modules/progress.md"
+  ],
+  "expectedChecks": [
+    "Inspected branch and claim"
+  ],
+  "stopConditions": [
+    "Evidence or ownership mismatch",
+    "Authority conflict"
+  ],
+  "evidence": [
+    {
+      "id": "bootstrap-BOOT.S003",
+      "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S003.json",
+      "sha256": "94e89e87f02182a257ee8427c2a142a83c11c5504b157db30084f2c1e64f8214",
+      "targetIds": [
+        "BOOT.S003"
+      ],
+      "criteria": [
+        "outcome",
+        "verification"
+      ],
+      "class": "document",
+      "command": "Reviewed bootstrap journal and source-bound verification report",
+      "result": "pass",
+      "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+      "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+      "limitations": [
+        "Software/bootstrap observation only; no physical acceptance or gate passage.",
+        "Original journal observation times differ from event import times."
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "PC-001 journal 2c51146be0e7497217f6c34a26d1d65a2a0188468c39d693f40cd0739584ed1e: Created preservation main commit and bootstrap branch; declared ownership, scope and checks.",
+  "approval": null,
+  "handoffTo": null
+}

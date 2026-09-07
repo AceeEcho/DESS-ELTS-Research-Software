@@ -1,0 +1,4610 @@
+{
+  "$schema": "schemas/progress/progress-state.schema.json",
+  "schemaVersion": 1,
+  "project": "DESS-ELTS-Research-Software",
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "generatedAtUtc": "2026-09-07T00:51:16.296320+00:00",
+  "generatedFrom": {
+    "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
+    "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
+    "amendmentRulesSha256": "9ec4ef3a7c455cb7766cab2f708e90d936feab7e192a918e8736641a28fa7c7d",
+    "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
+    "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+    "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
+    "eventCount": 33,
+    "eventSetSha256": "b240aab9a162446ef2e5f2b931304f9b7ceebd6caff5601127940117eb694fd9"
+  },
+  "current": {
+    "mode": "working",
+    "primaryStepId": "BOOT.S012",
+    "activeStepIds": [],
+    "nextEligibleStepIds": [
+      "P0.2.S001",
+      "P0.4.S001",
+      "P0.5.S001"
+    ],
+    "blockingIds": [
+      "BOOT.S012",
+      "BOOT.S013",
+      "BOOT.S014",
+      "BOOT.S015",
+      "BOOT.S016",
+      "BOOT.S017",
+      "BOOT.S018",
+      "BOOT.S019",
+      "BOOT.S020",
+      "BOOT.S021",
+      "BOOT.S022",
+      "BOOT.S023",
+      "BOOT.S024",
+      "BOOT.S025",
+      "D-01",
+      "D-02",
+      "D-11",
+      "D-13",
+      "D-14",
+      "P0.1.S001",
+      "P0.2.S001",
+      "P0.4.S001",
+      "P0.5.S001",
+      "P0.6.S001",
+      "P0.6.S002",
+      "P0.6.S003",
+      "P0.7.S001"
+    ],
+    "phaseId": "P0",
+    "gateId": "G0"
+  },
+  "execution": {
+    "mode": "working",
+    "primaryStepId": "BOOT.S012",
+    "activeStepIds": [],
+    "nextEligibleStepIds": [
+      "DEV-01.S001",
+      "P0.2.S001",
+      "P0.4.S001",
+      "P0.5.S001"
+    ],
+    "blockingIds": [
+      "BOOT.S012",
+      "BOOT.S013",
+      "BOOT.S014",
+      "BOOT.S015",
+      "BOOT.S016",
+      "BOOT.S017",
+      "BOOT.S018",
+      "BOOT.S019",
+      "BOOT.S020",
+      "BOOT.S021",
+      "BOOT.S022",
+      "BOOT.S023",
+      "BOOT.S024",
+      "BOOT.S025",
+      "D-01",
+      "D-02",
+      "D-03",
+      "D-04",
+      "D-05",
+      "D-06",
+      "D-07",
+      "D-08",
+      "D-09",
+      "D-10",
+      "D-11",
+      "D-12",
+      "D-13",
+      "D-14",
+      "D-16",
+      "D-17",
+      "DEV-01",
+      "DEV-01.S001",
+      "DEV-02",
+      "DEV-02.S001",
+      "DEV-03",
+      "DEV-03.S001",
+      "DEV-04",
+      "DEV-04.S001",
+      "DEV-05",
+      "DEV-05.S001",
+      "DEV-06",
+      "DEV-06.S001",
+      "DEV-07",
+      "DEV-07.S001",
+      "DEV-08",
+      "DEV-08.S001",
+      "DEV-09",
+      "DEV-09.S001",
+      "DEV-10",
+      "DEV-10.S001",
+      "DEV-11",
+      "DEV-11.S001",
+      "DEV-12.S001",
+      "G0",
+      "G1",
+      "G2",
+      "G3",
+      "G4",
+      "G5",
+      "G6",
+      "G7",
+      "P0.1.S001",
+      "P0.2",
+      "P0.2.S001",
+      "P0.4.S001",
+      "P0.5.S001",
+      "P0.6.S001",
+      "P0.6.S002",
+      "P0.6.S003",
+      "P0.7.S001",
+      "P1.1",
+      "P1.1.S001",
+      "P1.10",
+      "P1.10.S001",
+      "P1.10.S002",
+      "P1.10.S003",
+      "P1.11",
+      "P1.11.S001",
+      "P1.12",
+      "P1.12.S001",
+      "P1.13",
+      "P1.13.S001",
+      "P1.14",
+      "P1.14.S001",
+      "P1.2",
+      "P1.2.S001",
+      "P1.3",
+      "P1.3.S001",
+      "P1.3.S002",
+      "P1.4",
+      "P1.4.S001",
+      "P1.4.S002",
+      "P1.5",
+      "P1.5.S001",
+      "P1.5.S002",
+      "P1.6",
+      "P1.6.S001",
+      "P1.6.S002",
+      "P1.7",
+      "P1.7.S001",
+      "P1.7.S002",
+      "P1.8",
+      "P1.8.S001",
+      "P1.8.S002",
+      "P1.9",
+      "P1.9.S001",
+      "P1.9.S002",
+      "P2.1",
+      "P2.1.S001",
+      "P2.2",
+      "P2.2.S001",
+      "P2.3",
+      "P2.3.S001",
+      "P2.3.S002",
+      "P2.3.S003",
+      "P2.3.S004",
+      "P2.3.S005",
+      "P2.3.S006",
+      "P2.3.S007",
+      "P2.3.S008",
+      "P2.4",
+      "P2.4.S001",
+      "P2.5",
+      "P2.5.S001",
+      "P2.5.S002",
+      "P2.5.S003",
+      "P2.5.S004",
+      "P2.5.S005",
+      "P2.5.S006",
+      "P2.6",
+      "P2.6.S001",
+      "P2.7",
+      "P2.7.S001",
+      "P2.8.S001",
+      "P2.9",
+      "P2.9.S001",
+      "P3.1",
+      "P3.1.S001",
+      "P3.2",
+      "P3.2.S001",
+      "P3.2.S002",
+      "P3.2.S003",
+      "P3.3.S001",
+      "P3.4",
+      "P3.4.S001",
+      "P3.4.S002",
+      "P3.5",
+      "P3.5.S001",
+      "P3.6.S001",
+      "P3.7.S001",
+      "P3.8.S001",
+      "P4.1",
+      "P4.1.S001",
+      "P4.10",
+      "P4.10.S001",
+      "P4.11",
+      "P4.11.S001",
+      "P4.11.S002",
+      "P4.11.S003",
+      "P4.11.S004",
+      "P4.11.S005",
+      "P4.11.S006",
+      "P4.11.S007",
+      "P4.12",
+      "P4.12.S001",
+      "P4.13.S001",
+      "P4.2",
+      "P4.2.S001",
+      "P4.3",
+      "P4.3.S001",
+      "P4.4",
+      "P4.4.S001",
+      "P4.5",
+      "P4.5.S001",
+      "P4.6",
+      "P4.6.S001",
+      "P4.7",
+      "P4.7.S001",
+      "P4.7.S002",
+      "P4.8",
+      "P4.8.S001",
+      "P4.9",
+      "P4.9.S001",
+      "P5.1",
+      "P5.1.S001",
+      "P5.10.S001",
+      "P5.2",
+      "P5.2.S001",
+      "P5.3",
+      "P5.3.S001",
+      "P5.4",
+      "P5.4.S001",
+      "P5.5",
+      "P5.5.S001",
+      "P5.6",
+      "P5.6.S001",
+      "P5.7",
+      "P5.7.S001",
+      "P5.8",
+      "P5.8.S001",
+      "P5.9.S001",
+      "P6.1",
+      "P6.1.S001",
+      "P6.10",
+      "P6.10.S001",
+      "P6.10.S002",
+      "P6.11.S001",
+      "P6.12.S001",
+      "P6.13.S001",
+      "P6.2",
+      "P6.2.S001",
+      "P6.3",
+      "P6.3.S001",
+      "P6.4",
+      "P6.4.S001",
+      "P6.5",
+      "P6.5.S001",
+      "P6.6",
+      "P6.6.S001",
+      "P6.6.S002",
+      "P6.7",
+      "P6.7.S001",
+      "P6.8",
+      "P6.8.S001",
+      "P6.8.S002",
+      "P6.8.S003",
+      "P6.9",
+      "P6.9.S001",
+      "P7.1",
+      "P7.1.S001",
+      "P7.2",
+      "P7.2.S001",
+      "P7.3",
+      "P7.3.S001",
+      "P7.4",
+      "P7.4.S001",
+      "P7.5",
+      "P7.5.S001",
+      "P7.6.S001",
+      "P7.7.S001",
+      "P7.8.S001",
+      "P7.9.S001",
+      "P8.1",
+      "P8.1.S001",
+      "P8.2",
+      "P8.2.S001",
+      "P8.3",
+      "P8.3.S001",
+      "P8.4",
+      "P8.4.S001",
+      "P8.5",
+      "P8.5.S001",
+      "P8.6",
+      "P8.6.S001",
+      "P8.7.S001",
+      "P8.8.S001"
+    ],
+    "selectedPhaseId": "P0",
+    "selectedLane": "bootstrap"
+  },
+  "activeWork": [],
+  "tasks": {
+    "P0.1": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.2": {
+      "status": "ready",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.3": {
+      "status": "in_progress",
+      "revision": 33,
+      "lastEventHash": "1dc2dc85dbe63faf88c50b39377a28508fdd206665ab6943c498a7ab20f9b398",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.4": {
+      "status": "ready",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.5": {
+      "status": "ready",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.6": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.7": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.1": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.2": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.3": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.4": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.5": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.6": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.7": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.8": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.9": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.10": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.11": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.12": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.13": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.14": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.1": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.2": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.3": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.4": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.5": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.6": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.7": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.8": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.9": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.1": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.2": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.3": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.4": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.5": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.6": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.7": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.8": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.1": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.2": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.3": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.4": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.5": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.6": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.7": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.8": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.9": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.10": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.11": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.12": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.13": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.1": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.2": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.3": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.4": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.5": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.6": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.7": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.8": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.9": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.10": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.1": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.2": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.3": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.4": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.5": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.6": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.7": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.8": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.9": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.10": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.11": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.12": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.13": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.1": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.2": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.3": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.4": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.5": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.6": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.7": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.8": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.9": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.1": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.2": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.3": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.4": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.5": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.6": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.7": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.8": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-01": {
+      "status": "ready",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-02": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-03": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-04": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-05": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-06": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-07": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-08": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-09": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-10": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-11": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-12": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    }
+  },
+  "atomicSteps": {
+    "P0.3.S001": {
+      "status": "done",
+      "revision": 3,
+      "lastEventHash": "7e816c9b700efdee294a1384ebea8dd06e0d5ecf010ede6bd0b49cbf752dd69b",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "project-management/bootstrap/"
+      ],
+      "evidence": [
+        {
+          "id": "bootstrap-P0.3.S001",
+          "path": "project-management/progress/evidence/bootstrap-observations/P0.3.S001.json",
+          "sha256": "16d893991a0b6ee0d18dd7a7809f58c8d0ffc9c9676546bc2a6e3cf3d6161a3f",
+          "targetIds": [
+            "P0.3.S001"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "document",
+          "command": "Reviewed bootstrap journal and source-bound verification report",
+          "result": "pass",
+          "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+          "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+          "limitations": [
+            "Software/bootstrap observation only; no physical acceptance or gate passage.",
+            "Original journal observation times differ from event import times."
+          ]
+        }
+      ],
+      "blockers": []
+    },
+    "BOOT.S002": {
+      "status": "done",
+      "revision": 6,
+      "lastEventHash": "a02122bb59c4625124def3b5aa97eb85de2f3cfdeb2cc0d1e2dc2581c70a3dd5",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "project-management/",
+        "schemas/progress/",
+        "tools/progress/",
+        "docs/modules/progress.md"
+      ],
+      "evidence": [
+        {
+          "id": "bootstrap-BOOT.S002",
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S002.json",
+          "sha256": "f1b5110be938562f2bc537d59acd8429e946c948df64282fd6f2304ef426f381",
+          "targetIds": [
+            "BOOT.S002"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "document",
+          "command": "Reviewed bootstrap journal and source-bound verification report",
+          "result": "pass",
+          "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+          "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+          "limitations": [
+            "Software/bootstrap observation only; no physical acceptance or gate passage.",
+            "Original journal observation times differ from event import times."
+          ]
+        }
+      ],
+      "blockers": []
+    },
+    "BOOT.S003": {
+      "status": "done",
+      "revision": 9,
+      "lastEventHash": "ff89103fa1e33257177f294df188f4379aa9558bd551a4dba0862e6a77c1bcb7",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "project-management/",
+        "schemas/progress/",
+        "tools/progress/",
+        "docs/modules/progress.md"
+      ],
+      "evidence": [
+        {
+          "id": "bootstrap-BOOT.S003",
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S003.json",
+          "sha256": "94e89e87f02182a257ee8427c2a142a83c11c5504b157db30084f2c1e64f8214",
+          "targetIds": [
+            "BOOT.S003"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "document",
+          "command": "Reviewed bootstrap journal and source-bound verification report",
+          "result": "pass",
+          "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+          "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+          "limitations": [
+            "Software/bootstrap observation only; no physical acceptance or gate passage.",
+            "Original journal observation times differ from event import times."
+          ]
+        }
+      ],
+      "blockers": []
+    },
+    "BOOT.S004": {
+      "status": "done",
+      "revision": 12,
+      "lastEventHash": "ba534f1fe530d42b9f8aeda19a66b5e80c44bb0987590501f22d637c0d1e84aa",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "project-management/",
+        "schemas/progress/",
+        "tools/progress/",
+        "docs/modules/progress.md"
+      ],
+      "evidence": [
+        {
+          "id": "bootstrap-BOOT.S004",
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S004.json",
+          "sha256": "4c64c8bddefcb697a8d95d02d8d31b4adc513e015ccf24b1ef2def6082d07cba",
+          "targetIds": [
+            "BOOT.S004"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "document",
+          "command": "Reviewed bootstrap journal and source-bound verification report",
+          "result": "pass",
+          "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+          "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+          "limitations": [
+            "Software/bootstrap observation only; no physical acceptance or gate passage.",
+            "Original journal observation times differ from event import times."
+          ]
+        }
+      ],
+      "blockers": []
+    },
+    "BOOT.S005": {
+      "status": "done",
+      "revision": 15,
+      "lastEventHash": "3e537f7da28daa366c9784f81fc6a881104f51c54e1cf1c3256f81d3aa147809",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "schemas/progress/",
+        "tools/progress/schema.py",
+        "tools/progress/build_schemas.py",
+        "tools/progress/test_schema.py"
+      ],
+      "evidence": [
+        {
+          "id": "bootstrap-BOOT.S005",
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S005.json",
+          "sha256": "774ea6157cd3be93a6fa79fb8f29a168b17edb4034ac2de2849a7af94695ca43",
+          "targetIds": [
+            "BOOT.S005"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "automated_test",
+          "command": "Reviewed bootstrap journal and source-bound verification report",
+          "result": "pass",
+          "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+          "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+          "limitations": [
+            "Software/bootstrap observation only; no physical acceptance or gate passage.",
+            "Original journal observation times differ from event import times."
+          ]
+        }
+      ],
+      "blockers": []
+    },
+    "BOOT.S006": {
+      "status": "done",
+      "revision": 18,
+      "lastEventHash": "7c981130d0c4c94059c62b0025c7137a6f508f48842c6253ae5daaa92fd560c1",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "project-management/task-catalog.json",
+        "project-management/exports/",
+        "tools/progress/import_plan.py",
+        "tools/progress/test_import_plan.py"
+      ],
+      "evidence": [
+        {
+          "id": "bootstrap-BOOT.S006",
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S006.json",
+          "sha256": "29db2a7ca22c61dd58c691f6aa714ba652f7747d8bace161cb4d898598fc2afa",
+          "targetIds": [
+            "BOOT.S006"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "automated_test",
+          "command": "Reviewed bootstrap journal and source-bound verification report",
+          "result": "pass",
+          "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+          "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+          "limitations": [
+            "Software/bootstrap observation only; no physical acceptance or gate passage.",
+            "Original journal observation times differ from event import times."
+          ]
+        }
+      ],
+      "blockers": []
+    },
+    "BOOT.S007": {
+      "status": "done",
+      "revision": 21,
+      "lastEventHash": "2a0f0951e06877627f1ca41c14eff564dbf8ef4b56fbd6e09b4ace14037aceb5",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "tools/progress/",
+        "schemas/progress/",
+        "docs/modules/progress.md"
+      ],
+      "evidence": [
+        {
+          "id": "bootstrap-BOOT.S007",
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S007.json",
+          "sha256": "5c64d3401eacc9b9ced3ccb19ccdce8e19819ad658ac0da7f04de3b8f6f3ec96",
+          "targetIds": [
+            "BOOT.S007"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "automated_test",
+          "command": "Reviewed bootstrap journal and source-bound verification report",
+          "result": "pass",
+          "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+          "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+          "limitations": [
+            "Software/bootstrap observation only; no physical acceptance or gate passage.",
+            "Original journal observation times differ from event import times."
+          ]
+        }
+      ],
+      "blockers": []
+    },
+    "BOOT.S008": {
+      "status": "done",
+      "revision": 24,
+      "lastEventHash": "f8c48e4398ec6bd18dc5154c141306425b8972199c0a94604877ef7956ac7970",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "tools/progress/",
+        "schemas/progress/",
+        "docs/modules/progress.md"
+      ],
+      "evidence": [
+        {
+          "id": "bootstrap-BOOT.S008",
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S008.json",
+          "sha256": "a60564268333fbe2bf7f0cceeb11355879b428f0feda98e247732af2a5b70497",
+          "targetIds": [
+            "BOOT.S008"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "automated_test",
+          "command": "Reviewed bootstrap journal and source-bound verification report",
+          "result": "pass",
+          "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+          "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+          "limitations": [
+            "Software/bootstrap observation only; no physical acceptance or gate passage.",
+            "Original journal observation times differ from event import times."
+          ]
+        }
+      ],
+      "blockers": []
+    },
+    "BOOT.S009": {
+      "status": "done",
+      "revision": 27,
+      "lastEventHash": "ab0a64a53113b15eebb28c3be229cae084d52d7d4b9e152b5f7b768d0d5ac638",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "tools/progress/",
+        "schemas/progress/",
+        "docs/modules/progress.md"
+      ],
+      "evidence": [
+        {
+          "id": "bootstrap-BOOT.S009",
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S009.json",
+          "sha256": "03628ca42729ef5dc077cc12f8194bad5183b627ea060fbbe8a5854ba25c0804",
+          "targetIds": [
+            "BOOT.S009"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "automated_test",
+          "command": "Reviewed bootstrap journal and source-bound verification report",
+          "result": "pass",
+          "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+          "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+          "limitations": [
+            "Software/bootstrap observation only; no physical acceptance or gate passage.",
+            "Original journal observation times differ from event import times."
+          ]
+        }
+      ],
+      "blockers": []
+    },
+    "BOOT.S010": {
+      "status": "done",
+      "revision": 30,
+      "lastEventHash": "b1da484f436efee7be05e1f4081190f7002287d039cdd2d463aa2606bd682aa6",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "tools/progress/",
+        "schemas/progress/",
+        "docs/modules/progress.md"
+      ],
+      "evidence": [
+        {
+          "id": "bootstrap-BOOT.S010",
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S010.json",
+          "sha256": "272a848b9898217d26218cd217e16114aeedaedea018f0fff161176791759fb0",
+          "targetIds": [
+            "BOOT.S010"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "automated_test",
+          "command": "Reviewed bootstrap journal and source-bound verification report",
+          "result": "pass",
+          "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+          "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+          "limitations": [
+            "Software/bootstrap observation only; no physical acceptance or gate passage.",
+            "Original journal observation times differ from event import times."
+          ]
+        }
+      ],
+      "blockers": []
+    },
+    "BOOT.S011": {
+      "status": "done",
+      "revision": 33,
+      "lastEventHash": "1dc2dc85dbe63faf88c50b39377a28508fdd206665ab6943c498a7ab20f9b398",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "project-management/progress/",
+        "PROJECT_STATE.json"
+      ],
+      "evidence": [
+        {
+          "id": "BOOT.S011-BOOT.S011",
+          "path": "project-management/progress/evidence/BOOT.S011.json",
+          "sha256": "f45c1d3641f8d2edeb67d606293fbb32176fcb17582e925248e34db1b7365eb1",
+          "targetIds": [
+            "BOOT.S011"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "automated_test",
+          "command": "Truthful 30-transition journal import; generate(write=True) twice; byte and mtime equality assertions",
+          "result": "pass",
+          "sourceRevision": "62907bf3e46fa218fac53eca2b78b378aedcc02a",
+          "recordedAtUtc": "2026-09-07T00:51:14.721662+00:00",
+          "limitations": [
+            "No physical tests or gate approvals.",
+            "Authenticated human approval integration remains pending.",
+            "Unity project/runtime tests have not yet run."
+          ]
+        }
+      ],
+      "blockers": []
+    },
+    "BOOT.S012": {
+      "status": "ready",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S013": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S014": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S015": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S016": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S017": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S018": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S019": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S020": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S021": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S022": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S023": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S024": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S025": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "BOOT.S026": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-01.S001": {
+      "status": "ready",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-01.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-02.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-02.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-03.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-03.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-04.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-04.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-05.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-05.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-06.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-06.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-07.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-07.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-08.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-08.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-09.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-09.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-10.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-10.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-11.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-11.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-12.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "DEV-12.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.1.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.1.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.2.S001": {
+      "status": "ready",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.2.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.4.S001": {
+      "status": "ready",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.4.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.5.S001": {
+      "status": "ready",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.5.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.6.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.6.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.6.S003": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.6.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.7.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P0.7.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.1.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.1.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.2.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.2.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.3.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.3.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.3.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.4.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.4.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.4.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.5.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.5.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.5.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.6.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.6.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.6.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.7.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.7.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.7.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.8.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.8.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.8.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.9.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.9.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.9.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.10.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.10.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.10.S003": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.10.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.11.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.11.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.12.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.12.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.13.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.13.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.14.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P1.14.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.1.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.1.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.2.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.2.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.3.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.3.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.3.S003": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.3.S004": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.3.S005": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.3.S006": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.3.S007": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.3.S008": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.3.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.4.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.4.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.5.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.5.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.5.S003": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.5.S004": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.5.S005": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.5.S006": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.5.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.6.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.6.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.7.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.7.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.8.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.8.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.9.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P2.9.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.1.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.1.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.2.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.2.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.2.S003": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.2.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.3.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.3.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.4.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.4.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.4.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.5.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.5.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.6.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.6.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.7.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.7.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.8.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P3.8.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.1.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.1.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.2.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.2.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.3.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.3.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.4.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.4.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.5.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.5.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.6.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.6.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.7.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.7.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.7.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.8.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.8.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.9.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.9.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.10.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.10.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.11.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.11.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.11.S003": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.11.S004": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.11.S005": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.11.S006": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.11.S007": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.11.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.12.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.12.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.13.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P4.13.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.1.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.1.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.2.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.2.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.3.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.3.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.4.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.4.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.5.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.5.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.6.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.6.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.7.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.7.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.8.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.8.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.9.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.9.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.10.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P5.10.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.1.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.1.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.2.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.2.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.3.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.3.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.4.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.4.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.5.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.5.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.6.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.6.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.6.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.7.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.7.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.8.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.8.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.8.S003": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.8.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.9.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.9.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.10.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.10.S002": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.10.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.11.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.11.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.12.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.12.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.13.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P6.13.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.1.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.1.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.2.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.2.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.3.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.3.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.4.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.4.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.5.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.5.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.6.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.6.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.7.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.7.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.8.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.8.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.9.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P7.9.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.1.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.1.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.2.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.2.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.3.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.3.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.4.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.4.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.5.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.5.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.6.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.6.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.7.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.7.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.8.S001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "P8.8.V001": {
+      "status": "not_started",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    }
+  },
+  "decisions": {
+    "D-01": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-02": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-03": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-04": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-05": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-06": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-07": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-08": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-09": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-10": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-11": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-12": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-13": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-14": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-15": {
+      "status": "informational",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-16": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-17": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "D-18": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    }
+  },
+  "gates": {
+    "G0": {
+      "status": "open",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "G1": {
+      "status": "locked",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "G2": {
+      "status": "locked",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "G3": {
+      "status": "locked",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "G4": {
+      "status": "locked",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "G5": {
+      "status": "locked",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "G6": {
+      "status": "locked",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "G7": {
+      "status": "locked",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    },
+    "G8": {
+      "status": "locked",
+      "revision": 0,
+      "lastEventHash": null,
+      "owner": null,
+      "branch": null,
+      "claimedPaths": [],
+      "evidence": [],
+      "blockers": []
+    }
+  },
+  "chains": {
+    "task:P0.3": {
+      "revision": 33,
+      "hash": "1dc2dc85dbe63faf88c50b39377a28508fdd206665ab6943c498a7ab20f9b398"
+    }
+  },
+  "integrity": {
+    "reducerVersion": "1.0.0",
+    "valid": true,
+    "warnings": [
+      "Privileged approvals unavailable until an authenticated human approval verifier is integrated; self-declared human receipts cannot pass gates or decide research outcomes."
+    ]
+  }
+}

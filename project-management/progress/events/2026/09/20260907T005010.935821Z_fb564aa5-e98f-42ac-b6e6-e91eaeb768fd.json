@@ -1,0 +1,69 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "fb564aa5-e98f-42ac-b6e6-e91eaeb768fd",
+  "eventType": "verification_pending",
+  "recordedAtUtc": "2026-09-07T00:50:10.935821+00:00",
+  "occurredAtUtc": "2026-09-07T00:11:56.296006+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S002"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "in_progress",
+  "toStatus": "verification_pending",
+  "taskRevision": 5,
+  "previousTaskEventHash": "eed5383d6f49b8ef216b559cb276a828c3c224f8c44a7e1b4459c24d5e423189",
+  "causalEventHashes": [
+    "eed5383d6f49b8ef216b559cb276a828c3c224f8c44a7e1b4459c24d5e423189"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "project-management/",
+    "schemas/progress/",
+    "tools/progress/",
+    "docs/modules/progress.md"
+  ],
+  "expectedChecks": [
+    "baseline byte equality",
+    "approved plan drift check and 11 planner tests"
+  ],
+  "stopConditions": [
+    "Evidence or ownership mismatch",
+    "Authority conflict"
+  ],
+  "evidence": [
+    {
+      "id": "bootstrap-BOOT.S002",
+      "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S002.json",
+      "sha256": "f1b5110be938562f2bc537d59acd8429e946c948df64282fd6f2304ef426f381",
+      "targetIds": [
+        "BOOT.S002"
+      ],
+      "criteria": [
+        "outcome",
+        "verification"
+      ],
+      "class": "document",
+      "command": "Reviewed bootstrap journal and source-bound verification report",
+      "result": "pass",
+      "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+      "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+      "limitations": [
+        "Software/bootstrap observation only; no physical acceptance or gate passage.",
+        "Original journal observation times differ from event import times."
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "PC-001 journal 1df79235c7ce41aa58264e05127b4036194f08ba4e1d6df938dc4f030dfa1576: Read original authorities and accepted amendment; verified source hashes, active counts and all 11 planner tests.",
+  "approval": null,
+  "handoffTo": null
+}

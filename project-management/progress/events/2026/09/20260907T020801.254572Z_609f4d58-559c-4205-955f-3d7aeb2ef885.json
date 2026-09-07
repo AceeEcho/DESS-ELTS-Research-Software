@@ -1,0 +1,45 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "609f4d58-559c-4205-955f-3d7aeb2ef885",
+  "eventType": "task_started",
+  "recordedAtUtc": "2026-09-07T02:08:01.254572+00:00",
+  "occurredAtUtc": "2026-09-07T02:08:01.254572+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "DEV-03.V001"
+  },
+  "taskId": "DEV-03",
+  "fromStatus": "ready",
+  "toStatus": "in_progress",
+  "taskRevision": 4,
+  "previousTaskEventHash": "637bdc6bf2cb5b70452d3d856959bda97692c73cd1a7f3354745792d5d11532b",
+  "causalEventHashes": [
+    "0179fadda6bd748fc32b828bdadc02da4172a7c5c0738df4d906fbdb2ebb4293",
+    "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d",
+    "637bdc6bf2cb5b70452d3d856959bda97692c73cd1a7f3354745792d5d11532b",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c"
+  ],
+  "branch": "work/dev03-synthetic-tracking",
+  "claimedPaths": [
+    "docs/modules/synthetic-tracking.md"
+  ],
+  "expectedChecks": [
+    "Review performed source-bound checks and deferred physical obligations"
+  ],
+  "stopConditions": [
+    "Evidence invalid"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "Verify the assigned development task with performed checks.",
+  "approval": null,
+  "handoffTo": null
+}

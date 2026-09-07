@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "targetId": "BOOT.S020",
+  "result": "pass",
+  "evidenceClass": "toolchain_runtime",
+  "sourceRevision": "4bec3598a8d9d3fb4b3821644b10ba3143d556b4",
+  "recordedAtUtc": "2026-09-07T02:03:03.762002+00:00",
+  "command": "python tools/dependencies/verify_openvr.py; python -m unittest tools.dependencies.test_openvr -v; Unity -batchmode -nographics -quit -executeMethod Elts.Editor.OpenVrImporter.Configure",
+  "summary": "Pinned unmodified OpenVR binding/native library, license/notice/provenance and Windows x64 importer verified.",
+  "checks": [
+    "4 upstream blobs matched Git SHA-1 and recorded SHA-256, byte counts and exact commit",
+    "Staged Git objects retain exact vendored bytes",
+    "Offline PE audit confirms x86_64; 3 integrity/corruption tests passed",
+    "Initial binding compile identified required UnityEngine reference; corrected without modifying upstream source",
+    "Initial importer check caught Unity enabling macOS/Linux from x86_64 folder convention; explicitly disabled those platforms",
+    "Corrected Unity import exit0: ELTS_OPENVR_IMPORT_PASS and normal exit0; any-platform false, Windows x64 and Editor Windows x64 only, no preload"
+  ],
+  "limitations": [
+    "Vendoring/compilation only; no OpenVR initialization or native ABI calls performed",
+    "SteamVR, device serials/reconnect/polling/trigger/calibration/physical safety remain unverified",
+    "Synthetic source does not reference or initialize Valve.OpenVR",
+    "Upstream convenience matrix conversions excluded from ELTS adapter use; Tracking owns validated conversion"
+  ],
+  "artifactSnapshotSha256": {
+    "unity/Assets/ThirdParty/OpenVR/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "unity/Assets/ThirdParty/OpenVR/checksums.sha256": "15524ea1553e02cd4b9f283c9c47c098a1a3ed365d251e611ad36291994f0ed8",
+    "unity/Assets/ThirdParty/OpenVR/checksums.sha256.meta": "c85cd55e8224d26f83be1b9466562f1c9dd95af0844f87ce2ad3a224462633de",
+    "unity/Assets/ThirdParty/OpenVR/dependency.json": "c75d91be445d49328fd4401465491800e097512179f6a1d2d5b888160920a164",
+    "unity/Assets/ThirdParty/OpenVR/dependency.json.meta": "a849990af3938510d42fba9305a620eaf2f603a903420bad508791339e98364b",
+    "unity/Assets/ThirdParty/OpenVR/LICENSE": "f56ff606104d4ef18e617921a75c73ad73b5a1a1d70c69590c29de16919e04ad",
+    "unity/Assets/ThirdParty/OpenVR/LICENSE.meta": "c4979d41db52df05bbbaa6894c42423113f46ef4d7a5d40d60a9d15d92e028aa",
+    "unity/Assets/ThirdParty/OpenVR/NOTICE": "8b231fe983453ac3a50dad3416c1c25825e1356898c62901b4a973bf55c59392",
+    "unity/Assets/ThirdParty/OpenVR/NOTICE.meta": "0caf56391815023a4ce974ce6e517cd0f8b45d781838119ee32008f59fc3d2c2",
+    "unity/Assets/ThirdParty/OpenVR/openvr_api.cs": "65e77d3880b70fbbfe10a8df8124cdfd112a40146c8c88a982c73c6d78a9aece",
+    "unity/Assets/ThirdParty/OpenVR/openvr_api.cs.meta": "f82927b5169a60fdb7b706363ae3c4fc61c3bbe4b018825eabcc19eca4faf57a",
+    "unity/Assets/ThirdParty/OpenVR/Plugins/x86_64/openvr_api.dll": "e61701f75930b4c47615d17f5901ca62edf1a948f5ea804d4cbbdc94ad2e6e2e",
+    "unity/Assets/ThirdParty/OpenVR/Plugins/x86_64/openvr_api.dll.meta": "c7941c5551bed9b7147672d677623ff0623da17574867494d84ec430500f2d2e",
+    "unity/Assets/ThirdParty/OpenVR/Plugins/x86_64.meta": "df896fd98c6199ebf046259551248c95c30c1dd90c7e4fe94f063981ae91a273",
+    "unity/Assets/ThirdParty/OpenVR/Plugins.meta": "a791380085d38d685b445e89f7bf21baed505b93cd4b53ab6d2292d24da4ae69",
+    "unity/Assets/ThirdParty/OpenVR/UPSTREAM-README.md": "98a55d4a07a8ceffc010e6fa6c1f3e05689caa514dcf9c7da8b60f9944f2e020",
+    "unity/Assets/ThirdParty/OpenVR/UPSTREAM-README.md.meta": "68686adc029ca0ecad4ebc2fcf0cfebef4c79dadb600030ead48d30e95f4aa25",
+    "unity/Assets/ThirdParty/OpenVR/Valve.OpenVR.asmdef": "b0ea0c9a1ac048d3286adf64a744df2c169cb69673cc0b6b1594395e6b7e477d",
+    "unity/Assets/ThirdParty/OpenVR/Valve.OpenVR.asmdef.meta": "ac2f3f6c8e05feeb534008048bc6757c270e0dbf20f11d1c093fc809b54a6f65",
+    "tools/dependencies/test_openvr.py": "ce61e7480bf7609b8ca513cec607746e6c3292c9995d6af964f5cdbb342379b1",
+    "tools/dependencies/verify_openvr.py": "bb3427862acfade6fc98c06da09033e0c97756835d4d5fd765a368e8e0b941cd",
+    "unity/Assets/Editor/ProjectBootstrap/OpenVrImporter.cs": "8f8ed7dd7def8113629ef57032319e62084aaf5c30609a4e51e33e54a26a1b25",
+    "docs/modules/openvr-dependency.md": "049811545e03a592c2bd2ef12ff8fcd16ce2db2c05b5b967c58d51ca26d88917",
+    ".gitattributes": "d446710e570e26989902f666ff0ae1529f8cdcf1c9c02aa3e7c20b9fdfd13215"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "873d248f-40fd-486b-a26c-08df05cb85e4",
+  "eventType": "verification_pending",
+  "recordedAtUtc": "2026-09-07T02:08:03.223008+00:00",
+  "occurredAtUtc": "2026-09-07T02:08:03.223008+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "DEV-03.V001"
+  },
+  "taskId": "DEV-03",
+  "fromStatus": "in_progress",
+  "toStatus": "verification_pending",
+  "taskRevision": 5,
+  "previousTaskEventHash": "a6f669a7fb66f4509b96293bd0ea1603d681eb96dafcba7bc9950674e17907b2",
+  "causalEventHashes": [
+    "0179fadda6bd748fc32b828bdadc02da4172a7c5c0738df4d906fbdb2ebb4293",
+    "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "a6f669a7fb66f4509b96293bd0ea1603d681eb96dafcba7bc9950674e17907b2"
+  ],
+  "branch": "work/dev03-synthetic-tracking",
+  "claimedPaths": [
+    "docs/modules/synthetic-tracking.md"
+  ],
+  "expectedChecks": [],
+  "stopConditions": [],
+  "evidence": [
+    {
+      "id": "DEV-03-acceptance",
+      "path": "project-management/progress/evidence/DEV-03.json",
+      "sha256": "54d80499db62339da344ee09153f6c65fb4cad5716effc0e5e8673430be297e8",
+      "targetIds": [
+        "DEV-03.S001",
+        "DEV-03.V001",
+        "DEV-03"
+      ],
+      "criteria": [
+        "outcome",
+        "verification",
+        "task-acceptance"
+      ],
+      "class": "synthetic_test",
+      "command": "dotnet run --project tools/runtime-tests/SyntheticTrackingChecks.csproj; dotnet run --project tools/runtime-tests/Dev03ReviewChecks.csproj; dotnet build tools/runtime-tests/Dev03UnityCompatibility.csproj --verbosity quiet",
+      "result": "pass",
+      "sourceRevision": "4bec3598a8d9d3fb4b3821644b10ba3143d556b4",
+      "recordedAtUtc": "2026-09-07T02:07:56.888178+00:00",
+      "limitations": [
+        "Synthetic motion/dropout/trigger fixtures only; real serial/reconnect, polling jitter, occlusion and coordinate spikes deferred because testing equipment unavailable",
+        "Rendering prediction is absent from this source and must remain separate in the later renderer",
+        "Unity imported the prior timing-corrected source during OpenVR compilation; final Unity tests/build are separate bootstrap evidence",
+        "No physical calibration, study parameters or gate acceptance"
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "Deterministic configurable synthetic tracking, dropout and falling-edge fixtures verified with bounded polling/queues and timestamp-based raw motion.",
+  "approval": null,
+  "handoffTo": null
+}

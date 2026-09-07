@@ -1,0 +1,68 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "ede1b160-9a40-4c05-bdbf-95b71fab9675",
+  "eventType": "verification_pending",
+  "recordedAtUtc": "2026-09-07T01:52:20.284171+00:00",
+  "occurredAtUtc": "2026-09-07T01:52:20.284171+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S019"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "in_progress",
+  "toStatus": "verification_pending",
+  "taskRevision": 61,
+  "previousTaskEventHash": "dddd1570ac71751853c8db1aef438cf6fa280949fb33739bef03a14cbb194e9a",
+  "causalEventHashes": [
+    "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d",
+    "5b143014aae1f41e1fa289a203e0a65a69f8d18d5d41d230640ca5fc0f432c4b",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "dddd1570ac71751853c8db1aef438cf6fa280949fb33739bef03a14cbb194e9a"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "unity/ProjectSettings/",
+    "unity/Packages/",
+    "unity/Assets/Settings/",
+    "unity/Assets/Scenes/",
+    "unity/Assets/Editor/ProjectBootstrap/"
+  ],
+  "expectedChecks": [],
+  "stopConditions": [],
+  "evidence": [
+    {
+      "id": "BOOT.S019-BOOT.S019",
+      "path": "project-management/progress/evidence/BOOT.S019.json",
+      "sha256": "09490a2311f63fb59f34b78d3e1d1e11958f151265fb43a6e5e51730bf299174",
+      "targetIds": [
+        "BOOT.S019"
+      ],
+      "criteria": [
+        "outcome",
+        "verification"
+      ],
+      "class": "toolchain_runtime",
+      "command": "Unity CLI projects create --editor-version 6000.3.23f1 --template com.unity.template.urp-blank; Unity -batchmode -nographics -executeMethod Elts.Editor.PackageSetup.RemoveXr; Unity -batchmode -nographics -quit -executeMethod Elts.Editor.ProjectSetup.Configure",
+      "result": "pass",
+      "sourceRevision": "a657868f5c1e65207bd4f34e81e53171be869da2",
+      "recordedAtUtc": "2026-09-07T01:52:19.125786+00:00",
+      "limitations": [
+        "Config assembly intentionally constrained until pinned Newtonsoft dependency at BOOT.S021; standalone ConfigChecks already passed but Unity Config compilation not claimed here",
+        "EditMode/PlayMode tests and Windows standalone build remain later bootstrap steps",
+        "No physical equipment, actual display/SteamVR or gate acceptance"
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "Exact Unity URP project created/imported, XR packages removed through UPM API, Windows x64/Mono settings and metadata committed.",
+  "approval": null,
+  "handoffTo": null
+}

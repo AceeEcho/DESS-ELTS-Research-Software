@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "mode", "studyReady", "runtime", "rig", "scenario", "session", "machine"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "mode": {"const": "synthetic"},
+    "studyReady": {"const": false},
+    "runtime": {"$ref": "runtime.schema.json"},
+    "rig": {"$ref": "rig.schema.json"},
+    "scenario": {"$ref": "scenario.schema.json"},
+    "session": {"$ref": "session.schema.json"},
+    "machine": {"$ref": "local.schema.json"}
+  }
+}

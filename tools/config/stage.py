@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT))
 from tools.progress.schema import ValidationError, validate_file  # noqa: E402
 
 SCHEMAS = {"runtime": "runtime.schema.json", "rig": "rig.schema.json", "scenario": "scenario.schema.json", "session": "session.schema.json", "local": "local.schema.json"}
+STAGED_SCHEMAS = ("effective.schema.json", *SCHEMAS.values())
 OUTPUT_NAMES = {"effective": "effective-config.json", "manifest": "manifest.json"}
 
 
@@ -36,7 +37,7 @@ def _safe_source(root: Path, raw: str) -> Path:
     if not isinstance(raw, str) or not raw.startswith("config/") or "\\" in raw:
         raise ValueError(f"Source must be a repository-relative config path: {raw!r}")
     candidate = root / raw
-    if candidate.is_symlink():
+    if any((root / Path(*raw.split("/")[:i])).is_symlink() for i in range(1, len(raw.split("/")) + 1)):
         raise ValueError(f"Missing, symlinked, or escaped config source: {raw}")
     path = candidate.resolve()
     config_root = (root / "config").resolve()
@@ -47,8 +48,17 @@ def _safe_source(root: Path, raw: str) -> Path:
 
 def _load_json(path: Path) -> tuple[dict, bytes]:
     raw = path.read_bytes()
+    def pairs(items):
+        value = {}
+        for key, item in items:
+            if key in value: raise ValueError(f"Duplicate JSON key in {path}: {key}")
+            value[key] = item
+        return value
+    def invalid(number): raise ValueError(f"Non-finite JSON number in {path}: {number}")
     try:
-        value = json.loads(raw.decode("utf-8"))
+        value = json.loads(raw.decode("utf-8"), object_pairs_hook=pairs, parse_constant=invalid)
+    except ValueError:
+        raise
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ValueError(f"Malformed JSON: {path}") from exc
     if not isinstance(value, dict):
@@ -86,15 +96,22 @@ def _validate_rig(rig: dict) -> None:
 
 def _validate_local(local: dict) -> None:
     data_root = local["dataRoot"].replace("\\", "/")
-    if data_root.startswith("/") or any(part == ".." for part in data_root.split("/")):
+    reserved = {"con", "prn", "aux", "nul", "clock$", *(f"com{i}" for i in range(1, 10)), *(f"lpt{i}" for i in range(1, 10))}
+    parts = data_root.split("/")
+    if (data_root.startswith(("/", "//")) or ":" in data_root or "\\" in local["dataRoot"] or
+            any(part in ("", ".", "..") or part.lower().split(".")[0] in reserved for part in parts)):
         raise ValueError("dataRoot must be relative and may not traverse")
+    if local["participantDisplayIndex"] > 31 or local["operatorDisplayIndex"] > 31:
+        raise ValueError("Display index exceeds development bound 31")
     if local["participantDisplayIndex"] == local["operatorDisplayIndex"]:
         raise ValueError("Participant and operator displays must differ")
 
 
 def build_bundle(root: Path) -> tuple[dict, dict]:
     root = root.resolve()
-    staging, _ = _load_json(root / "config/staging.json")
+    staging_path = root / "config/staging.json"
+    if staging_path.is_symlink(): raise ValueError("staging.json may not be a symlink")
+    staging, staging_raw = _load_json(staging_path)
     validate_file(staging, root / "schemas/config/staging.schema.json")
     if staging["mode"] != "synthetic":
         raise ValueError("Only synthetic mode is supported by this bootstrap lane")
@@ -112,7 +129,9 @@ def build_bundle(root: Path) -> tuple[dict, dict]:
         raw_hashes[key] = sha256_bytes(raw)
     _validate_rig(values["rig"]); _validate_local(values["local"])
     effective = {"schemaVersion": 1, "mode": "synthetic", "studyReady": False, "runtime": values["runtime"], "rig": values["rig"], "scenario": values["scenario"], "session": values["session"], "machine": values["local"]}
-    manifest = {"schemaVersion": 1, "mode": "synthetic", "effectiveConfig": "effective-config.json", "effectiveConfigSha256": sha256_bytes(canonical(effective)), "sourceRawSha256": raw_hashes}
+    schema_bytes = {name: (root / "schemas/config" / name).read_bytes() for name in STAGED_SCHEMAS}
+    validate_file(effective, root / "schemas/config/effective.schema.json")
+    manifest = {"schemaVersion": 1, "mode": "synthetic", "schema": "schemas/effective.schema.json", "effectiveConfig": "effective-config.json", "effectiveConfigSha256": sha256_bytes(canonical(effective)), "sourceRawSha256": {"staging": sha256_bytes(staging_raw), **raw_hashes}, "schemaFilesSha256": {name: sha256_bytes(data) for name, data in schema_bytes.items()}}
     return effective, manifest
 
 
@@ -120,22 +139,34 @@ def _atomic_write(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.is_file() and path.read_bytes() == data:
         return
-    with NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}.", delete=False) as handle:
-        temporary = Path(handle.name)
-        handle.write(data); handle.flush(); os.fsync(handle.fileno())
-    os.replace(temporary, path)
+    temporary = None
+    try:
+        with NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}.", delete=False) as handle:
+            temporary = Path(handle.name)
+            handle.write(data); handle.flush(); os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except Exception:
+        if temporary is not None: temporary.unlink(missing_ok=True)
+        raise
 
 
 def stage(root: Path, output: Path | None = None, check: bool = False) -> list[Path]:
     root = root.resolve(); output = (output or root / "unity/Assets/StreamingAssets/config-generated").resolve()
-    if root not in output.parents:
-        raise ValueError("Output must remain inside repository")
+    rel = output.relative_to(root) if output != root else Path()
+    allowed = rel.as_posix() == "unity/Assets/StreamingAssets/config-generated" or rel.parts and rel.parts[0] in {"build", "release"}
+    if not rel.parts or not allowed or any((root / Path(*rel.parts[:i])).is_symlink() for i in range(1, len(rel.parts) + 1)):
+        raise ValueError("Output must be a generated subdirectory inside the repository")
     effective, manifest = build_bundle(root)
     expected = {output / OUTPUT_NAMES["effective"]: canonical(effective), output / OUTPUT_NAMES["manifest"]: canonical(manifest)}
+    for name in STAGED_SCHEMAS: expected[output / "schemas" / name] = (root / "schemas/config" / name).read_bytes()
+    allowed_meta = {path.with_name(path.name + ".meta") for path in expected} | {output.with_name(output.name + ".meta"), (output / "schemas").with_name("schemas.meta")}
+    actual = set(output.glob("**/*")) if output.is_dir() else set()
+    extras = [p for p in actual if p.is_file() and p not in expected and p not in allowed_meta]
+    if not check and extras: raise ValueError("Unexpected existing generated output: " + ", ".join(str(p) for p in extras))
     if check:
-        actual = {p for p in output.glob("*")} if output.is_dir() else set()
+        actual = {p for p in output.glob("**/*")} if output.is_dir() else set()
         drift = [str(p.relative_to(root)) for p, data in expected.items() if not p.is_file() or p.read_bytes() != data]
-        drift += [str(p.relative_to(root)) for p in sorted(actual) if p not in expected]
+        drift += [str(p.relative_to(root)) for p in sorted(actual) if p.is_file() and p not in expected and p not in allowed_meta]
         if drift: raise ValueError("Generated configuration drift: " + ", ".join(drift))
     else:
         for path, data in expected.items(): _atomic_write(path, data)

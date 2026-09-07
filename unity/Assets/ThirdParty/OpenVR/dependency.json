@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "name": "Valve OpenVR SDK",
+  "version": "2.12.14",
+  "upstreamTag": "v2.12.14",
+  "upstreamCommit": "91825305130f446f82054c1ec3d416321ace0072",
+  "origin": "https://github.com/ValveSoftware/openvr",
+  "license": "BSD-3-Clause",
+  "platform": "Windows x86_64",
+  "purpose": "Vendored binding and native ABI only; physical tracking integration is a separate task",
+  "runtimeInitialization": "Not performed; synthetic mode never initializes OpenVR",
+  "files": [
+    {
+      "path": "openvr_api.cs",
+      "upstreamPath": "headers/openvr_api.cs",
+      "url": "https://raw.githubusercontent.com/ValveSoftware/openvr/91825305130f446f82054c1ec3d416321ace0072/headers/openvr_api.cs",
+      "upstreamGitBlobSha1": "bfaec402f987ff4ebd8a565f697ed0db146fc4ee",
+      "sha256": "65e77d3880b70fbbfe10a8df8124cdfd112a40146c8c88a982c73c6d78a9aece",
+      "bytes": 364715
+    },
+    {
+      "path": "Plugins/x86_64/openvr_api.dll",
+      "upstreamPath": "bin/win64/openvr_api.dll",
+      "url": "https://raw.githubusercontent.com/ValveSoftware/openvr/91825305130f446f82054c1ec3d416321ace0072/bin/win64/openvr_api.dll",
+      "upstreamGitBlobSha1": "ab53dc64919a4bb9101671ee5c12768cb10f33c1",
+      "sha256": "e61701f75930b4c47615d17f5901ca62edf1a948f5ea804d4cbbdc94ad2e6e2e",
+      "bytes": 836760
+    },
+    {
+      "path": "LICENSE",
+      "upstreamPath": "LICENSE",
+      "url": "https://raw.githubusercontent.com/ValveSoftware/openvr/91825305130f446f82054c1ec3d416321ace0072/LICENSE",
+      "upstreamGitBlobSha1": "ee83337d7fcb726d14cc10f7dd2fda6799d8a135",
+      "sha256": "f56ff606104d4ef18e617921a75c73ad73b5a1a1d70c69590c29de16919e04ad",
+      "bytes": 1488
+    },
+    {
+      "path": "UPSTREAM-README.md",
+      "upstreamPath": "README.md",
+      "url": "https://raw.githubusercontent.com/ValveSoftware/openvr/91825305130f446f82054c1ec3d416321ace0072/README.md",
+      "upstreamGitBlobSha1": "083a48fdabc7ea0aed40168814f7c9db9c038c26",
+      "sha256": "98a55d4a07a8ceffc010e6fa6c1f3e05689caa514dcf9c7da8b60f9944f2e020",
+      "bytes": 832
+    }
+  ]
+}

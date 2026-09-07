@@ -103,3 +103,34 @@ is true. That boundary is consistent with the module's stated limitation only
 after privileged approvals fail closed; it must not be described as automatic
 verification of external evidence.
 
+## Remediation verification: `31931d8`
+
+The remediation snapshot correctly resolves the three behavioral findings above:
+
+- The default reducer has no approval verifier and now rejects a self-enrolled,
+  self-authored G0 approval with `Privileged approvals unavailable`. The only
+  permissive verifier is passed directly by isolated tests; neither events nor
+  the production CLI provide a selector for it. Generated state also carries
+  the explicit prerequisite warning.
+- G1 now requires G0's passed-event hash in its causal ancestry. The former
+  digest-order reproduction is rejected.
+- Every atomic-step transition checks the parent task owner and branch. The
+  added `test_adversarial.py` regression verifies that a foreign actor cannot
+  block ready `BOOT.S002` after P0.3 has an owner.
+
+The normal test discovery command still has a local, pre-existing-worktree
+CRLF catalog limitation. A fresh worktree at this snapshot materialized
+`task-catalog.json` with zero CRLF sequences under the new `eol=lf` attribute.
+
+### Journal prefix hardening after remediation review
+
+The first remediation review found that `import_journal.py` described a resumed
+prefix as exact while comparing only target, event type, status, note and
+occurred time. A reducer-valid pre-existing verification event could substitute
+its evidence receipt while retaining those fields. The importer now compares
+every request-derived field—actor, branch, claimed paths, expected checks, stop
+conditions and the full evidence list as well as the original fields—while
+deliberately leaving generated `recordedAtUtc`, IDs and chain metadata free to
+reflect the real publication. The added isolated regression creates such a
+valid-but-substituted evidence prefix, confirms import rejection, and verifies
+that no extra event is written.

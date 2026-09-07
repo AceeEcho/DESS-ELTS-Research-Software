@@ -69,3 +69,54 @@ C89D38CECED018431834DCA16C4E393A936F76875315546A545FA44FD228F93D  unity/Assets/E
 The counterexample programs are review-only console projects. They do not
 assert a real tracker rate, OpenVR behavior, Unity 6000.3.23f1 import, hardware
 calibration, physical trigger timing, or cross-device synchronization.
+
+## Remediation assessment — `17255e4737b7b6a400f745e0d9bc776e3732cdb2`
+
+The timing remediation was cherry-picked for independent verification (review
+worktree commit `e03d825`). Both P1 findings are closed for the corrected source
+hash below. The original verdict above remains historical evidence for revision
+`736d0f3`; the corrected candidate is approved for the timing findings reviewed
+here.
+
+- `EnsurePending` now creates `candidateStamp` once, derives `now` from that
+  stamp, and uses the same value for due-time checks, skipped-interval accounting,
+  sample sequence, paired samples, and trigger timing. The previous split-read
+  counterexample now emits stamps at 0 ms and 4 ms with zero skipped intervals.
+- Synthetic pose phase now derives from the acquisition timestamp and applies
+  `2 * pi * Hz * seconds` consistently for head sway, weapon sway, and weapon
+  yaw. A delayed 100 ms acquisition produces the 100 ms pose phase; a one-hertz
+  fixture reaches its positive peak at 250 ms. An exact 4 Hz poll and a poll one
+  tick late both report zero skipped acquisitions, while a 100 ms gap at 250 Hz
+  reports 24 skipped intervals.
+- The prior review's queue, dropout, invalid-sample, raw-pose, and C# 9
+  compatibility observations remain unchanged. No predicted pose was added.
+
+### Remediation evidence
+
+```text
+dotnet run --project tools/runtime-tests/Dev03ReviewChecks.csproj
+PASS: DEV-03 review regressions verify single-capture scheduling and timestamp-based Hz motion
+
+dotnet run --project tools/runtime-tests/SyntheticTrackingChecks.csproj
+PASS: 87 synthetic tracking checks
+
+dotnet run --project tools/runtime-tests/TrackingChecks.csproj
+PASS: 25 tracking checks
+
+dotnet build tools/runtime-tests/Dev03UnityCompatibility.csproj
+Build succeeded. 0 Warning(s), 0 Error(s)
+```
+
+Corrected reviewed source hashes:
+
+```text
+5A319D24394CADB56609EB86EDF10F08A04143A806D95DB07F226C2B70B3C602  unity/Assets/ELTS/Tracking/SyntheticTrackingSource.cs
+438206090CC917EFDC21E0614E4BF1C144E8B70BBEE80B22EDACCBACBC18EA3B  tools/runtime-tests/SyntheticTrackingChecks.cs
+F51C65202D9F8AD7B08B89844D31437278146C3BF968E383E6ED16CFC2979C14  tools/runtime-tests/TrackingChecks.cs
+C89D38CECED018431834DCA16C4E393A936F76875315546A545FA44FD228F93D  unity/Assets/ELTS/Tracking/TrackingContracts.cs
+```
+
+This assessment verifies only the software timing corrections under deterministic
+clocks. Unity 6000.3.23f1 import/runtime, OpenVR operation, physical tracking,
+trigger timing, calibration, and cross-device synchronization remain outside its
+scope.

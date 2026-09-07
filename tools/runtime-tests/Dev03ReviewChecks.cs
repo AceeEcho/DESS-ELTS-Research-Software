@@ -47,14 +47,14 @@ static class Dev03ReviewChecks
 
     private static void Main()
     {
-        // EnsurePending reads Now to schedule, then TrackingAcquisitionStamp.Capture
-        // reads it again. A clock that advances once per read exposes the split poll.
+        // A clock that advances once per read proves the source makes one read
+        // per poll and uses that same timestamp for scheduling and its stamp.
         using var steppingSource = new SyntheticTrackingSource(new SyntheticTrackingSettings(new SteppingClock(TimeSpan.FromMilliseconds(4))));
         var first = ReadHead(steppingSource);
         var second = ReadHead(steppingSource);
-        True(first.Timestamp.Ticks == TimeSpan.TicksPerMillisecond * 4, "first emitted stamp came from second clock read");
-        True(second.Timestamp.Ticks == TimeSpan.TicksPerMillisecond * 12, "second emitted stamp came from fourth clock read");
-        True(steppingSource.SkippedAcquisitionCount == 1, "split reads report one skipped interval");
+        True(first.Timestamp.Ticks == 0, "first emitted stamp uses the first clock read");
+        True(second.Timestamp.Ticks == TimeSpan.TicksPerMillisecond * 4, "second emitted stamp uses the next poll clock read");
+        True(steppingSource.SkippedAcquisitionCount == 0, "one interval later does not report a skipped acquisition");
 
         var manualClock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
         var skippedSettings = new SyntheticTrackingSettings(manualClock);
@@ -66,9 +66,26 @@ static class Dev03ReviewChecks
         True(current.Sequence == 2, "catch-up emits one current acquisition");
         True(skippedSource.SkippedAcquisitionCount == 24, "100 ms gap records missed 4 ms intervals");
         var phase = (skippedSettings.Seed % 360) * Math.PI / 180.0;
-        var sampleIndexTime = 1.0 / skippedSettings.SampleRateHz;
-        var expectedHeadX = skippedSettings.Motion.HeadBasePosition.X + skippedSettings.Motion.HeadSwayAmplitude.X * Math.Sin(sampleIndexTime * skippedSettings.Motion.HeadSwayFrequencyHz + phase);
-        Near(current.Pose!.Value.Position.X, expectedHeadX, 1e-12, "catch-up pose follows sample index rather than 100 ms stamp");
+        var stampTime = current.Timestamp.Elapsed.TotalSeconds;
+        var expectedHeadX = skippedSettings.Motion.HeadBasePosition.X + skippedSettings.Motion.HeadSwayAmplitude.X * Math.Sin(2 * Math.PI * stampTime * skippedSettings.Motion.HeadSwayFrequencyHz + phase);
+        Near(current.Pose!.Value.Position.X, expectedHeadX, 1e-12, "catch-up pose follows its captured timestamp");
+
+        var hzClock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+        var oneHertz = new SyntheticMotionSettings(Elts.Geometry.Vector3d.Zero, new Elts.Geometry.Vector3d(1, 0, 0), 1,
+            Elts.Geometry.Vector3d.Zero, Elts.Geometry.Vector3d.Zero, 0, 0, 0);
+        using var hzSource = new SyntheticTrackingSource(new SyntheticTrackingSettings(hzClock, seed: 0, sampleRateHz: 4, motion: oneHertz));
+        _ = ReadHead(hzSource);
+        hzClock.Advance(TimeSpan.FromMilliseconds(250));
+        var quarterSecond = ReadHead(hzSource);
+        Near(quarterSecond.Pose!.Value.Position.X, 1, 1e-12, "one hertz motion reaches its quarter-cycle peak at 250 ms");
+        True(hzSource.SkippedAcquisitionCount == 0, "exact 250 ms poll has no skipped 4 Hz acquisition");
+
+        var slightClock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+        using var slightSource = new SyntheticTrackingSource(new SyntheticTrackingSettings(slightClock));
+        _ = ReadHead(slightSource);
+        slightClock.Advance(TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 250 + 1));
+        _ = ReadHead(slightSource);
+        True(slightSource.SkippedAcquisitionCount == 0, "slight lateness does not report a skipped interval");
 
         var stationaryClock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
         var stationary = new SyntheticMotionSettings(new Elts.Geometry.Vector3d(1, 2, 3), Elts.Geometry.Vector3d.Zero, 0, new Elts.Geometry.Vector3d(4, 5, 6), Elts.Geometry.Vector3d.Zero, 0, 0, 0);
@@ -82,6 +99,6 @@ static class Dev03ReviewChecks
         Throws<ArgumentOutOfRangeException>(() => new SyntheticTrackingSettings(manualClock, sampleRateHz: double.PositiveInfinity), "infinite sample rate is rejected");
         Throws<ArgumentOutOfRangeException>(() => new SyntheticTrackingSettings(manualClock, sampleRateHz: 2000.1), "sample rate above bound is rejected");
         Throws<ArgumentOutOfRangeException>(() => new SyntheticTrackingSettings(manualClock, triggerQueueCapacity: 0), "zero trigger capacity is rejected");
-        Console.WriteLine("PASS: DEV-03 review counterexamples reproduce split-clock scheduling and sample-index motion conditions");
+        Console.WriteLine("PASS: DEV-03 review regressions verify single-capture scheduling and timestamp-based Hz motion");
     }
 }

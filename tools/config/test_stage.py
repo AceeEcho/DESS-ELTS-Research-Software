@@ -12,7 +12,8 @@ ROOT = Path(__file__).resolve().parents[2]
 def fixture_root(parent: Path) -> Path:
     root = parent / f"config fixture with spaces {uuid.uuid4().hex}"
     for rel in ("config", "schemas/config"):
-        shutil.copytree(ROOT / rel, root / rel)
+        # Tests model a fresh portable checkout, never this machine's overrides.
+        shutil.copytree(ROOT / rel, root / rel, ignore=shutil.ignore_patterns("local.json", "local"))
     (root / "unity/Assets/StreamingAssets").mkdir(parents=True)
     return root
 

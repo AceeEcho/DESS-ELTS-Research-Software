@@ -17,6 +17,8 @@ synthetic release shot. Trigger queues are bounded and expose overflow counts.
 Polls are gated by the injected clock interval: an unchanged clock emits at
 most one pending pair, and skipped intervals are counted rather than replayed
 with invented timestamps. `Dispose` clears pending samples and trigger events.
+Motion phase is derived from the captured monotonic timestamp, and frequency
+settings are in cycles per second (`Hz`) with an explicit `2*pi` conversion.
 
 Run the standalone checks with .NET 10:
 

@@ -133,18 +133,19 @@ public sealed class SyntheticTrackingSource : ITrackingSource
     private bool EnsurePending()
     {
         if (pending.Count > 0) return true;
-        var now = settings.Clock.Now;
         var intervalTicks = Math.Max(1L, (long)Math.Ceiling(TimeSpan.TicksPerSecond / settings.SampleRateHz));
+        var candidateStamp = TrackingAcquisitionStamp.Capture(settings.Clock, checked(sequence + 1));
+        var now = candidateStamp.Timestamp;
         if (hasAcquisition && now.Ticks < nextDueTicks) return false;
         if (hasAcquisition && now.Ticks > nextDueTicks)
         {
             var elapsed = now.Ticks - nextDueTicks;
-            SkippedAcquisitionCount += elapsed / intervalTicks + (elapsed % intervalTicks == 0 ? 0 : 1);
+            SkippedAcquisitionCount += elapsed / intervalTicks;
         }
         hasAcquisition = true;
         nextDueTicks = now.Ticks > long.MaxValue - intervalTicks ? long.MaxValue : now.Ticks + intervalTicks;
         sampleNumber++; sequence++;
-        var stamp = TrackingAcquisitionStamp.Capture(settings.Clock, sequence);
+        var stamp = candidateStamp;
         var dropped = false;
         foreach (var window in settings.Dropouts) if (window.Contains(sampleNumber)) { dropped = true; break; }
         if (dropped)
@@ -154,12 +155,14 @@ public sealed class SyntheticTrackingSource : ITrackingSource
         }
         else
         {
-            var t = (sampleNumber - 1) / settings.SampleRateHz;
+            var t = stamp.Timestamp.Ticks / (double)TimeSpan.TicksPerSecond;
             var motion = settings.Motion;
-            var headSway = Math.Sin(t * motion.HeadSwayFrequencyHz + phase);
-            var head = new RigidPose(motion.HeadBasePosition + new Vector3d(motion.HeadSwayAmplitude.X * headSway, motion.HeadSwayAmplitude.Y * Math.Cos(t * motion.HeadSwayFrequencyHz * 0.65 + phase), motion.HeadSwayAmplitude.Z * headSway), Quaterniond.Identity);
-            var weaponSway = Math.Sin(t * motion.WeaponSwayFrequencyHz + phase);
-            var weapon = new RigidPose(motion.WeaponBasePosition + new Vector3d(motion.WeaponSwayAmplitude.X * Math.Cos(t * motion.WeaponSwayFrequencyHz + phase), motion.WeaponSwayAmplitude.Y * weaponSway, motion.WeaponSwayAmplitude.Z * weaponSway), Quaterniond.FromAxisAngle(new Vector3d(0, 1, 0), motion.WeaponYawAmplitudeRadians * Math.Sin(t * motion.WeaponYawFrequencyHz + phase)));
+            var headAngle = 2 * Math.PI * motion.HeadSwayFrequencyHz * t + phase;
+            var headSway = Math.Sin(headAngle);
+            var head = new RigidPose(motion.HeadBasePosition + new Vector3d(motion.HeadSwayAmplitude.X * headSway, motion.HeadSwayAmplitude.Y * Math.Cos(2 * Math.PI * motion.HeadSwayFrequencyHz * 0.65 * t + phase), motion.HeadSwayAmplitude.Z * headSway), Quaterniond.Identity);
+            var weaponAngle = 2 * Math.PI * motion.WeaponSwayFrequencyHz * t + phase;
+            var weaponSway = Math.Sin(weaponAngle);
+            var weapon = new RigidPose(motion.WeaponBasePosition + new Vector3d(motion.WeaponSwayAmplitude.X * Math.Cos(weaponAngle), motion.WeaponSwayAmplitude.Y * weaponSway, motion.WeaponSwayAmplitude.Z * weaponSway), Quaterniond.FromAxisAngle(new Vector3d(0, 1, 0), motion.WeaponYawAmplitudeRadians * Math.Sin(2 * Math.PI * motion.WeaponYawFrequencyHz * t + phase)));
             pending.Enqueue(TrackingSample.Valid(stamp, settings.HeadTracker, head));
             pending.Enqueue(TrackingSample.Valid(stamp, settings.WeaponTracker, weapon));
         }

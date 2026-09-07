@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "unity": {
+    "version": "6000.3.23f1",
+    "revision": "09d2ecc7fb28",
+    "projectPath": "unity",
+    "target": "StandaloneWindows64",
+    "scriptingBackend": "Mono",
+    "packageManifest": "unity/Packages/manifest.json",
+    "packageLock": "unity/Packages/packages-lock.json",
+    "requiredPackages": [
+      "com.unity.render-pipelines.universal",
+      "com.unity.nuget.newtonsoft-json",
+      "com.unity.test-framework"
+    ],
+    "forbiddenPackagePrefixes": [
+      "com.unity.xr."
+    ]
+  },
+  "python": {
+    "minimumVersion": "3.10",
+    "maximumExclusiveVersion": "3.15",
+    "testedVersion": "3.12.14",
+    "externalDependencies": []
+  },
+  "git": {
+    "minimumVersion": "2.30",
+    "testedVersion": "2.54.0"
+  },
+  "standaloneTests": {
+    "dotnetSdkVersion": "10.0.400",
+    "targetFramework": "net10.0",
+    "csharpLanguageVersion": "9.0",
+    "requiredForUnityRuntime": false
+  },
+  "optionalUnityCli": {
+    "testedVersion": "1.0.0-beta.6",
+    "requiredForExistingCheckout": false
+  },
+  "dependencies": {
+    "openvrManifest": "unity/Assets/ThirdParty/OpenVR/dependency.json",
+    "pythonManifest": "analysis/pyproject.toml",
+    "pythonLock": "analysis/uv.lock"
+  },
+  "validation": {
+    "editorInstallation": "verified",
+    "editorRuntime": "pending",
+    "unityTests": "pending",
+    "windowsBuild": "pending",
+    "studyMachineBaseline": "pending physical commissioning",
+    "jetsonBaseline": "pending device inspection"
+  }
+}

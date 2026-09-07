@@ -77,9 +77,44 @@ class StageTests(unittest.TestCase):
             try:
                 link.symlink_to(target)
             except (OSError, NotImplementedError):
-                return
+                self.skipTest("Host does not permit file symlink creation")
             staging = root / "config/staging.json"; value = json.loads(staging.read_text()); value["runtime"] = "config/defaults/runtime-link.json"; staging.write_text(json.dumps(value))
             with self.assertRaisesRegex(ValueError, "symlinked"):
                 stage(root)
+
+    def test_generated_destinations_and_exact_unity_meta_allowance(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = fixture_root(Path(temp))
+            for output in (Path("config/defaults"), Path("build"), Path("release"), root, root.parent):
+                with self.assertRaises(ValueError):
+                    stage(root, output)
+            outputs = stage(root, Path("build/config"))
+            for path in outputs:
+                path.with_name(path.name + ".meta").write_text("Unity metadata fixture", encoding="utf-8")
+            stage(root, Path("build/config"), check=True)
+            (root / "build/config/unexpected-empty").mkdir()
+            with self.assertRaisesRegex(ValueError, "Unexpected"):
+                stage(root, Path("build/config"))
+
+    def test_output_links_are_checked_before_resolve_and_before_any_write(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = fixture_root(Path(temp))
+            target = root / "build/real"
+            target.mkdir(parents=True)
+            link = root / "build/link"
+            try:
+                link.symlink_to(target, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("Host does not permit directory symlink creation")
+            with self.assertRaisesRegex(ValueError, "symlinked"):
+                stage(root, link)
+            self.assertEqual(list(target.iterdir()), [])
+            # An expected filename pointing outside the bundle is also rejected.
+            outside = root / "sentinel.json"
+            outside.write_text("keep", encoding="utf-8")
+            (target / "effective-config.json").symlink_to(outside)
+            with self.assertRaisesRegex(ValueError, "symlinked"):
+                stage(root, target)
+            self.assertEqual(outside.read_text(), "keep")
 
 if __name__ == "__main__": unittest.main()

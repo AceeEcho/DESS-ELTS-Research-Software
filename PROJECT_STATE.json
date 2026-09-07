@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T00:57:58.366325+00:00",
+  "generatedAtUtc": "2026-09-07T01:00:30.365375+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,20 +11,21 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 46,
-    "eventSetSha256": "bdad303e466c3c35c97bb9d881e0970264b96f0848c6577e415f36ddcb9daccd"
+    "eventCount": 50,
+    "eventSetSha256": "447f4eb31aac664f50eb942cdde54b39e58701cc386e204bee595806c2b97cd4"
   },
   "current": {
     "mode": "working",
-    "primaryStepId": "BOOT.S016",
-    "activeStepIds": [],
+    "primaryStepId": "BOOT.S017",
+    "activeStepIds": [
+      "BOOT.S017"
+    ],
     "nextEligibleStepIds": [
       "P0.2.S001",
       "P0.4.S001",
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S016",
       "BOOT.S017",
       "BOOT.S018",
       "BOOT.S019",
@@ -53,18 +54,17 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "DEV-01.S001",
+    "primaryStepId": "BOOT.S017",
     "activeStepIds": [
+      "BOOT.S017",
       "DEV-01.S001"
     ],
     "nextEligibleStepIds": [
-      "BOOT.S016",
       "P0.2.S001",
       "P0.4.S001",
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S016",
       "BOOT.S017",
       "BOOT.S018",
       "BOOT.S019",
@@ -317,10 +317,27 @@
       "P8.7.S001",
       "P8.8.S001"
     ],
-    "selectedPhaseId": "DEV",
-    "selectedLane": "synthetic_development_only"
+    "selectedPhaseId": "P0",
+    "selectedLane": "bootstrap"
   },
   "activeWork": [
+    {
+      "owner": "agent:codex-astra",
+      "taskId": "P0.3",
+      "atomicStepId": "BOOT.S017",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "config/defaults/",
+        "config/development/",
+        "config/rig/",
+        "config/study/",
+        "config/local.example.json",
+        "config/staging.json",
+        "schemas/config/",
+        "tools/config/",
+        "docs/modules/config-staging.md"
+      ]
+    },
     {
       "owner": "agent:codex-astra",
       "taskId": "DEV-01",
@@ -358,11 +375,21 @@
     },
     "P0.3": {
       "status": "in_progress",
-      "revision": 45,
-      "lastEventHash": "e48971342557985ad8e1c13af135a2b72afd0272cf7fa1dd0a1bf84860e8aff3",
+      "revision": 49,
+      "lastEventHash": "703daa08b53791741d4a9325e99244d455bcd541e097ebb960f6ca1ab838d3af",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
-      "claimedPaths": [],
+      "claimedPaths": [
+        "config/defaults/",
+        "config/development/",
+        "config/local.example.json",
+        "config/rig/",
+        "config/staging.json",
+        "config/study/",
+        "docs/modules/config-staging.md",
+        "schemas/config/",
+        "tools/config/"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -1928,22 +1955,58 @@
       "blockers": []
     },
     "BOOT.S016": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 48,
+      "lastEventHash": "36ab11e23cfc42d75c1b06f569ba940f713cfa9fa4d15f56b661a230762931e8",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "config/toolchain.json",
+        "schemas/build/toolchain.schema.json",
+        "docs/operator/toolchain.md"
+      ],
+      "evidence": [
+        {
+          "id": "BOOT.S016-BOOT.S016",
+          "path": "project-management/progress/evidence/BOOT.S016.json",
+          "sha256": "4dbe04f2bd492308ee0da79b3a9ce1c9bd2ffcfc515ed89b09b68795fdc77178",
+          "targetIds": [
+            "BOOT.S016"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "document",
+          "command": "Inspect Unity binary ProductVersion and CLI editors/license status; python --version; git --version; dotnet --list-sdks; validate toolchain schema",
+          "result": "pass",
+          "sourceRevision": "7ce043947bec6af38d2848c5dd64f3bda759ce88",
+          "recordedAtUtc": "2026-09-07T01:00:09.605865+00:00",
+          "limitations": [
+            "Editor runtime, Unity tests and Windows build remain separate pending checks.",
+            "Study machine and Jetson hardware baselines are not inferred."
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S017": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 49,
+      "lastEventHash": "703daa08b53791741d4a9325e99244d455bcd541e097ebb960f6ca1ab838d3af",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "config/defaults/",
+        "config/development/",
+        "config/rig/",
+        "config/study/",
+        "config/local.example.json",
+        "config/staging.json",
+        "schemas/config/",
+        "tools/config/",
+        "docs/modules/config-staging.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -4730,8 +4793,8 @@
   },
   "chains": {
     "task:P0.3": {
-      "revision": 45,
-      "hash": "e48971342557985ad8e1c13af135a2b72afd0272cf7fa1dd0a1bf84860e8aff3"
+      "revision": 49,
+      "hash": "703daa08b53791741d4a9325e99244d455bcd541e097ebb960f6ca1ab838d3af"
     },
     "task:DEV-01": {
       "revision": 1,

@@ -17,11 +17,16 @@ class ValidationError(ValueError):
     """A precise, operator-readable contract violation."""
 
 
+class SchemaDefinitionError(ValidationError):
+    """An unsupported schema must not be mistaken for a nonmatching condition."""
+
+
 ANNOTATIONS = {"$schema", "$id", "title", "description", "$comment", "default", "examples"}
 ASSERTIONS = {"$ref", "$defs", "type", "properties", "required", "additionalProperties",
               "items", "minItems", "maxItems", "uniqueItems", "enum", "const", "pattern",
               "minLength", "maxLength", "minimum", "maximum", "exclusiveMinimum",
-              "oneOf", "anyOf", "allOf", "format", "minProperties"}
+              "oneOf", "anyOf", "allOf", "format", "minProperties",
+              "if", "then", "else", "propertyNames"}
 
 
 def load_json(path: Path):
@@ -49,10 +54,10 @@ def validate(value, schema, *, base: Path, document=None, location="$", depth=0)
     if schema is False:
         raise ValidationError(f"{location}: value prohibited")
     if not isinstance(schema, dict):
-        raise ValidationError(f"{location}: malformed schema")
+        raise SchemaDefinitionError(f"{location}: malformed schema")
     unknown = set(schema) - ANNOTATIONS - ASSERTIONS
     if unknown:
-        raise ValidationError(f"Unsupported schema keywords: {sorted(unknown)}")
+        raise SchemaDefinitionError(f"Unsupported schema keywords: {sorted(unknown)}")
     document = schema if document is None else document
 
     def check(item, rule, path=location):
@@ -98,11 +103,23 @@ def validate(value, schema, *, base: Path, document=None, location="$", depth=0)
             try:
                 check(value, rule)
                 passed += 1
+            except SchemaDefinitionError:
+                raise
             except ValidationError:
                 pass
         expected = len(schema[keyword]) if keyword == "allOf" else 1
         if (passed != expected if keyword in ("allOf", "oneOf") else passed < expected):
             raise ValidationError(f"{location}: failed {keyword}")
+    if "if" in schema:
+        try:
+            check(value, schema["if"])
+            branch = "then"
+        except SchemaDefinitionError:
+            raise
+        except ValidationError:
+            branch = "else"
+        if branch in schema:
+            check(value, schema[branch])
     if isinstance(value, dict):
         missing = set(schema.get("required", [])) - set(value)
         if missing:
@@ -111,6 +128,8 @@ def validate(value, schema, *, base: Path, document=None, location="$", depth=0)
             raise ValidationError(f"{location}: too few properties")
         properties = schema.get("properties", {})
         for key, item in value.items():
+            if "propertyNames" in schema:
+                check(key, schema["propertyNames"], f"{location} property name {key!r}")
             check(item, properties.get(key, schema.get("additionalProperties", True)), f"{location}.{key}")
     if isinstance(value, list):
         if not schema.get("minItems", 0) <= len(value) <= schema.get("maxItems", math.inf):

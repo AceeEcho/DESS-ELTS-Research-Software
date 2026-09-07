@@ -1,0 +1,46 @@
+{
+  "targetId": "DEV-04.S001",
+  "result": "pass",
+  "evidenceClass": "synthetic_test",
+  "command": "dotnet LoggingChecks; dotnet LoggingThroughputChecks; python -m unittest tools.logging.test_verify_run; python -m tools.logging.verify_run short run; actual Unity EditMode import regression",
+  "summary": "Versioned logging implementation and focused tests are complete; sustained-soak acceptance is the separate DEV-04.V001 verification step.",
+  "checks": [
+    "28 focused logging checks and1232 throughput/fairness checks pass after integration",
+    "5 streaming verifier tamper checks pass; short499-sample run fully verified including1 event and1 target",
+    "Independent Luna review confirms throughput,default-pair andASCII identifier corrections",
+    "Logging assembly imports independently with no UnityEngine reference in exactEditor test",
+    "38 shared progress/schema tests pass with logging condition/property-name vocabulary"
+  ],
+  "limitations": [
+    "Measured1800-second soak is still running and not yet accepted",
+    "No Study-PC full-load disk,real-device,physical or study gate acceptance"
+  ],
+  "schemaVersion": 1,
+  "sourceRevision": "3c09902e72c46eeca47b306fcda79ab117e3a7c9",
+  "recordedAtUtc": "2026-09-07T02:53:59.982287+00:00",
+  "artifactSnapshotSha256": {
+    "unity/Assets/ELTS/Logging/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "unity/Assets/ELTS/Logging/Elts.Logging.asmdef": "126e071c8c6ad918db35a94f5e4ceb007e73575892866e880466b15b79c510c1",
+    "unity/Assets/ELTS/Logging/Elts.Logging.asmdef.meta": "94d5b4ad9c0159bd5743617e39da76cee34b943d4d5c8b027eaeb7bc65860742",
+    "unity/Assets/ELTS/Logging/LoggingContracts.cs": "6555f15124882d97ba6c766c1f4bb42c98b58b173dfc84cd9968c2b5344b634c",
+    "unity/Assets/ELTS/Logging/LoggingContracts.cs.meta": "1191ad876a431b092fed672c499940280cce7bfc1cb17190ab5458f78a5c4689",
+    "unity/Assets/ELTS/Logging/LogJson.cs": "e01522808e30fb5c16eab6e99477662f882b3300f0d53e1ce2f6fee403aa2004",
+    "unity/Assets/ELTS/Logging/LogJson.cs.meta": "28ba45bbbb075342356ed1efdde71cd056bdcfb010e899f4d6e6dc0469846f9a",
+    "unity/Assets/ELTS/Logging/SessionLogWriter.cs": "08ecc3460b7d182016fd413f3b476c092e54e9e50bfdcb261b080075937bd1be",
+    "unity/Assets/ELTS/Logging/SessionLogWriter.cs.meta": "4f147b3c3df9778efac94b18ae81849a1b2b1fca5ec53cde81161bf6d5b98f70",
+    "schemas/logs/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "schemas/logs/events.v1.schema.json": "ea19f8636dfd164959cbd7f1c0eab0f265fbd9eef9e28244636f79e2a8f668ba",
+    "schemas/logs/samples.v1.schema.json": "02c6b3dec8fb9db36c57cdd689a7c90654a34be9d2d2f05c8644397b7a5a2191",
+    "schemas/logs/session-summary.v1.schema.json": "8813c3b2694c3e7c80ebe63a3f9dce1664f5d6268eaa96b21f2c459e38fe62db",
+    "schemas/logs/targets.v1.schema.json": "7e4d9ae6d1e7791fa9f2c7711fad95d4027430846943b960528e2a16baf67028",
+    "tools/runtime-tests/LoggingChecks.cs": "d73edcc10376c0c4a6a53e6a2a5949e0a54e5104b439a80be91b30b3edb5dfe9",
+    "tools/runtime-tests/LoggingChecks.csproj": "77b1682dbaa1bc492dd28873208feebac046ee4d5e7f8352f51dfbb4b56db662",
+    "tools/runtime-tests/LoggingThroughputChecks.cs": "09f817dffb2d19b1e9299047ea2f4ceb9f557ef3db7f2dc63aa0656ff26d7d72",
+    "tools/runtime-tests/LoggingThroughputChecks.csproj": "583c16daa5b7a67e7bc1617fed834c35f819cf7a48d22ec6463f6d07c05b130d",
+    "tools/logging/README.md": "4179dd1f485c8b669f7c8c873595f301e3cc607a7e36eec5693423ea2a5b2a90",
+    "tools/logging/test_verify_run.py": "449792307120983dcef08db81b2afad09016533d87eefabab56db79a3f5506e7",
+    "tools/logging/verify_run.py": "31eb36e9f616fbc89a7c392eb7bda3ef707c73c10031ceea3fffad41ac0df974",
+    "docs/modules/logging.md": "f26ef4bfafbc5d78bdac39e0f827539bc2a2a74716fed9443dad3b89bfc33f58",
+    "diagnostics/dev04-short-verification.json": "5b26c89fcef377ab7d5c1901fd9174c9d68556b13d45a17615560df8d5d79063"
+  }
+}

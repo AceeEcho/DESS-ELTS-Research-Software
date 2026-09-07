@@ -44,7 +44,7 @@
   },
   "validation": {
     "editorInstallation": "verified",
-    "editorRuntime": "verified: URP project import and Windows x64 target; configuration assembly awaits BOOT.S021",
+    "editorRuntime": "verified: implemented ELTS assemblies compile with pinned Unity packages",
     "unityTests": "pending",
     "windowsBuild": "pending",
     "studyMachineBaseline": "pending physical commissioning",

@@ -19,6 +19,29 @@ namespace Elts.Editor
         private static AddAndRemoveRequest changing;
         private static double deadline;
 
+        [Serializable] private sealed class PackagePin { public string id; public string version; public string source; }
+        [Serializable] private sealed class PackagePins { public int schemaVersion; public string unityVersion; public PackagePin[] required; }
+
+        public static void InstallRequired()
+        {
+            string config = Path.GetFullPath(Path.Combine(Application.dataPath, "../../config/unity-packages.json"));
+            var pins = JsonUtility.FromJson<PackagePins>(File.ReadAllText(config));
+            if (pins == null || pins.schemaVersion != 1 || pins.unityVersion != Application.unityVersion
+                || pins.required == null || pins.required.Length != 3 || pins.required.Select(p => p.id).Distinct().Count() != 3)
+                throw new InvalidOperationException("Validate the canonical Unity package configuration before installing.");
+            deadline = EditorApplication.timeSinceStartup + TimeoutSeconds;
+            changing = Client.AddAndRemove(pins.required.Select(p => p.id + "@" + p.version).ToArray(), Array.Empty<string>());
+            EditorApplication.update += PollRequired;
+        }
+
+        private static void PollRequired()
+        {
+            if (EditorApplication.timeSinceStartup > deadline) { Finish(2, "UPM required-package installation timed out"); return; }
+            if (changing == null || !changing.IsCompleted) return;
+            if (changing.Status != StatusCode.Success) { Finish(1, changing.Error.message); return; }
+            Finish(0, "Required packages resolved; run the offline pin audit and a fresh import");
+        }
+
         public static void RemoveXr()
         {
             deadline = EditorApplication.timeSinceStartup + TimeoutSeconds;
@@ -55,6 +78,7 @@ namespace Elts.Editor
         private static void Finish(int code, string message)
         {
             EditorApplication.update -= PollRemoval;
+            EditorApplication.update -= PollRequired;
             Debug.Log("ELTS_UPM_RESULT " + code + " " + message);
             EditorApplication.Exit(code);
         }

@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T01:00:30.365375+00:00",
+  "generatedAtUtc": "2026-09-07T01:28:20.737549+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,14 +11,14 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 50,
-    "eventSetSha256": "447f4eb31aac664f50eb942cdde54b39e58701cc386e204bee595806c2b97cd4"
+    "eventCount": 58,
+    "eventSetSha256": "e10dfe5f58ae6553ef562206e703e09537e09404afc460a9789ac3433747efad"
   },
   "current": {
     "mode": "working",
-    "primaryStepId": "BOOT.S017",
+    "primaryStepId": "BOOT.S018",
     "activeStepIds": [
-      "BOOT.S017"
+      "BOOT.S018"
     ],
     "nextEligibleStepIds": [
       "P0.2.S001",
@@ -26,7 +26,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S017",
       "BOOT.S018",
       "BOOT.S019",
       "BOOT.S020",
@@ -54,9 +53,9 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "BOOT.S017",
+    "primaryStepId": "BOOT.S018",
     "activeStepIds": [
-      "BOOT.S017",
+      "BOOT.S018",
       "DEV-01.S001"
     ],
     "nextEligibleStepIds": [
@@ -65,7 +64,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S017",
       "BOOT.S018",
       "BOOT.S019",
       "BOOT.S020",
@@ -324,18 +322,14 @@
     {
       "owner": "agent:codex-astra",
       "taskId": "P0.3",
-      "atomicStepId": "BOOT.S017",
+      "atomicStepId": "BOOT.S018",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        "config/defaults/",
-        "config/development/",
-        "config/rig/",
-        "config/study/",
-        "config/local.example.json",
-        "config/staging.json",
-        "schemas/config/",
-        "tools/config/",
-        "docs/modules/config-staging.md"
+        "scripts/",
+        "schemas/diagnostics/",
+        "tools/bootstrap/",
+        "docs/operator/developer-quick-start.md",
+        "README.md"
       ]
     },
     {
@@ -375,20 +369,16 @@
     },
     "P0.3": {
       "status": "in_progress",
-      "revision": 49,
-      "lastEventHash": "703daa08b53791741d4a9325e99244d455bcd541e097ebb960f6ca1ab838d3af",
+      "revision": 57,
+      "lastEventHash": "78f9c75ee6067d1c0aba081dccc1d9f15c3c5e85e91b29687f028232d266388e",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        "config/defaults/",
-        "config/development/",
-        "config/local.example.json",
-        "config/rig/",
-        "config/staging.json",
-        "config/study/",
-        "docs/modules/config-staging.md",
-        "schemas/config/",
-        "tools/config/"
+        "README.md",
+        "docs/operator/developer-quick-start.md",
+        "schemas/diagnostics/",
+        "scripts/",
+        "tools/bootstrap/"
       ],
       "evidence": [],
       "blockers": []
@@ -1991,33 +1981,81 @@
       "blockers": []
     },
     "BOOT.S017": {
-      "status": "in_progress",
-      "revision": 49,
-      "lastEventHash": "703daa08b53791741d4a9325e99244d455bcd541e097ebb960f6ca1ab838d3af",
+      "status": "done",
+      "revision": 56,
+      "lastEventHash": "10fc5416153a1095aaf900f269925ce3a2ed86c60f9c772cd86bb503f2360142",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        "config/defaults/",
-        "config/development/",
-        "config/rig/",
-        "config/study/",
-        "config/local.example.json",
-        "config/staging.json",
-        "schemas/config/",
         "tools/config/",
+        "schemas/config/",
         "docs/modules/config-staging.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "basis-remediation",
+          "path": "project-management/progress/evidence/BOOT.S017-remediation.json",
+          "sha256": "414e557a3e76c1232754494dabb8297b98d5c0f52ef35b4d1c922aff2a4a77dd",
+          "targetIds": [
+            "BOOT.S017",
+            "BOOT.S018"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "blocker-resolution"
+          ],
+          "class": "automated_test",
+          "command": "python -m unittest tools.config.test_stage -v; dotnet run ConfigChecks; dotnet run GeometryChecks; dotnet run ConfigChecks (exact project paths and Unity Newtonsoft reference)",
+          "result": "pass",
+          "sourceRevision": "c444010009eb1eb79ab7461a52aec49e5fd0c55e",
+          "recordedAtUtc": "2026-09-07T01:27:55.284756+00:00",
+          "limitations": [
+            "Symlink creation cases skipped because Windows host denies creating symlinks",
+            "Numerical synthetic checks only; no measured geometry or physical acceptance"
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S018": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "in_progress",
+      "revision": 57,
+      "lastEventHash": "78f9c75ee6067d1c0aba081dccc1d9f15c3c5e85e91b29687f028232d266388e",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "scripts/",
+        "schemas/diagnostics/",
+        "tools/bootstrap/",
+        "docs/operator/developer-quick-start.md",
+        "README.md"
+      ],
+      "evidence": [
+        {
+          "id": "basis-remediation",
+          "path": "project-management/progress/evidence/BOOT.S017-remediation.json",
+          "sha256": "414e557a3e76c1232754494dabb8297b98d5c0f52ef35b4d1c922aff2a4a77dd",
+          "targetIds": [
+            "BOOT.S017",
+            "BOOT.S018"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "blocker-resolution"
+          ],
+          "class": "automated_test",
+          "command": "python -m unittest tools.config.test_stage -v; dotnet run ConfigChecks; dotnet run GeometryChecks; dotnet run ConfigChecks (exact project paths and Unity Newtonsoft reference)",
+          "result": "pass",
+          "sourceRevision": "c444010009eb1eb79ab7461a52aec49e5fd0c55e",
+          "recordedAtUtc": "2026-09-07T01:27:55.284756+00:00",
+          "limitations": [
+            "Symlink creation cases skipped because Windows host denies creating symlinks",
+            "Numerical synthetic checks only; no measured geometry or physical acceptance"
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S019": {
@@ -4793,8 +4831,8 @@
   },
   "chains": {
     "task:P0.3": {
-      "revision": 49,
-      "hash": "703daa08b53791741d4a9325e99244d455bcd541e097ebb960f6ca1ab838d3af"
+      "revision": 57,
+      "hash": "78f9c75ee6067d1c0aba081dccc1d9f15c3c5e85e91b29687f028232d266388e"
     },
     "task:DEV-01": {
       "revision": 1,

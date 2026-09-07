@@ -1,0 +1,46 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "9de2fc20-1255-4fd1-a8d3-f523667ab83c",
+  "eventType": "reopened",
+  "recordedAtUtc": "2026-09-07T01:23:25.543026+00:00",
+  "occurredAtUtc": "2026-09-07T01:23:25.543026+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S017"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "done",
+  "toStatus": "in_progress",
+  "taskRevision": 54,
+  "previousTaskEventHash": "e5881d7a8808f9215a5ee8c7597fe968334555414cfbba0113786ba9ea727db8",
+  "causalEventHashes": [
+    "9dd0e60e40e368e777b7628ead17ec932106650a77ce363f92152e7fe7e6d868",
+    "e5881d7a8808f9215a5ee8c7597fe968334555414cfbba0113786ba9ea727db8"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "tools/config/",
+    "schemas/config/",
+    "docs/modules/config-staging.md"
+  ],
+  "expectedChecks": [
+    "Staging/runtime near-orthogonal boundary parity",
+    "Configuration suites and idempotence"
+  ],
+  "stopConditions": [
+    "Mismatch persists"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "Reopen staging for independent review finding: Python accepted a basis rejected by the C# runtime.",
+  "approval": null,
+  "handoffTo": null
+}

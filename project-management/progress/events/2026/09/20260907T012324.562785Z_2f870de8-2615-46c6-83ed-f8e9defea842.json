@@ -1,0 +1,50 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "2f870de8-2615-46c6-83ed-f8e9defea842",
+  "eventType": "blocked",
+  "recordedAtUtc": "2026-09-07T01:23:24.562785+00:00",
+  "occurredAtUtc": "2026-09-07T01:23:24.562785+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S018"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "in_progress",
+  "toStatus": "blocked",
+  "taskRevision": 53,
+  "previousTaskEventHash": "28199fcc8eb4c3d1331d0bf1cbfaa30a3fb2616aa1977477590964c13b554bd4",
+  "causalEventHashes": [
+    "28199fcc8eb4c3d1331d0bf1cbfaa30a3fb2616aa1977477590964c13b554bd4",
+    "9dd0e60e40e368e777b7628ead17ec932106650a77ce363f92152e7fe7e6d868"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "scripts/",
+    "schemas/diagnostics/",
+    "tools/bootstrap/",
+    "docs/operator/developer-quick-start.md",
+    "README.md"
+  ],
+  "expectedChecks": [],
+  "stopConditions": [],
+  "evidence": [],
+  "blockers": [
+    {
+      "id": "FIX-config-basis-parity",
+      "reason": "Python staging tolerance was looser than C# loader; independently reproduced by review",
+      "requiredAction": "Align predicates and rerun staging/runtime boundary checks before resuming bootstrap scripts",
+      "responsibleRole": "coordinator"
+    }
+  ],
+  "note": "Pause dependent script acceptance while correcting newly observed staging/runtime geometry tolerance mismatch.",
+  "approval": null,
+  "handoffTo": null
+}

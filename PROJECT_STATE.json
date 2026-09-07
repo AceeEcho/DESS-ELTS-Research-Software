@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T01:41:55.348469+00:00",
+  "generatedAtUtc": "2026-09-07T02:08:26.566541+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,14 +11,14 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 77,
-    "eventSetSha256": "4d4647f1dc1d8f62a013f9791e6905f58d7c871554fef6708ff4aa12419e0be0"
+    "eventCount": 90,
+    "eventSetSha256": "3650d9c0878fe09ceaf2d180e8741883a23767b65a52d8add4d83b58ae30fac3"
   },
   "current": {
     "mode": "working",
-    "primaryStepId": "BOOT.S019",
+    "primaryStepId": "BOOT.S021",
     "activeStepIds": [
-      "BOOT.S019"
+      "BOOT.S021"
     ],
     "nextEligibleStepIds": [
       "P0.2.S001",
@@ -26,8 +26,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S019",
-      "BOOT.S020",
       "BOOT.S021",
       "BOOT.S022",
       "BOOT.S023",
@@ -52,10 +50,10 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "BOOT.S019",
+    "primaryStepId": "BOOT.S021",
     "activeStepIds": [
-      "BOOT.S019",
-      "DEV-03.S001"
+      "BOOT.S021",
+      "DEV-04.S001"
     ],
     "nextEligibleStepIds": [
       "P0.2.S001",
@@ -63,8 +61,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S019",
-      "BOOT.S020",
       "BOOT.S021",
       "BOOT.S022",
       "BOOT.S023",
@@ -86,8 +82,6 @@
       "D-14",
       "D-16",
       "D-17",
-      "DEV-03",
-      "DEV-03.S001",
       "DEV-04",
       "DEV-04.S001",
       "DEV-05",
@@ -316,26 +310,29 @@
     {
       "owner": "agent:codex-astra",
       "taskId": "P0.3",
-      "atomicStepId": "BOOT.S019",
+      "atomicStepId": "BOOT.S021",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        "unity/ProjectSettings/",
+        "config/unity-packages.json",
+        "schemas/build/unity-packages.schema.json",
         "unity/Packages/",
-        "unity/Assets/Settings/",
-        "unity/Assets/Scenes/",
-        "unity/Assets/Editor/ProjectBootstrap/"
+        "unity/Assets/Editor/ProjectBootstrap/",
+        "tools/dependencies/verify_unity_packages.py",
+        "docs/modules/unity-packages.md"
       ]
     },
     {
       "owner": "agent:codex-astra",
-      "taskId": "DEV-03",
-      "atomicStepId": "DEV-03.S001",
-      "branch": "work/dev03-synthetic-tracking",
+      "taskId": "DEV-04",
+      "atomicStepId": "DEV-04.S001",
+      "branch": "work/dev04-logging",
       "claimedPaths": [
-        "unity/Assets/ELTS/Tracking/SyntheticTrackingSource.cs",
-        "tools/runtime-tests/SyntheticTrackingChecks.cs",
-        "tools/runtime-tests/SyntheticTrackingChecks.csproj",
-        "docs/modules/synthetic-tracking.md"
+        "unity/Assets/ELTS/Logging/",
+        "schemas/logs/",
+        "tools/runtime-tests/LoggingChecks.cs",
+        "tools/runtime-tests/LoggingChecks.csproj",
+        "tools/logging/",
+        "docs/modules/logging.md"
       ]
     }
   ],
@@ -362,16 +359,17 @@
     },
     "P0.3": {
       "status": "in_progress",
-      "revision": 60,
-      "lastEventHash": "dddd1570ac71751853c8db1aef438cf6fa280949fb33739bef03a14cbb194e9a",
+      "revision": 66,
+      "lastEventHash": "0179fadda6bd748fc32b828bdadc02da4172a7c5c0738df4d906fbdb2ebb4293",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
+        "config/unity-packages.json",
+        "docs/modules/unity-packages.md",
+        "schemas/build/unity-packages.schema.json",
+        "tools/dependencies/verify_unity_packages.py",
         "unity/Assets/Editor/ProjectBootstrap/",
-        "unity/Assets/Scenes/",
-        "unity/Assets/Settings/",
-        "unity/Packages/",
-        "unity/ProjectSettings/"
+        "unity/Packages/"
       ],
       "evidence": [],
       "blockers": []
@@ -1332,27 +1330,56 @@
       "blockers": []
     },
     "DEV-03": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "5b143014aae1f41e1fa289a203e0a65a69f8d18d5d41d230640ca5fc0f432c4b",
+      "status": "done",
+      "revision": 7,
+      "lastEventHash": "b456cff38d75cf98ff4a0017df409acc3f081e2f63c9346ba259914888548a5f",
       "owner": "agent:codex-astra",
       "branch": "work/dev03-synthetic-tracking",
-      "claimedPaths": [
-        "docs/modules/synthetic-tracking.md",
-        "tools/runtime-tests/SyntheticTrackingChecks.cs",
-        "tools/runtime-tests/SyntheticTrackingChecks.csproj",
-        "unity/Assets/ELTS/Tracking/SyntheticTrackingSource.cs"
+      "claimedPaths": [],
+      "evidence": [
+        {
+          "id": "DEV-03-acceptance",
+          "path": "project-management/progress/evidence/DEV-03.json",
+          "sha256": "54d80499db62339da344ee09153f6c65fb4cad5716effc0e5e8673430be297e8",
+          "targetIds": [
+            "DEV-03.S001",
+            "DEV-03.V001",
+            "DEV-03"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "dotnet run --project tools/runtime-tests/SyntheticTrackingChecks.csproj; dotnet run --project tools/runtime-tests/Dev03ReviewChecks.csproj; dotnet build tools/runtime-tests/Dev03UnityCompatibility.csproj --verbosity quiet",
+          "result": "pass",
+          "sourceRevision": "4bec3598a8d9d3fb4b3821644b10ba3143d556b4",
+          "recordedAtUtc": "2026-09-07T02:07:56.888178+00:00",
+          "limitations": [
+            "Synthetic motion/dropout/trigger fixtures only; real serial/reconnect, polling jitter, occlusion and coordinate spikes deferred because testing equipment unavailable",
+            "Rendering prediction is absent from this source and must remain separate in the later renderer",
+            "Unity imported the prior timing-corrected source during OpenVR compilation; final Unity tests/build are separate bootstrap evidence",
+            "No physical calibration, study parameters or gate acceptance"
+          ]
+        }
       ],
-      "evidence": [],
       "blockers": []
     },
     "DEV-04": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "a13b48c990029ad9018e570d32d312d78f2390f4b3b4db7df8bc4f1488e471d8",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev04-logging",
+      "claimedPaths": [
+        "docs/modules/logging.md",
+        "schemas/logs/",
+        "tools/logging/",
+        "tools/runtime-tests/LoggingChecks.cs",
+        "tools/runtime-tests/LoggingChecks.csproj",
+        "unity/Assets/ELTS/Logging/"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -2106,9 +2133,9 @@
       "blockers": []
     },
     "BOOT.S019": {
-      "status": "in_progress",
-      "revision": 60,
-      "lastEventHash": "dddd1570ac71751853c8db1aef438cf6fa280949fb33739bef03a14cbb194e9a",
+      "status": "done",
+      "revision": 62,
+      "lastEventHash": "04e8ce5bcb31266da838b7dad7815ad606ef3229aa484b8cd907cabebcf9a169",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
@@ -2118,26 +2145,85 @@
         "unity/Assets/Scenes/",
         "unity/Assets/Editor/ProjectBootstrap/"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "BOOT.S019-BOOT.S019",
+          "path": "project-management/progress/evidence/BOOT.S019.json",
+          "sha256": "09490a2311f63fb59f34b78d3e1d1e11958f151265fb43a6e5e51730bf299174",
+          "targetIds": [
+            "BOOT.S019"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "toolchain_runtime",
+          "command": "Unity CLI projects create --editor-version 6000.3.23f1 --template com.unity.template.urp-blank; Unity -batchmode -nographics -executeMethod Elts.Editor.PackageSetup.RemoveXr; Unity -batchmode -nographics -quit -executeMethod Elts.Editor.ProjectSetup.Configure",
+          "result": "pass",
+          "sourceRevision": "a657868f5c1e65207bd4f34e81e53171be869da2",
+          "recordedAtUtc": "2026-09-07T01:52:19.125786+00:00",
+          "limitations": [
+            "Config assembly intentionally constrained until pinned Newtonsoft dependency at BOOT.S021; standalone ConfigChecks already passed but Unity Config compilation not claimed here",
+            "EditMode/PlayMode tests and Windows standalone build remain later bootstrap steps",
+            "No physical equipment, actual display/SteamVR or gate acceptance"
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S020": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 65,
+      "lastEventHash": "adc5bc5c7f3532dee8ed0900a2f646f4fd5bf65f059e692c638dc155d69f882b",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "unity/Assets/ThirdParty/OpenVR/",
+        "unity/Assets/Editor/ProjectBootstrap/",
+        "tools/dependencies/",
+        "docs/modules/openvr-dependency.md"
+      ],
+      "evidence": [
+        {
+          "id": "BOOT.S020-BOOT.S020",
+          "path": "project-management/progress/evidence/BOOT.S020.json",
+          "sha256": "bb0ebc494fd11620b291800cd4a0e16586fa09e04592832b6f2f63886277ea41",
+          "targetIds": [
+            "BOOT.S020"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "toolchain_runtime",
+          "command": "python tools/dependencies/verify_openvr.py; python -m unittest tools.dependencies.test_openvr -v; Unity -batchmode -nographics -quit -executeMethod Elts.Editor.OpenVrImporter.Configure",
+          "result": "pass",
+          "sourceRevision": "4bec3598a8d9d3fb4b3821644b10ba3143d556b4",
+          "recordedAtUtc": "2026-09-07T02:03:03.762002+00:00",
+          "limitations": [
+            "Vendoring/compilation only; no OpenVR initialization or native ABI calls performed",
+            "SteamVR, device serials/reconnect/polling/trigger/calibration/physical safety remain unverified",
+            "Synthetic source does not reference or initialize Valve.OpenVR",
+            "Upstream convenience matrix conversions excluded from ELTS adapter use; Tracking owns validated conversion"
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S021": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 66,
+      "lastEventHash": "0179fadda6bd748fc32b828bdadc02da4172a7c5c0738df4d906fbdb2ebb4293",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "config/unity-packages.json",
+        "schemas/build/unity-packages.schema.json",
+        "unity/Packages/",
+        "unity/Assets/Editor/ProjectBootstrap/",
+        "tools/dependencies/verify_unity_packages.py",
+        "docs/modules/unity-packages.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -2358,9 +2444,9 @@
       "blockers": []
     },
     "DEV-03.S001": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "5b143014aae1f41e1fa289a203e0a65a69f8d18d5d41d230640ca5fc0f432c4b",
+      "status": "done",
+      "revision": 3,
+      "lastEventHash": "637bdc6bf2cb5b70452d3d856959bda97692c73cd1a7f3354745792d5d11532b",
       "owner": "agent:codex-astra",
       "branch": "work/dev03-synthetic-tracking",
       "claimedPaths": [
@@ -2369,26 +2455,89 @@
         "tools/runtime-tests/SyntheticTrackingChecks.csproj",
         "docs/modules/synthetic-tracking.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "DEV-03-acceptance",
+          "path": "project-management/progress/evidence/DEV-03.json",
+          "sha256": "54d80499db62339da344ee09153f6c65fb4cad5716effc0e5e8673430be297e8",
+          "targetIds": [
+            "DEV-03.S001",
+            "DEV-03.V001",
+            "DEV-03"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "dotnet run --project tools/runtime-tests/SyntheticTrackingChecks.csproj; dotnet run --project tools/runtime-tests/Dev03ReviewChecks.csproj; dotnet build tools/runtime-tests/Dev03UnityCompatibility.csproj --verbosity quiet",
+          "result": "pass",
+          "sourceRevision": "4bec3598a8d9d3fb4b3821644b10ba3143d556b4",
+          "recordedAtUtc": "2026-09-07T02:07:56.888178+00:00",
+          "limitations": [
+            "Synthetic motion/dropout/trigger fixtures only; real serial/reconnect, polling jitter, occlusion and coordinate spikes deferred because testing equipment unavailable",
+            "Rendering prediction is absent from this source and must remain separate in the later renderer",
+            "Unity imported the prior timing-corrected source during OpenVR compilation; final Unity tests/build are separate bootstrap evidence",
+            "No physical calibration, study parameters or gate acceptance"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-03.V001": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 6,
+      "lastEventHash": "b3e3bf1272bd383ad69971efbf7fe1eabfd64517149f23b9361025b3d2bb4429",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev03-synthetic-tracking",
+      "claimedPaths": [
+        "docs/modules/synthetic-tracking.md"
+      ],
+      "evidence": [
+        {
+          "id": "DEV-03-acceptance",
+          "path": "project-management/progress/evidence/DEV-03.json",
+          "sha256": "54d80499db62339da344ee09153f6c65fb4cad5716effc0e5e8673430be297e8",
+          "targetIds": [
+            "DEV-03.S001",
+            "DEV-03.V001",
+            "DEV-03"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "dotnet run --project tools/runtime-tests/SyntheticTrackingChecks.csproj; dotnet run --project tools/runtime-tests/Dev03ReviewChecks.csproj; dotnet build tools/runtime-tests/Dev03UnityCompatibility.csproj --verbosity quiet",
+          "result": "pass",
+          "sourceRevision": "4bec3598a8d9d3fb4b3821644b10ba3143d556b4",
+          "recordedAtUtc": "2026-09-07T02:07:56.888178+00:00",
+          "limitations": [
+            "Synthetic motion/dropout/trigger fixtures only; real serial/reconnect, polling jitter, occlusion and coordinate spikes deferred because testing equipment unavailable",
+            "Rendering prediction is absent from this source and must remain separate in the later renderer",
+            "Unity imported the prior timing-corrected source during OpenVR compilation; final Unity tests/build are separate bootstrap evidence",
+            "No physical calibration, study parameters or gate acceptance"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-04.S001": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "a13b48c990029ad9018e570d32d312d78f2390f4b3b4db7df8bc4f1488e471d8",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev04-logging",
+      "claimedPaths": [
+        "unity/Assets/ELTS/Logging/",
+        "schemas/logs/",
+        "tools/runtime-tests/LoggingChecks.cs",
+        "tools/runtime-tests/LoggingChecks.csproj",
+        "tools/logging/",
+        "docs/modules/logging.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -5009,8 +5158,8 @@
   },
   "chains": {
     "task:P0.3": {
-      "revision": 60,
-      "hash": "dddd1570ac71751853c8db1aef438cf6fa280949fb33739bef03a14cbb194e9a"
+      "revision": 66,
+      "hash": "0179fadda6bd748fc32b828bdadc02da4172a7c5c0738df4d906fbdb2ebb4293"
     },
     "task:DEV-01": {
       "revision": 7,
@@ -5021,8 +5170,12 @@
       "hash": "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d"
     },
     "task:DEV-03": {
+      "revision": 7,
+      "hash": "b456cff38d75cf98ff4a0017df409acc3f081e2f63c9346ba259914888548a5f"
+    },
+    "task:DEV-04": {
       "revision": 1,
-      "hash": "5b143014aae1f41e1fa289a203e0a65a69f8d18d5d41d230640ca5fc0f432c4b"
+      "hash": "a13b48c990029ad9018e570d32d312d78f2390f4b3b4db7df8bc4f1488e471d8"
     }
   },
   "integrity": {

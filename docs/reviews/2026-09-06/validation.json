@@ -1,0 +1,69 @@
+{
+  "tasks": {
+    "count": 91,
+    "expected": 91,
+    "unique": 91,
+    "pass": true
+  },
+  "atomic_steps": {
+    "count": 243,
+    "expected": 243,
+    "unique": 243,
+    "pass": true
+  },
+  "decisions": {
+    "count": 18,
+    "expected": 18,
+    "unique": 18,
+    "pass": true
+  },
+  "gate_criteria": {
+    "count": 62,
+    "expected": 62,
+    "unique": 62,
+    "pass": true
+  },
+  "dependencies": {
+    "count": 360,
+    "expected": 360,
+    "unique": 360,
+    "pass": true
+  },
+  "requirements": {
+    "count": 108,
+    "expected": 108,
+    "unique": 108,
+    "pass": true
+  },
+  "risks": {
+    "count": 26,
+    "expected": 26,
+    "unique": 26,
+    "pass": true
+  },
+  "task_cycle_components": [
+    [
+      "P2.1",
+      "P2.2",
+      "P2.9"
+    ],
+    [
+      "P2.1",
+      "P2.9"
+    ],
+    [
+      "P2.2",
+      "P2.9"
+    ],
+    [
+      "P2.9"
+    ]
+  ],
+  "self_edges": [
+    "DEP-0081"
+  ],
+  "source_hashes": {
+    "ELTS_Implementation_and_Progress_Workbook.xlsx": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
+    "ELTS_Repository_Portability_and_Multi_LLM_Architecture_Specification.docx": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a"
+  }
+}

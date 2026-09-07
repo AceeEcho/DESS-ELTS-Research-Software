@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "unityVersion": {"const": "6000.3.23f1"},
+    "required": {
+      "type": "array", "minItems": 3, "maxItems": 3,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {"enum": ["com.unity.render-pipelines.universal", "com.unity.nuget.newtonsoft-json", "com.unity.test-framework"]},
+          "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+          "source": {"enum": ["builtin", "registry"]}
+        },
+        "required": ["id", "version", "source"], "additionalProperties": false
+      }
+    }
+  },
+  "required": ["schemaVersion", "unityVersion", "required"], "additionalProperties": false
+}

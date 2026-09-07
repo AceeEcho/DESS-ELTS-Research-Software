@@ -171,6 +171,9 @@ def run(args) -> tuple[dict, Path]:
         if args.action in {"bootstrap", "doctor"}:
             command("plan", py + ["tools/plan/build_plan.py", "--check"])
             command("progress", py + ["tools/progress/validate.py"])
+            for audit in ("verify_openvr.py", "verify_unity_packages.py"):
+                if (ROOT / "tools/dependencies" / audit).is_file():
+                    command(audit.removesuffix(".py"), py + ["tools/dependencies/" + audit])
             if args.action == "bootstrap":
                 # Never overwrite a machine's local configuration. The stager
                 # validates an existing file or rejects it with an exact error.
@@ -202,7 +205,7 @@ def run(args) -> tuple[dict, Path]:
 
         elif args.action == "test":
             selected = args.suite
-            for suite, folder in (("plan", "tools/plan"), ("progress", "tools/progress"), ("config", "tools/config"), ("bootstrap", "tools/bootstrap")):
+            for suite, folder in (("plan", "tools/plan"), ("progress", "tools/progress"), ("config", "tools/config"), ("bootstrap", "tools/bootstrap"), ("dependencies", "tools/dependencies")):
                 if selected in {"all", "baseline", suite}:
                     command(suite, py + ["-m", "unittest", "discover", "-s", folder, "-p", "test_*.py", "-v"])
             if selected in {"all", "geometry", "runtime"}:
@@ -215,8 +218,20 @@ def run(args) -> tuple[dict, Path]:
                         raise ValueError("Runtime config console tests need the verified Editor Newtonsoft assembly")
                     stage(ROOT)
                     json_dll = editor.parent / "Data/Managed/Newtonsoft.Json.dll"
+                    pins_path = ROOT / "config/unity-packages.json"
+                    if pins_path.is_file():
+                        pins = load_json(pins_path)
+                        version = next(p["version"] for p in pins["required"] if p["id"] == "com.unity.nuget.newtonsoft-json")
+                        candidates = [p for p in (ROOT / "unity/Library/PackageCache").glob("com.unity.nuget.newtonsoft-json@*/Runtime/Newtonsoft.Json.dll")
+                                      if load_json(p.parent.parent / "package.json")["version"] == version]
+                        if len(candidates) != 1:
+                            raise ValueError("Import the project to resolve exactly one pinned Newtonsoft runtime assembly")
+                        json_dll = candidates[0]
                     command("runtime-config", [dotnet, "run", "--project", "tools/runtime-tests/ConfigChecks.csproj",
                             "-p:NewtonsoftPath=" + str(json_dll), "--", str(ROOT / "unity/Assets/StreamingAssets/config-generated")], expected_output=" configuration checks")
+                    for project, banner in (("TrackingChecks", " tracking checks"), ("SyntheticTrackingChecks", " synthetic tracking checks"), ("Dev03ReviewChecks", "DEV-03 review regressions")):
+                        if (ROOT / "tools/runtime-tests" / (project + ".csproj")).is_file():
+                            command(project, [dotnet, "run", "--project", "tools/runtime-tests/" + project + ".csproj"], expected_output=banner)
             if selected in {"all", "unity-edit", "unity-play"}:
                 smoke = ROOT / "unity/Assets/Tests/EditMode/Elts.EditModeTests.asmdef"
                 if not editor or not smoke.is_file():

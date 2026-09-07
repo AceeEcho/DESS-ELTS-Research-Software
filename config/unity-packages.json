@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "unityVersion": "6000.3.23f1",
+  "required": [
+    {"id": "com.unity.render-pipelines.universal", "version": "17.3.0", "source": "builtin"},
+    {"id": "com.unity.nuget.newtonsoft-json", "version": "3.2.2", "source": "registry"},
+    {"id": "com.unity.test-framework", "version": "1.6.0", "source": "builtin"}
+  ]
+}

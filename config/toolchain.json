@@ -45,7 +45,7 @@
   "validation": {
     "editorInstallation": "verified",
     "editorRuntime": "verified: implemented ELTS assemblies compile with pinned Unity packages",
-    "unityTests": "pending",
+    "unityTests": "verified: batch EditMode 2 passed and PlayMode 1 passed on selected Editor",
     "windowsBuild": "pending",
     "studyMachineBaseline": "pending physical commissioning",
     "jetsonBaseline": "pending device inspection"

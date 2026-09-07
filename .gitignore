@@ -1,0 +1,34 @@
+# Generated caches/builds; original committed deliverables remain preserved.
+**/__pycache__/
+*.py[cod]
+.venv/
+**/bin/
+**/obj/
+.vs/
+.vscode/
+.DS_Store
+Thumbs.db
+/unity/[Ll]ibrary/
+/unity/[Tt]emp/
+/unity/[Oo]bj/
+/unity/[Ll]ogs/
+/unity/[Uu]ser[Ss]ettings/
+/unity/[Bb]uild*/
+/unity/[Mm]emoryCaptures/
+/unity/[Rr]ecordings/
+/unity/*.csproj
+/unity/*.sln*
+/unity/Assets/StreamingAssets/config-generated/
+/config/local/
+/config/local.json
+/build/
+/release/
+/test-results/
+/diagnostics/
+/data/
+# Raw research/private deployment inputs must never enter source control.
+*.ulf
+*.pfx
+*.pem
+.env
+.env.*

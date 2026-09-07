@@ -1,0 +1,49 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "b2d1308f-f17c-4f91-8beb-74f78c233c1a",
+  "eventType": "task_started",
+  "recordedAtUtc": "2026-09-07T01:31:02.656321+00:00",
+  "occurredAtUtc": "2026-09-07T01:31:02.656321+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "DEV-02.S001"
+  },
+  "taskId": "DEV-02",
+  "fromStatus": "ready",
+  "toStatus": "in_progress",
+  "taskRevision": 1,
+  "previousTaskEventHash": null,
+  "causalEventHashes": [
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "78f9c75ee6067d1c0aba081dccc1d9f15c3c5e85e91b29687f028232d266388e"
+  ],
+  "branch": "work/dev02-clock-tracking",
+  "claimedPaths": [
+    "unity/Assets/ELTS/Tracking/",
+    "unity/Assets/ELTS/Time/",
+    "tools/runtime-tests/TrackingChecks.cs",
+    "tools/runtime-tests/TrackingChecks.csproj",
+    "docs/modules/tracking.md"
+  ],
+  "expectedChecks": [
+    "Shared monotonic clock and startup UTC anchor",
+    "Validity-bearing sample contracts and deterministic clock tests"
+  ],
+  "stopConditions": [
+    "Missing exact contract",
+    "Numerical or temporal invariants fail"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "Eligible DEV-02 starts after verified DEV-01; delegate bounded implementation in isolated worktree.",
+  "approval": null,
+  "handoffTo": null
+}

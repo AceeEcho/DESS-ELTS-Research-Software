@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T02:12:18.913032+00:00",
+  "generatedAtUtc": "2026-09-07T02:17:29.409345+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,14 +11,14 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 93,
-    "eventSetSha256": "b18f4e38e430b6e5b7f4753ffa21a8017b678ccd0a397d5a13d513f07ebb6aaa"
+    "eventCount": 96,
+    "eventSetSha256": "aaa83107b122ed419d7009c8a5ddc72bbfe9ac02b8e9cd8f1296f0c02b7c3ffa"
   },
   "current": {
     "mode": "working",
-    "primaryStepId": "BOOT.S022",
+    "primaryStepId": "BOOT.S023",
     "activeStepIds": [
-      "BOOT.S022"
+      "BOOT.S023"
     ],
     "nextEligibleStepIds": [
       "P0.2.S001",
@@ -26,7 +26,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S022",
       "BOOT.S023",
       "BOOT.S024",
       "BOOT.S025",
@@ -49,9 +48,9 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "BOOT.S022",
+    "primaryStepId": "BOOT.S023",
     "activeStepIds": [
-      "BOOT.S022",
+      "BOOT.S023",
       "DEV-04.S001"
     ],
     "nextEligibleStepIds": [
@@ -60,7 +59,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S022",
       "BOOT.S023",
       "BOOT.S024",
       "BOOT.S025",
@@ -308,12 +306,13 @@
     {
       "owner": "agent:codex-astra",
       "taskId": "P0.3",
-      "atomicStepId": "BOOT.S022",
+      "atomicStepId": "BOOT.S023",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        "unity/Assets/Tests/",
-        "tools/bootstrap/driver.py",
-        "docs/modules/unity-tests.md"
+        "unity/Assets/Editor/EltsBuild",
+        "tools/build",
+        "schemas/build",
+        "docs/modules/windows-build.md"
       ]
     },
     {
@@ -354,14 +353,15 @@
     },
     "P0.3": {
       "status": "in_progress",
-      "revision": 69,
-      "lastEventHash": "0cde2d020a0b1e9a260e1601859a62bc27988dd31454dc097f6307bcacd02027",
+      "revision": 72,
+      "lastEventHash": "86399758c0796e018000074aaf602891f25df951a01eb334f235f5147a1c6406",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        "docs/modules/unity-tests.md",
-        "tools/bootstrap/driver.py",
-        "unity/Assets/Tests/"
+        "docs/modules/windows-build.md",
+        "schemas/build",
+        "tools/build",
+        "unity/Assets/Editor/EltsBuild"
       ],
       "evidence": [],
       "blockers": []
@@ -2242,9 +2242,9 @@
       "blockers": []
     },
     "BOOT.S022": {
-      "status": "in_progress",
-      "revision": 69,
-      "lastEventHash": "0cde2d020a0b1e9a260e1601859a62bc27988dd31454dc097f6307bcacd02027",
+      "status": "done",
+      "revision": 71,
+      "lastEventHash": "c4b3730452d9434bb87c8fae093a832f17b9582bfa9458784d782bb1d08b130d",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
@@ -2252,16 +2252,43 @@
         "tools/bootstrap/driver.py",
         "docs/modules/unity-tests.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "BOOT.S022-BOOT.S022",
+          "path": "project-management/progress/evidence/BOOT.S022.json",
+          "sha256": "9913ecc0eb44176d754b393c0d79844df2f877eb984688ff745a0b4f95eefcf4",
+          "targetIds": [
+            "BOOT.S022"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "toolchain_runtime",
+          "command": "scripts/test.ps1 -Suite unity-edit; scripts/test.ps1 -Suite unity-play",
+          "result": "pass",
+          "sourceRevision": "0fffef5684d8fd1a2ae5de60851f4843ac0a9eeb",
+          "recordedAtUtc": "2026-09-07T02:17:23.540572+00:00",
+          "limitations": [
+            "Manual acquisition clock does not measure runtime cadence or physical tracking",
+            "No physical, safety or study gate acceptance"
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S023": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 72,
+      "lastEventHash": "86399758c0796e018000074aaf602891f25df951a01eb334f235f5147a1c6406",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "unity/Assets/Editor/EltsBuild",
+        "tools/build",
+        "schemas/build",
+        "docs/modules/windows-build.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -5176,8 +5203,8 @@
   },
   "chains": {
     "task:P0.3": {
-      "revision": 69,
-      "hash": "0cde2d020a0b1e9a260e1601859a62bc27988dd31454dc097f6307bcacd02027"
+      "revision": 72,
+      "hash": "86399758c0796e018000074aaf602891f25df951a01eb334f235f5147a1c6406"
     },
     "task:DEV-01": {
       "revision": 7,

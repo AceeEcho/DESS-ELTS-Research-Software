@@ -1,1 +1,67 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","additionalProperties":false,"required":["schemaVersion","trackingSource","sampleRateHz","loggedPredictionSeconds","renderHeadPredictionSeconds","triggerLockoutSeconds","sampleQueueCapacity","eventQueueCapacity","logFlushSeconds","diagnosticIntervalSeconds"],"properties":{"schemaVersion":{"const":1},"trackingSource":{"const":"synthetic"},"sampleRateHz":{"type":"number","exclusiveMinimum":0,"maximum":2000},"loggedPredictionSeconds":{"const":0},"renderHeadPredictionSeconds":{"type":"number","minimum":0,"maximum":0.05},"triggerLockoutSeconds":{"type":"number","exclusiveMinimum":0,"maximum":10},"sampleQueueCapacity":{"type":"integer","exclusiveMinimum":0,"maximum":10000000},"eventQueueCapacity":{"type":"integer","exclusiveMinimum":0,"maximum":10000000},"logFlushSeconds":{"type":"number","exclusiveMinimum":0,"maximum":3600},"diagnosticIntervalSeconds":{"type":"number","exclusiveMinimum":0,"maximum":3600}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "trackingSource",
+    "sampleRateHz",
+    "loggedPredictionSeconds",
+    "renderHeadPredictionSeconds",
+    "triggerLockoutSeconds",
+    "sampleQueueCapacity",
+    "eventQueueCapacity",
+    "logFlushSeconds",
+    "diagnosticIntervalSeconds"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "trackingSource": {
+      "const": "synthetic"
+    },
+    "sampleRateHz": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 2000,
+      "minimum": 1
+    },
+    "loggedPredictionSeconds": {
+      "const": 0
+    },
+    "renderHeadPredictionSeconds": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.05
+    },
+    "triggerLockoutSeconds": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 10,
+      "minimum": 0.001
+    },
+    "sampleQueueCapacity": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 10000000
+    },
+    "eventQueueCapacity": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 10000000
+    },
+    "logFlushSeconds": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 3600,
+      "minimum": 0.001
+    },
+    "diagnosticIntervalSeconds": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 3600,
+      "minimum": 0.001
+    }
+  }
+}

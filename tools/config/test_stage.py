@@ -20,12 +20,13 @@ class StageTests(unittest.TestCase):
     def test_write_check_is_deterministic_and_manifest_is_consumer_contract(self):
         with tempfile.TemporaryDirectory() as temp:
             root = fixture_root(Path(temp)); out = root / "unity/Assets/StreamingAssets/config-generated"
-            first = stage(root); bytes1 = {p: p.read_bytes() for p in first}; mtimes = {p: p.stat().st_mtime_ns for p in first}
+            first = stage(root); bytes1 = {p: p.read_bytes() for p in first}; mtimes = {p: p.stat().st_mtime_ns for p in first}; stage(root)
             stage(root, check=True)
             self.assertEqual(bytes1, {p: p.read_bytes() for p in first}); self.assertEqual(mtimes, {p: p.stat().st_mtime_ns for p in first})
             manifest = json.loads((out / "manifest.json").read_text())
-            self.assertEqual(set(manifest), {"schemaVersion", "mode", "effectiveConfig", "effectiveConfigSha256", "sourceRawSha256"})
+            self.assertEqual(set(manifest), {"schemaVersion", "mode", "schema", "effectiveConfig", "effectiveConfigSha256", "sourceRawSha256", "schemaFilesSha256"})
             self.assertEqual(manifest["effectiveConfig"], "effective-config.json")
+            self.assertIn("effective.schema.json", manifest["schemaFilesSha256"])
 
     def test_missing_stale_and_extra_outputs_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -54,5 +55,31 @@ class StageTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "perpendicular"): stage(root)
             root = fixture_root(Path(temp)); session = root / "config/defaults/session.json"; value = json.loads(session.read_text()); value["conditionOrder"] = value["conditionOrder"][:3]; session.write_text(json.dumps(value))
             with self.assertRaises(Exception): stage(root)
+
+    def test_duplicate_nonfinite_and_no_write_on_invalid_source(self):
+        with tempfile.TemporaryDirectory(prefix="catalog importer ") as temp:
+            root = fixture_root(Path(temp)); output = root / "unity/Assets/StreamingAssets/config-generated"
+            runtime = root / "config/defaults/runtime.json"; runtime.write_text('{"schemaVersion":1,"schemaVersion":1}')
+            with self.assertRaisesRegex(ValueError, "Duplicate"):
+                stage(root)
+            self.assertFalse(output.exists())
+            runtime.write_text('{"schemaVersion":1,"trackingSource":"synthetic","sampleRateHz":NaN}')
+            with self.assertRaisesRegex(ValueError, "Non-finite"):
+                stage(root)
+            self.assertFalse(output.exists())
+
+    def test_data_root_and_symlink_fail_closed(self):
+        with tempfile.TemporaryDirectory(prefix="catalog importer ") as temp:
+            root = fixture_root(Path(temp)); local = root / "config/local.example.json"; value = json.loads(local.read_text()); value["dataRoot"] = "C:/escape"; local.write_text(json.dumps(value))
+            with self.assertRaisesRegex(ValueError, "dataRoot"):
+                stage(root)
+            root = fixture_root(Path(temp)); target = root / "config/defaults/runtime.json"; link = root / "config/defaults/runtime-link.json"
+            try:
+                link.symlink_to(target)
+            except (OSError, NotImplementedError):
+                return
+            staging = root / "config/staging.json"; value = json.loads(staging.read_text()); value["runtime"] = "config/defaults/runtime-link.json"; staging.write_text(json.dumps(value))
+            with self.assertRaisesRegex(ValueError, "symlinked"):
+                stage(root)
 
 if __name__ == "__main__": unittest.main()

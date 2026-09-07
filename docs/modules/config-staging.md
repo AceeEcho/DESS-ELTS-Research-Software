@@ -10,7 +10,9 @@ and `machine`.
 
 The effective JSON is canonical UTF-8 with sorted keys, compact separators, and
 one LF newline. Its SHA-256 is recorded in the manifest along with raw source
-hashes. A C# loader must hash the exact staged effective bytes before parsing;
+hashes, including `sourceRawSha256.staging`. The manifest names
+`schemas/effective.schema.json` and records `schemaFilesSha256` for that strict
+schema and each whitelisted component schema. A C# loader must hash the exact staged effective bytes before parsing;
 it must not reserialize to reproduce the hash. Writes use temporary files and
 `os.replace`; identical bytes are left untouched so repeated staging preserves
 mtime. `--check` rejects missing, stale, or extra generated files.

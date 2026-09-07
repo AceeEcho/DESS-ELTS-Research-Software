@@ -13,6 +13,8 @@ import shutil
 import subprocess
 import sys
 import time
+import stat
+from tempfile import NamedTemporaryFile
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,9 +34,11 @@ def _has_reparse_component(path: Path) -> bool:
     current = Path(path.anchor) if path.is_absolute() else Path()
     for component in path.parts[1:] if path.is_absolute() else path.parts:
         current /= component
-        if not current.exists():
+        try:
+            attributes = current.lstat()
+        except FileNotFoundError:
             continue
-        if current.is_symlink() or getattr(current.stat(), "st_file_attributes", 0) & 0x400:
+        if stat.S_ISLNK(attributes.st_mode) or getattr(attributes, "st_file_attributes", 0) & 0x400:
             return True
     return False
 
@@ -46,7 +50,7 @@ def relative_output(value: str, default: str) -> Path:
     if any(part in {".", ".."} for part in raw.parts):
         raise ValueError("Generated output may not contain lexical traversal components")
     path = raw if raw.is_absolute() else ROOT / raw
-    if _has_reparse_component(path.parent) or (path.exists() and _has_reparse_component(path)):
+    if _has_reparse_component(path):
         raise ValueError("Generated output may not traverse symlink/reparse components")
     lexical = path.absolute()
     try:
@@ -72,6 +76,11 @@ def validate_unity_results(path: Path, started_at: float) -> None:
         raise ValueError("Unity test results are not valid XML") from exc
     if root.tag.rsplit("}", 1)[-1] != "test-run" or root.attrib.get("result") not in {"Passed", "passed"}:
         raise ValueError("Unity test results did not report Passed")
+    cases = list(root.iter("test-case"))
+    if not cases or not any(case.attrib.get("result") == "Passed" for case in cases):
+        raise ValueError("Unity test results contain no passing test cases")
+    if any(case.attrib.get("result") in {"Failed", "Inconclusive"} for case in cases):
+        raise ValueError("Unity test results contain failed or inconclusive cases")
 
 
 def atomic_json(path: Path, value: dict):
@@ -79,7 +88,7 @@ def atomic_json(path: Path, value: dict):
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = None
     try:
-        with open(path.with_name("." + path.name + ".tmp"), "wb") as stream:
+        with NamedTemporaryFile(prefix="." + path.name, suffix=".tmp", dir=path.parent, delete=False) as stream:
             temporary = Path(stream.name)
             stream.write(data); stream.flush(); os.fsync(stream.fileno())
         os.replace(temporary, path)
@@ -90,8 +99,15 @@ def atomic_json(path: Path, value: dict):
 def publish_new(path: Path, data: bytes) -> None:
     """Create a first-run local file without overwriting an existing machine file."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("xb") as stream:
-        stream.write(data); stream.flush(); os.fsync(stream.fileno())
+    temporary = None
+    try:
+        with NamedTemporaryFile(prefix="." + path.name, suffix=".tmp", dir=path.parent, delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(data); stream.flush(); os.fsync(stream.fileno())
+        # Atomic create-new publication. Existing machine settings are preserved.
+        os.link(temporary, path)
+    finally:
+        if temporary is not None: temporary.unlink(missing_ok=True)
 
 
 def editor_path(manifest: dict, explicit: str | None) -> tuple[Path | None, str | None]:
@@ -129,7 +145,7 @@ def run(args) -> tuple[dict, Path]:
         report["checks"].append({"id": identifier, "result": result, "message": message, "details": details})
         print(f"{result.upper()}: {identifier}: {message}", flush=True)
 
-    def command(identifier, command_line, timeout=PYTHON_TEST_TIMEOUT_SECONDS):
+    def command(identifier, command_line, timeout=PYTHON_TEST_TIMEOUT_SECONDS, expected_output=None):
         result = subprocess.run(command_line, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
         log = report_path.parent / (args.action + "-" + identifier + ".log")
         log.parent.mkdir(parents=True, exist_ok=True)
@@ -138,6 +154,8 @@ def run(args) -> tuple[dict, Path]:
               command=[str(x) for x in command_line], output=log.relative_to(ROOT).as_posix())
         if result.returncode:
             raise ValueError(f"{identifier} failed; inspect {log.relative_to(ROOT)}")
+        if expected_output is not None and expected_output not in result.stdout:
+            raise ValueError(f"{identifier} did not run the expected test harness: {expected_output}")
 
     try:
         minimum = tuple(map(int, manifest["python"]["minimumVersion"].split(".")))
@@ -184,21 +202,21 @@ def run(args) -> tuple[dict, Path]:
 
         elif args.action == "test":
             selected = args.suite
-            for suite, folder in (("plan", "tools/plan"), ("progress", "tools/progress"), ("config", "tools/config")):
+            for suite, folder in (("plan", "tools/plan"), ("progress", "tools/progress"), ("config", "tools/config"), ("bootstrap", "tools/bootstrap")):
                 if selected in {"all", "baseline", suite}:
                     command(suite, py + ["-m", "unittest", "discover", "-s", folder, "-p", "test_*.py", "-v"])
             if selected in {"all", "geometry", "runtime"}:
                 dotnet = shutil.which("dotnet")
                 if not dotnet:
                     raise ValueError("Install the standalone test SDK recorded in config/toolchain.json")
-                command("geometry", [dotnet, "run", "--project", "tools/runtime-tests/GeometryChecks.csproj"])
+                command("geometry", [dotnet, "run", "--project", "tools/runtime-tests/GeometryChecks.csproj"], expected_output=" geometry checks")
                 if selected != "geometry":
                     if not editor:
                         raise ValueError("Runtime config console tests need the verified Editor Newtonsoft assembly")
                     stage(ROOT)
                     json_dll = editor.parent / "Data/Managed/Newtonsoft.Json.dll"
                     command("runtime-config", [dotnet, "run", "--project", "tools/runtime-tests/ConfigChecks.csproj",
-                            "-p:NewtonsoftPath=" + str(json_dll), "--", str(ROOT / "unity/Assets/StreamingAssets/config-generated")])
+                            "-p:NewtonsoftPath=" + str(json_dll), "--", str(ROOT / "unity/Assets/StreamingAssets/config-generated")], expected_output=" configuration checks")
             if selected in {"all", "unity-edit", "unity-play"}:
                 smoke = ROOT / "unity/Assets/Tests/EditMode/Elts.EditModeTests.asmdef"
                 if not editor or not smoke.is_file():

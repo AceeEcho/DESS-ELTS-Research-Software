@@ -1,5 +1,10 @@
 # Developer quick start
 
+`scripts/verify.ps1` runs doctor and the complete currently available test set,
+retaining separate diagnostic reports. A deferred Unity check is explicitly
+reported and does not count as Unity runtime acceptance. Use `-PythonExecutable`
+and `-UnityEditor` when the prerequisites are outside standard discovery paths.
+
 This is a development setup for software connected to the already built ELTS.
 Testing equipment is currently unavailable. No synthetic test establishes physical
 calibration, safety, timing, display, or study-readiness acceptance.

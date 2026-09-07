@@ -12,7 +12,7 @@ python tools/progress/import_plan.py --write
 python tools/progress/import_plan.py --check
 ```
 
-`--write` emits `project-management/exports/task-catalog.json` plus one UTF-8,
+`--write` emits `project-management/task-catalog.json` plus one UTF-8,
 LF-normalized JSON and CSV pair for every workbook sheet. Formula cells are
 objects containing `formula` and `cachedValue`, so cached values never replace
 the source expression. `--check` computes the same bytes and reports drift

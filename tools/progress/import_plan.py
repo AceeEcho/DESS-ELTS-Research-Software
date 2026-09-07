@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -39,32 +40,15 @@ def _registry(sheets: dict[str, list[list[Any]]], name: str) -> list[dict[str, A
             for row in rows[5:] if any(v is not None for v in row)]
 
 
-def _normalize_predicate(value: Any) -> Any:
-    """Remove repeated conjuncts required by the catalog schema's uniqueness rule."""
-    if not isinstance(value, dict):
-        return value
-    if "allOf" in value or "anyOf" in value:
-        key = "allOf" if "allOf" in value else "anyOf"
-        items = [_normalize_predicate(item) for item in value[key]]
-        unique: list[Any] = []
-        seen: set[str] = set()
-        for item in items:
-            marker = json.dumps(item, sort_keys=True, separators=(",", ":"))
-            if marker not in seen:
-                seen.add(marker)
-                unique.append(item)
-        return {key: unique}
-    return dict(value)
-
-
-def _catalog_definitions(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    result = []
-    for item in items:
-        copied = dict(item)
-        if "eligibility" in copied:
-            copied["eligibility"] = _normalize_predicate(copied["eligibility"])
-        result.append(copied)
-    return result
+def _load_builder(root: Path):
+    """Load the planner beside the supplied root, avoiding module-global roots."""
+    path = root / "tools" / "plan" / "build_plan.py"
+    spec = importlib.util.spec_from_file_location(f"elts_build_plan_{id(root)}", path)
+    if spec is None or spec.loader is None:
+        raise ValueError(f"Cannot load planner: {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def _verify_sources(root: Path, rules: dict[str, Any]) -> None:
@@ -91,18 +75,19 @@ def _verify_sources(root: Path, rules: dict[str, Any]) -> None:
 def build_catalog(root: Path) -> dict[str, Any]:
     """Build and validate a catalog from *root*, independent of current cwd."""
     root = Path(root).resolve()
+    builder = _load_builder(root)
     rules_path = root / "docs" / "plan" / "amendment-rules.json"
     rules = json.loads(rules_path.read_text(encoding="utf-8"))
     _verify_sources(root, rules)
     plan_path = root / "docs" / "plan" / "approved-plan.json"
-    plan = build_plan.build(rules)
+    plan = builder.build(rules)
     expected_plan = _json_bytes(plan)
     # Git may materialize this generated JSON with CRLF; compare decoded text
     # like the planner CLI while retaining the raw file hash as provenance.
     if not plan_path.is_file() or plan_path.read_text(encoding="utf-8") != expected_plan.decode("utf-8"):
         raise ValueError("Approved plan output is stale; run tools/plan/build_plan.py --write after review")
     workbook = root / "deliverables" / "ELTS_Implementation_and_Progress_Workbook.xlsx"
-    sheets = build_plan.read_workbook(workbook)
+    sheets = builder.read_workbook(workbook)
     registries = {name: _registry(sheets, name) for name in sheets if len(sheets[name]) >= 5}
     deps = [row for row in registries["Dependencies"]
             if row.get("Dependency ID") not in set(plan["replacedDependencyIds"])]
@@ -118,8 +103,8 @@ def build_catalog(root: Path) -> dict[str, Any]:
             "approvedPlanSha256": _sha256(plan_path),
         },
         "activeCounts": plan["activeCounts"],
-        "tasks": _catalog_definitions(plan["taskDefinitions"]),
-        "atomicSteps": _catalog_definitions(plan["atomicStepDefinitions"]),
+        "tasks": plan["taskDefinitions"],
+        "atomicSteps": plan["atomicStepDefinitions"],
         "phases": registries["Phases"],
         "decisions": registries["Decisions"],
         "gateCriteria": plan["gateCriteria"],
@@ -151,9 +136,9 @@ def export_outputs(root: Path, check: bool = False) -> list[Path]:
     root = Path(root).resolve()
     catalog = build_catalog(root)
     workbook = root / "deliverables" / "ELTS_Implementation_and_Progress_Workbook.xlsx"
-    sheets = build_plan.read_workbook(workbook)
+    sheets = _load_builder(root).read_workbook(workbook)
     out = root / "project-management" / "exports"
-    expected: dict[Path, bytes] = {out / "task-catalog.json": _json_bytes(catalog)}
+    expected: dict[Path, bytes] = {root / "project-management" / "task-catalog.json": _json_bytes(catalog)}
     for name, rows in sheets.items():
         safe = name.lower().replace(" ", "-")
         expected[out / f"workbook-{safe}.json"] = _json_bytes(rows)

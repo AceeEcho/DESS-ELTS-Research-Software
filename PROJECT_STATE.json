@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T02:29:52.728692+00:00",
+  "generatedAtUtc": "2026-09-07T02:32:38.521711+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,14 +11,14 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 102,
-    "eventSetSha256": "65849a44cff8481edc6cf38be879246d9774fd2f94c2e94246e5dda24d1eafec"
+    "eventCount": 105,
+    "eventSetSha256": "1fb32b6ee10e9a91ea06636801232ad7ba05a32a94f68eafe48c4ead2ab7e3b0"
   },
   "current": {
     "mode": "working",
-    "primaryStepId": "BOOT.S025",
+    "primaryStepId": "BOOT.S026",
     "activeStepIds": [
-      "BOOT.S025"
+      "BOOT.S026"
     ],
     "nextEligibleStepIds": [
       "P0.2.S001",
@@ -26,7 +26,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S025",
       "D-01",
       "D-02",
       "D-11",
@@ -46,9 +45,9 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "BOOT.S025",
+    "primaryStepId": "BOOT.S026",
     "activeStepIds": [
-      "BOOT.S025",
+      "BOOT.S026",
       "DEV-04.S001"
     ],
     "nextEligibleStepIds": [
@@ -57,7 +56,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S025",
       "D-01",
       "D-02",
       "D-03",
@@ -302,12 +300,12 @@
     {
       "owner": "agent:codex-astra",
       "taskId": "P0.3",
-      "atomicStepId": "BOOT.S025",
+      "atomicStepId": "BOOT.S026",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        ".github/CODEOWNERS",
-        ".github/PULL_REQUEST_TEMPLATE.md",
-        "docs/governance/repository-rules.md"
+        "docs/ai/bootstrap-handoff.md",
+        "scripts/first-run",
+        "tools/bootstrap"
       ]
     },
     {
@@ -348,14 +346,14 @@
     },
     "P0.3": {
       "status": "in_progress",
-      "revision": 78,
-      "lastEventHash": "929e78c1acf56b5a721cde50ba0c2fc3230c685ded73a06a1a3070677da37a6c",
+      "revision": 81,
+      "lastEventHash": "8228b99856db1149b059564940aaadf6c3bb9468da2bfa5202f7eb56460e37ab",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
-        ".github/CODEOWNERS",
-        ".github/PULL_REQUEST_TEMPLATE.md",
-        "docs/governance/repository-rules.md"
+        "docs/ai/bootstrap-handoff.md",
+        "scripts/first-run",
+        "tools/bootstrap"
       ],
       "evidence": [],
       "blockers": []
@@ -2349,9 +2347,9 @@
       "blockers": []
     },
     "BOOT.S025": {
-      "status": "in_progress",
-      "revision": 78,
-      "lastEventHash": "929e78c1acf56b5a721cde50ba0c2fc3230c685ded73a06a1a3070677da37a6c",
+      "status": "done",
+      "revision": 80,
+      "lastEventHash": "b3c2127156f38d954642f4503884677705ae0aa07459761ab4a110c02ee68339",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
@@ -2359,16 +2357,44 @@
         ".github/PULL_REQUEST_TEMPLATE.md",
         "docs/governance/repository-rules.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "BOOT.S025-BOOT.S025",
+          "path": "project-management/progress/evidence/BOOT.S025.json",
+          "sha256": "b3adb81478c97c9c89af40f53302eaf01935709af6999ef0d636dad1bb4c4402",
+          "targetIds": [
+            "BOOT.S025"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "document",
+          "command": "git remote -v; git ls-remote origin; python tools/ci/check.py; inspect CODEOWNERS, PR template and rules documentation against spec14.4 and PC-001",
+          "result": "pass",
+          "sourceRevision": "cefe5f8d4a91d0041008028eedef2b6f5cd9e245",
+          "recordedAtUtc": "2026-09-07T02:32:32.650156+00:00",
+          "limitations": [
+            "No remote settings were configured or verified; remote protection and status names remain pending controls",
+            "No remote push, merge, issue/Trello update or Butler verification",
+            "Named research/safety reviewers and commit-signing decision remain pending",
+            "Documented route passes this bootstrap outcome only; no physical/study/release gate acceptance"
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S026": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 81,
+      "lastEventHash": "8228b99856db1149b059564940aaadf6c3bb9468da2bfa5202f7eb56460e37ab",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "docs/ai/bootstrap-handoff.md",
+        "scripts/first-run",
+        "tools/bootstrap"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -5253,8 +5279,8 @@
   },
   "chains": {
     "task:P0.3": {
-      "revision": 78,
-      "hash": "929e78c1acf56b5a721cde50ba0c2fc3230c685ded73a06a1a3070677da37a6c"
+      "revision": 81,
+      "hash": "8228b99856db1149b059564940aaadf6c3bb9468da2bfa5202f7eb56460e37ab"
     },
     "task:DEV-01": {
       "revision": 7,

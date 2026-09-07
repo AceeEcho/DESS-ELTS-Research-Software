@@ -1,0 +1,58 @@
+from __future__ import annotations
+import json
+import shutil
+import tempfile
+import unittest
+import uuid
+from pathlib import Path
+from tools.config.stage import stage
+
+ROOT = Path(__file__).resolve().parents[2]
+
+def fixture_root(parent: Path) -> Path:
+    root = parent / f"config fixture with spaces {uuid.uuid4().hex}"
+    for rel in ("config", "schemas/config"):
+        shutil.copytree(ROOT / rel, root / rel)
+    (root / "unity/Assets/StreamingAssets").mkdir(parents=True)
+    return root
+
+class StageTests(unittest.TestCase):
+    def test_write_check_is_deterministic_and_manifest_is_consumer_contract(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = fixture_root(Path(temp)); out = root / "unity/Assets/StreamingAssets/config-generated"
+            first = stage(root); bytes1 = {p: p.read_bytes() for p in first}; mtimes = {p: p.stat().st_mtime_ns for p in first}
+            stage(root, check=True)
+            self.assertEqual(bytes1, {p: p.read_bytes() for p in first}); self.assertEqual(mtimes, {p: p.stat().st_mtime_ns for p in first})
+            manifest = json.loads((out / "manifest.json").read_text())
+            self.assertEqual(set(manifest), {"schemaVersion", "mode", "effectiveConfig", "effectiveConfigSha256", "sourceRawSha256"})
+            self.assertEqual(manifest["effectiveConfig"], "effective-config.json")
+
+    def test_missing_stale_and_extra_outputs_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = fixture_root(Path(temp)); outputs = stage(root); outputs[0].unlink()
+            with self.assertRaisesRegex(ValueError, "drift"): stage(root, check=True)
+            stage(root); outputs[0].write_bytes(outputs[0].read_bytes() + b"x")
+            with self.assertRaisesRegex(ValueError, "drift"): stage(root, check=True)
+            stage(root); (outputs[0].parent / "unexpected.json").write_text("{}")
+            with self.assertRaisesRegex(ValueError, "drift"): stage(root, check=True)
+
+    def test_strict_unknown_invalid_mode_and_local_whitelist(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = fixture_root(Path(temp)); staging = root / "config/staging.json"
+            value = json.loads(staging.read_text()); value["mode"] = "study"; staging.write_text(json.dumps(value))
+            with self.assertRaisesRegex(ValueError, "synthetic"): stage(root)
+            value["mode"] = "synthetic"; value["unknown"] = 1; staging.write_text(json.dumps(value))
+            with self.assertRaises(Exception): stage(root)
+            value.pop("unknown"); staging.write_text(json.dumps(value)); local = json.loads((root / "config/local.example.json").read_text()); local["unsafe"] = 1; (root / "config/local.json").write_text(json.dumps(local))
+            with self.assertRaises(Exception): stage(root)
+
+    def test_missing_source_geometry_order_and_path_fail_closed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = fixture_root(Path(temp)); (root / "config/development/scenario.json").unlink()
+            with self.assertRaisesRegex(ValueError, "Missing"): stage(root)
+            root = fixture_root(Path(temp)); rig = root / "config/rig/templates/synthetic-rig.json"; value = json.loads(rig.read_text()); value["display"]["upperLeftM"] = value["display"]["lowerLeftM"]; rig.write_text(json.dumps(value))
+            with self.assertRaisesRegex(ValueError, "perpendicular"): stage(root)
+            root = fixture_root(Path(temp)); session = root / "config/defaults/session.json"; value = json.loads(session.read_text()); value["conditionOrder"] = value["conditionOrder"][:3]; session.write_text(json.dumps(value))
+            with self.assertRaises(Exception): stage(root)
+
+if __name__ == "__main__": unittest.main()

@@ -12,6 +12,8 @@ import platform
 import shutil
 import subprocess
 import sys
+import time
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -26,10 +28,31 @@ UNITY_TIMEOUT_SECONDS = 1800
 ACTIONS = ("bootstrap", "doctor", "test", "build", "stage", "package-study", "setup-study-machine")
 
 
+def _has_reparse_component(path: Path) -> bool:
+    current = Path(path.anchor) if path.is_absolute() else Path()
+    for component in path.parts[1:] if path.is_absolute() else path.parts:
+        current /= component
+        if not current.exists():
+            continue
+        if current.is_symlink() or getattr(current.stat(), "st_file_attributes", 0) & 0x400:
+            return True
+    return False
+
+
 def relative_output(value: str, default: str) -> Path:
     """Keep generated reports/builds out of sources and private deployment data."""
-    raw = Path(value or default)
+    raw_text = value or default
+    raw = Path(raw_text)
+    if any(part in {".", ".."} for part in raw.parts):
+        raise ValueError("Generated output may not contain lexical traversal components")
     path = raw if raw.is_absolute() else ROOT / raw
+    if _has_reparse_component(path.parent) or (path.exists() and _has_reparse_component(path)):
+        raise ValueError("Generated output may not traverse symlink/reparse components")
+    lexical = path.absolute()
+    try:
+        lexical.relative_to(ROOT)
+    except ValueError as exc:
+        raise ValueError("Generated output must stay inside this checkout") from exc
     resolved = path.resolve()
     if not resolved.is_relative_to(ROOT) or resolved == ROOT:
         raise ValueError("Generated output must stay inside this checkout")
@@ -39,9 +62,36 @@ def relative_output(value: str, default: str) -> Path:
     return resolved
 
 
+def validate_unity_results(path: Path, started_at: float) -> None:
+    """Require a fresh, successful Unity XML result from the current invocation."""
+    if not path.is_file() or path.stat().st_mtime < started_at:
+        raise ValueError("Unity exited without producing fresh test results")
+    try:
+        root = ET.parse(path).getroot()
+    except ET.ParseError as exc:
+        raise ValueError("Unity test results are not valid XML") from exc
+    if root.tag.rsplit("}", 1)[-1] != "test-run" or root.attrib.get("result") not in {"Passed", "passed"}:
+        raise ValueError("Unity test results did not report Passed")
+
+
 def atomic_json(path: Path, value: dict):
-    from tools.progress.store import replace_generated, json_bytes
-    replace_generated(path, json_bytes(value))
+    data = (json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + "\n").encode("utf-8")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with open(path.with_name("." + path.name + ".tmp"), "wb") as stream:
+            temporary = Path(stream.name)
+            stream.write(data); stream.flush(); os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None: temporary.unlink(missing_ok=True)
+
+
+def publish_new(path: Path, data: bytes) -> None:
+    """Create a first-run local file without overwriting an existing machine file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("xb") as stream:
+        stream.write(data); stream.flush(); os.fsync(stream.fileno())
 
 
 def editor_path(manifest: dict, explicit: str | None) -> tuple[Path | None, str | None]:
@@ -108,7 +158,6 @@ def run(args) -> tuple[dict, Path]:
                 # validates an existing file or rejects it with an exact error.
                 local = ROOT / "config/local.json"
                 if not local.exists():
-                    from tools.progress.store import publish_new
                     publish_new(local, (ROOT / "config/local.example.json").read_bytes())
                     check("local-config", "pass", "Created config/local.json from the whitelist template")
                 else:
@@ -161,12 +210,12 @@ def run(args) -> tuple[dict, Path]:
                         if selected in {"all", suite}:
                             result_file = relative_output("", "test-results/" + suite + ".xml")
                             result_file.parent.mkdir(parents=True, exist_ok=True)
+                            started_at = time.time()
                             log = report_path.parent / (suite + ".log")
                             command(suite, [str(editor), "-batchmode", "-projectPath", str(ROOT / "unity"),
                                     "-runTests", "-testPlatform", platform_name, "-testResults", str(result_file),
                                     "-logFile", str(log)], UNITY_TIMEOUT_SECONDS)
-                            if not result_file.is_file():
-                                raise ValueError("Unity exited without producing test results")
+                            validate_unity_results(result_file, started_at)
 
         elif args.action == "build":
             if not editor or not (ROOT / "unity/Assets/Editor/EltsBuild/BuildEntry.cs").is_file():

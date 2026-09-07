@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "targetId": "DEV-04",
+  "result": "pass",
+  "evidenceClass": "synthetic_test",
+  "sourceRevision": "e88c515e3138c46a91a0573dd7658394e55ce7d2",
+  "recordedAtUtc": "2026-09-07T03:13:37.677156+00:00",
+  "command": "Integrated dotnet LoggingChecks, LoggingThroughputChecks, LoggingPublicationChecks; 2-second recording and offline verify_run; pending-only rejection; scripts/test.ps1 baseline and unity-edit",
+  "summary": "Versioned recording integrity, safe close, overflow/failure behavior and measured synthetic soak verified for the bounded DEV-04 software scope.",
+  "checks": [
+    "28 logging checks pass",
+    "1232 throughput checks pass",
+    "12 publication checks pass",
+    "Fresh 499 paired samples, 1 event and 1 target pass offline schema/count/hash validation",
+    "Pending-only summary rejected by offline verifier",
+    "Exact Unity 6000.3.23f1 EditMode tests pass",
+    "Baseline plan/progress/config/bootstrap/dependencies/build-provenance/logging suites pass",
+    "Independent Luna review of eba5d83 found no concrete defects"
+  ],
+  "limitations": [
+    "Synthetic development acceptance only; baseline parents and physical gates remain pending.",
+    "The 1800-second recording predates the terminal-publication fix; unchanged recording hot path is covered by that source-bound evidence and terminal behavior by new integrated checks.",
+    "Configured 250 Hz, measured 244.37038269 Hz; timing target not met. Zero queue drops does not mean all nominal acquisition opportunities occurred.",
+    "No full Unity/display-load, Study-PC disk, real-device or physical safety acceptance. OS final-move stalls can extend Close wait."
+  ],
+  "artifactSnapshotSha256": {
+    "unity/Assets/ELTS/Logging/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "unity/Assets/ELTS/Logging/Elts.Logging.asmdef": "126e071c8c6ad918db35a94f5e4ceb007e73575892866e880466b15b79c510c1",
+    "unity/Assets/ELTS/Logging/Elts.Logging.asmdef.meta": "94d5b4ad9c0159bd5743617e39da76cee34b943d4d5c8b027eaeb7bc65860742",
+    "unity/Assets/ELTS/Logging/LoggingContracts.cs": "65b2ffd47bb742a5eef809e37e77822343885f0c42404209d0a8f4d5d8379d57",
+    "unity/Assets/ELTS/Logging/LoggingContracts.cs.meta": "1191ad876a431b092fed672c499940280cce7bfc1cb17190ab5458f78a5c4689",
+    "unity/Assets/ELTS/Logging/LogJson.cs": "e01522808e30fb5c16eab6e99477662f882b3300f0d53e1ce2f6fee403aa2004",
+    "unity/Assets/ELTS/Logging/LogJson.cs.meta": "28ba45bbbb075342356ed1efdde71cd056bdcfb010e899f4d6e6dc0469846f9a",
+    "unity/Assets/ELTS/Logging/SessionLogWriter.cs": "8022e60a250b3a9dfcbb74d19880a37b9bd6f99620a6c4860206a22336f12b72",
+    "unity/Assets/ELTS/Logging/SessionLogWriter.cs.meta": "4f147b3c3df9778efac94b18ae81849a1b2b1fca5ec53cde81161bf6d5b98f70",
+    "tools/runtime-tests/LoggingPublicationChecks.cs": "260fb0249dff8182efcc97ac8dca5dd1124ceca82cb685aa113c4249ba396852",
+    "tools/runtime-tests/LoggingPublicationChecks.csproj": "0b3f14c1517b92b04d9cbb121ce9ba451fd6ba4115a1474eb13d2f2fc3c13e2c",
+    "docs/modules/logging.md": "5f6fc606ed68f42120b692b466644451c2b8ffaed2475c8bc0fd7bb418ad3371",
+    "diagnostics/dev04-publication-verification.json": "f4ea42fcd2393914c3947e00b7af9b5744691b1dd08814a40a7351520acd1e92",
+    "test-results/dev04-publication/synthetic-soak-soak-evidence.json": "c829b4dca7dbeef16700dfd0deec2b5d023c3b17c816cc1a04ecf5937cd292d1",
+    "test-results/unity-edit.xml": "c5a9424693ff492d5a83187cd7a25c7519172ba3e15ab2923c60895286b0bd98",
+    "diagnostics/test-report.json": "2881f1cd5b6378662d4f8fa599ab71dc04954e5a8ddfc532a6e2cd52b4c8a3bc"
+  },
+  "supportingEvidence": {
+    "project-management\\progress\\evidence\\DEV-04-publication.json": "d2654a0f47edb2c086fec1e8095dea776342e8a343b9a18da3c15a3b53dceb5c",
+    "project-management/progress/evidence/DEV-04-soak.json": "5655e221564dc5a06e82e1dfed53c585f719fe3f11ec3d6c339fa49c90532112"
+  }
+}

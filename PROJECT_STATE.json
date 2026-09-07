@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T03:02:51.076882+00:00",
+  "generatedAtUtc": "2026-09-07T03:13:51.404396+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,8 +11,8 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 112,
-    "eventSetSha256": "9de2c48fb9f4de54c7ac06ce1c5aaf9bff35f617f080cc15fc8f16631ca26519"
+    "eventCount": 117,
+    "eventSetSha256": "efedd1d502c63ded5c10e2edbeaf37b2cbf92214274ef8d6467e3a8a7e623c7b"
   },
   "current": {
     "mode": "working",
@@ -42,11 +42,12 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "DEV-04.S001",
-    "activeStepIds": [
-      "DEV-04.S001"
-    ],
+    "primaryStepId": "DEV-05.S001",
+    "activeStepIds": [],
     "nextEligibleStepIds": [
+      "DEV-06.S001",
+      "DEV-07.S001",
+      "DEV-10.S001",
       "P0.2.S001",
       "P0.4.S001",
       "P0.5.S001"
@@ -68,8 +69,6 @@
       "D-14",
       "D-16",
       "D-17",
-      "DEV-04",
-      "DEV-04.S001",
       "DEV-05",
       "DEV-05.S001",
       "DEV-06",
@@ -292,30 +291,7 @@
     "selectedPhaseId": "DEV",
     "selectedLane": "synthetic_development_only"
   },
-  "activeWork": [
-    {
-      "owner": "agent:codex-astra",
-      "taskId": "DEV-04",
-      "atomicStepId": "DEV-04.S001",
-      "branch": "work/dev04-logging",
-      "claimedPaths": [
-        "unity/Assets/ELTS/Logging",
-        "tools/runtime-tests/LoggingPublicationChecks.cs",
-        "tools/runtime-tests/LoggingPublicationChecks.csproj",
-        "docs/modules/logging.md"
-      ]
-    },
-    {
-      "owner": "agent:codex-astra",
-      "taskId": "DEV-04",
-      "atomicStepId": "DEV-04.V001",
-      "branch": "work/dev04-logging",
-      "claimedPaths": [
-        "project-management/progress/evidence/DEV-04.json",
-        "test-results/dev04-soak"
-      ]
-    }
-  ],
+  "activeWork": [],
   "tasks": {
     "P0.1": {
       "status": "not_started",
@@ -1362,24 +1338,43 @@
       "blockers": []
     },
     "DEV-04": {
-      "status": "in_progress",
-      "revision": 5,
-      "lastEventHash": "5ea254d41d83d6b238ff72e4825d76a138cb929080dd73716d1e033a023bcf6b",
+      "status": "done",
+      "revision": 10,
+      "lastEventHash": "6d86b96019b4e9092bf2ba43110c0b086f5fcc37fd3dbe526812be5b55e66b4b",
       "owner": "agent:codex-astra",
       "branch": "work/dev04-logging",
-      "claimedPaths": [
-        "docs/modules/logging.md",
-        "project-management/progress/evidence/DEV-04.json",
-        "test-results/dev04-soak",
-        "tools/runtime-tests/LoggingPublicationChecks.cs",
-        "tools/runtime-tests/LoggingPublicationChecks.csproj",
-        "unity/Assets/ELTS/Logging"
+      "claimedPaths": [],
+      "evidence": [
+        {
+          "id": "DEV-04",
+          "path": "project-management/progress/evidence/DEV-04.json",
+          "sha256": "a8f7fa818fd9a629f63b5cdd175064afd8dfd5d0f962229e5413c3d4d0dd5cb1",
+          "targetIds": [
+            "DEV-04.V001",
+            "DEV-04"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "Integrated dotnet LoggingChecks, LoggingThroughputChecks, LoggingPublicationChecks; 2-second recording and offline verify_run; pending-only rejection; scripts/test.ps1 baseline and unity-edit",
+          "result": "pass",
+          "sourceRevision": "e88c515e3138c46a91a0573dd7658394e55ce7d2",
+          "recordedAtUtc": "2026-09-07T03:13:37.677156+00:00",
+          "limitations": [
+            "Synthetic development acceptance only; baseline parents and physical gates remain pending.",
+            "The 1800-second recording predates the terminal-publication fix; unchanged recording hot path is covered by that source-bound evidence and terminal behavior by new integrated checks.",
+            "Configured 250 Hz, measured 244.37038269 Hz; timing target not met. Zero queue drops does not mean all nominal acquisition opportunities occurred.",
+            "No full Unity/display-load, Study-PC disk, real-device or physical safety acceptance. OS final-move stalls can extend Close wait."
+          ]
+        }
       ],
-      "evidence": [],
       "blockers": []
     },
     "DEV-05": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -1389,7 +1384,7 @@
       "blockers": []
     },
     "DEV-06": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -1399,7 +1394,7 @@
       "blockers": []
     },
     "DEV-07": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -1429,7 +1424,7 @@
       "blockers": []
     },
     "DEV-10": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -2682,9 +2677,9 @@
       "blockers": []
     },
     "DEV-04.S001": {
-      "status": "in_progress",
-      "revision": 5,
-      "lastEventHash": "5ea254d41d83d6b238ff72e4825d76a138cb929080dd73716d1e033a023bcf6b",
+      "status": "done",
+      "revision": 7,
+      "lastEventHash": "6ff30fd5a8178991cac7fadb7516a660d203e7c11d66e305542a1604763db554",
       "owner": "agent:codex-astra",
       "branch": "work/dev04-logging",
       "claimedPaths": [
@@ -2693,24 +2688,74 @@
         "tools/runtime-tests/LoggingPublicationChecks.csproj",
         "docs/modules/logging.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "DEV-04-publication",
+          "path": "project-management/progress/evidence/DEV-04-publication.json",
+          "sha256": "d2654a0f47edb2c086fec1e8095dea776342e8a343b9a18da3c15a3b53dceb5c",
+          "targetIds": [
+            "DEV-04.S001"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "synthetic_test",
+          "command": "Integrated dotnet LoggingChecks, LoggingThroughputChecks, LoggingPublicationChecks; 2-second recording and offline verify_run; pending-only rejection; scripts/test.ps1 baseline and unity-edit",
+          "result": "pass",
+          "sourceRevision": "e88c515e3138c46a91a0573dd7658394e55ce7d2",
+          "recordedAtUtc": "2026-09-07T03:13:37.677156+00:00",
+          "limitations": [
+            "Synthetic development acceptance only; baseline parents and physical gates remain pending.",
+            "The 1800-second recording predates the terminal-publication fix; unchanged recording hot path is covered by that source-bound evidence and terminal behavior by new integrated checks.",
+            "Configured 250 Hz, measured 244.37038269 Hz; timing target not met. Zero queue drops does not mean all nominal acquisition opportunities occurred.",
+            "No full Unity/display-load, Study-PC disk, real-device or physical safety acceptance. OS final-move stalls can extend Close wait."
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-04.V001": {
-      "status": "in_progress",
-      "revision": 4,
-      "lastEventHash": "6f3b6c0997edf4745ff4d525a66c99db3ac4e0982596bf4ae05a40251e97a8fe",
+      "status": "done",
+      "revision": 9,
+      "lastEventHash": "97e11f70d37d61aa7c82c865024855b05a9b51c099f09567fb32848e0ac42fe6",
       "owner": "agent:codex-astra",
       "branch": "work/dev04-logging",
       "claimedPaths": [
         "project-management/progress/evidence/DEV-04.json",
         "test-results/dev04-soak"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "DEV-04",
+          "path": "project-management/progress/evidence/DEV-04.json",
+          "sha256": "a8f7fa818fd9a629f63b5cdd175064afd8dfd5d0f962229e5413c3d4d0dd5cb1",
+          "targetIds": [
+            "DEV-04.V001",
+            "DEV-04"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "Integrated dotnet LoggingChecks, LoggingThroughputChecks, LoggingPublicationChecks; 2-second recording and offline verify_run; pending-only rejection; scripts/test.ps1 baseline and unity-edit",
+          "result": "pass",
+          "sourceRevision": "e88c515e3138c46a91a0573dd7658394e55ce7d2",
+          "recordedAtUtc": "2026-09-07T03:13:37.677156+00:00",
+          "limitations": [
+            "Synthetic development acceptance only; baseline parents and physical gates remain pending.",
+            "The 1800-second recording predates the terminal-publication fix; unchanged recording hot path is covered by that source-bound evidence and terminal behavior by new integrated checks.",
+            "Configured 250 Hz, measured 244.37038269 Hz; timing target not met. Zero queue drops does not mean all nominal acquisition opportunities occurred.",
+            "No full Unity/display-load, Study-PC disk, real-device or physical safety acceptance. OS final-move stalls can extend Close wait."
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-05.S001": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -2730,7 +2775,7 @@
       "blockers": []
     },
     "DEV-06.S001": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -2750,7 +2795,7 @@
       "blockers": []
     },
     "DEV-07.S001": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -2810,7 +2855,7 @@
       "blockers": []
     },
     "DEV-10.S001": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -5332,8 +5377,8 @@
       "hash": "b456cff38d75cf98ff4a0017df409acc3f081e2f63c9346ba259914888548a5f"
     },
     "task:DEV-04": {
-      "revision": 5,
-      "hash": "5ea254d41d83d6b238ff72e4825d76a138cb929080dd73716d1e033a023bcf6b"
+      "revision": 10,
+      "hash": "6d86b96019b4e9092bf2ba43110c0b086f5fcc37fd3dbe526812be5b55e66b4b"
     }
   },
   "integrity": {

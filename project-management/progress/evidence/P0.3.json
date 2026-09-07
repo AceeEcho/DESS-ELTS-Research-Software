@@ -1,0 +1,317 @@
+{
+  "targetId": "P0.3",
+  "result": "pass",
+  "evidenceClass": "document",
+  "command": "Validate all26 active bootstrap statuses and immutable evidence hashes; compare retained P0.3 completion requirements with BOOT.S019 through BOOT.S026 results",
+  "summary": "Repository/project bootstrap completed: all26 active steps and retained clean-clone Unity/test/Windows-build requirements verified. G0 and physical/study controls remain pending.",
+  "checks": [
+    "All26 exact active bootstrap IDs are done with hash-valid immutable evidence",
+    "Retained baseline requirement clean clone -> Unity import -> tests green -> Windows standalone produced is covered by BOOT.S026",
+    "README exact Unity version,URP/noXR,pinnedOpenVR/Newtonsoft/TestFramework,versioned Windows build covered by BOOT19-23",
+    "Pre-reducer observations imported truthfully; deterministic state and schema validation passed",
+    "Remote protection uses PC-001 explicitly permitted documented route and remains an unverified remote control"
+  ],
+  "limitations": [
+    "No physical, safety, study or release gate acceptance",
+    "No remote push/merge/settings/CI verification",
+    "DEV04 logging soak remains in progress; development does not automatically complete baseline support tasks"
+  ],
+  "activeStepCoverage": [
+    {
+      "id": "P0.3.S001",
+      "action": "Inventory the repository, branches, remotes, files, history, instructions, and working tree; preserve all existing work.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/bootstrap-observations/P0.3.S001.json",
+          "sha256": "16d893991a0b6ee0d18dd7a7809f58c8d0ffc9c9676546bc2a6e3cf3d6161a3f"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S002",
+      "action": "Read and hash the specification, workbook, and available source plan; record baseline metadata.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S002.json",
+          "sha256": "f1b5110be938562f2bc537d59acd8429e946c948df64282fd6f2304ef426f381"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S003",
+      "action": "Create the bootstrap branch and declare task ownership, claimed paths, checks, and stop conditions.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S003.json",
+          "sha256": "94e89e87f02182a257ee8427c2a142a83c11c5504b157db30084f2c1e64f8214"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S004",
+      "action": "Copy original deliverables unchanged to project-management/baseline/ and create SHA256SUMS.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S004.json",
+          "sha256": "4c64c8bddefcb697a8d95d02d8d31b4adc513e015ccf24b1ef2def6082d07cba"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S005",
+      "action": "Create schemas for task catalog, events, state, evidence, handoff, and plan changes.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S005.json",
+          "sha256": "774ea6157cd3be93a6fa79fb8f29a168b17edb4034ac2de2849a7af94695ca43"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S006",
+      "action": "Implement workbook import and normalized CSV/JSON exports with stable-ID/count reconciliation.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S006.json",
+          "sha256": "29db2a7ca22c61dd58c691f6aa714ba652f7747d8bace161cb4d898598fc2afa"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S007",
+      "action": "Implement the append-only event writer with atomic creation and validation.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S007.json",
+          "sha256": "5c64d3401eacc9b9ced3ccb19ccdce8e19819ad658ac0da7f04de3b8f6f3ec96"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S008",
+      "action": "Implement the deterministic reducer and exact-current-step algorithm.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S008.json",
+          "sha256": "a60564268333fbe2bf7f0cceeb11355879b428f0feda98e247732af2a5b70497"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S009",
+      "action": "Implement transition, dependency, ownership, event-chain, gate-authority, and evidence validation.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S009.json",
+          "sha256": "03628ca42729ef5dc077cc12f8194bad5183b627ea060fbbe8a5854ba25c0804"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S010",
+      "action": "Add reducer fixtures for baseline, active, verification, blocked, conflict, reopen, and completed states.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S010.json",
+          "sha256": "272a848b9898217d26218cd217e16114aeedaedea018f0fff161176791759fb0"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S011",
+      "action": "Seed the truthful bootstrap event and generate PROJECT_STATE.json; verify a no-diff second reduction.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S011.json",
+          "sha256": "f45c1d3641f8d2edeb67d606293fbb32176fcb17582e925248e34db1b7365eb1"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S012",
+      "action": "Create the canonical monorepo directories and root portability/policy files.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S012.json",
+          "sha256": "8f8ee06810cd22e22826c7e02cb5215a546ebc9456de6f0fc165e2f1c42a32fc"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S013",
+      "action": "Create README.md and link the human quick start, architecture, workbook/catalog, state, and safety authorities.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S013.json",
+          "sha256": "847095388130dee95a584a1c80a5ad1c4175b53e3a8348be4b15bc8668570c01"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S014",
+      "action": "Create canonical AGENTS.md and thin CLAUDE/Copilot adapters without duplicated policy.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S014.json",
+          "sha256": "f6b79fe040f4d7415ea9b61ee219ecb83decdb4b50f13f0cbabbf009733acdef"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S015",
+      "action": "Create ADR, module-contract, agent-handoff, evidence, validation, and operator-document templates.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S015.json",
+          "sha256": "7964cfb01d057e52d094dae1fa12428c749e19473ffcc048ea3d74b7fdd42f35"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S016",
+      "action": "Create centralized toolchain/dependency manifest and choose the exact Unity patch from verified reality.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S016.json",
+          "sha256": "4dbe04f2bd492308ee0da79b3a9ce1c9bd2ffcfc515ed89b09b68795fdc77178"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S017",
+      "action": "Create config source/staging architecture, schemas, examples, local whitelist, ignore rules, and divergence checks.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S017-remediation.json",
+          "sha256": "414e557a3e76c1232754494dabb8297b98d5c0f52ef35b4d1c922aff2a4a77dd"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S018",
+      "action": "Create portable idempotent bootstrap, doctor, test, build, staging, package, and first-run script skeletons.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S018.json",
+          "sha256": "73c81239b1ca85929576c44c1a963f6e276ed0098b21c7c77660a809815dbcca"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S019",
+      "action": "Create the Unity 6 URP project, remove XR packages, and commit settings, manifests, locks, and meta files.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S019.json",
+          "sha256": "09490a2311f63fb59f34b78d3e1d1e11958f151265fb43a6e5e51730bf299174"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S020",
+      "action": "Vendor/pin OpenVR binding and native library with version, origin, license, notice, and checksums.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S020.json",
+          "sha256": "bb0ebc494fd11620b291800cd4a0e16586fa09e04592832b6f2f63886277ea41"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S021",
+      "action": "Add Newtonsoft JSON and Unity Test Framework through pinned package manifests.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S021.json",
+          "sha256": "87c18b64d2cdcea19ea798e8d4b39d45416d09d1e084a38b6fa167e38d502771"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S022",
+      "action": "Create EditMode and PlayMode assemblies with one meaningful smoke test each.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S022.json",
+          "sha256": "9913ecc0eb44176d754b393c0d79844df2f877eb984688ff745a0b4f95eefcf4"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S023",
+      "action": "Create explicit Windows standalone command-line build entry and build-info generation.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S023.json",
+          "sha256": "7aa867c1d4e0e4549195ef9c684c1b69b3ab4fbb3c2785e01f9fb7a252560f00"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S024",
+      "action": "Create CI for repository policy, schemas/progress, documentation, Python baseline, and Unity tests/build as available.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S024.json",
+          "sha256": "b72f30b739bdbc212d16b54a8c35ef7cd505a8cd82c5bf9f2fadd8ce6871431d"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S025",
+      "action": "Configure or document required GitHub ruleset, CODEOWNERS, PR template, squash merge, and mirror reconciliation.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S025.json",
+          "sha256": "b3adb81478c97c9c89af40f53302eaf01935709af6999ef0d636dad1bb4c4402"
+        }
+      ]
+    },
+    {
+      "id": "BOOT.S026",
+      "action": "Perform clean-clone/path-with-spaces/repeated-bootstrap/tests/build verification; record evidence and handoff.",
+      "status": "done",
+      "evidence": [
+        {
+          "path": "project-management/progress/evidence/BOOT.S026.json",
+          "sha256": "cd1d636fecea6e0f5ade7143e1b95f1092a959fa97553730fa23b863ce63e52b"
+        }
+      ]
+    }
+  ],
+  "retainedBaselineCompletionRequirement": "clean clone -> open in Unity -> tests green -> standalone build produced",
+  "schemaVersion": 1,
+  "sourceRevision": "0b406a9c5401a42195ea99250548cfe5969b3b6b",
+  "recordedAtUtc": "2026-09-07T02:52:34.898342+00:00",
+  "artifactSnapshotSha256": {
+    "docs/plan/approved-plan.json": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
+    "project-management/task-catalog.json": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+    "docs/ai/bootstrap-handoff.md": "d06408ee89f1727662095b6aa60dc364773fc61b76a64345b9658cb3d6da028d",
+    "project-management/progress/evidence/BOOT.S026.json": "cd1d636fecea6e0f5ade7143e1b95f1092a959fa97553730fa23b863ce63e52b"
+  }
+}

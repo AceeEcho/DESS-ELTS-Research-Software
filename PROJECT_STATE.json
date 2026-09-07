@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T02:32:38.521711+00:00",
+  "generatedAtUtc": "2026-09-07T02:52:35.888202+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,17 +11,14 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 105,
-    "eventSetSha256": "1fb32b6ee10e9a91ea06636801232ad7ba05a32a94f68eafe48c4ead2ab7e3b0"
+    "eventCount": 108,
+    "eventSetSha256": "3675fba58e5b920f41339aa0240edce49041a8a8072dfc99bc22fdc0da5a0a68"
   },
   "current": {
     "mode": "working",
-    "primaryStepId": "BOOT.S026",
-    "activeStepIds": [
-      "BOOT.S026"
-    ],
+    "primaryStepId": "P0.2.S001",
+    "activeStepIds": [],
     "nextEligibleStepIds": [
-      "P0.2.S001",
       "P0.4.S001",
       "P0.5.S001"
     ],
@@ -45,9 +42,8 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "BOOT.S026",
+    "primaryStepId": "DEV-04.S001",
     "activeStepIds": [
-      "BOOT.S026",
       "DEV-04.S001"
     ],
     "nextEligibleStepIds": [
@@ -293,21 +289,10 @@
       "P8.7.S001",
       "P8.8.S001"
     ],
-    "selectedPhaseId": "P0",
-    "selectedLane": "bootstrap"
+    "selectedPhaseId": "DEV",
+    "selectedLane": "synthetic_development_only"
   },
   "activeWork": [
-    {
-      "owner": "agent:codex-astra",
-      "taskId": "P0.3",
-      "atomicStepId": "BOOT.S026",
-      "branch": "bootstrap/repository-governance",
-      "claimedPaths": [
-        "docs/ai/bootstrap-handoff.md",
-        "scripts/first-run",
-        "tools/bootstrap"
-      ]
-    },
     {
       "owner": "agent:codex-astra",
       "taskId": "DEV-04",
@@ -345,17 +330,35 @@
       "blockers": []
     },
     "P0.3": {
-      "status": "in_progress",
-      "revision": 81,
-      "lastEventHash": "8228b99856db1149b059564940aaadf6c3bb9468da2bfa5202f7eb56460e37ab",
+      "status": "done",
+      "revision": 84,
+      "lastEventHash": "ff89ba440bf29decf3a60303ff022dc84b2cdcb84244aa4a4dfd9c100d94740b",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
-      "claimedPaths": [
-        "docs/ai/bootstrap-handoff.md",
-        "scripts/first-run",
-        "tools/bootstrap"
+      "claimedPaths": [],
+      "evidence": [
+        {
+          "id": "P0.3-bootstrap-closure",
+          "path": "project-management/progress/evidence/P0.3.json",
+          "sha256": "fbc11c8895aab93b8c309d9fda0c54f1ec5d08ec82d254db8d5b8cb6f8363870",
+          "targetIds": [
+            "P0.3"
+          ],
+          "criteria": [
+            "task-acceptance"
+          ],
+          "class": "document",
+          "command": "Validate all26 active bootstrap statuses and immutable evidence hashes; compare retained P0.3 completion requirements with BOOT.S019 through BOOT.S026 results",
+          "result": "pass",
+          "sourceRevision": "0b406a9c5401a42195ea99250548cfe5969b3b6b",
+          "recordedAtUtc": "2026-09-07T02:52:34.898342+00:00",
+          "limitations": [
+            "No physical, safety, study or release gate acceptance",
+            "No remote push/merge/settings/CI verification",
+            "DEV04 logging soak remains in progress; development does not automatically complete baseline support tasks"
+          ]
+        }
       ],
-      "evidence": [],
       "blockers": []
     },
     "P0.4": {
@@ -2385,9 +2388,9 @@
       "blockers": []
     },
     "BOOT.S026": {
-      "status": "in_progress",
-      "revision": 81,
-      "lastEventHash": "8228b99856db1149b059564940aaadf6c3bb9468da2bfa5202f7eb56460e37ab",
+      "status": "done",
+      "revision": 83,
+      "lastEventHash": "736b32cb1cc8db6372558f90de2e9a6f627d28530385fb2cef82015156f5f56c",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [
@@ -2395,7 +2398,32 @@
         "scripts/first-run",
         "tools/bootstrap"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "BOOT.S026-BOOT.S026",
+          "path": "project-management/progress/evidence/BOOT.S026.json",
+          "sha256": "cd1d636fecea6e0f5ade7143e1b95f1092a959fa97553730fa23b863ce63e52b",
+          "targetIds": [
+            "BOOT.S026"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "toolchain_runtime",
+          "command": "fresh git clone --no-hardlinks; bootstrap-dev twice from unrelated cwd; tools/ci/check.py --baseline; test.ps1 runtime/unity-edit/unity-play; build.ps1; tools.build.verify and tools.build.smoke before/after copy; reducer --check",
+          "result": "pass",
+          "sourceRevision": "0b406a9c5401a42195ea99250548cfe5969b3b6b",
+          "recordedAtUtc": "2026-09-07T02:51:46.796701+00:00",
+          "limitations": [
+            "No GUI/display/physical tracking or safety validation",
+            "Study-PC full-load throughput and real-device timing remain deferred; DEV04 measured soak is still running separately",
+            "Remote settings/CI/review-role setup remain pending under accepted documented route",
+            "Final clone unit/runtime suites tested97ef765; player smoke addition tested in root EditMode and clean player27340e5; exact source revisions retained below",
+            "Two platform-specific Python configuration cases were skipped, not passed"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-01.S001": {
@@ -5279,8 +5307,8 @@
   },
   "chains": {
     "task:P0.3": {
-      "revision": 81,
-      "hash": "8228b99856db1149b059564940aaadf6c3bb9468da2bfa5202f7eb56460e37ab"
+      "revision": 84,
+      "hash": "ff89ba440bf29decf3a60303ff022dc84b2cdcb84244aa4a4dfd9c100d94740b"
     },
     "task:DEV-01": {
       "revision": 7,

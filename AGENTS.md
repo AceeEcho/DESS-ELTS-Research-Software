@@ -42,7 +42,9 @@ anchor so missing testing equipment does not stop eligible software work.
   Installing or repositioning parts requires applicable calibration and validation.
 - Before implementation read `docs/ai/BUILD-CONSTRAINTS.md` and the accepted PC-001
   amendment. The historical review's plan conflicts are resolved by that amendment;
-  physical criteria and gates remain pending. Bootstrap is still incomplete.
+  physical criteria and gates remain pending. Bootstrap P0.3 is verified complete;
+  follow validated `PROJECT_STATE.json` and `docs/ai/bootstrap-handoff.md` for the
+  recorded checkpoint and current development selection.
 
 ## Efficient execution
 

@@ -60,3 +60,11 @@ the incompatibility actionable now.
 - Checked ordinary synthetic vector, pose, bore, plane intersection and
   projection behavior through the committed checks. No physical measurement,
   calibration, Unity Editor compile, or hardware validation was performed.
+
+## Coordinator remediation
+
+All listed findings were corrected before DEV-01 acceptance: block namespace and
+C# 9 harness; scaled normalization; default quaternion rejection; projection
+distance expressed in meters; regression coverage expanded from 19 to 43 checks.
+`dotnet run --project tools/runtime-tests/GeometryChecks.csproj` passed on the
+corrected working snapshot. Unity runtime verification remains a separate step.

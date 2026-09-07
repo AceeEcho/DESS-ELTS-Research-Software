@@ -24,3 +24,19 @@ only. Run the executable checks with the installed .NET SDK:
 ```text
 dotnet run --project tools/runtime-tests/GeometryChecks.csproj
 ```
+
+## Review corrections and numerical contract
+
+Vector and quaternion normalization scale components before computing a norm,
+so large finite values remain valid directions instead of overflowing to zero.
+A default quaternion is invalid and is rejected when constructing or using a pose.
+Vector construction rejects nonfinite components, including arithmetic overflow.
+ScreenProjection.Distance and ray intersection distance are both meters from the
+eye/ray origin. Screen U/V are meter offsets from the lower-left origin, with a
+centralized numerical edge tolerance. None of these values asserts calibration.
+
+The console harness pins C# 9 and covers all four screen corners from an off-axis
+eye, distance units, nonidentity zero correction, large finite normalization,
+default-value rejection, transforms, known angles and invalid inputs. Actual Unity
+compilation/import is still separately required. Work item: DEV-01; supports the
+baseline geometry work without completing physical calibration or any gate.

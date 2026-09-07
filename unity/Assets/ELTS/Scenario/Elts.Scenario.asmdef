@@ -1,0 +1,6 @@
+{
+  "name": "Elts.Scenario",
+  "rootNamespace": "Elts.Scenario",
+  "references": ["Elts.Clock", "Elts.Geometry", "Elts.Logging"],
+  "noEngineReferences": true
+}

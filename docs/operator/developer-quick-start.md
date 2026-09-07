@@ -51,3 +51,16 @@ A schema or state mismatch is a stop condition for dependent work. Preserve the
 error and reconcile the source/events; do not delete history or make the generated
 state match an expected status manually. A missing device blocks its physical
 checks while eligible synthetic work can continue under PC-001.
+
+## Development build and study entry points
+
+Run `scripts/build.ps1 -Output build/new-output` for a Windows synthetic player;
+the output directory must be empty. See [build provenance](../modules/windows-build.md).
+The standalone numerical/runtime checks additionally use the .NET SDK declared
+in `config/toolchain.json`; that SDK is not required to run a built Unity player.
+
+The root `FIRST-RUN.cmd` and `START-ELTS.cmd` are study entry-point skeletons.
+They currently fail closed with a structured report because study configuration,
+physical acceptance and release approval are pending. Use `bootstrap-dev.ps1`
+for development setup. `CHECK-SYSTEM.cmd` invokes development diagnostics; a pass
+does not authorize a study session. Every entry resolves its own repository path.

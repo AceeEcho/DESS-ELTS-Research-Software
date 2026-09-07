@@ -205,7 +205,7 @@ def run(args) -> tuple[dict, Path]:
 
         elif args.action == "test":
             selected = args.suite
-            for suite, folder in (("plan", "tools/plan"), ("progress", "tools/progress"), ("config", "tools/config"), ("bootstrap", "tools/bootstrap"), ("dependencies", "tools/dependencies")):
+            for suite, folder in (("plan", "tools/plan"), ("progress", "tools/progress"), ("config", "tools/config"), ("bootstrap", "tools/bootstrap"), ("dependencies", "tools/dependencies"), ("build-provenance", "tools/build")):
                 if selected in {"all", "baseline", suite}:
                     command(suite, py + ["-m", "unittest", "discover", "-s", folder, "-p", "test_*.py", "-v"])
             if selected in {"all", "geometry", "runtime"}:
@@ -256,11 +256,15 @@ def run(args) -> tuple[dict, Path]:
             stage(ROOT)
             output = relative_output(args.output, "build/windows-synthetic")
             output.mkdir(parents=True, exist_ok=True)
+            from tools.build.provenance import prepare, finalize
+            provenance = prepare(ROOT, output, manifest)
             command("unity-build", [str(editor), "-batchmode", "-quit", "-projectPath", str(ROOT / "unity"),
                     "-buildTarget", manifest["unity"]["target"], "-executeMethod", "Elts.Editor.BuildEntry.BuildWindows",
-                    "-eltsBuildOutput", str(output), "-logFile", str(output / "unity-build.log")], UNITY_TIMEOUT_SECONDS)
+                    "-eltsBuildOutput", str(output), "-eltsEditorVersion", manifest["unity"]["version"],
+                    "-eltsBuildVersion", provenance["version"], "-logFile", str(output / "unity-build.log")], UNITY_TIMEOUT_SECONDS)
             if not (output / "ELTS-Synthetic.exe").is_file():
                 raise ValueError("Unity build exited without the expected Windows executable")
+            finalize(output, provenance)
 
         else:
             raise ValueError("Study provisioning/packaging is unavailable: approved study configuration, physical acceptance and release gates remain pending. Use development instructions.")

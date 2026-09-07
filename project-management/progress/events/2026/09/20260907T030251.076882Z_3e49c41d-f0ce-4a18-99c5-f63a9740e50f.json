@@ -1,0 +1,52 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "3e49c41d-f0ce-4a18-99c5-f63a9740e50f",
+  "eventType": "reopened",
+  "recordedAtUtc": "2026-09-07T03:02:51.076882+00:00",
+  "occurredAtUtc": "2026-09-07T03:02:51.076882+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "DEV-04.S001"
+  },
+  "taskId": "DEV-04",
+  "fromStatus": "done",
+  "toStatus": "in_progress",
+  "taskRevision": 5,
+  "previousTaskEventHash": "6f3b6c0997edf4745ff4d525a66c99db3ac4e0982596bf4ae05a40251e97a8fe",
+  "causalEventHashes": [
+    "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "6f3b6c0997edf4745ff4d525a66c99db3ac4e0982596bf4ae05a40251e97a8fe",
+    "b456cff38d75cf98ff4a0017df409acc3f081e2f63c9346ba259914888548a5f",
+    "ff89ba440bf29decf3a60303ff022dc84b2cdcb84244aa4a4dfd9c100d94740b"
+  ],
+  "branch": "work/dev04-logging",
+  "claimedPaths": [
+    "unity/Assets/ELTS/Logging",
+    "tools/runtime-tests/LoggingPublicationChecks.cs",
+    "tools/runtime-tests/LoggingPublicationChecks.csproj",
+    "docs/modules/logging.md"
+  ],
+  "expectedChecks": [
+    "Pending-to-final summary publication after durable flush",
+    "Timeout cancellation cannot publish false completion",
+    "Finalization failure and normal closure regression checks"
+  ],
+  "stopConditions": [
+    "False-complete final summary",
+    "Unbounded unexpected publication behavior"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "Verification found final summary written before its durable flush and a timeout/publication race. Reopen implementation for targeted completion-publication correction; preserve the running source-bound soak as separate evidence.",
+  "approval": null,
+  "handoffTo": null
+}

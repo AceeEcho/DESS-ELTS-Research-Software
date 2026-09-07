@@ -1,0 +1,15 @@
+Valve OpenVR SDK 2.12.14
+Copyright (c) 2015, Valve Corporation. All rights reserved.
+
+The unmodified C# binding, Windows x86_64 native library, license and upstream
+README are vendored from ValveSoftware/openvr commit
+91825305130f446f82054c1ec3d416321ace0072 (release tag v2.12.14).
+Origin: https://github.com/ValveSoftware/openvr
+
+See LICENSE for the BSD 3-Clause redistribution terms. Include this notice and
+LICENSE with source and binary distributions that contain these components.
+dependency.json and checksums.sha256 record exact byte provenance.
+
+ELTS's synthetic development mode does not initialize this native library.
+Vendoring and successful compilation do not validate SteamVR, tracker hardware,
+physical timing, registration or study readiness. No Valve endorsement is implied.

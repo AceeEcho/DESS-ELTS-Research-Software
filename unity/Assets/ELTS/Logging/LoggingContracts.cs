@@ -178,6 +178,7 @@ public sealed class LoggingHealth
     public string? Failure { get; }
 }
 
+/// <summary>Completed reports whether the writer joined within the requested wait. CompleteOutput reports whether the durable final summary publication won; it can be true during the narrow post-publication exit window even when Completed is false.</summary>
 public sealed class LogCloseResult
 {
     internal LogCloseResult(bool completed, bool completeOutput, string? error) { Completed = completed; CompleteOutput = completeOutput; Error = error; }

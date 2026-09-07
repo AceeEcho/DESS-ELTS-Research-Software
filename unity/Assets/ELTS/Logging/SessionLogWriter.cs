@@ -147,12 +147,6 @@ internal sealed class FileLogSink : ILogSink
         foreach (StreamWriter writer in writers.Values) writer.Flush();
         if (durable) foreach (StreamWriter writer in writers.Values) ((FileStream)writer.BaseStream).Flush(true);
     }
-    public void WriteSummary(LoggingRunLease lease, string content)
-    {
-        string path = LoggingRunDirectory.CombineChild(lease.DirectoryPath, "session-summary.json");
-        using (var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
-        using (var writer = new StreamWriter(stream, Utf8)) { writer.NewLine = "\n"; writer.Write(content); writer.Flush(); stream.Flush(true); }
-    }
     public void Dispose()
     {
         if (disposed) return;
@@ -170,6 +164,46 @@ internal sealed class FileLogSink : ILogSink
     private static string ToHex(byte[] value) { var builder = new StringBuilder(value.Length * 2); foreach (byte b in value) builder.Append(b.ToString("x2", CultureInfo.InvariantCulture)); return builder.ToString(); }
 }
 
+/// <summary>
+/// Writer-thread seam for terminal publication tests. A pending file is never
+/// a completed run; only a successful Publish call exposes the final name.
+/// </summary>
+public interface ISessionSummaryPublisher
+{
+    void WritePending(LoggingRunLease lease, string content);
+    void Publish(LoggingRunLease lease);
+}
+
+internal sealed class FileSessionSummaryPublisher : ISessionSummaryPublisher
+{
+    private const string PendingFileName = ".session-summary.pending.json";
+    private const string FinalFileName = "session-summary.json";
+    private static readonly Encoding Utf8 = new UTF8Encoding(false, true);
+
+    public void WritePending(LoggingRunLease lease, string content)
+    {
+        string path = LoggingRunDirectory.CombineChild(lease.DirectoryPath, PendingFileName);
+        using (var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
+        using (var writer = new StreamWriter(stream, Utf8))
+        {
+            writer.NewLine = "\n";
+            writer.Write(content);
+            writer.Flush();
+            // A durable-flush failure leaves only this ignored pending file.
+            stream.Flush(true);
+        }
+    }
+
+    public void Publish(LoggingRunLease lease)
+    {
+        string pending = LoggingRunDirectory.CombineChild(lease.DirectoryPath, PendingFileName);
+        string final = LoggingRunDirectory.CombineChild(lease.DirectoryPath, FinalFileName);
+        if (File.Exists(final)) throw new IOException("A final session summary already exists.");
+        // Same-directory File.Move is the no-overwrite terminal publication step.
+        File.Move(pending, final);
+    }
+}
+
 /// <summary>Single-writer session recorder. Samples can drop under pressure; target and event failures make the session unhealthy.</summary>
 public sealed class SessionLogWriter : IDisposable
 {
@@ -179,25 +213,31 @@ public sealed class SessionLogWriter : IDisposable
     private readonly SessionProvenance provenance;
     private readonly LoggingConfiguration configuration;
     private readonly ILogSinkFactory sinkFactory;
+    private readonly ISessionSummaryPublisher summaryPublisher;
     private readonly BlockingCollection<WriterItem> samples;
     private readonly BlockingCollection<WriterItem> critical;
     private readonly object faultLock = new object();
+    // Serializes the irrevocable final move against a caller timing out Close().
+    private readonly object terminalPublicationLock = new object();
     private Thread? thread;
     private Exception? fault;
     private int started;
     private int closeRequested;
     private int exited;
+    private bool terminalPublicationCancelled;
+    private bool terminalPublicationWon;
     private long droppedSamples;
     private long writtenSamples;
     private long writtenEvents;
     private long writtenTargets;
 
-    public SessionLogWriter(LoggingRunLease lease, SessionProvenance provenance, LoggingConfiguration? configuration = null, ILogSinkFactory? sinkFactory = null)
+    public SessionLogWriter(LoggingRunLease lease, SessionProvenance provenance, LoggingConfiguration? configuration = null, ILogSinkFactory? sinkFactory = null, ISessionSummaryPublisher? summaryPublisher = null)
     {
         this.lease = lease ?? throw new ArgumentNullException(nameof(lease));
         this.provenance = provenance ?? throw new ArgumentNullException(nameof(provenance));
         this.configuration = configuration ?? new LoggingConfiguration();
         this.sinkFactory = sinkFactory ?? new FileLogSinkFactory();
+        this.summaryPublisher = summaryPublisher ?? new FileSessionSummaryPublisher();
         samples = new BlockingCollection<WriterItem>(new ConcurrentQueue<WriterItem>(), this.configuration.SampleQueueCapacity);
         critical = new BlockingCollection<WriterItem>(new ConcurrentQueue<WriterItem>(), this.configuration.CriticalQueueCapacity);
     }
@@ -242,9 +282,28 @@ public sealed class SessionLogWriter : IDisposable
         TimeSpan wait = timeout ?? configuration.CloseTimeout;
         if (wait <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(timeout));
         bool completed = thread != null && thread.Join(wait);
-        if (!completed) SetFault(new TimeoutException("Logging did not close within the configured timeout; output is incomplete."));
+        bool published;
+        if (!completed)
+        {
+            // This lock covers only terminal arbitration and File.Move. It can exceed the
+            // requested close wait only if a filesystem metadata move itself stalls; that
+            // tradeoff prevents timeout cancellation from racing a complete publication.
+            lock (terminalPublicationLock)
+            {
+                if (!terminalPublicationWon)
+                {
+                    terminalPublicationCancelled = true;
+                    SetFaultLocked(new TimeoutException("Logging did not close within the configured timeout; output is incomplete."));
+                }
+                published = terminalPublicationWon;
+            }
+        }
+        else
+        {
+            lock (terminalPublicationLock) published = terminalPublicationWon;
+        }
         Exception? current; lock (faultLock) current = fault;
-        return new LogCloseResult(completed, completed && current == null, current?.Message);
+        return new LogCloseResult(completed, published && current == null, current?.Message);
     }
     public void Dispose() { if (Interlocked.CompareExchange(ref started, 0, 0) != 0 && Volatile.Read(ref closeRequested) == 0) Close(); }
 
@@ -312,7 +371,7 @@ public sealed class SessionLogWriter : IDisposable
                 try
                 {
                     sink.Dispose();
-                    if (sink is FileLogSink files) files.WriteSummary(lease, SerializeSummary(files.FileChecksums));
+                    if (sink is FileLogSink files) FinalizeSummary(files.FileChecksums);
                 }
                 catch (Exception error) { SetFault(error); }
             }
@@ -334,13 +393,37 @@ public sealed class SessionLogWriter : IDisposable
             default: throw new InvalidOperationException("Unknown log item.");
         }
     }
+    private void FinalizeSummary(IReadOnlyDictionary<string, string> checksums)
+    {
+        lock (terminalPublicationLock)
+        {
+            if (terminalPublicationCancelled || HasFaultLocked()) return;
+        }
+        // The candidate has no authority while it remains under the pending name.
+        summaryPublisher.WritePending(lease, SerializeSummary(checksums));
+        lock (terminalPublicationLock)
+        {
+            if (terminalPublicationCancelled || HasFaultLocked()) return;
+            summaryPublisher.Publish(lease);
+            terminalPublicationWon = true;
+        }
+    }
     private string SerializeSummary(IReadOnlyDictionary<string, string> checksums)
     {
         Exception? current; lock (faultLock) current = fault;
         return LogJson.Summary(lease, provenance, current == null, current?.Message, DroppedSampleCount, Interlocked.Read(ref writtenSamples),
             Interlocked.Read(ref writtenEvents), Interlocked.Read(ref writtenTargets), checksums);
     }
-    private void SetFault(Exception error) { lock (faultLock) { if (fault == null) fault = error; } }
+    private void SetFault(Exception error)
+    {
+        lock (terminalPublicationLock)
+        {
+            // No later producer-side race may revise a successfully published terminal record.
+            if (!terminalPublicationWon) SetFaultLocked(error);
+        }
+    }
+    private void SetFaultLocked(Exception error) { lock (faultLock) { if (fault == null) fault = error; } }
+    private bool HasFaultLocked() { lock (faultLock) return fault != null; }
 
     private enum WriterItemKind { Sample, Event, Target }
     private readonly struct WriterItem

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -44,25 +45,53 @@ class ImportPlanTests(unittest.TestCase):
                 _verify_sources(base, rules)
 
     def test_exports_are_repeatable_and_formulas_are_preserved(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            # Export to the real project-management destination only after proving
-            # deterministic bytes; avoid mutating the checkout in this test.
-            first = export_outputs(ROOT)
+        with tempfile.TemporaryDirectory(prefix="catalog importer ") as temporary:
+            root = Path(temporary) / "project copy with spaces"
+            shutil.copytree(ROOT, root, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+            first = export_outputs(root)
             snapshots = {path: path.read_bytes() for path in first}
-            second = export_outputs(ROOT, check=True)
+            second = export_outputs(root, check=True)
             self.assertEqual(first, second)
             self.assertTrue(all(path.read_bytes() == snapshots[path] for path in first))
-            sheets = json.loads((ROOT / "project-management/exports/workbook-dashboard.json").read_text(encoding="utf-8"))
+            sheets = json.loads((root / "project-management/exports/workbook-dashboard.json").read_text(encoding="utf-8"))
             formula_cells = [cell for row in sheets for cell in row if isinstance(cell, dict) and "formula" in cell]
             self.assertTrue(formula_cells)
             self.assertTrue(any(cell["formula"].startswith("=") for cell in formula_cells))
             original_cwd = Path.cwd()
             try:
                 os.chdir(root)  # path resolution must not depend on caller's cwd
-                self.assertEqual(build_catalog(ROOT)["planVersion"], "ELTS-build-plan-1.0+PC-001")
+                self.assertEqual(build_catalog(root)["planVersion"], "ELTS-build-plan-1.0+PC-001")
             finally:
                 os.chdir(original_cwd)
+
+    def test_missing_and_stale_exports_are_rejected(self):
+        with tempfile.TemporaryDirectory(prefix="catalog importer ") as temporary:
+            root = Path(temporary) / "project copy"
+            shutil.copytree(ROOT, root, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+            outputs = export_outputs(root)
+            outputs[0].unlink()
+            with self.assertRaisesRegex(ValueError, "Export drift"):
+                export_outputs(root, check=True)
+            export_outputs(root)
+            outputs[0].write_bytes(outputs[0].read_bytes() + b"drift")
+            with self.assertRaisesRegex(ValueError, "Export drift"):
+                export_outputs(root, check=True)
+
+    def test_approved_plan_and_rules_drift_are_rejected(self):
+        with tempfile.TemporaryDirectory(prefix="catalog importer ") as temporary:
+            root = Path(temporary) / "project copy"
+            shutil.copytree(ROOT, root, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+            plan = root / "docs/plan/approved-plan.json"
+            plan.write_bytes(plan.read_bytes() + b" ")
+            with self.assertRaisesRegex(ValueError, "Approved plan output is stale"):
+                build_catalog(root)
+            shutil.copyfile(ROOT / "docs/plan/approved-plan.json", plan)
+            rules = root / "docs/plan/amendment-rules.json"
+            changed = json.loads(rules.read_text(encoding="utf-8"))
+            changed["amendmentId"] = "TAMPERED"
+            rules.write_text(json.dumps(changed, indent=2) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Expected accepted PC-001"):
+                build_catalog(root)
 
 
 if __name__ == "__main__":

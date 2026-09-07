@@ -60,6 +60,15 @@ unique `BaseIntermediateOutputPath` and `OutputPath` restored the expected
 
 ## Remaining boundary
 
+Coordinator remediation at `c444010`: staging and runtime now share the
+dimensionless `1e-10` basis tolerance, with paired below/above boundary checks.
+`Directory.Build.props` isolates each console project's intermediate and output
+paths before SDK imports. Alternating runs produced 32 configuration checks,
+43 geometry checks, then 32 configuration checks, all exit zero. The staging
+suite ran nine tests: seven passed and two symlink creation cases were skipped
+because this Windows host denied creating symlinks. Receipt:
+`project-management/progress/evidence/BOOT.S017-remediation.json`.
+
 This configuration loader intentionally accepts only synthetic, unmeasured rig
 data and cannot establish study readiness. Its hash manifest detects accidental
 bundle corruption; it is not an independent authorization mechanism for a

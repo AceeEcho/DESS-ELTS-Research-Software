@@ -17,6 +17,22 @@ def fixture_root(parent: Path) -> Path:
     return root
 
 class StageTests(unittest.TestCase):
+    def test_display_orthogonality_matches_runtime_basis_tolerance(self):
+        # Both sides use normalized edge dot <= 1e-10. These fixtures straddle
+        # that engineering threshold without relying on floating-point equality.
+        for x_offset, accepted in ((3.375e-11, True), (3.375e-10, False)):
+            with self.subTest(x_offset=x_offset), tempfile.TemporaryDirectory() as temp:
+                root = fixture_root(Path(temp))
+                rig = root / "config/rig/templates/synthetic-rig.json"
+                value = json.loads(rig.read_text())
+                value["display"]["upperLeftM"][0] += x_offset
+                rig.write_text(json.dumps(value))
+                if accepted:
+                    stage(root)
+                else:
+                    with self.assertRaisesRegex(ValueError, "perpendicular"):
+                        stage(root)
+
     def test_write_check_is_deterministic_and_manifest_is_consumer_contract(self):
         with tempfile.TemporaryDirectory() as temp:
             root = fixture_root(Path(temp)); out = root / "unity/Assets/StreamingAssets/config-generated"

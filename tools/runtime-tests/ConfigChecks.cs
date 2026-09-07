@@ -64,6 +64,11 @@ internal static class ConfigChecks
         Directory.CreateDirectory(temporary);
         try
         {
+            string boundary = Path.Combine(temporary, "basis accepted"); Copy(source, boundary);
+            MutateEffective(boundary, v => v["rig"]["display"]["upperLeftM"][0] = -0.6 + 3.375e-11);
+            Assert(DevelopmentConfiguration.LoadDirectory(boundary).Mode == "synthetic", "basis below tolerance accepted");
+            MutateEffective(boundary, v => v["rig"]["display"]["upperLeftM"][0] = -0.6 + 3.375e-10);
+            Reject(() => DevelopmentConfiguration.LoadDirectory(boundary), "basis above tolerance rejected");
             Action<JObject>[] invalid = {
                 v => v["unexpected"] = true,
                 v => ((JObject)v["runtime"]).Remove("sampleRateHz"),

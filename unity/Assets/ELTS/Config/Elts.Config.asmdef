@@ -1,0 +1,10 @@
+{
+  "name": "Elts.Config",
+  "rootNamespace": "Elts.Config",
+  "references": ["Elts.Geometry"],
+  "noEngineReferences": true,
+  "defineConstraints": ["ELTS_NEWTONSOFT"],
+  "versionDefines": [
+    {"name": "com.unity.nuget.newtonsoft-json", "expression": "3.0.0", "define": "ELTS_NEWTONSOFT"}
+  ]
+}

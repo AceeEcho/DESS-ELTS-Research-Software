@@ -44,7 +44,7 @@
   },
   "validation": {
     "editorInstallation": "verified",
-    "editorRuntime": "pending",
+    "editorRuntime": "verified: URP project import and Windows x64 target; configuration assembly awaits BOOT.S021",
     "unityTests": "pending",
     "windowsBuild": "pending",
     "studyMachineBaseline": "pending physical commissioning",

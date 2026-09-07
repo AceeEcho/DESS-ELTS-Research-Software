@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "result": "pass",
+  "sourceRevision": "d8e44213be630c0d08af5238bf6c6ac12d0afbc4",
+  "recordedAtUtc": "2026-09-07T01:41:29.655064+00:00",
+  "summary": "Shared monotonic clock, startup UTC anchor and validity-bearing acquisition/source contracts verified after default-sample correction.",
+  "command": "dotnet run --project tools/runtime-tests/TrackingChecks.csproj",
+  "checks": [
+    "25 tracking checks passed on integrated source",
+    "Paired valid/invalid head and weapon samples share one acquisition timestamp and sequence",
+    "Default samples invalid; connection/status/pose semantics explicit",
+    "Native position and quarter-turn orientation convert once into Unity room frame",
+    "Manual time cannot move backward; production clock monotonic reads and UTC anchor verified"
+  ],
+  "limitations": [
+    "No actual OpenVR lifecycle/device ingestion in this step",
+    "Physical trigger timing, cross-device alignment and clock comparison deferred: testing equipment unavailable",
+    "D-12 synchronization method remains unresolved",
+    "No physical/gate acceptance"
+  ],
+  "artifactSnapshotSha256": {
+    "unity/Assets/ELTS/Clock/SharedMonotonicClock.cs": "1618ca38154d8e3ddee8a617c96b2cc34be36ff7c50ad2cbc0276065f46d5fac",
+    "unity/Assets/ELTS/Tracking/TrackingContracts.cs": "c89d38ceced018431834dca16c4e393a936f76875315546a545fa44fd228f93d",
+    "tools/runtime-tests/TrackingChecks.cs": "f51c65202d9f8ad7b08b89844d31437278146c3bf968e383e6ed16cfc2979c14",
+    "tools/runtime-tests/TrackingChecks.csproj": "66d6b79c56d01cad7f9274783bce2562caa2e8b256c4645f487ab084796f8235",
+    "docs/modules/tracking.md": "ab3012303295dc1db9989c6a19a8c297c3e79391bd9b24f0b11e22ea351a1534"
+  }
+}

@@ -1,0 +1,14 @@
+test_data_root_and_symlink_fail_closed (test_stage.StageTests.test_data_root_and_symlink_fail_closed) ... skipped 'Host does not permit file symlink creation'
+test_display_orthogonality_matches_runtime_basis_tolerance (test_stage.StageTests.test_display_orthogonality_matches_runtime_basis_tolerance) ... ok
+test_duplicate_nonfinite_and_no_write_on_invalid_source (test_stage.StageTests.test_duplicate_nonfinite_and_no_write_on_invalid_source) ... ok
+test_generated_destinations_and_exact_unity_meta_allowance (test_stage.StageTests.test_generated_destinations_and_exact_unity_meta_allowance) ... ok
+test_missing_source_geometry_order_and_path_fail_closed (test_stage.StageTests.test_missing_source_geometry_order_and_path_fail_closed) ... ok
+test_missing_stale_and_extra_outputs_rejected (test_stage.StageTests.test_missing_stale_and_extra_outputs_rejected) ... ok
+test_output_links_are_checked_before_resolve_and_before_any_write (test_stage.StageTests.test_output_links_are_checked_before_resolve_and_before_any_write) ... skipped 'Host does not permit directory symlink creation'
+test_strict_unknown_invalid_mode_and_local_whitelist (test_stage.StageTests.test_strict_unknown_invalid_mode_and_local_whitelist) ... ok
+test_write_check_is_deterministic_and_manifest_is_consumer_contract (test_stage.StageTests.test_write_check_is_deterministic_and_manifest_is_consumer_contract) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 1.020s
+
+OK (skipped=2)

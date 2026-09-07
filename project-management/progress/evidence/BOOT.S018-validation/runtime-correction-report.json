@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "action": "test",
+  "recordedAtUtc": "2026-09-07T01:37:05.363517+00:00",
+  "result": "pass",
+  "sourceRevision": "d685f85ab698415801ea2595fa6050066bbb4844",
+  "environment": {
+    "os": "Windows",
+    "python": "3.12.14",
+    "unityVersion": "6000.3.23f1"
+  },
+  "checks": [
+    {
+      "id": "python",
+      "result": "pass",
+      "message": "3.12.14",
+      "details": {}
+    },
+    {
+      "id": "unity-installation",
+      "result": "pass",
+      "message": "6000.3.23f1",
+      "details": {}
+    },
+    {
+      "id": "geometry",
+      "result": "pass",
+      "message": "exit 0",
+      "details": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "run",
+          "--project",
+          "tools/runtime-tests/GeometryChecks.csproj"
+        ],
+        "output": "diagnostics/test-geometry.log"
+      }
+    },
+    {
+      "id": "runtime-config",
+      "result": "pass",
+      "message": "exit 0",
+      "details": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "run",
+          "--project",
+          "tools/runtime-tests/ConfigChecks.csproj",
+          "-p:NewtonsoftPath=C:\\Program Files\\Unity\\Hub\\Editor\\6000.3.23f1\\Editor\\Data\\Managed\\Newtonsoft.Json.dll",
+          "--",
+          "C:\\Users\\cadet\\OneDrive\\Documents\\ELTS Project\\unity\\Assets\\StreamingAssets\\config-generated"
+        ],
+        "output": "diagnostics/test-runtime-config.log"
+      }
+    }
+  ],
+  "limitations": [
+    "Development diagnostics only; no physical, safety or gate acceptance."
+  ]
+}

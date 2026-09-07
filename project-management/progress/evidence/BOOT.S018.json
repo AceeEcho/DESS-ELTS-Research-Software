@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "targetId": "BOOT.S018",
+  "result": "pass",
+  "evidenceClass": "automated_test",
+  "sourceRevision": "6ffabc884d341121dc905900a1ad266505167d7c",
+  "recordedAtUtc": "2026-09-07T01:38:35.581223+00:00",
+  "command": "powershell -File scripts/bootstrap-dev.ps1 (from TEMP and repeat); scripts/doctor.ps1; scripts/verify.ps1; scripts/test.ps1 -Suite config/runtime; scripts/package-study.ps1; python -m unittest tools.bootstrap.test_driver",
+  "summary": "Portable bootstrap/doctor/test/build/staging/verify/study first-run skeletons verified, with explicit unavailable future build and study paths.",
+  "checks": [
+    "First bootstrap from another working directory succeeded in repository path with spaces",
+    "Repeat bootstrap preserved config/local.json bytes and mtime",
+    "Doctor verified exact Unity installation, plan/state and deterministic staging",
+    "Combined verify: planner11 and progress34 passed; configuration fixture failure discovered after local file creation",
+    "Fixed fixture machine-local isolation; reran staging9 (7 passed,2 skipped) and driver3 passed",
+    "Config wrapper and runtime wrapper then passed; actual43 geometry and32 configuration check outputs preserved",
+    "Driver3 tests rerun after XML namespace review correction: all passed",
+    "Study packaging deliberately failed with structured report and physical/approval requirements"
+  ],
+  "limitations": [
+    "Combined verify retained initial failure; affected configuration/driver/runtime suites passed after correction, unchanged plan/progress not duplicated",
+    "Unity project creation, runtime/test/build verification remain later bootstrap steps",
+    "Two symlink creation tests skipped by this Windows host",
+    "No study provisioning, second-machine, hardware or gate acceptance"
+  ],
+  "artifactSnapshotSha256": {
+    "scripts/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "scripts/bootstrap-dev.ps1": "a4ebc6ace90e84b9f99895d8fe2eefbc206b7ee1ec7fbffc4e6b138779169745",
+    "scripts/build.ps1": "0c8085ec542d1021ac659a7c2a53cc387204d1c928b7458aa50f6b48bdc6d9c8",
+    "scripts/common.ps1": "05ab2083cf974eaa5950e95522716557d97dde0fb23e4515436010b7acac209c",
+    "scripts/doctor.ps1": "676c4602454f37bef68be4e24dee9466d18741f95c5f13ceb11e0e291cb6f842",
+    "scripts/package-study.ps1": "1cb376c63db3f12ef03155fe77a30b6239ee27ad2a12b0bd1563c105c9feee82",
+    "scripts/setup-study-machine.ps1": "f3b492326bcd6277918e9284915f32249fbde8559f69d6ff4cae625ec76bb489",
+    "scripts/stage-config.ps1": "d5bb5f1165a406777090b7f0701b04e1aafff38e249d9b6caa81f46146052126",
+    "scripts/test.ps1": "bb049401bab729d8613c3d1741e9c93fb2845a902e223dfbc8e4c9f937b0b148",
+    "scripts/verify.ps1": "8a7c225370615cbff4bd95593e23da865e2c9c74d00e3e89304c3f5a781ad5fa",
+    "tools/bootstrap/driver.py": "549cc6f7e2447976c38131c94cefe164dd0cc33a20a9218076723bf8b9ec19ee",
+    "tools/bootstrap/test_driver.py": "e7c00cc19b020c76ea54616efeaa3894a0557ecc6a9d550204f166bfbf547b99",
+    "project-management/progress/evidence/BOOT.S018-validation/bootstrap-report.json": "a51f680d4cc60cf6775f7b600d74904b01daf660e97bf8b4195bfc4430fc1fe9",
+    "project-management/progress/evidence/BOOT.S018-validation/config-correction-report.json": "9777434cb602c4fb8d691ed6a757deb9a07c941c4753230c2c8e40c298c3eba5",
+    "project-management/progress/evidence/BOOT.S018-validation/doctor-report.json": "7bdc868109cf28f75c554024c9adcf3f4705e6032f7136c74e0c3aed8f9bb3e1",
+    "project-management/progress/evidence/BOOT.S018-validation/package-study-report.json": "9d1fcb6a24c01de8b66f2e0d10c5c6c2277a5da1b3204569277909f977976fcf",
+    "project-management/progress/evidence/BOOT.S018-validation/runtime-correction-report.json": "2b775a854521dea23183e35fcb392a96ad090f5b88c7cc1c4cd842829c23dd61",
+    "project-management/progress/evidence/BOOT.S018-validation/test-config.log": "e011a1eae1342d41911cca8a03b163c0163f4f5d0eab2985c875f82941996a13",
+    "project-management/progress/evidence/BOOT.S018-validation/test-geometry.log": "d073d8372f2826673a070ca1b32e29ad700bb2e2d6b8d7affb4742b80a6a1324",
+    "project-management/progress/evidence/BOOT.S018-validation/test-plan.log": "691a5ffb9fbad3a038c7827c14ea87587b5347a4936bea444cbe5fa149880a22",
+    "project-management/progress/evidence/BOOT.S018-validation/test-progress.log": "f10c52807d40f2a531c6ce39d171c8d283da2e344bb780918a50e761a0cdea50",
+    "project-management/progress/evidence/BOOT.S018-validation/test-report.json": "c2832b49f8e18c6e4d8fd868daa5360b9a8ecfbd337e804d6f634b78793f0761",
+    "project-management/progress/evidence/BOOT.S018-validation/test-runtime-config.log": "af80d2ffad7711c5ec7bd7a44d5c5acd698df82a01393fb6fb736d289fed6272"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "468a08b2-c569-460b-9942-49d3166906f5",
+  "eventType": "task_started",
+  "recordedAtUtc": "2026-09-07T01:41:55.348469+00:00",
+  "occurredAtUtc": "2026-09-07T01:41:55.348469+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "DEV-03.S001"
+  },
+  "taskId": "DEV-03",
+  "fromStatus": "ready",
+  "toStatus": "in_progress",
+  "taskRevision": 1,
+  "previousTaskEventHash": null,
+  "causalEventHashes": [
+    "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "dddd1570ac71751853c8db1aef438cf6fa280949fb33739bef03a14cbb194e9a"
+  ],
+  "branch": "work/dev03-synthetic-tracking",
+  "claimedPaths": [
+    "unity/Assets/ELTS/Tracking/SyntheticTrackingSource.cs",
+    "tools/runtime-tests/SyntheticTrackingChecks.cs",
+    "tools/runtime-tests/SyntheticTrackingChecks.csproj",
+    "docs/modules/synthetic-tracking.md"
+  ],
+  "expectedChecks": [
+    "Seeded repeatability through shared source interface",
+    "Scripted dropout and trigger events",
+    "Raw samples isolated from render prediction"
+  ],
+  "stopConditions": [
+    "Interface conflict",
+    "Numerical/temporal invariant failure"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "Begin eligible deterministic synthetic source after DEV-02 verification.",
+  "approval": null,
+  "handoffTo": null
+}

@@ -1,0 +1,61 @@
+{
+  "name": "Unity development verification",
+  "on": {
+    "workflow_dispatch": {}
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "jobs": {
+    "unity-development": {
+      "name": "Unity EditMode PlayMode and Windows build",
+      "runs-on": [
+        "self-hosted",
+        "Windows",
+        "X64",
+        "elts-unity-6000.3.23f1"
+      ],
+      "timeout-minutes": 60,
+      "steps": [
+        {
+          "uses": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "with": {
+            "fetch-depth": 0,
+            "persist-credentials": false
+          }
+        },
+        {
+          "uses": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "with": {
+            "python-version": "3.12.14"
+          }
+        },
+        {
+          "name": "Prepare development checkout",
+          "shell": "pwsh",
+          "run": "./scripts/bootstrap.ps1"
+        },
+        {
+          "name": "EditMode",
+          "shell": "pwsh",
+          "run": "./scripts/test.ps1 -Suite unity-edit"
+        },
+        {
+          "name": "PlayMode",
+          "shell": "pwsh",
+          "run": "./scripts/test.ps1 -Suite unity-play"
+        },
+        {
+          "name": "Windows development build",
+          "shell": "pwsh",
+          "run": "./scripts/build.ps1 -Output build/ci-${{ github.run_id }}-${{ github.run_attempt }}"
+        },
+        {
+          "name": "Verify player products",
+          "shell": "pwsh",
+          "run": "python -m tools.build.verify build/ci-${{ github.run_id }}-${{ github.run_attempt }}"
+        }
+      ]
+    }
+  }
+}

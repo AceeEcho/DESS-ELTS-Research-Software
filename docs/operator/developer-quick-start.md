@@ -11,14 +11,21 @@ calibration, safety, timing, display, or study-readiness acceptance.
 
 1. Copy or clone the repository into a writable path; spaces are supported.
 2. Provide Python 3.10+ and the exact Unity version declared in the root README.
-3. Run the portable wrappers from any current directory (pass an explicit
-   `-PythonExecutable` when the machine has no `python` on PATH):
+3. From the repository root, run the first-run bootstrap once. It creates the
+   local machine template without overwriting an existing local file and stages
+   the synthetic generated configuration. From another directory, use the
+   repository's full wrapper path instead:
 
    ```powershell
-   & .\scripts\doctor.ps1 -PythonExecutable C:\path\python.exe -Check
-   & .\scripts\test.ps1 -PythonExecutable C:\path\python.exe -Suite geometry
-   & .\scripts\test.ps1 -PythonExecutable C:\path\python.exe -Suite config
+   & .\scripts\bootstrap-dev.ps1 -PythonExecutable C:\path\python.exe -UnityEditor C:\path\Unity.exe
+   & .\scripts\verify.ps1 -PythonExecutable C:\path\python.exe -UnityEditor C:\path\Unity.exe
+   & C:\path\to\checkout\scripts\test.ps1 -PythonExecutable C:\path\python.exe -Suite geometry
    ```
+
+   `doctor.ps1` assumes staging has already completed; on a clean clone use
+   `bootstrap-dev.ps1` first. The wrappers resolve the repository from their
+   own location, so the full path is required when the current directory is
+   elsewhere.
 
    The driver writes structured reports under `diagnostics/`; a failed check is
    actionable evidence, not a reason to hand-edit generated state. Run the

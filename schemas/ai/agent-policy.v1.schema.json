@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ELTS agent efficiency policy v1",
+  "description": "Project settings consumed by tools/ai/sync-config.ps1. Changes to this contract require a new version and compatibility notes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schemaVersion", "model", "model_reasoning_effort", "model_verbosity", "tool_output_token_limit"],
+  "properties": {
+    "$schema": {"const": "../../schemas/ai/agent-policy.v1.schema.json"},
+    "schemaVersion": {"const": 1},
+    "model": {"const": "gpt-6-astra"},
+    "model_reasoning_effort": {
+      "description": "Portable intersection of verified Astra and documented Codex settings. Higher app-specific levels require compatibility review.",
+      "enum": ["low", "medium", "high", "xhigh"]
+    },
+    "model_verbosity": {"enum": ["low", "medium", "high"]},
+    "tool_output_token_limit": {
+      "description": "Per-output retained history budget, not a task or reasoning-token cap. Bounds are project guardrails, not vendor limits.",
+      "type": "integer", "minimum": 1000, "maximum": 16000
+    }
+  }
+}

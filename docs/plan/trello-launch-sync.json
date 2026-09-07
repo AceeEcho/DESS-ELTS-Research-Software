@@ -1,0 +1,90 @@
+{
+  "board": "https://trello.com/b/C5karyEw/elts-development",
+  "updatedCards": [
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9df751e2639be6b232eeb0",
+      "name": "PC-001 — Approved build plan amendment"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9df74f1f7a7df588706893",
+      "name": "READ FIRST — Build before testing equipment arrives"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1b2716ef60c8cae4907a",
+      "name": "P0.3 — Repository & Unity Skeleton"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1afc7608cb0daa671982",
+      "name": "D-12 — Define cross-device time synchronization"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9df754fefce9f8d3bf404c",
+      "name": "BOARD CONTROL — Verify actual Butler rules before execution"
+    }
+  ],
+  "developmentCards": [
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9dfe8f8f8f0f686fd1cdfc",
+      "name": "DEV-01 — Configuration and geometry foundations",
+      "url": "https://trello.com/c/zxyXaqFZ/79-dev-01-configuration-and-geometry-foundations"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9dfe919b57180f406f8f5f",
+      "name": "DEV-02 — Shared clock and tracking contracts",
+      "url": "https://trello.com/c/YDgNjPqj/80-dev-02-shared-clock-and-tracking-contracts"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9dfe94b3fb171ef8bc97dc",
+      "name": "DEV-03 — Synthetic tracking source",
+      "url": "https://trello.com/c/FbeCfMYn/81-dev-03-synthetic-tracking-source"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9dfe9600565445652f9ac8",
+      "name": "DEV-04 — Logging events and target snapshots",
+      "url": "https://trello.com/c/ce59b1wa/82-dev-04-logging-events-and-target-snapshots"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9dfe9955f8fd423cf1a951",
+      "name": "DEV-05 — Synthetic analysis ingest",
+      "url": "https://trello.com/c/GOzJ8nIC/83-dev-05-synthetic-analysis-ingest"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9dfe9ba74c9dc716264ea5",
+      "name": "DEV-06 — Rendering operator view and replay",
+      "url": "https://trello.com/c/sDfSYiWT/84-dev-06-rendering-operator-view-and-replay"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9dfe9e5bce9104248e0872",
+      "name": "DEV-07 — Scenario targets shots and scoring",
+      "url": "https://trello.com/c/B1KgpjKf/85-dev-07-scenario-targets-shots-and-scoring"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9dfea08ce635480ac52914",
+      "name": "DEV-08 — Session engine and operator controls",
+      "url": "https://trello.com/c/LYW25Vr3/86-dev-08-session-engine-and-operator-controls"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9dfea3d4a033330fb62241",
+      "name": "DEV-09 — Calibration solvers and development wizards",
+      "url": "https://trello.com/c/MYLPJN00/87-dev-09-calibration-solvers-and-development-wizards"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9dfea624a8ea06addd1de8",
+      "name": "DEV-10 — ELTS protocol and simulated link",
+      "url": "https://trello.com/c/4lPJAEF8/88-dev-10-elts-protocol-and-simulated-link"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9dfea82bdfae14f9e51d3a",
+      "name": "DEV-11 — Simulated ELTS session integration",
+      "url": "https://trello.com/c/Tv7mFVWf/89-dev-11-simulated-elts-session-integration"
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9dfeadd4fd07e297e6c419",
+      "name": "DEV-12 — Development packaging and end-to-end handoff",
+      "url": "https://trello.com/c/YOy52xEx/90-dev-12-development-packaging-and-end-to-end-handoff"
+    }
+  ],
+  "verified": true,
+  "totalOpenCards": 89,
+  "completedCards": 0
+}

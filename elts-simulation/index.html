@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ELTS testing environment</title><style>
+:root {color-scheme:dark; font:14px/1.5 system-ui,sans-serif; background:#101b29; color:#e3ecf5;}
+* {box-sizing:border-box;} body {margin:0; padding:24px; max-width:1100px; margin-inline:auto;}
+.viz-row,.viz-controls {display:flex; flex-wrap:wrap; align-items:center; gap:12px 20px;}
+.viz-controls {align-items:end;} .form-label {display:flex;flex-direction:column;gap:5px;flex:1 1 210px;}
+.btn,.form-select {font:inherit;color:inherit;background:#243545;border:1px solid #536575;border-radius:6px;padding:8px 12px;}
+.btn {cursor:pointer;} .btn:hover {background:#34475a;} .form-range {width:100%;accent-color:#75b7f7;}
+.form-check {display:inline-flex;align-items:center;gap:7px;} .form-check-input {accent-color:#75b7f7;width:16px;height:16px;}
+.text-small {font-size:12px;} .text-muted {color:#aabbca;} .sr-only {position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);}
+strong {font-weight:500;} :focus-visible {outline:2px solid #75e2d7;outline-offset:3px;} .intro {color:#aabbca;margin:20px 0 0;max-width:80ch;}
+@media(max-width:480px){body{padding:12px}.form-label{flex-basis:100%}.btn,.form-select{min-height:44px}}
+</style></head>
+<body><div id="elts-environment">
+  <div class="viz-row">
+    <strong>ELTS · testing environment</strong>
+    <span class="text-small text-muted">Illustrative layout · synthetic motion · metres</span>
+  </div>
+  <div class="viz-controls" style="margin-top:12px">
+    <label class="form-label">Condition
+      <select class="form-select" data-control="condition">
+        <option value="WE-MT">With ELTS · moving targets</option>
+        <option value="NE-MT">No ELTS · moving targets</option>
+        <option value="WE-FT">With ELTS · fixed targets</option>
+        <option value="NE-FT">No ELTS · fixed targets</option>
+      </select>
+    </label>
+    <label class="form-label">Camera
+      <select class="form-select" data-control="camera">
+        <option value="orbit">Room overview</option>
+        <option value="side">Side view</option>
+        <option value="front">Behind participant</option>
+        <option value="top">Above the room</option>
+      </select>
+    </label>
+    <button class="btn" type="button" data-control="play">Pause motion</button>
+    <button class="btn" type="button" data-control="reset">Reset scene</button>
+  </div>
+  <div class="elts-stage">
+    <canvas data-scene role="img" aria-label="Interactive 3D ELTS room with participant, mock rifle, display, tracking hardware, light assembly, and virtual targets. Drag to orbit; camera presets also support keyboard controls."></canvas>
+    <div class="elts-preview">
+      <div class="text-small">Participant display</div>
+      <canvas data-preview role="img" aria-label="Head-coupled target projection onto the physical display. No aiming crosshair is shown."></canvas>
+    </div>
+  </div>
+  <div class="viz-row text-small text-muted"><span>Drag to orbit · scroll to zoom</span><span>Solid room = physical · dashed floor = virtual space</span></div>
+  <div class="viz-controls" style="margin-top:14px">
+    <label class="form-label">Explore equipment
+      <select class="form-select" data-control="equipment" aria-describedby="elts-equipment-description">
+        <option value="overview">Whole environment</option>
+        <option value="display">Physical display</option>
+        <option value="head">Participant and head tracker</option>
+        <option value="weapon">Mock rifle and weapon tracker</option>
+        <option value="station">Tracking base station</option>
+        <option value="assembly">ELTS light and camera assembly</option>
+        <option value="targets">Virtual targets</option>
+      </select>
+    </label>
+  </div>
+  <p id="elts-equipment-description" class="text-small" aria-live="polite"></p>
+  <div class="viz-controls" style="margin-top:14px">
+    <label class="form-label">Participant sideways <output data-value="lateral">0.00 m</output>
+      <input class="form-range" data-control="lateral" aria-label="Participant sideways" type="range" min="-0.7" max="0.7" step="0.01" value="0">
+    </label>
+    <label class="form-label">Distance to screen <output data-value="distance">2.50 m</output>
+      <input class="form-range" data-control="distance" aria-label="Distance to screen" type="range" min="1.5" max="3.8" step="0.05" value="2.5">
+    </label>
+    <label class="form-label">Horizontal aim offset <output data-value="aim">2.0°</output>
+      <input class="form-range" data-control="aim" aria-label="Horizontal aim offset" type="range" min="-30" max="30" step="0.5" value="2">
+    </label>
+    <label class="form-label">Display width <output data-value="width">2.40 m</output>
+      <input class="form-range" data-control="width" aria-label="Display width" type="range" min="1.2" max="3.2" step="0.05" value="2.4">
+    </label>
+  </div>
+  <div class="viz-row">
+    <label class="form-check"><input class="form-check-input" data-control="frustum" type="checkbox" checked><span class="form-check-label">View frustum</span></label>
+    <label class="form-check"><input class="form-check-input" data-control="labels" type="checkbox" checked><span class="form-check-label">Labels</span></label>
+    <label class="form-check"><input class="form-check-input" data-control="sway" type="checkbox" checked><span class="form-check-label">Demo head movement</span></label>
+  </div>
+  <div class="viz-row text-small" style="margin-top:10px" data-metrics>
+    <span>Angular aim error: <strong data-error>—</strong></span>
+    <span data-aperture>—</span>
+    <span data-emission>—</span>
+  </div>
+  <div class="sr-only" aria-live="polite" data-announcement></div>
+</div>
+<style>
+  #elts-environment .elts-stage { position:relative; margin-top:12px; }
+  #elts-environment [data-scene] { display:block; width:100%; height:460px; touch-action:none; cursor:grab; }
+  #elts-environment .elts-preview { position:absolute; right:12px; bottom:12px; width:170px; pointer-events:none; color:#e1ebf5; }
+  #elts-environment [data-preview] { display:block; width:100%; aspect-ratio:16/9; margin-top:5px; }
+  #elts-environment output { white-space:nowrap; font-variant-numeric:tabular-nums; }
+  #elts-environment [data-metrics] { font-variant-numeric:tabular-nums; }
+  @media(max-width:480px) {
+    #elts-environment [data-scene] { height:390px; }
+    #elts-environment .elts-preview { width:125px; right:8px; bottom:8px; }
+  }
+</style>
+<script>
+(() => {
+  'use strict';
+
+  // EDITABLE DEMO CONFIGURATION. Distances are metres; none are measured rig values.
+  // The briefing specifies the equipment, but leaves room layout/display size open.
+  // No packages, network services, device drivers, or machine-specific paths are used.
+  const CONFIG = {
+    room: { width:6, depth:5, height:3 },
+    display: { width:2.4, aspect:16/9, centerY:1.6 },
+    participant: { distance:2.5, lateral:0, eyeHeight:1.67 },
+    station: [0,2.75,0.12],
+    assembly: [-1.75,1.36,0.28],
+    virtualDepth:3.8,
+    targetRadius:0.20,
+    targetCenters: [[-1,1.8,-3.4],[0,1.45,-3.8],[1,2.12,-4.2]],
+    demo: { swayAmplitude:0.12, swayRate:0.65, targetRate:0.7, aimOffset:2, condition:'WE-MT' },
+    camera: { yaw:0.78, pitch:0.40, radius:10.4, focus:[0,1.15,-0.4] },
+    colors: {
+      background:'#101b29', floor:'#1b2c3b', grid:'#34475a', wall:'#243545',
+      screen:'#122c42', frame:'#4a6175', body:'#8196aa', skin:'#b7c4ce',
+      tracker:'#75e2d7', rifle:'#f8a34b', bore:'#ffbd72', target:'#eec46a',
+      frustum:'#75b7f7', ideal:'#a0b0c5', led:'#ffeeae', text:'#e3ecf5',
+      muted:'#9eafc0', invalid:'#ff7a84'
+    }
+  };
+  const root = document.getElementById('elts-environment');
+  const canvas = root.querySelector('[data-scene]');
+  const ctx = canvas.getContext('2d');
+  const preview = root.querySelector('[data-preview]');
+  const pctx = preview.getContext('2d');
+  const controls = Object.fromEntries([...root.querySelectorAll('[data-control]')].map(el=>[el.dataset.control,el]));
+  const C = CONFIG.colors;
+  // Equipment descriptions live together so the outline can evolve with the rig.
+  const EQUIPMENT = {
+    overview: 'A participant aims a tracked mock rifle at a conventional display. The virtual scene is registered behind the screen; the inset shows the participant display. Select equipment to locate it with a ring.',
+    display: 'Physical display: the screen plane separates the real room from virtual target space. Head position changes the perspective shown on the screen. Transparency here is only an inspection aid.',
+    head: 'Participant and forehead tracker: the tracked head pose supports a calibrated eye-position estimate for display projection. The blue eye marker represents position, not measured gaze.',
+    weapon: 'Mock rifle and weapon tracker: the tracked rigid body supports a calibrated bore direction. The orange line shows the bore and its screen intersection; angular error is measured against the reference target.',
+    station: 'One tracking base station sits above the display. The dashed direction line is illustrative and does not represent a verified tracking coverage volume.',
+    assembly: 'ELTS assembly: two outer LED turrets flank a central Brio camera. With ELTS (WE) shows symbolic light paths; No ELTS (NE) turns them off. The independent vision pipeline and light exposure are not simulated.',
+    targets: 'Virtual targets occupy world space behind the display. MT shows synthetic moving targets; FT keeps targets fixed. Their dimensions and paths are demonstration choices, not approved study settings.'
+  };
+  const state = {
+    time:0, playing:!matchMedia('(prefers-reduced-motion: reduce)').matches,
+    condition:CONFIG.demo.condition, lateral:CONFIG.participant.lateral,
+    distance:CONFIG.participant.distance, aim:CONFIG.demo.aimOffset, width:CONFIG.display.width,
+    frustum:true, labels:true, sway:true, equipment:'overview', ...CONFIG.camera
+  };
+  const add=(a,b)=>a.map((v,i)=>v+b[i]);
+  const sub=(a,b)=>a.map((v,i)=>v-b[i]);
+  const scale=(a,s)=>a.map(v=>v*s);
+  const dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0);
+  const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+  const norm=a=>scale(a,1/(Math.hypot(...a)||1));
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const lerp=(a,b,t)=>add(a,scale(sub(b,a),t));
+  const radians=d=>d*Math.PI/180;
+  let w=736,h=460,queue=[],labels=[],camera,right,up,forward;
+
+  // Tiny software 3D renderer: perspective projection and far-to-near face sorting.
+  // This intentionally favors portability over mesh detail or a WebGL dependency.
+  function project(p) {
+    const v=sub(p,camera), z=dot(v,forward);
+    if(z<=0.08) return null;
+    const focal=Math.min(w*0.92,h*1.25);
+    return {x:w/2+dot(v,right)*focal/z, y:h*0.49-dot(v,up)*focal/z,z};
+  }
+  function polygon(points,fill,stroke=null,alpha=1) {
+    const pts=points.map(project); if(pts.some(p=>!p)) return;
+    queue.push({type:'poly',pts,fill,stroke,alpha,z:pts.reduce((s,p)=>s+p.z,0)/pts.length});
+  }
+  function line(a,b,color,width=1,dashed=false,alpha=1) {
+    const pa=project(a),pb=project(b);if(!pa||!pb)return;
+    queue.push({type:'line',pts:[pa,pb],color,width,dashed,alpha,z:(pa.z+pb.z)/2-0.006});
+  }
+  function ball(center,radius,color) {
+    const p=project(center),edge=project(add(center,scale(right,radius)));
+    if(!p||!edge)return;
+    queue.push({type:'ball',p,r:Math.abs(edge.x-p.x),color,z:p.z-radius*0.3});
+  }
+  function box(center,size,color) {
+    const [x,y,z]=center,[a,b,c]=scale(size,0.5);
+    const pts=[[-a,-b,-c],[a,-b,-c],[a,b,-c],[-a,b,-c],[-a,-b,c],[a,-b,c],[a,b,c],[-a,b,c]].map(p=>add(p,[x,y,z]));
+    const faces=[[0,1,2,3],[4,7,6,5],[0,4,5,1],[3,2,6,7],[1,5,6,2],[0,3,7,4]];
+    faces.forEach((f,i)=>{polygon(f.map(k=>pts[k]),color,C.background); if(i===2||i===5)polygon(f.map(k=>pts[k]),'#000000',null,0.13);});
+  }
+  function rod(a,b,radius,color) {
+    const direction=norm(sub(b,a));
+    const side=scale(norm(cross(direction,Math.abs(direction[1])>.9?[1,0,0]:[0,1,0])),radius);
+    const top=scale(norm(cross(direction,side)),radius);
+    const corners=p=>[add(add(p,side),top),add(sub(p,side),top),sub(sub(p,side),top),add(sub(p,top),side)];
+    const p=corners(a),q=corners(b);
+    polygon(p,color);polygon(q,color);
+    for(let i=0;i<4;i++)polygon([p[i],p[(i+1)%4],q[(i+1)%4],q[i]],color,C.background);
+  }
+  function label(point,text,dx=0,dy=-16,color=C.text) { labels.push({point,text,dx,dy,color}); }
+  function axes(p) {
+    line(p,add(p,[.18,0,0]),'#ed8291',2);
+    line(p,add(p,[0,.18,0]),'#9acc91',2);
+    line(p,add(p,[0,0,.18]),'#75b7f7',2);
+  }
+  function flush() {
+    queue.sort((a,b)=>b.z-a.z);
+    for(const item of queue) {
+      ctx.globalAlpha=item.alpha??1;
+      if(item.type==='ball') {
+        const g=ctx.createRadialGradient(item.p.x-item.r*.3,item.p.y-item.r*.3,0,item.p.x,item.p.y,item.r);
+        g.addColorStop(0,item.color);g.addColorStop(1,item.color+'99');
+        ctx.beginPath();ctx.arc(item.p.x,item.p.y,Math.max(.5,item.r),0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+      } else {
+        ctx.beginPath();item.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+        if(item.type==='poly') {
+          ctx.closePath();ctx.fillStyle=item.fill;ctx.fill();
+          if(item.stroke){ctx.strokeStyle=item.stroke;ctx.lineWidth=.65;ctx.stroke();}
+        } else {
+          ctx.strokeStyle=item.color;ctx.lineWidth=item.width;ctx.setLineDash(item.dashed?[5,5]:[]);ctx.stroke();ctx.setLineDash([]);
+        }
+      }
+    }
+    ctx.globalAlpha=1;
+    if(!state.labels)return;
+    const used=[];
+    // Keep labels legible when the user changes the camera or resizes the view.
+    ctx.font='12px system-ui, sans-serif';
+    for(const item of labels) {
+      if(w<480 && ['Physical room','Virtual target space','Calibrated eye','Bore / screen intersection'].includes(item.text))continue;
+      const p=project(item.point);if(!p)continue;
+      const tw=ctx.measureText(item.text).width;
+      let x=clamp(p.x+item.dx-tw/2,8,w-tw-8),y=clamp(p.y+item.dy,20,h-16);
+      for(let n=0;n<16&&used.some(r=>x<r.x+r.w&&x+tw>r.x&&Math.abs(y-r.y)<19);n++)y-=20;
+      if(y<18)continue;
+      if(x+tw>w-190&&y>h-135)continue;
+      used.push({x,y,w:tw});
+      ctx.strokeStyle=C.muted+'88';ctx.lineWidth=.6;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(x+tw/2,y+4);ctx.stroke();
+      ctx.fillStyle=C.background+'ed';ctx.fillRect(x-4,y-13,tw+8,18);
+      ctx.fillStyle=item.color;ctx.fillText(item.text,x,y);
+    }
+  }
+
+  // The synthetic scenario is queried by simulation time (not accumulated position).
+  // Changing WE/NE only changes the depicted device state, never participant accuracy.
+  function snapshot() {
+    const moving=state.condition.endsWith('MT');
+    const t=state.time;
+    const sway=state.sway?CONFIG.demo.swayAmplitude*Math.sin(t*CONFIG.demo.swayRate):0;
+    const eye=[state.lateral+sway,CONFIG.participant.eyeHeight,state.distance];
+    const targets=CONFIG.targetCenters.map((p,i)=>add(p,moving?[.32*Math.sin(t*CONFIG.demo.targetRate+i*2),.15*Math.sin(t*.49+i),0]:[0,0,0]));
+    const muzzle=add(eye,[.09,-.23,-.82]);
+    const ideal=norm(sub(targets[1],muzzle));
+    const angle=radians(state.aim);
+    const bore=[ideal[0]*Math.cos(angle)-ideal[2]*Math.sin(angle),ideal[1],ideal[0]*Math.sin(angle)+ideal[2]*Math.cos(angle)];
+    const k=-muzzle[2]/bore[2];
+    const intersection=add(muzzle,scale(bore,k));
+    const displayHeight=state.width/CONFIG.display.aspect;
+    const onScreen=k>0&&Math.abs(intersection[0])<=state.width/2&&Math.abs(intersection[1]-CONFIG.display.centerY)<=displayHeight/2;
+    const error=Math.acos(clamp(dot(ideal,bore),-1,1))*180/Math.PI;
+    return {eye,targets,muzzle,ideal,bore,intersection,onScreen,error,displayHeight,elts:state.condition.startsWith('WE')};
+  }
+
+  // Intersection of an eye-to-world-point line with the z=0 physical screen.
+  // This same projection drives the small participant view and targets on the screen.
+  function ontoScreen(eye,point) {
+    const t=-eye[2]/(point[2]-eye[2]);
+    return lerp(eye,point,t);
+  }
+  function drawParticipantDisplay(s) {
+    const pw=preview.clientWidth,ph=preview.clientHeight;
+    pctx.clearRect(0,0,pw,ph);pctx.fillStyle=C.screen;pctx.fillRect(0,0,pw,ph);
+    const map=p=>[(p[0]/state.width+.5)*pw,(.5-(p[1]-CONFIG.display.centerY)/s.displayHeight)*ph];
+    pctx.strokeStyle=C.grid;pctx.lineWidth=.7;
+    for(let x=-4;x<=4;x++) {
+      const a=map(ontoScreen(s.eye,[x,0,-.1])),b=map(ontoScreen(s.eye,[x,0,-8]));
+      pctx.beginPath();pctx.moveTo(...a);pctx.lineTo(...b);pctx.stroke();
+    }
+    for(let z=-1;z>=-8;z--) {
+      const a=map(ontoScreen(s.eye,[-5,0,z])),b=map(ontoScreen(s.eye,[5,0,z]));
+      pctx.beginPath();pctx.moveTo(...a);pctx.lineTo(...b);pctx.stroke();
+    }
+    s.targets.forEach((p,i)=> {
+      const a=map(ontoScreen(s.eye,p));
+      const r=CONFIG.targetRadius*s.eye[2]/(s.eye[2]-p[2])/state.width*pw;
+      pctx.fillStyle=i===1?C.target:'#87a6ba';pctx.beginPath();pctx.arc(...a,r,0,Math.PI*2);pctx.fill();
+    });
+  }
+
+  function draw() {
+    const s=snapshot();queue=[];labels=[];
+    camera=add(state.focus,[state.radius*Math.cos(state.pitch)*Math.sin(state.yaw),state.radius*Math.sin(state.pitch),state.radius*Math.cos(state.pitch)*Math.cos(state.yaw)]);
+    forward=norm(sub(state.focus,camera));right=norm(cross(forward,[0,1,0]));up=cross(right,forward);
+    ctx.fillStyle=C.background;ctx.fillRect(0,0,w,h);
+    const rw=CONFIG.room.width/2,rd=CONFIG.room.depth;
+    polygon([[-rw,0,0],[rw,0,0],[rw,0,rd],[-rw,0,rd]],C.floor);
+    // Low cutaway walls provide room context while keeping all apparatus visible.
+    polygon([[-rw,0,0],[-rw,.65,0],[-rw,.65,rd],[-rw,0,rd]],C.wall);
+    for(let x=-rw;x<=rw;x+=.5)line([x,.005,0],[x,.005,rd],C.grid,.55);
+    for(let z=0;z<=rd;z+=.5)line([-rw,.005,z],[rw,.005,z],C.grid,.55);
+    for(let x=-rw;x<=rw;x++)line([x,0,0],[x,0,-5],C.grid,.65,true);
+    for(let z=-1;z>=-5;z--)line([-rw,0,z],[rw,0,z],C.grid,.65,true);
+    line([-rw,0,0],[rw,0,0],C.frustum,1.2);
+    label([1.8,.03,4.35],'Physical room',0,20,C.muted);
+    label([-1.8,.03,-4.6],'Virtual target space',0,16,C.muted);
+
+    const sw=state.width/2,sy=CONFIG.display.centerY,sh=s.displayHeight/2;
+    const corners=[[-sw,sy-sh,0],[sw,sy-sh,0],[sw,sy+sh,0],[-sw,sy+sh,0]];
+    // Transparent debug screen: the real display is opaque; the inset shows its content.
+    polygon(corners,C.screen,null,.60);
+    for(let i=0;i<4;i++)rod(corners[i],corners[(i+1)%4],.024,C.frame);
+    [-.65,.65].forEach(x=> {rod([x,0,-.04],[x,sy-sh,-.04],.03,C.frame);box([x,.03,0],[.5,.06,.55],C.frame);});
+    label([sw,sy+sh,0],'Physical display',15,-20);
+    s.targets.forEach((target,i)=> {
+      ball(target,CONFIG.targetRadius,i===1?C.target:'#87a6ba');
+      const p=ontoScreen(s.eye,target);
+      if(Math.abs(p[0])<sw&&Math.abs(p[1]-sy)<sh)ball(add(p,[0,0,.01]),CONFIG.targetRadius*s.eye[2]/(s.eye[2]-target[2]),i===1?C.target:'#87a6ba');
+    });
+    label(s.targets[1],'Reference target',0,-22,C.target);
+
+    // One Lighthouse unit above the screen, with illustrative direction rays only.
+    box(CONFIG.station,[.19,.19,.17],C.tracker);
+    box(add(CONFIG.station,[0,0,.09]),[.13,.13,.025],C.screen);
+    line(CONFIG.station,[0,1.35,2.5],C.tracker,1,true,.38);
+    label(CONFIG.station,'1 × base station',0,-22,C.tracker);
+
+    const eye=s.eye,head=add(eye,[0,0,.065]),hip=[eye[0],.87,eye[2]+.06];
+    rod(add(hip,[-.13,0,0]),[eye[0]-.17,.12,eye[2]-.06],.075,C.body);
+    rod(add(hip,[.13,0,0]),[eye[0]+.22,.12,eye[2]+.22],.075,C.body);
+    box([eye[0]-.17,.07,eye[2]-.14],[.18,.14,.32],C.frame);
+    box([eye[0]+.22,.07,eye[2]+.14],[.18,.14,.32],C.frame);
+    rod(hip,add(head,[0,-.23,.03]),.19,C.body);
+    ball(head,.125,C.skin);
+    // A forehead tracker, with eyes unobscured; no HMD is part of this apparatus.
+    const headTracker=add(eye,[0,.13,.015]);
+    box(headTracker,[.15,.065,.09],C.tracker);axes(headTracker);
+    ball(eye,.024,C.frustum);
+    label(headTracker,'Head tracker',28,-24,C.tracker);
+    label(eye,'Calibrated eye',40,22,C.frustum);
+    const butt=sub(s.muzzle,scale(s.bore,.78));
+    rod(butt,s.muzzle,.038,C.rifle);
+    rod(butt,add(butt,[0,-.12,.07]),.065,C.rifle);
+    const grip=sub(s.muzzle,scale(s.bore,.53));
+    rod(grip,add(grip,[0,-.16,.015]),.028,C.rifle);
+    const weaponTracker=add(grip,[0,.085,0]);
+    box(weaponTracker,[.13,.06,.12],C.tracker);axes(weaponTracker);
+    const shoulder=add(head,[0,-.26,.02]);
+    const elbow=add(shoulder,[.30,-.26,.03]);
+    rod(shoulder,elbow,.045,C.body);rod(elbow,add(grip,[0,-.06,0]),.04,C.body);
+    const support=add(shoulder,[-.23,-.26,-.22]);
+    rod(add(shoulder,[-.1,0,0]),support,.045,C.body);rod(support,sub(s.muzzle,scale(s.bore,.18)),.04,C.body);
+    label(weaponTracker,'Weapon tracker',40,-12,C.tracker);
+    label(s.muzzle,'Mock rifle',35,24,C.rifle);
+    line(s.muzzle,s.targets[1],C.ideal,1.1,true);
+    const boreEnd=add(s.muzzle,scale(s.bore,(s.muzzle[2]+4.7)/-s.bore[2]));
+    line(s.muzzle,boreEnd,s.onScreen?C.bore:C.invalid,2);
+    ball(s.intersection,.04,s.onScreen?C.bore:C.invalid);
+    label(s.intersection,s.onScreen?'Bore / screen intersection':'Aim outside display',0,25,s.onScreen?C.bore:C.invalid);
+    if(state.frustum) {
+      corners.forEach(corner=> {
+        const endpoint=lerp(eye,corner,(eye[2]+CONFIG.virtualDepth)/eye[2]);
+        line(eye,corner,C.frustum,1,false,.5);line(corner,endpoint,C.frustum,1,true,.4);
+      });
+    }
+
+    // Geometry illustrates the three-turret assembly, not an actuation model.
+    // Beams are diagram lines, not predictions of intensity, beam spread, or glare.
+    const assembly=CONFIG.assembly;
+    box(add(assembly,[0,-.17,0]),[.80,.07,.30],C.frame);
+    rod(add(assembly,[0,-.17,0]),[assembly[0],.05,assembly[2]],.04,C.frame);
+    box([assembly[0],.04,assembly[2]],[.60,.08,.50],C.frame);
+    [-.27,0,.27].forEach((offset,i)=> {
+      const p=add(assembly,[offset,0,0]);
+      box(p,[.17,.13,.18],C.frame);
+      box(add(p,[0,.09,0]),[.15,.10,.11],i===1?C.tracker:C.rifle);
+      const face=add(p,[0,.09,.075]);
+      if(i===1){box(face,[.13,.045,.015],C.screen);ball(add(face,[0,0,.018]),.018,C.tracker);}
+      else {
+        ball(face,.043,s.elts?C.led:C.frame);
+        if(s.elts)line(face,add(eye,[i===0?-.032:.032,0,0]),C.led,1.3,true,.65);
+      }
+    });
+    label(add(assembly,[0,.1,0]),'ELTS · 2 LEDs + Brio',-45,-33,C.led);
+    box(add(assembly,[-.08,-.10,.02]),[.23,.05,.18],C.tracker);
+
+    flush();drawParticipantDisplay(s);
+    // An overlay ring locates the selected component even behind inspection geometry.
+    const locations={display:[0,sy,0],head:headTracker,weapon:weaponTracker,
+      station:CONFIG.station,assembly:CONFIG.assembly,targets:s.targets[1]};
+    const selected=locations[state.equipment];
+    if(selected) {
+      const p=project(selected);
+      if(p) {
+        ctx.strokeStyle=C.text;ctx.lineWidth=2;ctx.setLineDash([4,4]);
+        ctx.beginPath();ctx.arc(p.x,p.y,23,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+      }
+    }
+    root.querySelector('[data-error]').textContent=s.error.toFixed(2)+'°';
+    root.querySelector('[data-aperture]').textContent=s.onScreen?'Bore crosses display':'Bore outside display';
+    root.querySelector('[data-emission]').textContent=s.elts?'WE · LED paths shown':'NE · LEDs off';
+  }
+
+  function resize() {
+    const dpr=Math.min(devicePixelRatio||1,2);
+    w=canvas.clientWidth;h=canvas.clientHeight;
+    canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+    preview.width=Math.round(preview.clientWidth*dpr);preview.height=Math.round(preview.clientHeight*dpr);pctx.setTransform(dpr,0,0,dpr,0,0);
+    draw();
+  }
+  const announce=()=>{root.querySelector('[data-announcement]').textContent=controls.condition.selectedOptions[0].text+'. '+root.querySelector('[data-aperture]').textContent;};
+  function syncPlaying(){controls.play.textContent=state.playing?'Pause motion':'Play motion';controls.play.setAttribute('aria-pressed',String(state.playing));}
+  function describeEquipment(){root.querySelector('#elts-equipment-description').textContent=EQUIPMENT[state.equipment];}
+  controls.equipment.addEventListener('change',()=>{
+    state.equipment=controls.equipment.value;describeEquipment();draw();
+  });
+  controls.reset.addEventListener('click',()=>{
+    Object.assign(state,{time:0,playing:!matchMedia('(prefers-reduced-motion: reduce)').matches,
+      condition:CONFIG.demo.condition,lateral:CONFIG.participant.lateral,distance:CONFIG.participant.distance,
+      aim:CONFIG.demo.aimOffset,width:CONFIG.display.width,frustum:true,labels:true,sway:true,
+      equipment:'overview',...CONFIG.camera});
+    controls.condition.value=state.condition;controls.camera.value='orbit';controls.equipment.value='overview';
+    ['lateral','distance','aim','width'].forEach(key=>{
+      controls[key].value=String(state[key]);
+      root.querySelector('[data-value="'+key+'"]').textContent=state[key].toFixed(key==='aim'?1:2)+(key==='aim'?'°':' m');
+    });
+    ['frustum','labels','sway'].forEach(key=>{controls[key].checked=state[key];});
+    syncPlaying();describeEquipment();draw();announce();
+  });
+  controls.play.addEventListener('click',()=>{state.playing=!state.playing;syncPlaying();announce();});
+  controls.condition.addEventListener('change',()=>{state.condition=controls.condition.value;draw();announce();});
+  ['lateral','distance','aim','width'].forEach(key=>controls[key].addEventListener('input',()=>{
+    state[key]=Number(controls[key].value);
+    root.querySelector('[data-value="'+key+'"]').textContent=state[key].toFixed(key==='aim'?1:2)+(key==='aim'?'°':' m');draw();
+  }));
+  ['frustum','labels','sway'].forEach(key=>controls[key].addEventListener('change',()=>{state[key]=controls[key].checked;draw();}));
+  controls.camera.addEventListener('change',()=>{
+    const presets={orbit:[CONFIG.camera.yaw,CONFIG.camera.pitch,CONFIG.camera.radius],side:[1.48,.23,10.8],front:[.0,.25,10.5],top:[.0,1.40,11.2]};
+    [state.yaw,state.pitch,state.radius]=presets[controls.camera.value];draw();
+  });
+  let drag=null;
+  canvas.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';});
+  canvas.addEventListener('pointermove',e=>{
+    if(!drag)return;
+    state.yaw-=(e.clientX-drag[0])*.007;
+    state.pitch=clamp(state.pitch+(e.clientY-drag[1])*.006,.08,1.45);
+    drag=[e.clientX,e.clientY];draw();
+  });
+  function endDrag(){drag=null;canvas.style.cursor='grab';}
+  canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',endDrag);
+  canvas.addEventListener('wheel',e=>{e.preventDefault();state.radius=clamp(state.radius+e.deltaY*.008,6.8,17);draw();},{passive:false});
+  const resizeObserver=new ResizeObserver(resize);resizeObserver.observe(canvas);resizeObserver.observe(preview);
+  // Configuration owns defaults; update controls too so geometry and labels cannot drift.
+  controls.condition.value=state.condition;
+  ['lateral','distance','aim','width'].forEach(key=>{
+    controls[key].value=String(state[key]);
+    root.querySelector('[data-value="'+key+'"]').textContent=state[key].toFixed(key==='aim'?1:2)+(key==='aim'?'°':' m');
+    controls[key].addEventListener('change',announce);
+  });
+  syncPlaying();describeEquipment();resize();
+  let last=performance.now(),frameId;
+  function frame(now) {
+    if(!root.isConnected){resizeObserver.disconnect();cancelAnimationFrame(frameId);return;}
+    if(state.playing&&!document.hidden){state.time+=Math.min((now-last)/1000,.08);draw();}
+    last=now;frameId=requestAnimationFrame(frame);
+  }
+  frameId=requestAnimationFrame(frame);
+})();
+</script>
+<p class="intro">Concept visualization based on the ELTS briefing. Dimensions and movement are examples. LED paths are symbolic; no glare effect, hardware behavior, or study outcome is predicted. See README.md for assumptions and configuration.</p></body></html>

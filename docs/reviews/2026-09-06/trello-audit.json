@@ -1,0 +1,1105 @@
+{
+  "date": "2026-09-06",
+  "board": "https://trello.com/b/C5karyEw/elts-development",
+  "originalOpenCards": 74,
+  "finalOpenCards": 77,
+  "workItemCoverage": {
+    "count": 91,
+    "unique": 91,
+    "missing": [],
+    "mapping": [
+      {
+        "card": "P0.1–P0.2 — Hardware & Study PC Readiness",
+        "ids": [
+          "P0.1",
+          "P0.2"
+        ]
+      },
+      {
+        "card": "P0.3 — Repository & Unity Skeleton",
+        "ids": [
+          "P0.3"
+        ]
+      },
+      {
+        "card": "P0.4–P0.5 — Tracker Setup & Decision Ownership",
+        "ids": [
+          "P0.4",
+          "P0.5"
+        ]
+      },
+      {
+        "card": "P0.6–P0.7 — Safety Documentation & Room Survey",
+        "ids": [
+          "P0.6",
+          "P0.7"
+        ]
+      },
+      {
+        "card": "P1.1–P1.3 — Bring Tracking Rig Online",
+        "ids": [
+          "P1.1",
+          "P1.2",
+          "P1.3"
+        ]
+      },
+      {
+        "card": "P1.4–P1.7 — OpenVR Tracking Spikes",
+        "ids": [
+          "P1.4",
+          "P1.5",
+          "P1.6",
+          "P1.7"
+        ]
+      },
+      {
+        "card": "P1.8–P1.9 — Trigger & Coordinate Validation Spikes",
+        "ids": [
+          "P1.8",
+          "P1.9"
+        ]
+      },
+      {
+        "card": "P1.10 — Multi-Display Spike",
+        "ids": [
+          "P1.10"
+        ]
+      },
+      {
+        "card": "P1.11–P1.14 — Fabrication Kickoff",
+        "ids": [
+          "P1.11",
+          "P1.12",
+          "P1.13",
+          "P1.14"
+        ]
+      },
+      {
+        "card": "P2.1–P2.2 — Configuration & Shared Clock",
+        "ids": [
+          "P2.1",
+          "P2.2"
+        ]
+      },
+      {
+        "card": "P2.3 + P2.9 — Tracking Service & Synthetic Source",
+        "ids": [
+          "P2.3",
+          "P2.9"
+        ]
+      },
+      {
+        "card": "P2.4 — Geometry Library",
+        "ids": [
+          "P2.4"
+        ]
+      },
+      {
+        "card": "P2.5–P2.7 — Logging, Events & Target Snapshots",
+        "ids": [
+          "P2.5",
+          "P2.6",
+          "P2.7"
+        ]
+      },
+      {
+        "card": "P2.8 — Analysis Ingest Script v1",
+        "ids": [
+          "P2.8"
+        ]
+      },
+      {
+        "card": "P3.1–P3.3 — Head-Coupled Participant Rendering",
+        "ids": [
+          "P3.1",
+          "P3.2",
+          "P3.3"
+        ]
+      },
+      {
+        "card": "P3.4 — Operator Debug View",
+        "ids": [
+          "P3.4"
+        ]
+      },
+      {
+        "card": "P3.5 — Multi-Display Startup Manager",
+        "ids": [
+          "P3.5"
+        ]
+      },
+      {
+        "card": "P3.6–P3.7 — Prediction & Rendering Performance",
+        "ids": [
+          "P3.6",
+          "P3.7"
+        ]
+      },
+      {
+        "card": "P3.8 — Replay Mode",
+        "ids": [
+          "P3.8"
+        ]
+      },
+      {
+        "card": "P4.1–P4.2 — Scenario Definition & Target Entity",
+        "ids": [
+          "P4.1",
+          "P4.2"
+        ]
+      },
+      {
+        "card": "P4.3–P4.4 — Movement & Spawn Plug-ins",
+        "ids": [
+          "P4.3",
+          "P4.4"
+        ]
+      },
+      {
+        "card": "P4.5–P4.7 — Shot, Scoring & Feedback",
+        "ids": [
+          "P4.5",
+          "P4.6",
+          "P4.7"
+        ]
+      },
+      {
+        "card": "P4.8–P4.9 — Session Definition & Block Order",
+        "ids": [
+          "P4.8",
+          "P4.9"
+        ]
+      },
+      {
+        "card": "P4.10–P4.12 — Session Engine, Operator UI & Self-Check",
+        "ids": [
+          "P4.10",
+          "P4.11",
+          "P4.12"
+        ]
+      },
+      {
+        "card": "P4.13 — Full Dry Session",
+        "ids": [
+          "P4.13"
+        ]
+      },
+      {
+        "card": "P5.1 — Complete Weapon Integration",
+        "ids": [
+          "P5.1"
+        ]
+      },
+      {
+        "card": "P5.2–P5.4 — Calibration Framework & Rig Calibration",
+        "ids": [
+          "P5.2",
+          "P5.3",
+          "P5.4"
+        ]
+      },
+      {
+        "card": "P5.5–P5.8 — Participant Calibration Flow",
+        "ids": [
+          "P5.5",
+          "P5.6",
+          "P5.7",
+          "P5.8"
+        ]
+      },
+      {
+        "card": "P5.9 — Daily Bore-Laser Rig Check",
+        "ids": [
+          "P5.9"
+        ]
+      },
+      {
+        "card": "P5.10 — Integrate Calibration Into Session Flow",
+        "ids": [
+          "P5.10"
+        ]
+      },
+      {
+        "card": "P6.1–P6.3 — ELTS Protocol, Transport & Timing",
+        "ids": [
+          "P6.1",
+          "P6.2",
+          "P6.3"
+        ]
+      },
+      {
+        "card": "P6.4–P6.6 — Heartbeat & Session Integration",
+        "ids": [
+          "P6.4",
+          "P6.5",
+          "P6.6"
+        ]
+      },
+      {
+        "card": "P6.7–P6.10 — Jetson State Machine & Fail-Safes",
+        "ids": [
+          "P6.7",
+          "P6.8",
+          "P6.9",
+          "P6.10"
+        ]
+      },
+      {
+        "card": "P6.11–P6.13 — ELTS Integration Tests",
+        "ids": [
+          "P6.11",
+          "P6.12",
+          "P6.13"
+        ]
+      },
+      {
+        "card": "P7.1 — Final Placement & Recalibration",
+        "ids": [
+          "P7.1"
+        ]
+      },
+      {
+        "card": "P7.2–P7.3 — IR Interference & Display Washout",
+        "ids": [
+          "P7.2",
+          "P7.3"
+        ]
+      },
+      {
+        "card": "P7.4–P7.5 — Occlusion & Registration Accuracy",
+        "ids": [
+          "P7.4",
+          "P7.5"
+        ]
+      },
+      {
+        "card": "P7.6–P7.7 — Full Stability Soak & Latency",
+        "ids": [
+          "P7.6",
+          "P7.7"
+        ]
+      },
+      {
+        "card": "P7.8–P7.9 — Safety Closure & Threshold Freeze",
+        "ids": [
+          "P7.8",
+          "P7.9"
+        ]
+      },
+      {
+        "card": "P8.1 — Finalize Study Parameters",
+        "ids": [
+          "P8.1"
+        ]
+      },
+      {
+        "card": "P8.2–P8.3 — Operator Procedures & Data Handling",
+        "ids": [
+          "P8.2",
+          "P8.3"
+        ]
+      },
+      {
+        "card": "P8.4 — Cross-Device Synchronization Rehearsal",
+        "ids": [
+          "P8.4"
+        ]
+      },
+      {
+        "card": "P8.5 — Pilot Sessions",
+        "ids": [
+          "P8.5"
+        ]
+      },
+      {
+        "card": "P8.6 — Analysis Dry Run",
+        "ids": [
+          "P8.6"
+        ]
+      },
+      {
+        "card": "P8.7 — Freeze study-v1.0",
+        "ids": [
+          "P8.7"
+        ]
+      },
+      {
+        "card": "P8.8 — Spares & Contingencies",
+        "ids": [
+          "P8.8"
+        ]
+      }
+    ]
+  },
+  "checklists": [
+    {
+      "name": "G0 — Foundations Complete",
+      "error": false,
+      "checks": {
+        "checklists": [
+          {
+            "id": "ari:cloud:trello::checklist/workspace/6a9afed3fdfd10e009ab6958/6a9b1b3cc08fa8bf910f67d4",
+            "name": "Gate G0",
+            "position": 140737488355328,
+            "checkItems": [
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1b3f4672fbe2703bd3c2",
+                "name": "BOM complete; missing items ordered with expected arrival dates",
+                "state": "INCOMPLETE",
+                "position": 140737488355328
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1b431c7d87afd49cc55f",
+                "name": "Repository + Unity project skeleton builds and tests pass from a clean clone",
+                "state": "INCOMPLETE",
+                "position": 140737488371712
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1b47397d5aab8421c439",
+                "name": "Trello/project tracker seeded with all tasks and decisions",
+                "state": "INCOMPLETE",
+                "position": 140737488388096
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1b4b3d003d09875ab873",
+                "name": "Every Decision Register row has an acknowledged owner and deadline",
+                "state": "INCOMPLETE",
+                "position": 140737488404480
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1b4fdb74a20e3ee3ace2",
+                "name": "Safety documents opened with owners and target completion dates",
+                "state": "INCOMPLETE",
+                "position": 140737488420864
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1b539a6e8da60491af0b",
+                "name": "Room survey sketch exists with key mounting/standing positions",
+                "state": "INCOMPLETE",
+                "position": 140737488437248
+              }
+            ]
+          }
+        ],
+        "nextCursor": "eyJvYmplY3RJZCI6IjZhOWIxYjNjYzA4ZmE4YmY5MTBmNjdkNCJ9",
+        "hasMore": false
+      }
+    },
+    {
+      "name": "G1 — Tracking Online",
+      "error": false,
+      "checks": {
+        "checklists": [
+          {
+            "id": "ari:cloud:trello::checklist/workspace/6a9afed3fdfd10e009ab6958/6a9b1b77e55437897f1d3fee",
+            "name": "Gate G1",
+            "position": 140737488355328,
+            "checkItems": [
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1b7c22f626be44437bef",
+                "name": "SteamVR headless works; both trackers are serial-bound, correct-handed, and survive restart/reordering",
+                "state": "INCOMPLETE",
+                "position": 140737488355328
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1b7f48a631e16b6ddcbf",
+                "name": "Tracking thread holds ≥245 Hz average with 0 s prediction; validity flags respond correctly to occlusion",
+                "state": "INCOMPLETE",
+                "position": 140737488371712
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1b84834c32b8e25b1fb8",
+                "name": "Trigger toggles with the same polled state as pose; universe origin stable across restart/reboot; base-station pose readable",
+                "state": "INCOMPLETE",
+                "position": 140737488388096
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1cb8f5a516981bf7df93",
+                "name": "Two displays addressable; single-display case detected; docs/spikes.md records P1.4–P1.10 findings",
+                "state": "INCOMPLETE",
+                "position": 140737488404480
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1cbc1b43cb6a32006518",
+                "name": "Headband mount built and passes rigidity test; weapon parts are on order or in hand",
+                "state": "INCOMPLETE",
+                "position": 140737488420864
+              }
+            ]
+          }
+        ],
+        "nextCursor": "eyJvYmplY3RJZCI6IjZhOWIxYjc3ZTU1NDM3ODk3ZjFkM2ZlZSJ9",
+        "hasMore": false
+      }
+    },
+    {
+      "name": "G2 — Core Services",
+      "error": false,
+      "checks": {
+        "checklists": [
+          {
+            "id": "ari:cloud:trello::checklist/workspace/6a9afed3fdfd10e009ab6958/6a9b2036b0ec8d945efb9c81",
+            "name": "Gate G2",
+            "position": 140737488355328,
+            "checkItems": [
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b20465fb577ab948f4e45",
+                "name": "Config and geometry tests pass; full samples/targets/events/session outputs are produced with correct headers",
+                "state": "INCOMPLETE",
+                "position": 140737488355328
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b204a43893c31b576c9cb",
+                "name": "30-minute soak has zero dropped samples and ≥245 Hz; trigger edge + 20 ms lockout verified",
+                "state": "INCOMPLETE",
+                "position": 140737488371712
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b2063d779735ba6e8e41d",
+                "name": "ingest.py parses output and CI foreign-time-source grep passes",
+                "state": "INCOMPLETE",
+                "position": 140737488388096
+              }
+            ]
+          }
+        ],
+        "nextCursor": "eyJvYmplY3RJZCI6IjZhOWIyMDM2YjBlYzhkOTQ1ZWZiOWM4MSJ9",
+        "hasMore": false
+      }
+    },
+    {
+      "name": "G3 — Rendering",
+      "error": false,
+      "checks": {
+        "checklists": [
+          {
+            "id": "ari:cloud:trello::checklist/workspace/6a9afed3fdfd10e009ab6958/6a9b2067fc25e0223ca5eb5a",
+            "name": "Gate G3",
+            "position": 140737488355328,
+            "checkItems": [
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b206c43f6467768b784ab",
+                "name": "Off-axis projection unit test passes and corner-rod alignment holds from all three validation viewpoints",
+                "state": "INCOMPLETE",
+                "position": 140737488355328
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b20705965c1594049ab94",
+                "name": "Operator view is complete and never appears on participant display; single-display refusal + display swap work",
+                "state": "INCOMPLETE",
+                "position": 140737488371712
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b20768189588dd0b95ef3",
+                "name": "Rendering prediction is documented without affecting logged pose; 5-minute run has no hitches; replay works",
+                "state": "INCOMPLETE",
+                "position": 140737488388096
+              }
+            ]
+          }
+        ],
+        "nextCursor": "eyJvYmplY3RJZCI6IjZhOWIyMDY3ZmMyNWUwMjIzY2E1ZWI1YSJ9",
+        "hasMore": false
+      }
+    },
+    {
+      "name": "G4 — Scenario & Session",
+      "error": false,
+      "checks": {
+        "checklists": [
+          {
+            "id": "ari:cloud:trello::checklist/workspace/6a9afed3fdfd10e009ab6958/6a9b207d65d36841bb924804",
+            "name": "Gate G4",
+            "position": 140737488355328,
+            "checkItems": [
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b20821bdef9748151ae28",
+                "name": "Scenario/session files validate and movement/spawn/shot/scoring plug-ins swap entirely by config",
+                "state": "INCOMPLETE",
+                "position": 140737488355328
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b2086abc1e58369cb9b5d",
+                "name": "ingest.py reproduces block score exactly and 100% of target spawns are visible at spawn time",
+                "state": "INCOMPLETE",
+                "position": 140737488371712
+              }
+            ]
+          }
+        ],
+        "nextCursor": "eyJvYmplY3RJZCI6IjZhOWIyMDdkNjVkMzY4NDFiYjkyNDgwNCJ9",
+        "hasMore": false
+      }
+    },
+    {
+      "name": "G8 — READY FOR PARTICIPANT 1",
+      "error": false,
+      "checks": {
+        "checklists": [
+          {
+            "id": "ari:cloud:trello::checklist/workspace/6a9afed3fdfd10e009ab6958/6a9b1fd18fa3d06ee77d5b95",
+            "name": "Ready for Participant 1",
+            "position": 140737488355328,
+            "checkItems": [
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1fd83bf95379014db96b",
+                "name": "Standalone study build completes setup → calibration → practice → four blocks → session close from operator screen",
+                "state": "INCOMPLETE",
+                "position": 140737488355328
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1fdf3dc4fe48228b356e",
+                "name": "Both trackers are bound by serial, report valid poses, and weapon trigger registers",
+                "state": "INCOMPLETE",
+                "position": 140737488371712
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1fe3d4930aaf6cdb8fd8",
+                "name": "Rig calibration is stored and the daily bore-laser check passes",
+                "state": "INCOMPLETE",
+                "position": 140737488388096
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1fe92b0fa4fa82fb462c",
+                "name": "Per-participant dominant-eye, eye-offset, weapon-zero, and 3×3 verification flows complete and write calibration results",
+                "state": "INCOMPLETE",
+                "position": 140737488404480
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1ff07aff1bd6a4f48de7",
+                "name": "Head-coupled rendering passes corner-rod validation and operator view contains required live diagnostics",
+                "state": "INCOMPLETE",
+                "position": 140737488420864
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1ff4e7b09365d9c18a5d",
+                "name": "Logging produces full schema at ~250 Hz with validity flags/events/targets on one shared clock and no dropped-sample warnings in soak",
+                "state": "INCOMPLETE",
+                "position": 140737488437248
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b1ff93a2b6993d45dd59d",
+                "name": "ELTS starts/stops only for WE blocks, logs acknowledgements/timestamps, and heartbeat fail-safe turns LEDs off on Unity failure",
+                "state": "INCOMPLETE",
+                "position": 140737488453632
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b2000dead6d349fa3bfcc",
+                "name": "All Phase 7 bench-validation and safety tests pass with frozen thresholds",
+                "state": "INCOMPLETE",
+                "position": 140737488470016
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b2004eaecf4964b8d5fea",
+                "name": "At least three complete pilot sessions run consecutively without developer intervention and ingest.py processes them end to end",
+                "state": "INCOMPLETE",
+                "position": 140737488486400
+              },
+              {
+                "id": "ari:cloud:trello::check-item/workspace/6a9afed3fdfd10e009ab6958/6a9b2008847a01cf852ea745",
+                "name": "Every Decision Register item is closed except informational D-15",
+                "state": "INCOMPLETE",
+                "position": 140737488502784
+              }
+            ]
+          }
+        ],
+        "nextCursor": "eyJvYmplY3RJZCI6IjZhOWIxZmQxOGZhM2QwNmVlNzdkNWI5NSJ9",
+        "hasMore": false
+      }
+    }
+  ],
+  "updatedCards": [
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1b3771dc3d9a030e2d4b",
+      "original": {
+        "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1b3771dc3d9a030e2d4b",
+        "name": "G0 — Foundations Complete",
+        "description": "Gate to Phase 1. Do not advance until every item is green.",
+        "url": "https://trello.com/c/RbaZ6Ah0/23-g0-foundations-complete",
+        "shortUrl": "https://trello.com/c/RbaZ6Ah0",
+        "closed": false,
+        "complete": false,
+        "position": 140737488420864,
+        "lastActivityAt": "2026-09-04T19:26:11.038Z",
+        "startedAt": null,
+        "due": {
+          "date": null,
+          "complete": false
+        },
+        "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b195f3eef102366608599",
+        "boardId": null,
+        "labels": [],
+        "labelsHasMore": false,
+        "checklists": [],
+        "checklistsHasMore": false,
+        "members": [],
+        "comments": [],
+        "commentsHasMore": false,
+        "list": "P0 — Foundations",
+        "board": null
+      },
+      "expectedDescription": "Coordination mirror for G0; not an approval authority.\n\nBaseline acceptance criteria from ELTS_Implementation_and_Progress_Workbook.xlsx, Gate Criteria sheet (2026-09-04 baseline):\nG0.01: BOM complete; all missing items ordered with expected arrival dates\nG0.02: Repository + Unity project skeleton builds and tests pass from a clean clone\nG0.03: Issue tracker seeded with all tasks and decisions\nG0.04: Every Decision Register row has an acknowledged owner and deadline\nG0.05: Safety documents opened\nG0.06: Room survey sketch exists\n\nGate control: all applicable criteria require evidence and an explicit authorized gate_passed event with required human attestation. Checklist completion and card movement never pass this gate. Existing checklists are abbreviated reminders; use the complete criterion IDs above. G8 alone authorizes participant readiness through the approved process and tagged release.\n\n2026-09-06 status: no physical project parts are available; bootstrap is incomplete. Hardware-dependent criteria remain unverified. Synthetic results count only where the criterion permits them and never establish physical or safety performance. Trello must mirror validated repository events/state after bootstrap. No gate was passed by this review.",
+      "readbackMatched": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1b7311d1d7b48c21a4f5",
+      "original": {
+        "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1b7311d1d7b48c21a4f5",
+        "name": "G1 — Tracking Online",
+        "description": "Gate to Phase 2. All acceptance items must be green.",
+        "url": "https://trello.com/c/ezSv8Uyp/29-g1-tracking-online",
+        "shortUrl": "https://trello.com/c/ezSv8Uyp",
+        "closed": false,
+        "complete": false,
+        "position": 140737488437248,
+        "lastActivityAt": "2026-09-04T19:32:12.495Z",
+        "startedAt": null,
+        "due": {
+          "date": null,
+          "complete": false
+        },
+        "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b1965ae8533bf0a6dbad2",
+        "boardId": null,
+        "labels": [],
+        "labelsHasMore": false,
+        "checklists": [],
+        "checklistsHasMore": false,
+        "members": [],
+        "comments": [],
+        "commentsHasMore": false,
+        "list": "P1 — Tracking Online",
+        "board": null
+      },
+      "expectedDescription": "Coordination mirror for G1; not an approval authority.\n\nBaseline acceptance criteria from ELTS_Implementation_and_Progress_Workbook.xlsx, Gate Criteria sheet (2026-09-04 baseline):\nG1.01: SteamVR runs headless; both trackers listed\nG1.02: Unity test scene shows both trackers as gizmos, correct handedness, bound by serial, surviving three SteamVR restarts\nG1.03: 250 Hz polling thread holds ≥ 245 Hz average with 0 s prediction; validity flags observed to change under occlusion\nG1.04: Trigger toggles in the same polled state as the pose\nG1.05: Universe origin stable across SteamVR restart and PC reboot; base station pose readable\nG1.06: Two displays addressable from a standalone build; single-display case detected\nG1.07: docs/spikes.md records a finding for P1.4–P1.10\nG1.08: Headband mount built and passes the rigidity test; weapon parts on order or in hand\n\nGate control: all applicable criteria require evidence and an explicit authorized gate_passed event with required human attestation. Checklist completion and card movement never pass this gate. Existing checklists are abbreviated reminders; use the complete criterion IDs above. G8 alone authorizes participant readiness through the approved process and tagged release.\n\n2026-09-06 status: no physical project parts are available; bootstrap is incomplete. Hardware-dependent criteria remain unverified. Synthetic results count only where the criterion permits them and never establish physical or safety performance. Trello must mirror validated repository events/state after bootstrap. No gate was passed by this review.",
+      "readbackMatched": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1ec29f4aeeb5806324ae",
+      "original": {
+        "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1ec29f4aeeb5806324ae",
+        "name": "G2 — Core Services",
+        "description": "Gate to Phase 3.\nAcceptance: config + geometry tests pass; full samples/targets/events/session output produced; 30-min soak has zero drops and ≥245 Hz; trigger edge + 20 ms lockout verified; ingest.py parses output; foreign-time-source CI grep passes.",
+        "url": "https://trello.com/c/jHVk3Ju5/35-g2-core-services",
+        "shortUrl": "https://trello.com/c/jHVk3Ju5",
+        "closed": false,
+        "complete": false,
+        "position": 140737488437248,
+        "lastActivityAt": "2026-09-04T19:47:47.348Z",
+        "startedAt": null,
+        "due": {
+          "date": null,
+          "complete": false
+        },
+        "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b196ba47f744abf6962b7",
+        "boardId": null,
+        "labels": [],
+        "labelsHasMore": false,
+        "checklists": [],
+        "checklistsHasMore": false,
+        "members": [],
+        "comments": [],
+        "commentsHasMore": false,
+        "list": "P2 — Core Services",
+        "board": null
+      },
+      "expectedDescription": "Coordination mirror for G2; not an approval authority.\n\nBaseline acceptance criteria from ELTS_Implementation_and_Progress_Workbook.xlsx, Gate Criteria sheet (2026-09-04 baseline):\nG2.01: All EditMode geometry and config tests pass in CI\nG2.02: Real-tracker run (or synthetic if hardware not yet in) produces samples.csv, targets.csv, events.csv, session.json with full headers\nG2.03: 30-minute soak: zero dropped samples, ≥ 245 Hz\nG2.04: Trigger edge → Shot event with 20 ms lockout verified\nG2.05: ingest.py parses the output and prints summaries\nG2.06: CI grep for foreign time sources passes\n\nGate control: all applicable criteria require evidence and an explicit authorized gate_passed event with required human attestation. Checklist completion and card movement never pass this gate. Existing checklists are abbreviated reminders; use the complete criterion IDs above. G8 alone authorizes participant readiness through the approved process and tagged release.\n\n2026-09-06 status: no physical project parts are available; bootstrap is incomplete. Hardware-dependent criteria remain unverified. Synthetic results count only where the criterion permits them and never establish physical or safety performance. Trello must mirror validated repository events/state after bootstrap. No gate was passed by this review.",
+      "readbackMatched": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1ee3a7395d4f67cc4a84",
+      "original": {
+        "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1ee3a7395d4f67cc4a84",
+        "name": "G3 — Rendering",
+        "description": "Gate to Phase 4. Acceptance: off-axis projection unit test passes; corner rods align from three viewpoints; operator view complete and isolated from participant display; display startup checks work; rendering prediction documented without contaminating logs; 5-min performance run has no hitches; replay works.",
+        "url": "https://trello.com/c/BWQc27TE/41-g3-rendering",
+        "shortUrl": "https://trello.com/c/BWQc27TE",
+        "closed": false,
+        "complete": false,
+        "position": 140737488437248,
+        "lastActivityAt": "2026-09-04T19:48:06.571Z",
+        "startedAt": null,
+        "due": {
+          "date": null,
+          "complete": false
+        },
+        "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b19701a34cf138dcb18cd",
+        "boardId": null,
+        "labels": [],
+        "labelsHasMore": false,
+        "checklists": [],
+        "checklistsHasMore": false,
+        "members": [],
+        "comments": [],
+        "commentsHasMore": false,
+        "list": "P3 — Rendering",
+        "board": null
+      },
+      "expectedDescription": "Coordination mirror for G3; not an approval authority.\n\nBaseline acceptance criteria from ELTS_Implementation_and_Progress_Workbook.xlsx, Gate Criteria sheet (2026-09-04 baseline):\nG3.01: Off-axis projection unit test passes\nG3.02: Corner-rod alignment holds from three viewing positions\nG3.03: Operator view shows every §6.6 element; dropout indication is obvious\nG3.04: Operator view never appears on the participant display (verified by inspection of both outputs during a run)\nG3.05: Single-display refusal and identification splash work\nG3.06: Rendering prediction value chosen; logged pose confirmed unaffected\nG3.07: 5-minute run at target refresh rate with no hitches\nG3.08: Replay works on a logged file\n\nGate control: all applicable criteria require evidence and an explicit authorized gate_passed event with required human attestation. Checklist completion and card movement never pass this gate. Existing checklists are abbreviated reminders; use the complete criterion IDs above. G8 alone authorizes participant readiness through the approved process and tagged release.\n\n2026-09-06 status: no physical project parts are available; bootstrap is incomplete. Hardware-dependent criteria remain unverified. Synthetic results count only where the criterion permits them and never establish physical or safety performance. Trello must mirror validated repository events/state after bootstrap. No gate was passed by this review.",
+      "readbackMatched": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1f0cdff21e813e4ce67b",
+      "original": {
+        "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1f0cdff21e813e4ce67b",
+        "name": "G4 — Scenario & Session",
+        "description": "Gate to Phase 5. Acceptance: scenario/session files validate; movement/spawn/shot/scoring plug-ins swap by config; ingest.py reproduces score; full dry session + abort/rerun works; 100% of spawns visible; all required event types observed.",
+        "url": "https://trello.com/c/4XHgZcAk/48-g4-scenario-session",
+        "shortUrl": "https://trello.com/c/4XHgZcAk",
+        "closed": false,
+        "complete": false,
+        "position": 140737488453632,
+        "lastActivityAt": "2026-09-04T19:48:22.978Z",
+        "startedAt": null,
+        "due": {
+          "date": null,
+          "complete": false
+        },
+        "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b19743318c8b14b55353e",
+        "boardId": null,
+        "labels": [],
+        "labelsHasMore": false,
+        "checklists": [],
+        "checklistsHasMore": false,
+        "members": [],
+        "comments": [],
+        "commentsHasMore": false,
+        "list": "P4 — Scenario & Session",
+        "board": null
+      },
+      "expectedDescription": "Coordination mirror for G4; not an approval authority.\n\nBaseline acceptance criteria from ELTS_Implementation_and_Progress_Workbook.xlsx, Gate Criteria sheet (2026-09-04 baseline):\nG4.01: Two scenario files and the session template load and validate\nG4.02: Movement, spawn, shot, scoring plug-ins swappable by name from data\nG4.03: Block score reproducible from events.csv by ingest.py\nG4.04: Full dry session run from the operator screen; abort and re-run paths exercised\nG4.05: 100% of spawns visible at spawn time\nG4.06: Every Appendix B.3 event type observed in a real run\n\nGate control: all applicable criteria require evidence and an explicit authorized gate_passed event with required human attestation. Checklist completion and card movement never pass this gate. Existing checklists are abbreviated reminders; use the complete criterion IDs above. G8 alone authorizes participant readiness through the approved process and tagged release.\n\n2026-09-06 status: no physical project parts are available; bootstrap is incomplete. Hardware-dependent criteria remain unverified. Synthetic results count only where the criterion permits them and never establish physical or safety performance. Trello must mirror validated repository events/state after bootstrap. No gate was passed by this review.",
+      "readbackMatched": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1f2d07965d82eb6a0666",
+      "original": {
+        "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1f2d07965d82eb6a0666",
+        "name": "G5 — Calibration",
+        "description": "Gate to Phase 6/7. Acceptance: weapon integrated and tap test passes; pivot/corner rig calibration stored within provisional thresholds; corner rods align; three lab-member participant calibrations complete within thresholds; daily bore-laser check proven across two days; session enforces calibration before practice.",
+        "url": "https://trello.com/c/XeKz6Lws/54-g5-calibration",
+        "shortUrl": "https://trello.com/c/XeKz6Lws",
+        "closed": false,
+        "complete": false,
+        "position": 140737488437248,
+        "lastActivityAt": "2026-09-04T19:42:38.013Z",
+        "startedAt": null,
+        "due": {
+          "date": null,
+          "complete": false
+        },
+        "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b1979f94343931dc61bd6",
+        "boardId": null,
+        "labels": [],
+        "labelsHasMore": false,
+        "checklists": [],
+        "checklistsHasMore": false,
+        "members": [],
+        "comments": [],
+        "commentsHasMore": false,
+        "list": "P5 — Calibration & Weapon",
+        "board": null
+      },
+      "expectedDescription": "Coordination mirror for G5; not an approval authority.\n\nBaseline acceptance criteria from ELTS_Implementation_and_Progress_Workbook.xlsx, Gate Criteria sheet (2026-09-04 baseline):\nG5.01: Weapon integrated; bore ray runs along the barrel; tap test passed\nG5.02: Rig calibrations (pivot, corners) stored with residuals within provisional thresholds; corner rods align using probed values\nG5.03: Per-participant flows (dominant eye, eye offset, zero, 3×3) run end to end for three lab members; residuals within provisional thresholds\nG5.04: Daily bore-laser check procedure written and run on two days\nG5.05: Session flow enforces calibration before practice\n\nGate control: all applicable criteria require evidence and an explicit authorized gate_passed event with required human attestation. Checklist completion and card movement never pass this gate. Existing checklists are abbreviated reminders; use the complete criterion IDs above. G8 alone authorizes participant readiness through the approved process and tagged release.\n\n2026-09-06 status: no physical project parts are available; bootstrap is incomplete. Hardware-dependent criteria remain unverified. Synthetic results count only where the criterion permits them and never establish physical or safety performance. Trello must mirror validated repository events/state after bootstrap. No gate was passed by this review.",
+      "readbackMatched": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1f49eb3653dcac9e8d06",
+      "original": {
+        "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1f49eb3653dcac9e8d06",
+        "name": "G6 — ELTS Integration",
+        "description": "Gate to Phase 7. Acceptance: transport works both ends; HELLO self-check; 20-cycle link test passes with logged/stable offsets; all four fail-safes pass; WE/NE behavior matches D-10; Jetson event log produces data if adopted.",
+        "url": "https://trello.com/c/bPum2yGC/59-g6-elts-integration",
+        "shortUrl": "https://trello.com/c/bPum2yGC",
+        "closed": false,
+        "complete": false,
+        "position": 140737488420864,
+        "lastActivityAt": "2026-09-04T19:43:05.900Z",
+        "startedAt": null,
+        "due": {
+          "date": null,
+          "complete": false
+        },
+        "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b197f16186a0a0cb8b78a",
+        "boardId": null,
+        "labels": [],
+        "labelsHasMore": false,
+        "checklists": [],
+        "checklistsHasMore": false,
+        "members": [],
+        "comments": [],
+        "commentsHasMore": false,
+        "list": "P6 — ELTS Integration",
+        "board": null
+      },
+      "expectedDescription": "Coordination mirror for G6; not an approval authority.\n\nBaseline acceptance criteria from ELTS_Implementation_and_Progress_Workbook.xlsx, Gate Criteria sheet (2026-09-04 baseline):\nG6.01: Transport implemented on both ends; HELLO handshake in self-check\nG6.02: 20-cycle link test passes; clock offsets logged and stable\nG6.03: All four fail-safe tests pass and are written up\nG6.04: WE blocks send start/stop; NE blocks send nothing (or per D-10)\nG6.05: Jetson-side event log producing data (if P6.9 adopted)\n\nGate control: all applicable criteria require evidence and an explicit authorized gate_passed event with required human attestation. Checklist completion and card movement never pass this gate. Existing checklists are abbreviated reminders; use the complete criterion IDs above. G8 alone authorizes participant readiness through the approved process and tagged release.\n\n2026-09-06 status: no physical project parts are available; bootstrap is incomplete. Hardware-dependent criteria remain unverified. Synthetic results count only where the criterion permits them and never establish physical or safety performance. Trello must mirror validated repository events/state after bootstrap. No gate was passed by this review.",
+      "readbackMatched": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1f9ea5244d6c5b563f08",
+      "original": {
+        "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1f9ea5244d6c5b563f08",
+        "name": "G7 — Bench Validation",
+        "description": "Gate to Phase 8. Acceptance: validation write-ups exist for D.1–D.6; IR/Brio checks pass; washout and occlusion are within frozen thresholds; registration accuracy recorded; full-session soak clean; safety sheet complete; E-stop verified; thresholds frozen.",
+        "url": "https://trello.com/c/5ukWUNIW/66-g7-bench-validation",
+        "shortUrl": "https://trello.com/c/5ukWUNIW",
+        "closed": false,
+        "complete": false,
+        "position": 140737488437248,
+        "lastActivityAt": "2026-09-04T19:44:30.455Z",
+        "startedAt": null,
+        "due": {
+          "date": null,
+          "complete": false
+        },
+        "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b1985131bc0387039814e",
+        "boardId": null,
+        "labels": [],
+        "labelsHasMore": false,
+        "checklists": [],
+        "checklistsHasMore": false,
+        "members": [],
+        "comments": [],
+        "commentsHasMore": false,
+        "list": "P7 — Validation & Safety",
+        "board": null
+      },
+      "expectedDescription": "Coordination mirror for G7; not an approval authority.\n\nBaseline acceptance criteria from ELTS_Implementation_and_Progress_Workbook.xlsx, Gate Criteria sheet (2026-09-04 baseline):\nG7.01: Write-ups exist for D.1–D.6 (D.8 optional), each with pass/fail\nG7.02: IR test: no measurable degradation with LEDs on; Brio IR confirmed inactive\nG7.03: Washout within threshold at all nine points\nG7.04: Occlusion fraction within threshold for all three testers\nG7.05: Registration accuracy figure recorded\nG7.06: Soak clean\nG7.07: Safety sheet complete; E-stop verified\nG7.08: Thresholds frozen\n\nGate control: all applicable criteria require evidence and an explicit authorized gate_passed event with required human attestation. Checklist completion and card movement never pass this gate. Existing checklists are abbreviated reminders; use the complete criterion IDs above. G8 alone authorizes participant readiness through the approved process and tagged release.\n\n2026-09-06 status: no physical project parts are available; bootstrap is incomplete. Hardware-dependent criteria remain unverified. Synthetic results count only where the criterion permits them and never establish physical or safety performance. Trello must mirror validated repository events/state after bootstrap. No gate was passed by this review.",
+      "readbackMatched": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1fcc3d79743ee391ba71",
+      "original": {
+        "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1fcc3d79743ee391ba71",
+        "name": "G8 — READY FOR PARTICIPANT 1",
+        "description": "Final release gate. This card is the authoritative go/no-go for beginning data collection.",
+        "url": "https://trello.com/c/ckus7S2S/74-g8-ready-for-participant-1",
+        "shortUrl": "https://trello.com/c/ckus7S2S",
+        "closed": false,
+        "complete": false,
+        "position": 140737488470016,
+        "lastActivityAt": "2026-09-04T19:46:16.790Z",
+        "startedAt": null,
+        "due": {
+          "date": null,
+          "complete": false
+        },
+        "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b19884b3e30598e1c27ca",
+        "boardId": null,
+        "labels": [],
+        "labelsHasMore": false,
+        "checklists": [],
+        "checklistsHasMore": false,
+        "members": [],
+        "comments": [],
+        "commentsHasMore": false,
+        "list": "P8 — Pilot & Freeze",
+        "board": null
+      },
+      "expectedDescription": "G8 coordination mirror. Requires evidence-backed authorized gate_passed event and human approval; checklist completion is not approval.\n\nG8.01: The Unity study build (a tagged, versioned standalone build — never the Editor) runs a complete session: participant setup → per-participant calibration → practice → four condition blocks with breaks → session close, driven entirely from the operator screen.\nG8.02: Both trackers are bound by serial number, report valid poses, and the trigger registers on the weapon tracker.\nG8.03: Rig-level calibration (pivot, screen corners) is stored, and the daily bore-laser check (Appendix C.6) passes.\nG8.04: Per-participant calibration flows (weapon zero, eye offset, 3×3 verification) run inside the application and write their results into the participant's data folder (Appendix A.5).\nG8.05: The stimulus display renders head-coupled perspective correctly (corner-rod check passes from three viewing positions), and the operator view shows everything listed in briefing §6.6.\nG8.06: Logging produces the full schema (Appendix B) at ~250 Hz with validity flags, plus events, plus a per-block target table, on one shared clock, with no dropped-sample warnings over a 30-minute soak.\nG8.07: ELTS start/stop commands are sent for WE blocks only, acknowledged with timestamps, aligned to the shared clock, and the heartbeat fail-safe has been demonstrated (kill Unity → LEDs off within the configured timeout).\nG8.08: All Phase 7 bench tests pass and are written up.\nG8.09: At least three complete pilot sessions (non-data) have been run with the final build, and the analysis ingest script has successfully processed their output end to end.\nG8.10: Every Decision Register (§15) item is closed, except D-15, which is informational only.\n\n2026-09-06: no physical parts; no gate passed. Source: workbook Gate Criteria. Bootstrap incomplete.",
+      "readbackMatched": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b201a46b80ed51d91bf40",
+      "original": {
+        "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b201a46b80ed51d91bf40",
+        "name": "AUTOMATION — Butler Rules to Enable",
+        "description": "This Trello connection cannot create Butler rules directly. Configure these in Board → Automation:\n\n1) When all checklist items on a card are complete → mark card complete and move to Done.\n2) When a card is moved to Done → mark it complete.\n3) When a card is moved out of Done → mark it incomplete.\n4) When a card is marked complete → move it to Done.\n5) When a card is moved to Blocked / Waiting → keep it incomplete and move it to top of that list.\n6) When a card is moved to In Progress → move it to top of In Progress.\n7) Gate cards: when the gate checklist completes → mark gate complete and move to Done.\n8) G8: when Ready for Participant 1 checklist completes → mark G8 complete and move to Done.\n\nDo NOT auto-start the next phase; gates are go/no-go controls and phase work may run partially in parallel only where the build plan explicitly permits it.",
+        "url": "https://trello.com/c/j5JP5Zko/75-automation-butler-rules-to-enable",
+        "shortUrl": "https://trello.com/c/j5JP5Zko",
+        "closed": false,
+        "complete": false,
+        "position": 140737488650240,
+        "lastActivityAt": "2026-09-04T19:46:34.611Z",
+        "startedAt": null,
+        "due": {
+          "date": null,
+          "complete": false
+        },
+        "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b1952eea1816415b8df48",
+        "boardId": null,
+        "labels": [],
+        "labelsHasMore": false,
+        "checklists": [],
+        "checklistsHasMore": false,
+        "members": [],
+        "comments": [],
+        "commentsHasMore": false,
+        "list": "Decisions / Blockers",
+        "board": null
+      },
+      "expectedDescription": "Trello is a coordination mirror of the workbook baseline and, after bootstrap, validated repository events/PROJECT_STATE.json.\n\nDo not enable rules that mark tasks or gates complete merely because a checklist is checked or a card is moved. In particular, remove any gate/G8 auto-completion rules suggested by the previous version of this card. Gate passage requires complete criterion evidence and explicit authorized gate_passed events with required human approval.\n\nPermitted convenience rules: moving a card to In Progress or Blocked / Waiting may reposition it at the top of that list without changing completion. Done/completion must be reconciled only from validated authoritative task state; mixed tasks remain incomplete while required physical checks are outstanding. Do not auto-start phases.\n\n2026-09-06 review corrected this guidance. The connector does not expose Butler rule inspection/configuration, so actual enabled automations were not verified or changed.",
+      "readbackMatched": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1b2716ef60c8cae4907a",
+      "original": {
+        "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1b2716ef60c8cae4907a",
+        "name": "P0.3 — Repository & Unity Skeleton",
+        "description": "WS-C\nTasks:\n- Create git repository + README linking briefing/build plan.\n- Create Unity 6 LTS URP project; pin exact version.\n- Remove XR packages; add OpenVR bindings, Newtonsoft JSON, Unity Test Framework.\n- Create EditMode + PlayMode assemblies with passing smoke tests.\n- Add Windows standalone build script with baked version string.\nDone: clean clone opens, tests pass, standalone build produced.",
+        "url": "https://trello.com/c/jLiFDqKf/20-p03-repository-unity-skeleton",
+        "shortUrl": "https://trello.com/c/jLiFDqKf",
+        "closed": false,
+        "complete": false,
+        "position": 140737488371712,
+        "lastActivityAt": "2026-09-04T19:25:27.100Z",
+        "startedAt": null,
+        "due": {
+          "date": null,
+          "complete": false
+        },
+        "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b195f3eef102366608599",
+        "boardId": null,
+        "labels": [],
+        "labelsHasMore": false,
+        "checklists": [],
+        "checklistsHasMore": false,
+        "members": [],
+        "comments": [],
+        "commentsHasMore": false,
+        "list": "P0 — Foundations",
+        "board": null
+      },
+      "expectedDescription": "WS-C — repository, progress governance, portability and Unity bootstrap.\n\nStart with P0.3.S001: inspect and preserve the actual checkout/remote. Read both deliverables completely; preserve original baselines and hashes; reconcile the task catalog; implement tested append-only events/reducer/validator and generate PROJECT_STATE.json; create canonical instructions, contracts, toolchain/config manifests, portable scripts, Unity skeleton, dependency provenance, smoke tests, CI and standalone build evidence.\n\nREADINESS BLOCKER (2026-09-06): specification Appendix C and workbook Atomic Steps assign different actions to P0.3.S002 onward. Workbook asks for generated state before catalog inputs exist. Reconcile through a reviewed plan amendment before claiming affected steps; do not silently remap IDs or fabricate progress.\n\nThe current planning directory has no Git repository; the GitHub remote advertised no refs during this review. Inventory/initial repository setup must handle that explicitly. Unity editor folder 6000.3.10f1 exists locally, but launch/license/build tests have not been performed by this review. Never infer runtime readiness from folder presence.\n\nNo hardware parts are available. Bootstrap software work is the first intended lane, with hardware tests left pending. Completion requires full architecture acceptance and real performed checks, not this card summary. See AGENTS.md, docs/ai/BUILD-CONSTRAINTS.md and docs/reviews/2026-09-06/READINESS.md.",
+      "readbackMatched": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1b17919633757b2696d7",
+      "original": {
+        "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1b17919633757b2696d7",
+        "name": "D-18 — Confirm tracking hardware procurement",
+        "description": "Owner: Investigators\nBlocks: Phase 0\nConfirm which tracking items are already in hand versus need ordering; this resolves Assumption A1.",
+        "url": "https://trello.com/c/kxfCiAqt/18-d-18-confirm-tracking-hardware-procurement",
+        "shortUrl": "https://trello.com/c/kxfCiAqt",
+        "closed": false,
+        "complete": false,
+        "position": 140737488633856,
+        "lastActivityAt": "2026-09-04T19:25:11.551Z",
+        "startedAt": null,
+        "due": {
+          "date": null,
+          "complete": false
+        },
+        "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b1952eea1816415b8df48",
+        "boardId": null,
+        "labels": [],
+        "labelsHasMore": false,
+        "checklists": [],
+        "checklistsHasMore": false,
+        "members": [],
+        "comments": [],
+        "commentsHasMore": false,
+        "list": "Decisions / Blockers",
+        "board": null
+      },
+      "expectedDescription": "Owner: Investigators\nBlocks: Phase 0\nConfirm which tracking items are already in hand versus need ordering; this resolves Assumption A1.\n\nUser inventory update 2026-09-06: NO physical project parts are currently available. Record needed/ordered/in-hand accurately; this review did not place orders or establish delivery dates. D-18 remains open until the responsible owner confirms procurement details. Historical wording describing an operational rig is not evidence of availability.",
+      "readbackMatched": true
+    }
+  ],
+  "newCards": [
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9df74f1f7a7df588706893",
+      "name": "READ FIRST — Build before hardware arrives",
+      "description": "User confirmed 2026-09-06: no physical project parts are available. Build as much software as the approved dependency plan permits now; add and configure positions and hardware later.\n\nKeep geometry, orientations, dimensions, tracker bindings, endpoints and calibration configurable with documented units/frames. Use explicit synthetic fixtures/adapters; never treat example geometry as measured calibration. Repositioning/replacing hardware requires applicable recalibration and revalidation.\n\nKeep hardware-dependent tests pending with task/criterion ID, missing equipment and required later evidence. Simulated passes never establish physical performance or pass safety/phase gates. Mixed tasks remain incomplete while required physical checks are outstanding.\n\nShared guidance: AGENTS.md and docs/ai/BUILD-CONSTRAINTS.md. Review: docs/reviews/2026-09-06/READINESS.md. Baseline conflicts must be reconciled before broad implementation. Trello is a mirror; no procurement, decision closure or gate passage is claimed.",
+      "url": "https://trello.com/c/RGReuE51/76-read-first-build-before-hardware-arrives",
+      "shortUrl": "https://trello.com/c/RGReuE51",
+      "closed": false,
+      "complete": false,
+      "position": 140737488338944,
+      "lastActivityAt": "2026-09-06T23:29:19.269Z",
+      "startedAt": null,
+      "due": {
+        "date": null,
+        "complete": false
+      },
+      "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b1952eea1816415b8df48",
+      "boardId": "ari:cloud:trello::board/workspace/6a9afed3fdfd10e009ab6958/6a9afee6eb3df1aa605d0f19",
+      "labels": [],
+      "labelsHasMore": false,
+      "checklists": [],
+      "checklistsHasMore": false,
+      "members": [],
+      "comments": [],
+      "commentsHasMore": false,
+      "list": {
+        "id": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b1952eea1816415b8df48",
+        "name": "Decisions / Blockers"
+      },
+      "board": {
+        "id": "ari:cloud:trello::board/workspace/6a9afed3fdfd10e009ab6958/6a9afee6eb3df1aa605d0f19",
+        "name": "ELTS Development"
+      }
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9df751e2639be6b232eeb0",
+      "name": "PLAN BLOCKER — Reconcile bootstrap IDs and synthetic dependencies",
+      "description": "2026-09-06 review: resolve these through a reviewed plan amendment before affected implementation. Preserve original DOCX/XLSX unchanged and stable IDs/history.\n\n1. Specification Appendix C and workbook Atomic Steps disagree on P0.3.S002 onward. Workbook S002 needs generated state before hashed/imported catalog exists. Define one canonical order with explicit mapping and truthful bootstrap event timing.\n2. Dependencies DEP-0081 is P2.9 -> itself. DEP-0039/DEP-0082 and DEP-0042/DEP-0083 form config/clock/synthetic cycles. Conditional G1 OR (G0 + synthetic) was flattened into hard edges. Correct predicates and check all graph cycles.\n3. DEP-0044 requires D-12 decided before P2.2, while D-12 latest deadline is P8.4. Permit stable clock/UTC-anchor interfaces; keep final sync approval at its actual use boundary.\n4. Existing synthetic exception still requires G0. Define bounded development-only tasks for useful software before hardware, preserving all physical criteria and gate approvals. Do not globally waive G0-G8.\n\nReview packet: docs/reviews/2026-09-06/READINESS.md. No affected work claimed or completed.",
+      "url": "https://trello.com/c/4LymVcTP/77-plan-blocker-reconcile-bootstrap-ids-and-synthetic-dependencies",
+      "shortUrl": "https://trello.com/c/4LymVcTP",
+      "closed": false,
+      "complete": false,
+      "position": 140737488322560,
+      "lastActivityAt": "2026-09-06T23:29:21.965Z",
+      "startedAt": null,
+      "due": {
+        "date": null,
+        "complete": false
+      },
+      "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b1952eea1816415b8df48",
+      "boardId": "ari:cloud:trello::board/workspace/6a9afed3fdfd10e009ab6958/6a9afee6eb3df1aa605d0f19",
+      "labels": [],
+      "labelsHasMore": false,
+      "checklists": [],
+      "checklistsHasMore": false,
+      "members": [],
+      "comments": [],
+      "commentsHasMore": false,
+      "list": {
+        "id": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b1952eea1816415b8df48",
+        "name": "Decisions / Blockers"
+      },
+      "board": {
+        "id": "ari:cloud:trello::board/workspace/6a9afed3fdfd10e009ab6958/6a9afee6eb3df1aa605d0f19",
+        "name": "ELTS Development"
+      }
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9df754fefce9f8d3bf404c",
+      "name": "BOARD CONTROL — Verify actual Butler rules before execution",
+      "description": "The prior AUTOMATION card recommended automatic gate/G8 completion from checklists. That guidance has been corrected. Actual configured Butler rules cannot be inspected or changed through the available connector.\n\nBoard owner action: inspect Board > Automation; disable any checklist/move-to-Done rule that could complete tasks or gates without authoritative evidence. Verify gates require explicit authorized approval and never auto-start phases. This control remains unverified until checked in Trello.\n\nTrello is a mirror; workbook/repository progress cannot be inferred from card movement. No gate was passed during the 2026-09-06 review.",
+      "url": "https://trello.com/c/8ww0yCuU/78-board-control-verify-actual-butler-rules-before-execution",
+      "shortUrl": "https://trello.com/c/8ww0yCuU",
+      "closed": false,
+      "complete": false,
+      "position": 140737488306176,
+      "lastActivityAt": "2026-09-06T23:29:24.426Z",
+      "startedAt": null,
+      "due": {
+        "date": null,
+        "complete": false
+      },
+      "listId": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b1952eea1816415b8df48",
+      "boardId": "ari:cloud:trello::board/workspace/6a9afed3fdfd10e009ab6958/6a9afee6eb3df1aa605d0f19",
+      "labels": [],
+      "labelsHasMore": false,
+      "checklists": [],
+      "checklistsHasMore": false,
+      "members": [],
+      "comments": [],
+      "commentsHasMore": false,
+      "list": {
+        "id": "ari:cloud:trello::list/workspace/6a9afed3fdfd10e009ab6958/6a9b1952eea1816415b8df48",
+        "name": "Decisions / Blockers"
+      },
+      "board": {
+        "id": "ari:cloud:trello::board/workspace/6a9afed3fdfd10e009ab6958/6a9afee6eb3df1aa605d0f19",
+        "name": "ELTS Development"
+      }
+    }
+  ],
+  "butlerVerification": {
+    "status": "unverified",
+    "reason": "Connector does not expose rules. Browser opened Automation > Rules, then control failed with debugger unattached twice. No actual rules changed.",
+    "controlCardDescription": "The prior AUTOMATION card recommended automatic gate/G8 completion from checklists. That guidance has been corrected.\n\nActual Butler rules remain unverified. The connector exposes no rule inspection/configuration. Browser access to the board succeeded and Rules was opened, but browser control disconnected before the rules panel could be read; reconnect failed. No actual Butler rule was changed.\n\nBoard owner action: inspect Board > Automation; disable any checklist/move-to-Done rule that could complete tasks or gates without authoritative evidence. Verify gates require explicit authorized approval and never auto-start phases.\n\nTrello is a mirror; workbook/repository progress cannot be inferred from card movement. No gate passed during the 2026-09-06 review."
+  },
+  "completionStatesChanged": 0
+}

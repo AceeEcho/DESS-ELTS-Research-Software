@@ -1,0 +1,59 @@
+{
+  "date": "2026-09-06",
+  "supersedes": "Earlier no-physical-parts statements in this review and trello-audit.json are historical and incorrect.",
+  "elts": "Completed and built, per user.",
+  "testingEquipment": "Not currently available, per user.",
+  "unityVersion": "6000.3.23f1",
+  "unityChannel": "LTS",
+  "verificationLimit": "Selected-version installation, license and runtime/build validation not performed.",
+  "trelloCorrections": [
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9df74f1f7a7df588706893",
+      "verified": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1b17919633757b2696d7",
+      "verified": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1b2716ef60c8cae4907a",
+      "verified": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1b3771dc3d9a030e2d4b",
+      "verified": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1b7311d1d7b48c21a4f5",
+      "verified": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1ec29f4aeeb5806324ae",
+      "verified": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1ee3a7395d4f67cc4a84",
+      "verified": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1f0cdff21e813e4ce67b",
+      "verified": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1f2d07965d82eb6a0666",
+      "verified": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1f49eb3653dcac9e8d06",
+      "verified": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1f9ea5244d6c5b563f08",
+      "verified": true
+    },
+    {
+      "id": "ari:cloud:trello::card/workspace/6a9afed3fdfd10e009ab6958/6a9b1fcc3d79743ee391ba71",
+      "verified": true
+    }
+  ]
+}

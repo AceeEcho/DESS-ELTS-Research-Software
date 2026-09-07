@@ -1,0 +1,14 @@
+{
+  "$schema": "../../schemas/ai/agent-policy.v3.schema.json",
+  "schemaVersion": 3,
+  "model": "gpt-6-astra",
+  "model_reasoning_effort": "medium",
+  "model_verbosity": "medium",
+  "tool_output_token_limit": 4000,
+  "agents": {
+    "enabled": true,
+    "max_concurrent_threads_per_session": 7,
+    "default_subagent_model": "gpt-5.3-codex-spark",
+    "default_subagent_reasoning_effort": "medium"
+  }
+}

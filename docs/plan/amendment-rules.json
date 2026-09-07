@@ -1,0 +1,905 @@
+{
+  "amendmentId": "PC-001",
+  "version": 1,
+  "status": "accepted",
+  "approvedBy": "Project user in this conversation",
+  "approvalDate": "2026-09-06",
+  "sourceHashes": {
+    "ELTS_Implementation_and_Progress_Workbook.xlsx": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
+    "ELTS_Repository_Portability_and_Multi_LLM_Architecture_Specification.docx": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a"
+  },
+  "unityVersion": "6000.3.23f1",
+  "baselineCounts": {
+    "Work Items": 91,
+    "Atomic Steps": 243,
+    "Decisions": 18,
+    "Gate Criteria": 62,
+    "Dependencies": 360,
+    "Requirements Traceability": 108,
+    "Risks": 26
+  },
+  "bootstrapWorkbookMappings": {
+    "P0.3.S001": [
+      "P0.3.S001"
+    ],
+    "P0.3.S002": [
+      "BOOT.S005",
+      "BOOT.S007",
+      "BOOT.S008",
+      "BOOT.S009",
+      "BOOT.S010",
+      "BOOT.S011"
+    ],
+    "P0.3.S003": [
+      "BOOT.S004"
+    ],
+    "P0.3.S004": [
+      "BOOT.S002",
+      "BOOT.S004",
+      "BOOT.S006",
+      "BOOT.S011"
+    ],
+    "P0.3.S005": [
+      "BOOT.S006"
+    ],
+    "P0.3.S006": [
+      "BOOT.S012"
+    ],
+    "P0.3.S007": [
+      "BOOT.S013"
+    ],
+    "P0.3.S008": [
+      "BOOT.S014"
+    ],
+    "P0.3.S009": [
+      "BOOT.S014"
+    ],
+    "P0.3.S010": [
+      "BOOT.S015"
+    ],
+    "P0.3.S011": [
+      "BOOT.S015"
+    ],
+    "P0.3.S012": [
+      "BOOT.S012",
+      "BOOT.S017"
+    ],
+    "P0.3.S013": [
+      "BOOT.S012"
+    ],
+    "P0.3.S014": [
+      "BOOT.S005",
+      "BOOT.S017"
+    ],
+    "P0.3.S015": [
+      "BOOT.S018"
+    ],
+    "P0.3.S016": [
+      "BOOT.S016",
+      "BOOT.S019"
+    ],
+    "P0.3.S017": [
+      "BOOT.S019"
+    ],
+    "P0.3.S018": [
+      "BOOT.S019"
+    ],
+    "P0.3.S019": [
+      "BOOT.S020"
+    ],
+    "P0.3.S020": [
+      "BOOT.S021"
+    ],
+    "P0.3.S021": [
+      "BOOT.S022"
+    ],
+    "P0.3.S022": [
+      "BOOT.S023"
+    ],
+    "P0.3.S023": [
+      "BOOT.S024"
+    ],
+    "P0.3.S024": [
+      "BOOT.S025"
+    ],
+    "P0.3.S025": [
+      "BOOT.S026"
+    ],
+    "P0.3.S026": [
+      "BOOT.S026"
+    ]
+  },
+  "p2TaskEligibility": {
+    "P2.1": {
+      "anyOf": [
+        {
+          "id": "G1",
+          "state": "passed"
+        },
+        {
+          "id": "G0",
+          "state": "passed"
+        }
+      ]
+    },
+    "P2.2": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "id": "G1",
+              "state": "passed"
+            },
+            {
+              "id": "G0",
+              "state": "passed"
+            }
+          ]
+        },
+        {
+          "id": "P2.1",
+          "state": "done"
+        }
+      ]
+    },
+    "P2.9": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "id": "G1",
+              "state": "passed"
+            },
+            {
+              "id": "G0",
+              "state": "passed"
+            }
+          ]
+        },
+        {
+          "id": "P2.1",
+          "state": "done"
+        },
+        {
+          "id": "P2.2",
+          "state": "done"
+        }
+      ]
+    },
+    "P2.3": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "id": "G1",
+                  "state": "passed"
+                },
+                {
+                  "id": "P1.5",
+                  "state": "done"
+                },
+                {
+                  "id": "P1.6",
+                  "state": "done"
+                },
+                {
+                  "id": "P1.7",
+                  "state": "done"
+                },
+                {
+                  "id": "P1.8",
+                  "state": "done"
+                },
+                {
+                  "id": "P1.9",
+                  "state": "done"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "id": "G0",
+                  "state": "passed"
+                },
+                {
+                  "id": "P2.9",
+                  "state": "done"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "P2.1",
+          "state": "done"
+        },
+        {
+          "id": "P2.2",
+          "state": "done"
+        }
+      ]
+    },
+    "P2.4": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "id": "G1",
+              "state": "passed"
+            },
+            {
+              "allOf": [
+                {
+                  "id": "G0",
+                  "state": "passed"
+                },
+                {
+                  "id": "P2.9",
+                  "state": "done"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "P2.1",
+          "state": "done"
+        }
+      ]
+    },
+    "P2.5": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "id": "G1",
+              "state": "passed"
+            },
+            {
+              "allOf": [
+                {
+                  "id": "G0",
+                  "state": "passed"
+                },
+                {
+                  "id": "P2.9",
+                  "state": "done"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "P2.2",
+          "state": "done"
+        },
+        {
+          "id": "P2.3",
+          "state": "done"
+        }
+      ]
+    },
+    "P2.6": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "id": "G1",
+              "state": "passed"
+            },
+            {
+              "allOf": [
+                {
+                  "id": "G0",
+                  "state": "passed"
+                },
+                {
+                  "id": "P2.9",
+                  "state": "done"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "P2.2",
+          "state": "done"
+        },
+        {
+          "id": "P2.5",
+          "state": "done"
+        }
+      ]
+    },
+    "P2.7": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "id": "G1",
+              "state": "passed"
+            },
+            {
+              "allOf": [
+                {
+                  "id": "G0",
+                  "state": "passed"
+                },
+                {
+                  "id": "P2.9",
+                  "state": "done"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "P2.2",
+          "state": "done"
+        },
+        {
+          "id": "P2.4",
+          "state": "done"
+        }
+      ]
+    },
+    "P2.8": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "id": "G1",
+              "state": "passed"
+            },
+            {
+              "allOf": [
+                {
+                  "id": "G0",
+                  "state": "passed"
+                },
+                {
+                  "id": "P2.9",
+                  "state": "done"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "P2.5",
+          "state": "done"
+        },
+        {
+          "id": "P2.6",
+          "state": "done"
+        }
+      ]
+    }
+  },
+  "replacedDependencyIds": [
+    "DEP-0037",
+    "DEP-0038",
+    "DEP-0039",
+    "DEP-0040",
+    "DEP-0041",
+    "DEP-0042",
+    "DEP-0043",
+    "DEP-0044",
+    "DEP-0045",
+    "DEP-0046",
+    "DEP-0047",
+    "DEP-0048",
+    "DEP-0049",
+    "DEP-0050",
+    "DEP-0051",
+    "DEP-0052",
+    "DEP-0053",
+    "DEP-0054",
+    "DEP-0055",
+    "DEP-0056",
+    "DEP-0057",
+    "DEP-0058",
+    "DEP-0059",
+    "DEP-0060",
+    "DEP-0061",
+    "DEP-0062",
+    "DEP-0063",
+    "DEP-0064",
+    "DEP-0065",
+    "DEP-0066",
+    "DEP-0067",
+    "DEP-0068",
+    "DEP-0069",
+    "DEP-0070",
+    "DEP-0071",
+    "DEP-0072",
+    "DEP-0073",
+    "DEP-0074",
+    "DEP-0075",
+    "DEP-0076",
+    "DEP-0077",
+    "DEP-0078",
+    "DEP-0079",
+    "DEP-0080",
+    "DEP-0081",
+    "DEP-0082",
+    "DEP-0083",
+    "DEP-0002",
+    "DEP-0146"
+  ],
+  "deferredDecisionOverrides": {
+    "D-12": {
+      "removeDecidedPrerequisiteFrom": [
+        "P0.5",
+        "P2.2",
+        "P4.11"
+      ],
+      "retainDecidedPrerequisiteAt": [
+        "P8.4"
+      ],
+      "requiredScope": "Owner/deadline register, monotonic clock/UTC anchor and provisional SyncMarker interface only; no final cross-device synchronization protocol or acceptance decision."
+    }
+  },
+  "developmentTasks": [
+    {
+      "id": "DEV-01",
+      "title": "Configuration and geometry foundations",
+      "lane": "synthetic_development_only",
+      "supports": [
+        "P2.1",
+        "P2.4"
+      ],
+      "eligibility": {
+        "allOf": [
+          {
+            "id": "BOOT.S011",
+            "state": "done"
+          }
+        ]
+      },
+      "requiresVerifiedUnity": false,
+      "action": "Implement validated synthetic rig/scenario/session configuration and pure coordinate/geometry functions. Centralize editable placement, units and frame conventions; reject missing study calibration rather than silently using examples.",
+      "verification": "Known geometry, invalid/missing field and frame-conversion tests pass; synthetic fixture values cannot qualify a study rig.",
+      "deferredPhysicalEvidence": "Real dimensions, serial bindings and measured physical registration.",
+      "completionDoesNotAdvanceParentsOrGates": true
+    },
+    {
+      "id": "DEV-02",
+      "title": "Shared clock and tracking contracts",
+      "lane": "synthetic_development_only",
+      "supports": [
+        "P2.2",
+        "P2.3"
+      ],
+      "eligibility": {
+        "allOf": [
+          {
+            "id": "BOOT.S011",
+            "state": "done"
+          },
+          {
+            "id": "DEV-01",
+            "state": "done"
+          }
+        ]
+      },
+      "requiresVerifiedUnity": false,
+      "action": "Implement the monotonic shared clock, UTC startup anchor, validity-bearing tracking interfaces and deterministic test-clock adapters without selecting D-12 synchronization.",
+      "verification": "Tests prove one timestamp authority, monotonic ordering and explicit invalid samples; no invented final sync protocol.",
+      "deferredPhysicalEvidence": "Cross-device alignment method, physical trigger timing and clock comparison.",
+      "completionDoesNotAdvanceParentsOrGates": true
+    },
+    {
+      "id": "DEV-03",
+      "title": "Synthetic tracking source",
+      "lane": "synthetic_development_only",
+      "supports": [
+        "P2.9",
+        "P2.3"
+      ],
+      "eligibility": {
+        "allOf": [
+          {
+            "id": "BOOT.S011",
+            "state": "done"
+          },
+          {
+            "id": "DEV-01",
+            "state": "done"
+          },
+          {
+            "id": "DEV-02",
+            "state": "done"
+          }
+        ]
+      },
+      "requiresVerifiedUnity": false,
+      "action": "Implement deterministic scripted motion/dropouts/triggers through the same source interface; preserve raw logged data and keep rendering prediction separate.",
+      "verification": "Seeded fixtures repeat; dropout/trigger tests pass; source identifies synthetic mode and requires no SteamVR.",
+      "deferredPhysicalEvidence": "Real tracker serial/reconnect, polling jitter, occlusion and coordinate spikes.",
+      "completionDoesNotAdvanceParentsOrGates": true
+    },
+    {
+      "id": "DEV-04",
+      "title": "Logging events and target snapshots",
+      "lane": "synthetic_development_only",
+      "supports": [
+        "P2.5",
+        "P2.6",
+        "P2.7"
+      ],
+      "eligibility": {
+        "allOf": [
+          {
+            "id": "BOOT.S011",
+            "state": "done"
+          },
+          {
+            "id": "DEV-01",
+            "state": "done"
+          },
+          {
+            "id": "DEV-02",
+            "state": "done"
+          },
+          {
+            "id": "DEV-03",
+            "state": "done"
+          }
+        ]
+      },
+      "requiresVerifiedUnity": false,
+      "action": "Implement versioned sample/event/target/session output with source/config hashes, sequence/drop reporting, safe close and no-overwrite behavior; world target state remains canonical.",
+      "verification": "Schema and round-trip checks, forced overflow/failure tests and a measured synthetic soak report pass applicable software criteria.",
+      "deferredPhysicalEvidence": "Study-PC full-load throughput, disk behavior and real-device timing.",
+      "completionDoesNotAdvanceParentsOrGates": true
+    },
+    {
+      "id": "DEV-05",
+      "title": "Synthetic analysis ingest",
+      "lane": "synthetic_development_only",
+      "supports": [
+        "P2.8",
+        "P8.6"
+      ],
+      "eligibility": {
+        "allOf": [
+          {
+            "id": "BOOT.S011",
+            "state": "done"
+          },
+          {
+            "id": "DEV-04",
+            "state": "done"
+          }
+        ]
+      },
+      "requiresVerifiedUnity": false,
+      "action": "Implement schema-aware read-only ingest and summaries from synthetic recordings; retain raw inputs and provenance.",
+      "verification": "Known fixture counts, invalid-sample exclusion, scores and hand-computed angular errors agree; unsupported schemas fail clearly.",
+      "deferredPhysicalEvidence": "Pilot-data end-to-end analysis and investigator acceptance.",
+      "completionDoesNotAdvanceParentsOrGates": true
+    },
+    {
+      "id": "DEV-06",
+      "title": "Rendering operator view and replay",
+      "lane": "synthetic_development_only",
+      "supports": [
+        "P3.1",
+        "P3.2",
+        "P3.3",
+        "P3.4",
+        "P3.5",
+        "P3.6",
+        "P3.7",
+        "P3.8"
+      ],
+      "eligibility": {
+        "allOf": [
+          {
+            "id": "BOOT.S011",
+            "state": "done"
+          },
+          {
+            "id": "DEV-01",
+            "state": "done"
+          },
+          {
+            "id": "DEV-03",
+            "state": "done"
+          },
+          {
+            "id": "DEV-04",
+            "state": "done"
+          },
+          {
+            "id": "BOOT.S022",
+            "state": "done"
+          }
+        ]
+      },
+      "requiresVerifiedUnity": true,
+      "action": "Implement projection, editable synthetic layout, operator diagnostics and replay. A clearly labeled development view may emulate display separation; study mode still requires actual displays and calibration.",
+      "verification": "Projection corner tests, replay checks and exercised development UI controls pass; rendering prediction never changes logged pose.",
+      "deferredPhysicalEvidence": "Physical corner rods, head mount, output assignment and performance at target refresh.",
+      "completionDoesNotAdvanceParentsOrGates": true
+    },
+    {
+      "id": "DEV-07",
+      "title": "Scenario targets shots and scoring",
+      "lane": "synthetic_development_only",
+      "supports": [
+        "P4.1",
+        "P4.2",
+        "P4.3",
+        "P4.4",
+        "P4.5",
+        "P4.6",
+        "P4.7",
+        "P4.8",
+        "P4.9"
+      ],
+      "eligibility": {
+        "allOf": [
+          {
+            "id": "BOOT.S011",
+            "state": "done"
+          },
+          {
+            "id": "DEV-01",
+            "state": "done"
+          },
+          {
+            "id": "DEV-02",
+            "state": "done"
+          },
+          {
+            "id": "DEV-03",
+            "state": "done"
+          },
+          {
+            "id": "DEV-04",
+            "state": "done"
+          }
+        ]
+      },
+      "requiresVerifiedUnity": false,
+      "action": "Implement configurable scenario/session definitions, world-space targets, seeded motion/spawn, shot/scoring interfaces and provisional development fixtures; preserve specified scientific invariants.",
+      "verification": "Seeded repeatability, known hits/misses, event-derived scoring and invalid condition-order tests pass.",
+      "deferredPhysicalEvidence": "Final D-04 through D-08 and D-16 parameters and study behavior signoff.",
+      "completionDoesNotAdvanceParentsOrGates": true
+    },
+    {
+      "id": "DEV-08",
+      "title": "Session engine and operator controls",
+      "lane": "synthetic_development_only",
+      "supports": [
+        "P4.10",
+        "P4.11",
+        "P4.12",
+        "P4.13"
+      ],
+      "eligibility": {
+        "allOf": [
+          {
+            "id": "BOOT.S011",
+            "state": "done"
+          },
+          {
+            "id": "DEV-04",
+            "state": "done"
+          },
+          {
+            "id": "DEV-06",
+            "state": "done"
+          },
+          {
+            "id": "DEV-07",
+            "state": "done"
+          },
+          {
+            "id": "BOOT.S022",
+            "state": "done"
+          }
+        ]
+      },
+      "requiresVerifiedUnity": true,
+      "action": "Implement the session state machine, operator controls, abort/rerun and synthetic self-check. SyncMarker is provisional until D-12; study readiness must fail for missing physical requirements.",
+      "verification": "Exercise complete synthetic session, abort/restart/failure paths and event coverage; study mode cannot bypass missing calibration/hardware.",
+      "deferredPhysicalEvidence": "Real dry session, final cross-device synchronization and operator procedure validation.",
+      "completionDoesNotAdvanceParentsOrGates": true
+    },
+    {
+      "id": "DEV-09",
+      "title": "Calibration solvers and development wizards",
+      "lane": "synthetic_development_only",
+      "supports": [
+        "P5.2",
+        "P5.3",
+        "P5.4",
+        "P5.5",
+        "P5.6",
+        "P5.7",
+        "P5.8",
+        "P5.9",
+        "P5.10"
+      ],
+      "eligibility": {
+        "allOf": [
+          {
+            "id": "BOOT.S011",
+            "state": "done"
+          },
+          {
+            "id": "DEV-01",
+            "state": "done"
+          },
+          {
+            "id": "DEV-06",
+            "state": "done"
+          },
+          {
+            "id": "DEV-08",
+            "state": "done"
+          },
+          {
+            "id": "BOOT.S022",
+            "state": "done"
+          }
+        ]
+      },
+      "requiresVerifiedUnity": true,
+      "action": "Implement synthetic pivot/corner/zero solvers and wizard flow with explicit unmeasured data and configurable provisional development thresholds.",
+      "verification": "Known transforms recover within declared numerical tolerance; degenerate data fails; generated synthetic calibration cannot enable study readiness.",
+      "deferredPhysicalEvidence": "Measured rig/participant calibration, mounting rigidity, daily laser check and approved D-17 thresholds.",
+      "completionDoesNotAdvanceParentsOrGates": true
+    },
+    {
+      "id": "DEV-10",
+      "title": "ELTS protocol and simulated link",
+      "lane": "synthetic_development_only",
+      "supports": [
+        "P6.1",
+        "P6.2",
+        "P6.3",
+        "P6.4",
+        "P6.7",
+        "P6.8",
+        "P6.9",
+        "P6.10"
+      ],
+      "eligibility": {
+        "allOf": [
+          {
+            "id": "BOOT.S011",
+            "state": "done"
+          },
+          {
+            "id": "DEV-02",
+            "state": "done"
+          },
+          {
+            "id": "DEV-04",
+            "state": "done"
+          }
+        ]
+      },
+      "requiresVerifiedUnity": false,
+      "action": "Implement the specified codec/contracts and mock/null link plus a simulated controller model. Preserve command-only Unity boundaries. Do not deploy to or alter the built apparatus; unavailable protocol details are exact scoped blockers.",
+      "verification": "Malformed/version/sequence/timeout/reconnect tests pass against explicit fixtures; no physical safety or actual transport timing claim.",
+      "deferredPhysicalEvidence": "Existing controller code/protocol compatibility, D-03/D-10, physical link, shutdown and safety validation.",
+      "completionDoesNotAdvanceParentsOrGates": true
+    },
+    {
+      "id": "DEV-11",
+      "title": "Simulated ELTS session integration",
+      "lane": "synthetic_development_only",
+      "supports": [
+        "P6.5",
+        "P6.6",
+        "P6.11",
+        "P6.12",
+        "P6.13"
+      ],
+      "eligibility": {
+        "allOf": [
+          {
+            "id": "BOOT.S011",
+            "state": "done"
+          },
+          {
+            "id": "DEV-08",
+            "state": "done"
+          },
+          {
+            "id": "DEV-10",
+            "state": "done"
+          },
+          {
+            "id": "BOOT.S022",
+            "state": "done"
+          }
+        ]
+      },
+      "requiresVerifiedUnity": true,
+      "action": "Connect session lifecycle to mock ELTS link, abort/reconnect and configurable development WE/NE alternatives without deciding final D-10 or energizing hardware.",
+      "verification": "Scripted command/ack/loss/abort sequences behave correctly and are logged; reconnect never silently resumes active operation.",
+      "deferredPhysicalEvidence": "Actual Unity-Jetson integration cycles, physical fail-safes and approved WE/NE behavior.",
+      "completionDoesNotAdvanceParentsOrGates": true
+    },
+    {
+      "id": "DEV-12",
+      "title": "Development packaging and end-to-end handoff",
+      "lane": "synthetic_development_only",
+      "supports": [
+        "P0.3",
+        "P8.2",
+        "P8.3",
+        "P8.6",
+        "P8.7"
+      ],
+      "eligibility": {
+        "allOf": [
+          {
+            "id": "BOOT.S011",
+            "state": "done"
+          },
+          {
+            "id": "DEV-05",
+            "state": "done"
+          },
+          {
+            "id": "DEV-06",
+            "state": "done"
+          },
+          {
+            "id": "DEV-07",
+            "state": "done"
+          },
+          {
+            "id": "DEV-08",
+            "state": "done"
+          },
+          {
+            "id": "DEV-09",
+            "state": "done"
+          },
+          {
+            "id": "DEV-11",
+            "state": "done"
+          },
+          {
+            "id": "BOOT.S022",
+            "state": "done"
+          },
+          {
+            "id": "BOOT.S023",
+            "state": "done"
+          }
+        ]
+      },
+      "requiresVerifiedUnity": true,
+      "action": "Package a clearly marked synthetic development build, setup/run instructions, test evidence and hardware follow-up register. Do not label it study-v1.0 or study-ready.",
+      "verification": "Run available path-with-spaces, copied-output, synthetic end-to-end and provenance checks; report unavailable second-machine tests explicitly.",
+      "deferredPhysicalEvidence": "Actual study-machine portability, full rig soak, pilots, approved freeze and G8 release.",
+      "completionDoesNotAdvanceParentsOrGates": true
+    }
+  ],
+  "progressSelection": {
+    "baselineCurrent": "Earliest unpassed baseline phase/gate; existing anchor-phase current fields retain their meaning.",
+    "execution": "Select globally across eligible bootstrap, DEV and explicitly eligible baseline parallel work; in_progress then verification_pending then ready, stable executionOrder tie-break.",
+    "newFields": [
+      "execution.mode",
+      "execution.primaryStepId",
+      "execution.selectedPhaseId",
+      "execution.selectedLane",
+      "execution.activeStepIds",
+      "execution.nextEligibleStepIds",
+      "execution.blockingIds"
+    ],
+    "completion": "Only authorized G8 passage completes the project; DEV completion never closes parent tasks or gates."
+  }
+}

@@ -1,0 +1,1 @@
+{"schemaVersion":1,"mode":"synthetic","runtime":"config/defaults/runtime.json","rig":"config/rig/templates/synthetic-rig.json","scenario":"config/development/scenario.json","session":"config/defaults/session.json","local":"config/local.example.json"}

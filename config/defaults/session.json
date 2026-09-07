@@ -1,0 +1,1 @@
+{"schemaVersion":1,"sessionId":"synthetic-session-v1","blockDurationSeconds":300,"practiceDurationSeconds":10,"breakDurationSeconds":5,"conditionOrder":["WE_MT","NE_MT","WE_FT","NE_FT"],"blockRepeats":1,"syntheticOnly":true}

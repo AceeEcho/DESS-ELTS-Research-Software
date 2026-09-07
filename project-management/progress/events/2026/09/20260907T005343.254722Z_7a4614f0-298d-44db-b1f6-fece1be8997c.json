@@ -1,0 +1,48 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "7a4614f0-298d-44db-b1f6-fece1be8997c",
+  "eventType": "task_started",
+  "recordedAtUtc": "2026-09-07T00:53:43.254722+00:00",
+  "occurredAtUtc": "2026-09-07T00:53:43.254722+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "DEV-01.S001"
+  },
+  "taskId": "DEV-01",
+  "fromStatus": "ready",
+  "toStatus": "in_progress",
+  "taskRevision": 1,
+  "previousTaskEventHash": null,
+  "causalEventHashes": [
+    "e3c9e43e5b7d0b7d1272343bccb727913e84a1b65b9a0f282c11968fc1b85897"
+  ],
+  "branch": "work/dev01-geometry",
+  "claimedPaths": [
+    "unity/Assets/ELTS/Config/",
+    "unity/Assets/ELTS/Geometry/",
+    "tools/runtime-tests/",
+    "docs/modules/config.md",
+    "docs/modules/geometry.md"
+  ],
+  "expectedChecks": [
+    "Known geometry, invalid config and frame conversion tests",
+    "Synthetic fixtures cannot qualify study readiness"
+  ],
+  "stopConditions": [
+    "Required contract unavailable",
+    "Conflict with scientific invariants"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "Coordinator owns DEV-01; bounded pure geometry implementation delegated on an isolated branch while bootstrap continues.",
+  "approval": null,
+  "handoffTo": null
+}

@@ -7,10 +7,11 @@ The ELTS is built; testing equipment is unavailable. Selected Unity: 6000.3.23f1
 The user approved the readiness recommendations. The historical review remains
 under `docs/reviews/2026-09-06/`; it no longer blocks the approved build scope.
 
-This workspace currently contains planning artifacts and an offline simulation.
-The Unity repository and progress reducer are not yet implemented. The approved
-planning catalog exists at `docs/plan/approved-plan.json`; it is not live progress
-state. This document is navigation, not authoritative progress state.
+This workspace preserves planning artifacts and an offline simulation alongside
+active software development. The progress runtime exists; read validated
+`PROJECT_STATE.json` for actual completion and `execution` selection. Unity and
+other modules are accepted only by their recorded checks. This document is
+navigation, not authoritative progress state.
 
 | Work | Read first | Expand when needed |
 | --- | --- | --- |

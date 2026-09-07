@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T00:52:38.828273+00:00",
+  "generatedAtUtc": "2026-09-07T00:57:58.366325+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,12 +11,12 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 36,
-    "eventSetSha256": "8caa188a9f51bdd37566d2fe8d1a44fddcb40494503f423ac03afa4897e8c467"
+    "eventCount": 46,
+    "eventSetSha256": "bdad303e466c3c35c97bb9d881e0970264b96f0848c6577e415f36ddcb9daccd"
   },
   "current": {
     "mode": "working",
-    "primaryStepId": "BOOT.S013",
+    "primaryStepId": "BOOT.S016",
     "activeStepIds": [],
     "nextEligibleStepIds": [
       "P0.2.S001",
@@ -24,9 +24,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S013",
-      "BOOT.S014",
-      "BOOT.S015",
       "BOOT.S016",
       "BOOT.S017",
       "BOOT.S018",
@@ -56,18 +53,17 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "BOOT.S013",
-    "activeStepIds": [],
+    "primaryStepId": "DEV-01.S001",
+    "activeStepIds": [
+      "DEV-01.S001"
+    ],
     "nextEligibleStepIds": [
-      "DEV-01.S001",
+      "BOOT.S016",
       "P0.2.S001",
       "P0.4.S001",
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S013",
-      "BOOT.S014",
-      "BOOT.S015",
       "BOOT.S016",
       "BOOT.S017",
       "BOOT.S018",
@@ -321,10 +317,24 @@
       "P8.7.S001",
       "P8.8.S001"
     ],
-    "selectedPhaseId": "P0",
-    "selectedLane": "bootstrap"
+    "selectedPhaseId": "DEV",
+    "selectedLane": "synthetic_development_only"
   },
-  "activeWork": [],
+  "activeWork": [
+    {
+      "owner": "agent:codex-astra",
+      "taskId": "DEV-01",
+      "atomicStepId": "DEV-01.S001",
+      "branch": "work/dev01-geometry",
+      "claimedPaths": [
+        "unity/Assets/ELTS/Config/",
+        "unity/Assets/ELTS/Geometry/",
+        "tools/runtime-tests/",
+        "docs/modules/config.md",
+        "docs/modules/geometry.md"
+      ]
+    }
+  ],
   "tasks": {
     "P0.1": {
       "status": "not_started",
@@ -348,8 +358,8 @@
     },
     "P0.3": {
       "status": "in_progress",
-      "revision": 36,
-      "lastEventHash": "4ff4e4aca35363b7e9f77643e32590457180d157987444494299f1dd12c6ebc8",
+      "revision": 45,
+      "lastEventHash": "e48971342557985ad8e1c13af135a2b72afd0272cf7fa1dd0a1bf84860e8aff3",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [],
@@ -1237,12 +1247,18 @@
       "blockers": []
     },
     "DEV-01": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "9dd0e60e40e368e777b7628ead17ec932106650a77ce363f92152e7fe7e6d868",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev01-geometry",
+      "claimedPaths": [
+        "docs/modules/config.md",
+        "docs/modules/geometry.md",
+        "tools/runtime-tests/",
+        "unity/Assets/ELTS/Config/",
+        "unity/Assets/ELTS/Geometry/"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -1803,37 +1819,116 @@
       "blockers": []
     },
     "BOOT.S013": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 39,
+      "lastEventHash": "3e57f23c3ca9d2132c0e8425f12f2772e250c1d4322e0f56c4d1d4803b89b897",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "README.md",
+        "docs/architecture/",
+        "docs/operator/",
+        "docs/safety/",
+        "docs/ai/CONTEXT-INDEX.md"
+      ],
+      "evidence": [
+        {
+          "id": "BOOT.S013-BOOT.S013",
+          "path": "project-management/progress/evidence/BOOT.S013.json",
+          "sha256": "847095388130dee95a584a1c80a5ad1c4175b53e3a8348be4b15bc8668570c01",
+          "targetIds": [
+            "BOOT.S013"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "document",
+          "command": "Resolve new Markdown links, compare original architecture bytes, execute all five README verification commands",
+          "result": "pass",
+          "sourceRevision": "9b4ca2b743f3de609f114aff2ae49feedd20b83e",
+          "recordedAtUtc": "2026-09-07T00:55:48.638440+00:00",
+          "limitations": [
+            "Setup/build instructions expand as subsequent steps become verified.",
+            "No physical acceptance or gate passage."
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S014": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 42,
+      "lastEventHash": "2e8adec184e15fdc349656b5a55777b4acd92b44e07d11e47fdd691e91f296cb",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "AGENTS.md",
+        "CLAUDE.md",
+        ".github/copilot-instructions.md",
+        "docs/ai/agent-protocol.md"
+      ],
+      "evidence": [
+        {
+          "id": "BOOT.S014-BOOT.S014",
+          "path": "project-management/progress/evidence/BOOT.S014.json",
+          "sha256": "f6b79fe040f4d7415ea9b61ee219ecb83decdb4b50f13f0cbabbf009733acdef",
+          "targetIds": [
+            "BOOT.S014"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "document",
+          "command": "Inspect canonical AGENTS additions and thin adapter policy delegation",
+          "result": "pass",
+          "sourceRevision": "9b4ca2b743f3de609f114aff2ae49feedd20b83e",
+          "recordedAtUtc": "2026-09-07T00:56:52.590018+00:00",
+          "limitations": [
+            "No remote GitHub or model-host settings were changed.",
+            "No gate approval."
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S015": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 45,
+      "lastEventHash": "e48971342557985ad8e1c13af135a2b72afd0272cf7fa1dd0a1bf84860e8aff3",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        "docs/templates/",
+        "docs/ai/handoff-template.md"
+      ],
+      "evidence": [
+        {
+          "id": "BOOT.S015-BOOT.S015",
+          "path": "project-management/progress/evidence/BOOT.S015.json",
+          "sha256": "7964cfb01d057e52d094dae1fa12428c749e19473ffcc048ea3d74b7fdd42f35",
+          "targetIds": [
+            "BOOT.S015"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "document",
+          "command": "Inspect six template purposes and required module/handoff/evidence metadata against specification and schemas",
+          "result": "pass",
+          "sourceRevision": "9b4ca2b743f3de609f114aff2ae49feedd20b83e",
+          "recordedAtUtc": "2026-09-07T00:57:56.597745+00:00",
+          "limitations": [
+            "Templates are guidance and contain no approval or completion record."
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S016": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -1943,12 +2038,18 @@
       "blockers": []
     },
     "DEV-01.S001": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "9dd0e60e40e368e777b7628ead17ec932106650a77ce363f92152e7fe7e6d868",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev01-geometry",
+      "claimedPaths": [
+        "unity/Assets/ELTS/Config/",
+        "unity/Assets/ELTS/Geometry/",
+        "tools/runtime-tests/",
+        "docs/modules/config.md",
+        "docs/modules/geometry.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -4629,8 +4730,12 @@
   },
   "chains": {
     "task:P0.3": {
-      "revision": 36,
-      "hash": "4ff4e4aca35363b7e9f77643e32590457180d157987444494299f1dd12c6ebc8"
+      "revision": 45,
+      "hash": "e48971342557985ad8e1c13af135a2b72afd0272cf7fa1dd0a1bf84860e8aff3"
+    },
+    "task:DEV-01": {
+      "revision": 1,
+      "hash": "9dd0e60e40e368e777b7628ead17ec932106650a77ce363f92152e7fe7e6d868"
     }
   },
   "integrity": {

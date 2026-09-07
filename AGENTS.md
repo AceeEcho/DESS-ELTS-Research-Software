@@ -18,7 +18,8 @@ project gates or resolve study decisions. Follow their initial-agent reading and
 bootstrap requirements before starting architecture implementation.
 
 When the progress reducer and `PROJECT_STATE.json` exist, validate generated state
-and inspect the assigned atomic step before editing. Until then, report bootstrap
+and inspect the assigned atomic step before editing. Follow
+`docs/ai/agent-protocol.md` for the event-first ownership and evidence workflow. Until then, report bootstrap
 as incomplete; never invent progress events or mark workbook tasks complete.
 PC-001 defines the narrow pre-reducer journal exception and truthful event import;
 after bootstrap, use its global `execution` selection alongside the baseline gate

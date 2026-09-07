@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "targetId": "BOOT.S004",
+  "observation": {
+    "schemaVersion": 1,
+    "recordedAtUtc": "2026-09-07T00:11:56.296006+00:00",
+    "occurredAtUtc": "2026-09-07T00:11:56.296006+00:00",
+    "actor": "agent:codex-astra",
+    "stepId": "BOOT.S004",
+    "branch": "bootstrap/repository-governance",
+    "ownedPaths": [
+      "project-management/",
+      "schemas/progress/",
+      "tools/progress/",
+      "docs/modules/progress.md"
+    ],
+    "work": "Copied both immutable original deliverables and independently checked SHA-256 equality.",
+    "checks": [
+      "Source and destination SHA-256 equality"
+    ],
+    "evidence": [
+      "project-management/baseline/SHA256SUMS"
+    ],
+    "result": "verified_observation"
+  },
+  "artifactSnapshotSha256": {
+    "project-management/baseline/SHA256SUMS": "01f8667e8dd12f184a80b02e5758e9f51e2ab337d4ec408b9d7741dd04859c22"
+  },
+  "verificationReport": {
+    "path": "project-management/progress/evidence/progress-bootstrap/20260907T003934424402Z/report.json",
+    "sha256": "13e4f849531907cb3d494e58dae1eb326c586da8733b367a2fa98b8eed6dcd4c"
+  },
+  "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+  "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+  "result": "pass",
+  "limitations": [
+    "Software/bootstrap observation only; no physical acceptance or gate passage.",
+    "Original journal observation times differ from event import times."
+  ]
+}

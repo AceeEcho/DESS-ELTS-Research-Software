@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "targetId": "BOOT.S002",
+  "observation": {
+    "schemaVersion": 1,
+    "recordedAtUtc": "2026-09-07T00:11:56.296006+00:00",
+    "occurredAtUtc": "2026-09-07T00:11:56.296006+00:00",
+    "actor": "agent:codex-astra",
+    "stepId": "BOOT.S002",
+    "branch": "bootstrap/repository-governance",
+    "ownedPaths": [
+      "project-management/",
+      "schemas/progress/",
+      "tools/progress/",
+      "docs/modules/progress.md"
+    ],
+    "work": "Read original authorities and accepted amendment; verified source hashes, active counts and all 11 planner tests.",
+    "checks": [
+      "baseline byte equality",
+      "approved plan drift check and 11 planner tests"
+    ],
+    "evidence": [
+      "project-management/bootstrap/baseline-metadata.json"
+    ],
+    "result": "verified_observation"
+  },
+  "artifactSnapshotSha256": {
+    "project-management/bootstrap/baseline-metadata.json": "fdea339075525677f249ec76d6bbb30feba2bbf231ab2b36971e2f05a652da52"
+  },
+  "verificationReport": {
+    "path": "project-management/progress/evidence/progress-bootstrap/20260907T003934424402Z/report.json",
+    "sha256": "13e4f849531907cb3d494e58dae1eb326c586da8733b367a2fa98b8eed6dcd4c"
+  },
+  "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+  "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+  "result": "pass",
+  "limitations": [
+    "Software/bootstrap observation only; no physical acceptance or gate passage.",
+    "Original journal observation times differ from event import times."
+  ]
+}

@@ -9,10 +9,14 @@ handedness conversion occurs here.
 
 `SyntheticTrackingSettings` copies and exposes immutable fixture settings,
 including seed, sample rate, distinct tracker identities, dropout windows, and
-trigger windows. A held trigger produces one falling-edge event on release;
-lockout prevents repeated events. Polls never catch up missed wall-clock time:
-each call emits one pair at the current shared-clock timestamp. `Dispose`
-clears pending samples and trigger events.
+trigger windows. Motion base positions, amplitudes, and frequencies are also
+settings, with centralized synthetic defaults. A held trigger produces one
+falling-edge event on release; lockout prevents repeated events. Disconnecting
+an active dropout resets trigger edge history, so reconnecting cannot create a
+synthetic release shot. Trigger queues are bounded and expose overflow counts.
+Polls are gated by the injected clock interval: an unchanged clock emits at
+most one pending pair, and skipped intervals are counted rather than replayed
+with invented timestamps. `Dispose` clears pending samples and trigger events.
 
 Run the standalone checks with .NET 10:
 

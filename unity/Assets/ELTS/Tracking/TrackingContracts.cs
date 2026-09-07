@@ -17,18 +17,49 @@ public readonly struct TrackerId : IEquatable<TrackerId>
     public bool IsAssigned => !string.IsNullOrWhiteSpace(Value);
     public bool Equals(TrackerId other) => string.Equals(Value, other.Value, StringComparison.Ordinal);
     public override bool Equals(object? obj) => obj is TrackerId other && Equals(other);
-    public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(Value);
-    public override string ToString() => Value;
+    public override int GetHashCode() => Value == null ? 0 : StringComparer.Ordinal.GetHashCode(Value);
+    public override string ToString() => Value ?? string.Empty;
+}
+
+/// <summary>Transport connection state recorded alongside every tracking sample.</summary>
+public enum TrackingConnectionState
+{
+    Disconnected = 0,
+    Connected = 1,
+    Reconnecting = 2
 }
 
 /// <summary>Why a sample has no usable room-frame pose. Invalid samples remain timestamped and loggable.</summary>
 public enum TrackingValidity
 {
-    Valid = 0,
-    Unavailable = 1,
+    Unavailable = 0,
+    Valid = 1,
     OutOfRange = 2,
     DriverFault = 3,
     RejectedNativePose = 4
+}
+
+/// <summary>
+/// Shared capture identity for all tracker observations emitted by one native
+/// poll. Sequence starts at one and increases in source order; paired head and
+/// weapon observations reuse this exact stamp rather than reading the clock twice.
+/// </summary>
+public readonly struct TrackingAcquisitionStamp
+{
+    public long Sequence { get; }
+    public MonotonicTimestamp Timestamp { get; }
+    private TrackingAcquisitionStamp(long sequence, MonotonicTimestamp timestamp)
+    {
+        Sequence = sequence;
+        Timestamp = timestamp;
+    }
+    public static TrackingAcquisitionStamp Capture(ISharedClock clock, long sequence)
+    {
+        if (clock == null) throw new ArgumentNullException(nameof(clock));
+        if (sequence <= 0) throw new ArgumentOutOfRangeException(nameof(sequence), "Tracking acquisition sequence starts at one.");
+        return new TrackingAcquisitionStamp(sequence, clock.Now);
+    }
+    public bool IsAssigned => Sequence > 0;
 }
 
 /// <summary>
@@ -38,35 +69,56 @@ public enum TrackingValidity
 public readonly struct TrackingSample
 {
     public TrackerId Tracker { get; }
-    public MonotonicTimestamp Timestamp { get; }
+    public TrackingAcquisitionStamp Acquisition { get; }
+    public MonotonicTimestamp Timestamp => Acquisition.Timestamp;
+    public long Sequence => Acquisition.Sequence;
+    public TrackingConnectionState Connection { get; }
     public TrackingValidity Validity { get; }
     public RigidPose? Pose { get; }
-    public bool HasValidPose => Validity == TrackingValidity.Valid;
+    public bool HasValidPose => Acquisition.IsAssigned && Tracker.IsAssigned && Connection == TrackingConnectionState.Connected
+        && Validity == TrackingValidity.Valid && Pose.HasValue && Pose.Value.Orientation.IsUnit;
 
-    private TrackingSample(TrackerId tracker, MonotonicTimestamp timestamp, TrackingValidity validity, RigidPose? pose)
+    private TrackingSample(TrackerId tracker, TrackingAcquisitionStamp acquisition, TrackingConnectionState connection, TrackingValidity validity, RigidPose? pose)
     {
         Tracker = tracker;
-        Timestamp = timestamp;
+        Acquisition = acquisition;
+        Connection = connection;
         Validity = validity;
         Pose = pose;
     }
 
-    public static TrackingSample Valid(ISharedClock clock, TrackerId tracker, RigidPose roomPose)
+    public static TrackingSample Valid(TrackingAcquisitionStamp acquisition, TrackerId tracker, RigidPose roomPose)
     {
-        if (clock == null) throw new ArgumentNullException(nameof(clock));
+        if (!acquisition.IsAssigned) throw new ArgumentException("A valid tracking sample requires an acquisition stamp.", nameof(acquisition));
         if (!tracker.IsAssigned) throw new ArgumentException("A valid tracking sample requires a tracker identifier.", nameof(tracker));
         if (!roomPose.Orientation.IsUnit) throw new ArgumentException("A valid tracking sample requires a valid room-frame pose.", nameof(roomPose));
-        return new TrackingSample(tracker, clock.Now, TrackingValidity.Valid, roomPose);
+        return new TrackingSample(tracker, acquisition, TrackingConnectionState.Connected, TrackingValidity.Valid, roomPose);
     }
 
-    public static TrackingSample Invalid(ISharedClock clock, TrackerId tracker, TrackingValidity validity)
+    public static TrackingSample Invalid(TrackingAcquisitionStamp acquisition, TrackerId tracker, TrackingConnectionState connection, TrackingValidity validity)
     {
-        if (clock == null) throw new ArgumentNullException(nameof(clock));
+        if (!acquisition.IsAssigned) throw new ArgumentException("An invalid tracking sample requires an acquisition stamp.", nameof(acquisition));
         if (!tracker.IsAssigned) throw new ArgumentException("An invalid tracking sample requires a tracker identifier.", nameof(tracker));
+        if (!Enum.IsDefined(typeof(TrackingConnectionState), connection)) throw new ArgumentException("An invalid tracking sample requires a known connection state.", nameof(connection));
         if (!Enum.IsDefined(typeof(TrackingValidity), validity) || validity == TrackingValidity.Valid)
             throw new ArgumentException("Invalid samples require an explicit invalid validity value.", nameof(validity));
-        return new TrackingSample(tracker, clock.Now, validity, null);
+        return new TrackingSample(tracker, acquisition, connection, validity, null);
     }
+}
+
+/// <summary>Identifies the configured source mode in logs and diagnostics without selecting a transport implementation.</summary>
+public readonly struct TrackingSourceIdentity : IEquatable<TrackingSourceIdentity>
+{
+    public string Value { get; }
+    public TrackingSourceIdentity(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) throw new ArgumentException("A tracking source identity is required.", nameof(value));
+        Value = value;
+    }
+    public bool Equals(TrackingSourceIdentity other) => string.Equals(Value, other.Value, StringComparison.Ordinal);
+    public override bool Equals(object? obj) => obj is TrackingSourceIdentity other && Equals(other);
+    public override int GetHashCode() => Value == null ? 0 : StringComparer.Ordinal.GetHashCode(Value);
+    public override string ToString() => Value ?? string.Empty;
 }
 
 /// <summary>
@@ -77,6 +129,7 @@ public readonly struct TrackingSample
 public interface ITrackingSource : IDisposable
 {
     ISharedClock Clock { get; }
+    TrackingSourceIdentity Source { get; }
     bool TryGetNext(out TrackingSample sample);
 }
 

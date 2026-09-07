@@ -1,0 +1,47 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "6a9bd470-9f60-4170-a942-4d176b9f1f31",
+  "eventType": "task_started",
+  "recordedAtUtc": "2026-09-07T00:50:09.905882+00:00",
+  "occurredAtUtc": "2026-09-07T00:11:56.296006+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S002"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "ready",
+  "toStatus": "in_progress",
+  "taskRevision": 4,
+  "previousTaskEventHash": "7e816c9b700efdee294a1384ebea8dd06e0d5ecf010ede6bd0b49cbf752dd69b",
+  "causalEventHashes": [
+    "7e816c9b700efdee294a1384ebea8dd06e0d5ecf010ede6bd0b49cbf752dd69b"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "project-management/",
+    "schemas/progress/",
+    "tools/progress/",
+    "docs/modules/progress.md"
+  ],
+  "expectedChecks": [
+    "baseline byte equality",
+    "approved plan drift check and 11 planner tests"
+  ],
+  "stopConditions": [
+    "Evidence or ownership mismatch",
+    "Authority conflict"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "PC-001 journal 1df79235c7ce41aa58264e05127b4036194f08ba4e1d6df938dc4f030dfa1576: Read original authorities and accepted amendment; verified source hashes, active counts and all 11 planner tests.",
+  "approval": null,
+  "handoffTo": null
+}

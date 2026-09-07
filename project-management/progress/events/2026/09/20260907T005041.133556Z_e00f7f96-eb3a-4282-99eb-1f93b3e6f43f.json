@@ -1,0 +1,70 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "e00f7f96-eb3a-4282-99eb-1f93b3e6f43f",
+  "eventType": "step_completed",
+  "recordedAtUtc": "2026-09-07T00:50:41.133556+00:00",
+  "occurredAtUtc": "2026-09-07T00:44:27.390933+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S010"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "verification_pending",
+  "toStatus": "done",
+  "taskRevision": 30,
+  "previousTaskEventHash": "ac7b8b949217cc1a581794639cd7ef14189662958de930926b31be6d9d81ab8c",
+  "causalEventHashes": [
+    "ac7b8b949217cc1a581794639cd7ef14189662958de930926b31be6d9d81ab8c"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "tools/progress/",
+    "schemas/progress/",
+    "docs/modules/progress.md"
+  ],
+  "expectedChecks": [
+    "11 planner tests passed",
+    "32 progress tests passed",
+    "Plan, schema and catalog drift checks passed",
+    "Immutable verification report binds source snapshot 31931d8"
+  ],
+  "stopConditions": [
+    "Evidence or ownership mismatch",
+    "Authority conflict"
+  ],
+  "evidence": [
+    {
+      "id": "bootstrap-BOOT.S010",
+      "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S010.json",
+      "sha256": "272a848b9898217d26218cd217e16114aeedaedea018f0fff161176791759fb0",
+      "targetIds": [
+        "BOOT.S010"
+      ],
+      "criteria": [
+        "outcome",
+        "verification"
+      ],
+      "class": "automated_test",
+      "command": "Reviewed bootstrap journal and source-bound verification report",
+      "result": "pass",
+      "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+      "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+      "limitations": [
+        "Software/bootstrap observation only; no physical acceptance or gate passage.",
+        "Original journal observation times differ from event import times."
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "PC-001 journal a4921892d4cf5e705cc8673f521df33ebaea76c5cf988c19abe0aafcfe25b50e: Verified isolated baseline, active, verification, blocked, conflict, reopen, completed, publication-failure and malformed-evidence fixtures.",
+  "approval": null,
+  "handoffTo": null
+}

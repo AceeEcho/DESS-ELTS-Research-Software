@@ -1,0 +1,69 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "02e97799-e40a-465e-a4d5-0604623fc2e5",
+  "eventType": "verification_pending",
+  "recordedAtUtc": "2026-09-07T00:50:20.581685+00:00",
+  "occurredAtUtc": "2026-09-07T00:16:57.868185+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S005"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "in_progress",
+  "toStatus": "verification_pending",
+  "taskRevision": 14,
+  "previousTaskEventHash": "bbe071e5d90ddcd0a3b1bd406110728c39ce2b32b90b03c20f7b55788d64dea2",
+  "causalEventHashes": [
+    "bbe071e5d90ddcd0a3b1bd406110728c39ce2b32b90b03c20f7b55788d64dea2"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "schemas/progress/",
+    "tools/progress/schema.py",
+    "tools/progress/build_schemas.py",
+    "tools/progress/test_schema.py"
+  ],
+  "expectedChecks": [
+    "build_schemas.py generated seven contracts",
+    "5 schema tests passed: strict types/objects, bad fields, refs/arrays, UTC/paths, duplicate keys and non-finite JSON"
+  ],
+  "stopConditions": [
+    "Evidence or ownership mismatch",
+    "Authority conflict"
+  ],
+  "evidence": [
+    {
+      "id": "bootstrap-BOOT.S005",
+      "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S005.json",
+      "sha256": "774ea6157cd3be93a6fa79fb8f29a168b17edb4034ac2de2849a7af94695ca43",
+      "targetIds": [
+        "BOOT.S005"
+      ],
+      "criteria": [
+        "outcome",
+        "verification"
+      ],
+      "class": "automated_test",
+      "command": "Reviewed bootstrap journal and source-bound verification report",
+      "result": "pass",
+      "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+      "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+      "limitations": [
+        "Software/bootstrap observation only; no physical acceptance or gate passage.",
+        "Original journal observation times differ from event import times."
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "PC-001 journal 0e6557f854f73c7447184e7f01e1a06de466c7620809cbe533e66f6bbe4fdec4: Created versioned catalog, event, state, evidence, handoff, plan-change and authority schemas plus strict local validator.",
+  "approval": null,
+  "handoffTo": null
+}

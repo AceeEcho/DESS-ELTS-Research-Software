@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T03:13:51.404396+00:00",
+  "generatedAtUtc": "2026-09-07T03:14:48.370328+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,8 +11,8 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 117,
-    "eventSetSha256": "efedd1d502c63ded5c10e2edbeaf37b2cbf92214274ef8d6467e3a8a7e623c7b"
+    "eventCount": 120,
+    "eventSetSha256": "a7b8343cddb73143581621141b77321aa1e5fd50e44152d7f6d4b6ff66e8df53"
   },
   "current": {
     "mode": "working",
@@ -43,10 +43,12 @@
   "execution": {
     "mode": "working",
     "primaryStepId": "DEV-05.S001",
-    "activeStepIds": [],
-    "nextEligibleStepIds": [
+    "activeStepIds": [
+      "DEV-05.S001",
       "DEV-06.S001",
-      "DEV-07.S001",
+      "DEV-07.S001"
+    ],
+    "nextEligibleStepIds": [
       "DEV-10.S001",
       "P0.2.S001",
       "P0.4.S001",
@@ -291,7 +293,44 @@
     "selectedPhaseId": "DEV",
     "selectedLane": "synthetic_development_only"
   },
-  "activeWork": [],
+  "activeWork": [
+    {
+      "owner": "agent:codex-astra",
+      "taskId": "DEV-05",
+      "atomicStepId": "DEV-05.S001",
+      "branch": "work/dev-05",
+      "claimedPaths": [
+        "analysis",
+        "docs/modules/analysis.md"
+      ]
+    },
+    {
+      "owner": "agent:codex-astra",
+      "taskId": "DEV-06",
+      "atomicStepId": "DEV-06.S001",
+      "branch": "work/dev-06",
+      "claimedPaths": [
+        "unity/Assets/ELTS/Rendering",
+        "unity/Assets/ELTS/Operator",
+        "tools/runtime-tests/RenderingChecks.cs",
+        "tools/runtime-tests/RenderingChecks.csproj",
+        "docs/modules/rendering.md"
+      ]
+    },
+    {
+      "owner": "agent:codex-astra",
+      "taskId": "DEV-07",
+      "atomicStepId": "DEV-07.S001",
+      "branch": "work/dev-07",
+      "claimedPaths": [
+        "unity/Assets/ELTS/Scenario",
+        "unity/Assets/ELTS/Session",
+        "tools/runtime-tests/ScenarioChecks.cs",
+        "tools/runtime-tests/ScenarioChecks.csproj",
+        "docs/modules/scenario.md"
+      ]
+    }
+  ],
   "tasks": {
     "P0.1": {
       "status": "not_started",
@@ -1374,32 +1413,47 @@
       "blockers": []
     },
     "DEV-05": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "b2d2bc561fec5abbe910a65e20fb9dbee0b3bca9dd6fbeb4417196b4a4d31417",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev-05",
+      "claimedPaths": [
+        "analysis",
+        "docs/modules/analysis.md"
+      ],
       "evidence": [],
       "blockers": []
     },
     "DEV-06": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "1605a514d95d4cf951b1f6986c6f892d1af2c15c6895f5fb6bbfbb50c49265b1",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev-06",
+      "claimedPaths": [
+        "docs/modules/rendering.md",
+        "tools/runtime-tests/RenderingChecks.cs",
+        "tools/runtime-tests/RenderingChecks.csproj",
+        "unity/Assets/ELTS/Operator",
+        "unity/Assets/ELTS/Rendering"
+      ],
       "evidence": [],
       "blockers": []
     },
     "DEV-07": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "1c16bb2a387b17e96b7e7d76d5ef2e784a1cfa55e38c57e71381c76f271c0262",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev-07",
+      "claimedPaths": [
+        "docs/modules/scenario.md",
+        "tools/runtime-tests/ScenarioChecks.cs",
+        "tools/runtime-tests/ScenarioChecks.csproj",
+        "unity/Assets/ELTS/Scenario",
+        "unity/Assets/ELTS/Session"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -2755,12 +2809,15 @@
       "blockers": []
     },
     "DEV-05.S001": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "b2d2bc561fec5abbe910a65e20fb9dbee0b3bca9dd6fbeb4417196b4a4d31417",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev-05",
+      "claimedPaths": [
+        "analysis",
+        "docs/modules/analysis.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -2775,12 +2832,18 @@
       "blockers": []
     },
     "DEV-06.S001": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "1605a514d95d4cf951b1f6986c6f892d1af2c15c6895f5fb6bbfbb50c49265b1",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev-06",
+      "claimedPaths": [
+        "unity/Assets/ELTS/Rendering",
+        "unity/Assets/ELTS/Operator",
+        "tools/runtime-tests/RenderingChecks.cs",
+        "tools/runtime-tests/RenderingChecks.csproj",
+        "docs/modules/rendering.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -2795,12 +2858,18 @@
       "blockers": []
     },
     "DEV-07.S001": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "1c16bb2a387b17e96b7e7d76d5ef2e784a1cfa55e38c57e71381c76f271c0262",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev-07",
+      "claimedPaths": [
+        "unity/Assets/ELTS/Scenario",
+        "unity/Assets/ELTS/Session",
+        "tools/runtime-tests/ScenarioChecks.cs",
+        "tools/runtime-tests/ScenarioChecks.csproj",
+        "docs/modules/scenario.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -5379,6 +5448,18 @@
     "task:DEV-04": {
       "revision": 10,
       "hash": "6d86b96019b4e9092bf2ba43110c0b086f5fcc37fd3dbe526812be5b55e66b4b"
+    },
+    "task:DEV-05": {
+      "revision": 1,
+      "hash": "b2d2bc561fec5abbe910a65e20fb9dbee0b3bca9dd6fbeb4417196b4a4d31417"
+    },
+    "task:DEV-06": {
+      "revision": 1,
+      "hash": "1605a514d95d4cf951b1f6986c6f892d1af2c15c6895f5fb6bbfbb50c49265b1"
+    },
+    "task:DEV-07": {
+      "revision": 1,
+      "hash": "1c16bb2a387b17e96b7e7d76d5ef2e784a1cfa55e38c57e71381c76f271c0262"
     }
   },
   "integrity": {

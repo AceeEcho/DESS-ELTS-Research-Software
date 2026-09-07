@@ -24,8 +24,9 @@ It is not a general-purpose implementation of the full JSON Schema specification
 
 Input authorities are the immutable deliverables, accepted PC-001 rules, approved
 plan and evidence-backed human authority registry. Paths are repository-relative.
-Only a maintainer with recorded human authority may enroll gate/decision approvers
-in `project-management/progress/authorities.json`; it starts empty.
+`project-management/progress/authorities.json` contains candidate enrollment
+metadata and starts empty. It is not a root of trust. Changing that file and
+self-authoring an approval receipt cannot authenticate a human.
 
 The coordinator owns shared catalog/state integration. Each task has one owner and
 branch. Events targeting its atomic steps share a task revision/hash chain.
@@ -46,8 +47,14 @@ Do not delete events or choose one side of a generated-state merge conflict.
 Evidence binds a repository file's SHA-256, source revision/snapshot, command,
 result, target IDs, acceptance criteria and limitations. Physical/human acceptance
 is not established by synthetic tests. Approval requires an enrolled human, a
-matching target, and a separately resolvable approval record. No human is enrolled
-by bootstrap and no gate or final D decision is approved by PC-001.
+matching target, a separately resolvable approval record, and an independently
+authenticated human approval verifier. **The production CLI currently has no such
+verifier and rejects all privileged transitions.** There is no CLI/event option to
+select the fixture verifier used in isolated tests. Before the first real human
+approval, the maintainer must integrate a trusted signature/identity mechanism and
+verify signer enrollment, receipt binding, revocation and forgery rejection. The
+reducer reports this limitation explicitly. No human is enrolled by bootstrap and
+no gate or final D decision is approved by PC-001.
 
 ## Verification
 

@@ -34,9 +34,10 @@ class History:
         self.root = root
         self.catalog = json.loads((root / "project-management/task-catalog.json").read_text(encoding="utf-8"))
         self.events = []
+        self.approval_verifier = None
 
     def state(self):
-        return reduce_state(self.catalog, self.events, self.root)
+        return reduce_state(self.catalog, self.events, self.root, approval_verifier=self.approval_verifier)
 
     def evidence(self, target, criteria=("outcome", "verification"), kind="automated_test"):
         return {"id": "fixture-proof", "path": "fixture-evidence.json", "sha256": file_hash(self.root / "fixture-evidence.json"),
@@ -53,15 +54,15 @@ class History:
 
     def add(self, target, event_type, status, **extra):
         request = self.request(target, event_type, status, **extra)
-        event = make_event(self.catalog, self.events, self.root, request)
-        state = reduce_state(self.catalog, self.events + [event], self.root)
+        event = make_event(self.catalog, self.events, self.root, request, state=self.state())
+        state = reduce_state(self.catalog, self.events + [event], self.root, approval_verifier=self.approval_verifier)
         self.events.append(event)
         return state
 
-    def done(self, target):
-        self.add(target, "task_started", "in_progress")
-        self.add(target, "verification_pending", "verification_pending", evidence=[self.evidence(target)])
-        return self.add(target, "step_completed", "done", evidence=[self.evidence(target)])
+    def done(self, target, **extra):
+        self.add(target, "task_started", "in_progress", **extra)
+        self.add(target, "verification_pending", "verification_pending", evidence=[self.evidence(target)], **extra)
+        return self.add(target, "step_completed", "done", evidence=[self.evidence(target)], **extra)
 
 
 class CoreTests(unittest.TestCase):

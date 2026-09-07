@@ -60,6 +60,9 @@ def repository_path(root: Path, value: str, *, must_exist=True) -> Path:
     parts = value.rstrip("/").split("/")
     if any(p in ("", ".", "..") for p in parts) or PurePosixPath(value).is_absolute():
         fail(f"Non-canonical repository path: {value!r}")
+    reserved = {"con", "prn", "aux", "nul"} | {f"{prefix}{i}" for prefix in ("com", "lpt") for i in range(1, 10)}
+    if any(p.endswith((".", " ")) or p.split(".")[0].casefold() in reserved for p in parts):
+        fail(f"Path has a non-portable Windows component: {value!r}")
     path = (root / value).resolve()
     if not path.is_relative_to(root.resolve()):
         fail(f"Path escapes repository: {value}")
@@ -159,7 +162,7 @@ def ordered_events(events, schemas: Path):
 
 
 class Reducer:
-    def __init__(self, catalog, root: Path, authorities=None):
+    def __init__(self, catalog, root: Path, authorities=None, approval_verifier=None):
         self.root = root.resolve()
         self.catalog = catalog
         self.schemas = self.root / "schemas/progress"
@@ -179,6 +182,11 @@ class Reducer:
         self.evidence_cache = {}
         self.catalog_hash = file_hash(self.root / "project-management/task-catalog.json")
         self.authorities = authorities if authorities is not None else load_json(self.root / "project-management/progress/authorities.json")
+        # Registry entries and self-authored receipts are claims, not signatures.
+        # Production has no authenticated human approval provider yet and therefore
+        # rejects every privileged transition. Only trusted application integration
+        # code may supply a verifier; no event field/CLI switch can select one.
+        self.approval_verifier = approval_verifier
         validate_file(self.authorities, self.schemas / "authorities.schema.json")
 
     def task_status(self, task_id):
@@ -260,6 +268,10 @@ class Reducer:
                     "evidenceSha256": sorted({e["sha256"] for e in event["evidence"] if e["result"] == "pass"})}
         if any(record.get(k) != v for k, v in expected.items()):
             fail("Approval record does not attest this target, decision and exact evidence set")
+        if self.approval_verifier is None:
+            fail("Privileged approvals unavailable: no authenticated human approval verifier is configured")
+        if self.approval_verifier(event, record, authority) is not True:
+            fail("Human approval authentication failed")
 
     def active_records(self):
         return [(key, record) for key, record in self.step_records.items() if record["status"] in ACTIVE]
@@ -273,7 +285,9 @@ class Reducer:
         task_record = self.task_records[task]
         if task_record["owner"] and (task_record["owner"] != owner or task_record["branch"] != event["branch"]):
             fail(f"Task {task} ownership/branch transfer requires an explicit handoff")
-        paths = [p.rstrip("/").casefold() for p in event["claimedPaths"]]
+        if any(r["branch"] == event["branch"] for k, r in self.task_records.items() if k != task):
+            fail(f"Branch {event['branch']} is already assigned to another task")
+        paths = [repository_path(self.root, p, must_exist=False).relative_to(self.root).as_posix().casefold() for p in event["claimedPaths"]]
         for key, record in self.active_records():
             other_task = self.steps[key]["parent"]
             if other_task == task:
@@ -283,7 +297,7 @@ class Reducer:
             if record["branch"] == event["branch"]:
                 fail(f"Branch {event['branch']} is already assigned to {other_task}")
             for claimed in record["claimedPaths"]:
-                other = claimed.rstrip("/").casefold()
+                other = repository_path(self.root, claimed, must_exist=False).relative_to(self.root).as_posix().casefold()
                 if any(p == other or p.startswith(other + "/") or other.startswith(p + "/") for p in paths):
                     fail(f"Path claim overlaps active task {other_task}: {claimed}")
 
@@ -321,6 +335,12 @@ class Reducer:
         if (before, after) not in STEP_TRANSITIONS.get(event["eventType"], set()):
             fail(f"Illegal step transition: {event['eventType']} {before} -> {after}")
         owner = actor_id(event["actor"])
+        task_owner = self.task_records[step["parent"]]["owner"]
+        if task_owner and task_owner != owner:
+            fail(f"{key}: only the current owner of task {step['parent']} may transition its steps")
+        task_branch = self.task_records[step["parent"]]["branch"]
+        if task_branch and task_branch != event["branch"]:
+            fail(f"{key}: task branch change requires an explicit handoff")
         if record["owner"] and record["owner"] != owner:
             fail(f"{key}: only its current owner may transition the step")
         if record["owner"] and record["branch"] != event["branch"]:
@@ -415,6 +435,10 @@ class Reducer:
                  "gate_reopened": {("passed", "open")}}
         if (status, event["toStatus"]) not in pairs.get(event["eventType"], set()):
             fail("Illegal gate transition")
+        if int(key[1:]) > 0:
+            predecessor = self.gates[f"G{int(key[1:]) - 1}"]
+            if predecessor["status"] != "passed" or predecessor["lastEventHash"] not in self.event_ancestors:
+                fail(f"{key}: previous gate passage is missing from causal history")
         criteria = [c["Criterion ID"] for c in self.catalog["gateCriteria"] if c["Gate"] == key]
         self.check_evidence(event, criteria if event["toStatus"] in {"verification_pending", "passed"} else [])
         if event["toStatus"] in {"passed", "open", "failed"}:
@@ -508,7 +532,9 @@ class Reducer:
         for key, record in steps.items():
             record["status"] = self.effective_step_status(key)
         tasks = copy.deepcopy(self.task_records)
-        warnings = []
+        warnings = [] if self.approval_verifier is not None else [
+            "Privileged approvals unavailable until an authenticated human approval verifier is integrated; self-declared human receipts cannot pass gates or decide research outcomes."
+        ]
         for key, record in tasks.items():
             record["status"] = self.task_status(key)
             if record["status"] == "not_started" and eligible(self.tasks[key]["eligibility"], facts):
@@ -542,8 +568,8 @@ class Reducer:
         return state
 
 
-def reduce_state(catalog, events, root: Path, authorities=None):
-    reducer = Reducer(catalog, root, authorities)
+def reduce_state(catalog, events, root: Path, authorities=None, approval_verifier=None):
+    reducer = Reducer(catalog, root, authorities, approval_verifier)
     ordered = ordered_events(events, reducer.schemas)
     for hashed, event in ordered:
         reducer.apply(hashed, event)

@@ -1,0 +1,6 @@
+{
+  "name": "Elts.Tracking",
+  "rootNamespace": "Elts.Tracking",
+  "references": ["Elts.Clock", "Elts.Geometry"],
+  "noEngineReferences": true
+}

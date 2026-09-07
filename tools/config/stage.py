@@ -24,6 +24,9 @@ from tools.progress.schema import ValidationError, validate_file  # noqa: E402
 SCHEMAS = {"runtime": "runtime.schema.json", "rig": "rig.schema.json", "scenario": "scenario.schema.json", "session": "session.schema.json", "local": "local.schema.json"}
 STAGED_SCHEMAS = ("effective.schema.json", *SCHEMAS.values())
 OUTPUT_NAMES = {"effective": "effective-config.json", "manifest": "manifest.json"}
+# Dimensionless cosine guard; keep this predicate aligned with the runtime
+# GeometryTolerance.Basis. This is numerical validation, not lab calibration.
+BASIS_ORTHOGONALITY_TOLERANCE = 1e-10
 
 
 def canonical(value: object) -> bytes:
@@ -102,7 +105,7 @@ def _validate_rig(rig: dict) -> None:
     _finite_vec(a, "display.lowerLeftM"); _finite_vec(b, "display.lowerRightM"); _finite_vec(c, "display.upperLeftM")
     u = [b[i] - a[i] for i in range(3)]; v = [c[i] - a[i] for i in range(3)]
     dot = sum(u[i] * v[i] for i in range(3)); lu = math.sqrt(sum(x * x for x in u)); lv = math.sqrt(sum(x * x for x in v))
-    if not lu > 1e-12 or not lv > 1e-12 or abs(dot) > 1e-9 * lu * lv:
+    if not lu > 1e-12 or not lv > 1e-12 or abs(dot) > BASIS_ORTHOGONALITY_TOLERANCE * lu * lv:
         raise ValueError("Display edges must be nondegenerate and perpendicular")
     for key in ("headEyeOffsetM", "weaponMuzzleOffsetM", "weaponBoreLocalDirection"):
         _finite_vec(rig[key], key)

@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T00:51:16.296320+00:00",
+  "generatedAtUtc": "2026-09-07T00:52:38.828273+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,12 +11,12 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 33,
-    "eventSetSha256": "b240aab9a162446ef2e5f2b931304f9b7ceebd6caff5601127940117eb694fd9"
+    "eventCount": 36,
+    "eventSetSha256": "8caa188a9f51bdd37566d2fe8d1a44fddcb40494503f423ac03afa4897e8c467"
   },
   "current": {
     "mode": "working",
-    "primaryStepId": "BOOT.S012",
+    "primaryStepId": "BOOT.S013",
     "activeStepIds": [],
     "nextEligibleStepIds": [
       "P0.2.S001",
@@ -24,7 +24,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S012",
       "BOOT.S013",
       "BOOT.S014",
       "BOOT.S015",
@@ -57,7 +56,7 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "BOOT.S012",
+    "primaryStepId": "BOOT.S013",
     "activeStepIds": [],
     "nextEligibleStepIds": [
       "DEV-01.S001",
@@ -66,7 +65,6 @@
       "P0.5.S001"
     ],
     "blockingIds": [
-      "BOOT.S012",
       "BOOT.S013",
       "BOOT.S014",
       "BOOT.S015",
@@ -350,8 +348,8 @@
     },
     "P0.3": {
       "status": "in_progress",
-      "revision": 33,
-      "lastEventHash": "1dc2dc85dbe63faf88c50b39377a28508fdd206665ab6943c498a7ab20f9b398",
+      "revision": 36,
+      "lastEventHash": "4ff4e4aca35363b7e9f77643e32590457180d157987444494299f1dd12c6ebc8",
       "owner": "agent:codex-astra",
       "branch": "bootstrap/repository-governance",
       "claimedPaths": [],
@@ -1760,17 +1758,52 @@
       "blockers": []
     },
     "BOOT.S012": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 36,
+      "lastEventHash": "4ff4e4aca35363b7e9f77643e32590457180d157987444494299f1dd12c6ebc8",
+      "owner": "agent:codex-astra",
+      "branch": "bootstrap/repository-governance",
+      "claimedPaths": [
+        ".editorconfig",
+        ".gitignore",
+        ".gitattributes",
+        "unity/",
+        "jetson/",
+        "analysis/",
+        "config/",
+        "schemas/",
+        "scripts/",
+        "docs/",
+        "licenses/",
+        ".github/"
+      ],
+      "evidence": [
+        {
+          "id": "BOOT.S012-BOOT.S012",
+          "path": "project-management/progress/evidence/BOOT.S012.json",
+          "sha256": "8f8ee06810cd22e22826c7e02cb5215a546ebc9456de6f0fc165e2f1c42a32fc",
+          "targetIds": [
+            "BOOT.S012"
+          ],
+          "criteria": [
+            "outcome",
+            "verification"
+          ],
+          "class": "document",
+          "command": "Create and inspect canonical Appendix A directories and portable root policies",
+          "result": "pass",
+          "sourceRevision": "3dc51089acd40aede95146a985c574476baecb53",
+          "recordedAtUtc": "2026-09-07T00:52:36.925809+00:00",
+          "limitations": [
+            "Unity project settings and dependency assets follow in their assigned steps.",
+            "No project gate or physical acceptance."
+          ]
+        }
+      ],
       "blockers": []
     },
     "BOOT.S013": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -4596,8 +4629,8 @@
   },
   "chains": {
     "task:P0.3": {
-      "revision": 33,
-      "hash": "1dc2dc85dbe63faf88c50b39377a28508fdd206665ab6943c498a7ab20f9b398"
+      "revision": 36,
+      "hash": "4ff4e4aca35363b7e9f77643e32590457180d157987444494299f1dd12c6ebc8"
     }
   },
   "integrity": {

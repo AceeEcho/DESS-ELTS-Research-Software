@@ -78,9 +78,11 @@ def contracts():
                  "integrity": obj({"reducerVersion": TEXT, "valid": {"const": True}, "warnings": array(TEXT)})})
     # Imported source fields are preserved verbatim; the importer reconciles them
     # byte-for-byte/structurally with the accepted plan rather than interpreting prose.
+    # Repeated conjuncts are legal in the accepted planner's exact definitions.
+    # Do not normalize them away or confuse predicate lists with unique IDs.
     predicate = {"anyOf": [obj({"id": ID, "state": {"enum": ["done", "passed", "decided"]}}),
-                            obj({"allOf": array({"$ref": "#/$defs/predicate"})}),
-                            obj({"anyOf": array({"$ref": "#/$defs/predicate"}, 1)})]}
+                            obj({"allOf": {"type": "array", "items": {"$ref": "#/$defs/predicate"}}}),
+                            obj({"anyOf": {"type": "array", "items": {"$ref": "#/$defs/predicate"}, "minItems": 1}})]}
     definition = {"type": "object", "required": ["id", "phase", "lane", "eligibility"],
                   "properties": {"id": ID, "phase": TEXT, "lane": TEXT, "eligibility": predicate}}
     catalog = obj({"$schema": TEXT, "schemaVersion": {"const": 1}, "project": TEXT, "planVersion": TEXT,

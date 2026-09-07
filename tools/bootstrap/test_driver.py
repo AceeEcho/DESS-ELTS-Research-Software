@@ -17,9 +17,12 @@ class DriverTests(unittest.TestCase):
     def test_unity_xml_accepts_fresh_pass_and_rejects_stale_or_failed(self):
         with tempfile.TemporaryDirectory(prefix="driver xml ") as temp:
             path = Path(temp) / "results.xml"
-            path.write_text('<test-run result="Passed" />', encoding="utf-8")
+            path.write_text('<test-run result="Passed"><test-case result="Passed" /></test-run>', encoding="utf-8")
             started = time.time() - 1
             validate_unity_results(path, started)
+            path.write_text('<test-run result="Passed" />', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "no passing"):
+                validate_unity_results(path, started)
             path.write_text('<test-run result="Failed" />', encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "Passed"):
                 validate_unity_results(path, started)

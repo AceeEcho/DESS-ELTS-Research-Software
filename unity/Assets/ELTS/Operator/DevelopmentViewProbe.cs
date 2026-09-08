@@ -54,14 +54,15 @@ namespace Elts.Operator
                 for(int index=0;index<cameras.Length;index++)
                 {
                     var camera=cameras[index];var originalRect=camera.rect;var projection=camera.projectionMatrix;
-                    var target=RenderTexture.GetTemporary(side,side,24,RenderTextureFormat.ARGB32);
+                    int height=index==0?Math.Max(1,(int)Math.Round(side*view.DisplayPlane.Height/view.DisplayPlane.Width)):side;
+                    var target=RenderTexture.GetTemporary(side,height,24,RenderTextureFormat.ARGB32);
                     try
                     {
                         camera.rect=new Rect(0,0,1,1);
                         var request=new RenderPipeline.StandardRequest{destination=target};
                         if(!RenderPipeline.SupportsRenderRequest(camera,request))throw new InvalidOperationException("Active pipeline cannot render the requested camera preview.");
                         RenderPipeline.SubmitRenderRequest(camera,request);
-                        RenderTexture.active=target;image.ReadPixels(new Rect(0,0,side,side),index*side,0,false);
+                        RenderTexture.active=target;image.ReadPixels(new Rect(0,0,side,height),index*side,(side-height)/2,false);
                     }
                     finally{camera.rect=originalRect;camera.projectionMatrix=projection;RenderTexture.active=previous;RenderTexture.ReleaseTemporary(target);}
                 }

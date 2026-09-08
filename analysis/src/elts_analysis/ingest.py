@@ -212,10 +212,17 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
             item = markers.setdefault(block_id, {}); key = "start" if kind == "BlockStarted" else "end"
             if key in item: raise IngestError(f"duplicate {kind} marker for block {block_id!r}")
             item[key] = event["monotonicTicks"]
+    aborted_blocks = {
+        event.get("payload", {}).get("blockId")
+        for event in events
+        if event.get("eventType") == "BlockAborted"
+        and isinstance(event.get("payload", {}).get("blockId"), str)
+    }
     score_blocks = []
     for block_id, item in markers.items():
         if "start" not in item or "end" not in item: continue
         if item["end"] - item["start"] != BLOCK_TICKS: raise IngestError(f"block {block_id!r} must be exactly 300 seconds")
+        if block_id in aborted_blocks: continue
         score_blocks.append((block_id, item["start"], item["end"]))
     ordered_blocks = sorted(score_blocks, key=lambda block: block[1])
     if any(previous[2] > current[1] for previous, current in zip(ordered_blocks, ordered_blocks[1:])):

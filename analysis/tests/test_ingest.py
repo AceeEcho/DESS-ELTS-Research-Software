@@ -1,4 +1,4 @@
-import hashlib, json, tempfile, unittest
+import hashlib, json, math, tempfile, unittest
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parents[1] / 'src'))
@@ -79,6 +79,28 @@ class IngestTests(unittest.TestCase):
         root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
         events=[json.loads(line) for line in (run/'events.ndjson').read_text().splitlines()]; events[2]['payload']['blockId']='other'; self.refresh(run,events=events)
         result=ingest_run(run,cal); self.assertEqual(result['blocks'][0]['targetsDestroyed'],0)
+
+    def test_ninety_degree_aim_error_is_measured(self):
+        root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
+        targets=[json.loads(line) for line in (run/'targets.ndjson').read_text().splitlines()]
+        targets[0]['worldPositionMeters']={'x':1,'y':0,'z':0}; self.refresh(run,targets=targets)
+        result=ingest_run(run,cal); self.assertAlmostEqual(result['blocks'][0]['meanAimErrorDegrees'],90.0,places=6)
+
+    def test_zero_correction_and_muzzle_offset_are_in_metric(self):
+        root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
+        # Rotate local +Z to world +X, then translate the muzzle by +Z 0.5 m.
+        cal.write_text(json.dumps({'calibrationId':'synthetic-offset','muzzleOffsetMeters':[0,0,0.5],'boreDirectionLocal':[0,0,1],'zeroCorrectionQuaternion':[0,0.7071067811865476,0,0.7071067811865476]}))
+        targets=[json.loads(line) for line in (run/'targets.ndjson').read_text().splitlines()]
+        targets[0]['worldPositionMeters']={'x':1,'y':0,'z':-0.5}; self.refresh(run,targets=targets)
+        result=ingest_run(run,cal); self.assertAlmostEqual(result['blocks'][0]['meanAimErrorDegrees'],45.0,places=6)
+
+    def test_aborted_block_cannot_complete_dv(self):
+        root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
+        events=[json.loads(line) for line in (run/'events.ndjson').read_text().splitlines()]
+        events.insert(3, {'schemaVersion':'elts.events.v1','sequence':4,'monotonicTicks':5,'eventType':'BlockAborted','payload':{'blockId':'b1','reason':'fixture'}})
+        for index,event in enumerate(events,1): event['sequence']=index
+        self.refresh(run,events=events)
+        result=ingest_run(run,cal); self.assertEqual(result['blocks'][0]['scoreStatus'],'unavailable')
 
     def test_calibration_numeric_strings_are_rejected(self):
         root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))

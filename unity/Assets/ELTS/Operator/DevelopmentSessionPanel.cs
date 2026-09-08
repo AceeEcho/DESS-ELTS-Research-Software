@@ -49,12 +49,13 @@ namespace Elts.Operator
         private long diskFreeBytes;
         private double firstValidAt = -1;
         private bool setupPending, closing, destroyed;
+        private bool quitInProgress, quitAllowed;
         private long frameHitches;
         private readonly Dictionary<string,Vector3d> visibleTargets = new Dictionary<string,Vector3d>();
 
         public SessionEngine? Engine => engine;
         public VisualElement PanelRoot => root;
-        public bool IsBusy => operation != null;
+        public bool IsBusy => operation != null || quitInProgress;
         public void SetDiagnosticRenderTarget(RenderTexture target) { panelSettings.targetTexture=target; }
 
         private void Awake()
@@ -86,6 +87,7 @@ namespace Elts.Operator
             Bind("viewTools", () => SetVisible(false));
             SetVisible(true);
             RefreshLabels();
+            Application.wantsToQuit += OnWantsToQuit;
         }
 
         public void SetVisible(bool visible)
@@ -265,6 +267,7 @@ namespace Elts.Operator
         {
             if(destroyed) return;
             destroyed=true;
+            Application.wantsToQuit -= OnWantsToQuit;
             try
             {
                 if(operation!=null) await operation;
@@ -273,6 +276,31 @@ namespace Elts.Operator
             }
             catch(Exception exception) { Debug.LogError("ELTS_SESSION_CLOSE_FAIL "+exception.Message); }
             if(panelSettings!=null) Destroy(panelSettings);
+        }
+        private bool OnWantsToQuit()
+        {
+            if(quitAllowed || (acquisition==null && recording?.IsOpen!=true && operation==null)) return true;
+            if(!quitInProgress) FlushBeforeQuit();
+            return false;
+        }
+        private async void FlushBeforeQuit()
+        {
+            quitInProgress=true;
+            try
+            {
+                if(operation!=null) await operation;
+                engine?.Abort("application_shutdown");
+                await CloseRecordingAsync();
+                quitAllowed=true;
+                Application.Quit();
+            }
+            catch(Exception exception)
+            {
+                // Keep the operator UI available if a producer cannot stop or
+                // a recording cannot close; do not silently discard the failure.
+                lastMessage="Shutdown incomplete: "+exception.Message;
+                quitInProgress=false;
+            }
         }
         /// <summary>DEV-08 lifecycle fixture; DEV-11 supplies the protocol adapter.</summary>
         private sealed class DevelopmentSessionLink : ISessionLink

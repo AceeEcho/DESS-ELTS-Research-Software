@@ -2,7 +2,9 @@
 from __future__ import annotations
 import hashlib, json, tempfile, unittest
 from pathlib import Path
-from src.elts_analysis.ingest import ingest_run
+import sys
+sys.path.insert(0, str(Path(__file__).parents[1] / 'src'))
+from elts_analysis.ingest import ingest_run
 
 HASH = "a" * 64
 def line(value): return json.dumps(value, separators=(",", ":")) + "\n"

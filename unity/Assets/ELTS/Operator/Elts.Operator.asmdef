@@ -1,5 +1,5 @@
 {
   "name": "Elts.Operator",
-  "references": ["Elts.Config", "Elts.Geometry", "Elts.Rendering"],
+  "references": ["Elts.Config", "Elts.Geometry", "Elts.Rendering", "Elts.Session", "Elts.Clock", "Elts.Tracking", "Elts.Logging", "Elts.Scenario"],
   "autoReferenced": true
 }

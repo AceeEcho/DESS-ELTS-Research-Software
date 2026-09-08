@@ -5,7 +5,7 @@
 Run it from the repository root with the bundled or system Python (the source package is intentionally not installed):
 
 ```text
-PYTHONPATH=analysis/src python -m elts_analysis RUN_DIRECTORY --calibration calibration.json --output analysis.json
+python analysis/run_ingest.py RUN_DIRECTORY --calibration calibration.json --output analysis.json
 ```
 
 Set `PYTHONPATH=analysis/src` when invoking the source package directly, for example:
@@ -14,7 +14,7 @@ Set `PYTHONPATH=analysis/src` when invoking the source package directly, for exa
 PYTHONPATH=analysis/src python -m elts_analysis test-results/synthetic-soak/run-0001 --calibration fixtures/calibration.json
 ```
 
-Calibration is an explicit input. It contains `muzzleOffsetMeters`, `boreDirectionLocal`, and `zeroCorrectionQuaternion`; these are configuration values and do not assert measured or physically validated calibration. Aim error uses the corrected world bore ray and the muzzle-to-target ray, with the smallest angular error among target snapshots available at or before the sample. Samples with either tracker disconnected, invalid, or missing a usable pose are excluded from aim-error summaries and counted as invalid; no invalid pose is interpolated.
+Calibration is an explicit input. It contains `muzzleOffsetMeters`, `boreDirectionLocal`, and `zeroCorrectionQuaternion`; these are configuration values and do not assert measured or physically validated calibration. Aim error uses the corrected world bore ray and the muzzle-to-target ray. Target snapshots are folded by `(blockId, targetId)` in timestamp order; the latest non-destroyed snapshot replaces older positions, destruction removes the candidate, and the report records the nearest-angular-candidate policy. Samples with either tracker disconnected, invalid, or missing a usable pose are excluded from aim-error summaries and counted as invalid; no invalid pose is interpolated.
 
 The primary score is derived only from `TargetDestroyed` events. Each such event must carry scalar `blockId` and `targetId` fields. Scoring requires matching `BlockStarted` and `BlockEnded` events for an exact 300-second interval; the scoring interval is half-open `[start, end)`. Duplicate target destruction within a block is rejected. A run without a complete exact-length block marker pair (including a partial abort) reports `scoreStatus: unavailable`; target lifecycle records are retained as supporting state and are never used as the primary score source. No global-clock bucketing or target-lifecycle inference is used.
 

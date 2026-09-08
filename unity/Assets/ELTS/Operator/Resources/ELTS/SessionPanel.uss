@@ -20,10 +20,11 @@
 /* Retain natural control heights; overflowing content belongs in the scroll
    view, rather than shrinking labels and fields on top of one another. */
 .unity-scroll-view__content-container > *, .unity-foldout__content > * { flex-shrink: 0; }
+.session-column .unity-scroll-view__content-container { width: 100%; }
 .session-row { flex-direction: row; margin-top: 5px; }
 .session-row > Button { flex-grow: 1; margin-right: 5px; }
-Label { white-space: normal; margin-bottom: 4px; }
-Button {
+.session-root .unity-label { white-space: normal; margin-bottom: 4px; }
+.session-root .unity-button {
     background-color: #284257;
     color: #ffffff;
     min-height: 29px;
@@ -33,11 +34,11 @@ Button {
     border-radius: 4px;
     -unity-text-align: middle-center;
 }
-Button:hover { background-color: #365b75; }
-Button:focus { border-color: #78d4fa; }
-Button:disabled { opacity: 0.4; }
-.primary { background-color: #176587; }
-.abort { background-color: #85352f; border-color: #cd776f; }
+.session-root .unity-button:hover { background-color: #365b75; }
+.session-root .unity-button:focus { border-color: #78d4fa; }
+.session-root .unity-button:disabled { opacity: 0.4; }
+.session-root .primary { background-color: #176587; }
+.session-root .abort { background-color: #85352f; border-color: #cd776f; }
 TextField, DropdownField { margin-top: 4px; margin-bottom: 4px; }
 .unity-text-field__label { min-width: 80px; }
 .unity-text-field__input {

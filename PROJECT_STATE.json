@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-08T06:48:42.127744+00:00",
+  "generatedAtUtc": "2026-09-08T19:29:23.248172+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,8 +11,8 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 154,
-    "eventSetSha256": "670974c9497bdd3ce301abfc5dfef9eb5c2721b413ba8422fadbf4b0287e85bb"
+    "eventCount": 160,
+    "eventSetSha256": "16f3c25d8165f5aef0e783d4b0602beb8e95adeda16071793ae1aba438a36327"
   },
   "current": {
     "mode": "working",
@@ -44,8 +44,7 @@
     "mode": "working",
     "primaryStepId": "DEV-09.S001",
     "activeStepIds": [
-      "DEV-09.S001",
-      "DEV-11.S001"
+      "DEV-09.S001"
     ],
     "nextEligibleStepIds": [
       "P0.2.S001",
@@ -71,8 +70,6 @@
       "D-17",
       "DEV-09",
       "DEV-09.S001",
-      "DEV-11",
-      "DEV-11.S001",
       "DEV-12.S001",
       "G0",
       "G1",
@@ -293,19 +290,6 @@
         "tools/runtime-tests/CalibrationChecks.cs",
         "tools/runtime-tests/CalibrationChecks.csproj",
         "docs/modules/calibration.md"
-      ]
-    },
-    {
-      "owner": "agent:codex-astra",
-      "taskId": "DEV-11",
-      "atomicStepId": "DEV-11.S001",
-      "branch": "codex/dev11",
-      "claimedPaths": [
-        "unity/Assets/ELTS/Elts",
-        "unity/Assets/ELTS/Session",
-        "tools/runtime-tests/EltsSessionChecks.cs",
-        "tools/runtime-tests/EltsSessionChecks.csproj",
-        "docs/modules/elts-session.md"
       ]
     }
   ],
@@ -1589,19 +1573,41 @@
       "blockers": []
     },
     "DEV-11": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "757717841c9e7976d39cdb30b99f71432c5c9296342c815a096ab5e2b9ef2d0f",
+      "status": "done",
+      "revision": 7,
+      "lastEventHash": "0b54d61f0488f25b4e011e48fe980733db41d6d148d0cf64110ba93fa5a4e82c",
       "owner": "agent:codex-astra",
       "branch": "codex/dev11",
-      "claimedPaths": [
-        "docs/modules/elts-session.md",
-        "tools/runtime-tests/EltsSessionChecks.cs",
-        "tools/runtime-tests/EltsSessionChecks.csproj",
-        "unity/Assets/ELTS/Elts",
-        "unity/Assets/ELTS/Session"
+      "claimedPaths": [],
+      "evidence": [
+        {
+          "id": "DEV-11-acceptance",
+          "path": "project-management/progress/evidence/DEV-11.json",
+          "sha256": "8723a4bbf3bf929d21d07ffe3f0e74925aadacaf6808cb845b30beced1368aec",
+          "targetIds": [
+            "DEV-11.S001",
+            "DEV-11.V001",
+            "DEV-11"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "dotnet run --project tools/runtime-tests/EltsSessionChecks.csproj with pinned Newtonsoft 3.2.2 Runtime assembly; dotnet run --project tools/runtime-tests/SessionChecks.csproj; Unity 6000.3.23f1 PlayMode checks; verified standalone build manifest",
+          "result": "pass",
+          "sourceRevision": "3b4e471d2a9c795acbc44261cf3582a1bf428d0d",
+          "recordedAtUtc": "2026-09-08T19:29:11.391564+00:00",
+          "limitations": [
+            "Mock controller only; no network or hardware is energized",
+            "D-10 WE/NE alternatives and D-12 clock metadata remain provisional",
+            "Actual Unity-Jetson cycles, physical E-stop/failsafes and exposure timing require unavailable testing equipment",
+            "Manual-clock 300-second blocks are not real-time performance evidence",
+            "No parent baseline task or gate is accepted"
+          ]
+        }
       ],
-      "evidence": [],
       "blockers": []
     },
     "DEV-12": {
@@ -3344,9 +3350,9 @@
       "blockers": []
     },
     "DEV-11.S001": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "757717841c9e7976d39cdb30b99f71432c5c9296342c815a096ab5e2b9ef2d0f",
+      "status": "done",
+      "revision": 3,
+      "lastEventHash": "f552467df0df102e92c5532e1d7c4c567c7f12c7d3446654653b24e041e59383",
       "owner": "agent:codex-astra",
       "branch": "codex/dev11",
       "claimedPaths": [
@@ -3356,17 +3362,75 @@
         "tools/runtime-tests/EltsSessionChecks.csproj",
         "docs/modules/elts-session.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "DEV-11-acceptance",
+          "path": "project-management/progress/evidence/DEV-11.json",
+          "sha256": "8723a4bbf3bf929d21d07ffe3f0e74925aadacaf6808cb845b30beced1368aec",
+          "targetIds": [
+            "DEV-11.S001",
+            "DEV-11.V001",
+            "DEV-11"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "dotnet run --project tools/runtime-tests/EltsSessionChecks.csproj with pinned Newtonsoft 3.2.2 Runtime assembly; dotnet run --project tools/runtime-tests/SessionChecks.csproj; Unity 6000.3.23f1 PlayMode checks; verified standalone build manifest",
+          "result": "pass",
+          "sourceRevision": "3b4e471d2a9c795acbc44261cf3582a1bf428d0d",
+          "recordedAtUtc": "2026-09-08T19:29:11.391564+00:00",
+          "limitations": [
+            "Mock controller only; no network or hardware is energized",
+            "D-10 WE/NE alternatives and D-12 clock metadata remain provisional",
+            "Actual Unity-Jetson cycles, physical E-stop/failsafes and exposure timing require unavailable testing equipment",
+            "Manual-clock 300-second blocks are not real-time performance evidence",
+            "No parent baseline task or gate is accepted"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-11.V001": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 6,
+      "lastEventHash": "3961a2679f002cce7fe5ae32d9b473f0b32493e947344de28637272790116b50",
+      "owner": "agent:codex-astra",
+      "branch": "codex/dev11",
+      "claimedPaths": [
+        "project-management/progress/evidence/DEV-11.json"
+      ],
+      "evidence": [
+        {
+          "id": "DEV-11-acceptance",
+          "path": "project-management/progress/evidence/DEV-11.json",
+          "sha256": "8723a4bbf3bf929d21d07ffe3f0e74925aadacaf6808cb845b30beced1368aec",
+          "targetIds": [
+            "DEV-11.S001",
+            "DEV-11.V001",
+            "DEV-11"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "dotnet run --project tools/runtime-tests/EltsSessionChecks.csproj with pinned Newtonsoft 3.2.2 Runtime assembly; dotnet run --project tools/runtime-tests/SessionChecks.csproj; Unity 6000.3.23f1 PlayMode checks; verified standalone build manifest",
+          "result": "pass",
+          "sourceRevision": "3b4e471d2a9c795acbc44261cf3582a1bf428d0d",
+          "recordedAtUtc": "2026-09-08T19:29:11.391564+00:00",
+          "limitations": [
+            "Mock controller only; no network or hardware is energized",
+            "D-10 WE/NE alternatives and D-12 clock metadata remain provisional",
+            "Actual Unity-Jetson cycles, physical E-stop/failsafes and exposure timing require unavailable testing equipment",
+            "Manual-clock 300-second blocks are not real-time performance evidence",
+            "No parent baseline task or gate is accepted"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-12.S001": {
@@ -5880,8 +5944,8 @@
       "hash": "27702ce1ddd781eb8e7a4b4b1f19f260c7f69308b8bf01b4f1902aa2ae435664"
     },
     "task:DEV-11": {
-      "revision": 1,
-      "hash": "757717841c9e7976d39cdb30b99f71432c5c9296342c815a096ab5e2b9ef2d0f"
+      "revision": 7,
+      "hash": "0b54d61f0488f25b4e011e48fe980733db41d6d148d0cf64110ba93fa5a4e82c"
     }
   },
   "integrity": {

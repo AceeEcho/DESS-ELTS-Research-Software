@@ -1,0 +1,75 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "f348cec1-d3a2-4c52-a1b5-551c623dfb77",
+  "eventType": "task_completed",
+  "recordedAtUtc": "2026-09-08T19:29:23.248172+00:00",
+  "occurredAtUtc": "2026-09-08T19:29:23.248172+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "task",
+    "id": "DEV-11"
+  },
+  "taskId": "DEV-11",
+  "fromStatus": "verification_pending",
+  "toStatus": "done",
+  "taskRevision": 7,
+  "previousTaskEventHash": "3961a2679f002cce7fe5ae32d9b473f0b32493e947344de28637272790116b50",
+  "causalEventHashes": [
+    "0b0f12c54f933d68b7ba0e6e230cf33d630d4281214c6d2b2eb012e37261aaf9",
+    "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d",
+    "100168e223f819b3b3c3b01e8d9f98c416d30e0e9b4afd1b82b1e6c1790dfb1e",
+    "2107017562779c7b0e22e39d5395bceceb97cfc4b2041d49b4cbee4a04cfc300",
+    "27702ce1ddd781eb8e7a4b4b1f19f260c7f69308b8bf01b4f1902aa2ae435664",
+    "3961a2679f002cce7fe5ae32d9b473f0b32493e947344de28637272790116b50",
+    "40f50c895dea123b4d210c1cff83c218d858500206ff02861a9060cb1647095e",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "6d86b96019b4e9092bf2ba43110c0b086f5fcc37fd3dbe526812be5b55e66b4b",
+    "b456cff38d75cf98ff4a0017df409acc3f081e2f63c9346ba259914888548a5f",
+    "d157add7ed962d52f12b203d407aa000bfe9dbc8602bfe4acf2d8632d3b8907d",
+    "ff89ba440bf29decf3a60303ff022dc84b2cdcb84244aa4a4dfd9c100d94740b"
+  ],
+  "branch": "codex/dev11",
+  "claimedPaths": [],
+  "expectedChecks": [],
+  "stopConditions": [],
+  "evidence": [
+    {
+      "id": "DEV-11-acceptance",
+      "path": "project-management/progress/evidence/DEV-11.json",
+      "sha256": "8723a4bbf3bf929d21d07ffe3f0e74925aadacaf6808cb845b30beced1368aec",
+      "targetIds": [
+        "DEV-11.S001",
+        "DEV-11.V001",
+        "DEV-11"
+      ],
+      "criteria": [
+        "outcome",
+        "verification",
+        "task-acceptance"
+      ],
+      "class": "synthetic_test",
+      "command": "dotnet run --project tools/runtime-tests/EltsSessionChecks.csproj with pinned Newtonsoft 3.2.2 Runtime assembly; dotnet run --project tools/runtime-tests/SessionChecks.csproj; Unity 6000.3.23f1 PlayMode checks; verified standalone build manifest",
+      "result": "pass",
+      "sourceRevision": "3b4e471d2a9c795acbc44261cf3582a1bf428d0d",
+      "recordedAtUtc": "2026-09-08T19:29:11.391564+00:00",
+      "limitations": [
+        "Mock controller only; no network or hardware is energized",
+        "D-10 WE/NE alternatives and D-12 clock metadata remain provisional",
+        "Actual Unity-Jetson cycles, physical E-stop/failsafes and exposure timing require unavailable testing equipment",
+        "Manual-clock 300-second blocks are not real-time performance evidence",
+        "No parent baseline task or gate is accepted"
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "Verified synthetic development scope only; no baseline or physical gate acceptance.",
+  "approval": null,
+  "handoffTo": null
+}

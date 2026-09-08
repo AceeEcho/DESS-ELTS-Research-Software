@@ -65,7 +65,8 @@ def _finite_quat(value: Any, name: str) -> tuple[float, float, float, float]:
     except (TypeError, ValueError) as exc: raise IngestError(f"{name} must contain four numbers") from exc
     n = math.sqrt(sum(x*x for x in q))
     if not math.isfinite(n) or n <= 1e-12: raise IngestError(f"{name} must be a nonzero finite quaternion")
-    return tuple(x/n for x in q)
+    if abs(n - 1.0) > 1e-8: raise IngestError(f"{name} must be unit length")
+    return q
 
 def _qmul(a, b):
     ax, ay, az, aw = a; bx, by, bz, bw = b
@@ -91,10 +92,12 @@ def _angle(a,b):
 def _calibration(path: Path) -> dict[str, Any]:
     value = _load_json(path)
     if not isinstance(value, dict): raise IngestError("calibration must be a JSON object")
+    calibration_id = value.get("calibrationId")
+    if not isinstance(calibration_id, str) or not calibration_id: raise IngestError("calibrationId must be a non-empty string")
     return {"muzzleOffsetMeters": _finite_vector(value.get("muzzleOffsetMeters"), "muzzleOffsetMeters"),
             "boreDirectionLocal": _norm(_finite_vector(value.get("boreDirectionLocal"), "boreDirectionLocal")),
             "zeroCorrectionQuaternion": _finite_quat(value.get("zeroCorrectionQuaternion"), "zeroCorrectionQuaternion"),
-            "calibrationId": value.get("calibrationId", "unspecified")}
+            "calibrationId": calibration_id}
 
 def _records(path: Path, expected: str) -> list[dict[str, Any]]:
     result=[]; previous_sequence=0; previous_ticks=-1
@@ -134,6 +137,12 @@ def _sample_valid(sample: dict[str, Any]) -> bool:
         if tracker.get("validity") != "Valid" or tracker.get("connection") != "Connected" or not isinstance(pose, dict): return False
     return True
 
+def _validate_pose(tracker: dict[str, Any], role: str) -> tuple[tuple[float, float, float], tuple[float, float, float, float]]:
+    pose = tracker["pose"]
+    position = pose["positionMeters"]
+    return (_finite_vector([position[k] for k in ("x", "y", "z")], f"{role}.positionMeters"),
+            _finite_quat([pose["orientation"][k] for k in ("x", "y", "z", "w")], f"{role}.orientation"))
+
 def ingest_run(run_directory: str | Path, calibration: str | Path, output: str | Path | None = None) -> dict[str, Any]:
     """Read a complete v1 run and write only a derived report when output is given."""
     directory=Path(run_directory); calibration_path=Path(calibration)
@@ -172,7 +181,8 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
     target_cursor = 0
     for row in samples:
         if not _sample_valid(row): invalid += 1; continue
-        weapon=row["weapon"]; pose=weapon["pose"]; pos=tuple(float(pose["positionMeters"][k]) for k in ("x","y","z")); ori=tuple(float(pose["orientation"][k]) for k in ("x","y","z","w"))
+        head_pos, head_ori = _validate_pose(row["head"], "head")
+        weapon=row["weapon"]; pos, ori = _validate_pose(weapon, "weapon")
         corrected=_qmul(ori, cal["zeroCorrectionQuaternion"]); muzzle=tuple(pos[i]+_qrotate(ori,cal["muzzleOffsetMeters"])[i] for i in range(3)); bore=_qrotate(corrected,cal["boreDirectionLocal"])
         tick=row["monotonicTicks"]
         candidates=[]
@@ -228,7 +238,7 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
                 if event.get("eventType") == "TargetDestroyed":
                     if event.get("payload", {}).get("blockId") == block_id:
                         blocks[block_id]["targetsDestroyed"] += 1
-                if event.get("eventType") == "ShotFired": blocks[block_id]["shots"] += 1
+                if event.get("eventType") == "ShotFired" and event.get("payload", {}).get("blockId", block_id) == block_id: blocks[block_id]["shots"] += 1
                 break
     for row in samples:
         for block_id, start_tick, end_tick in score_blocks:
@@ -255,7 +265,8 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
     if output_path is not None:
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            output_path.write_text(json.dumps(report,indent=2,sort_keys=True,allow_nan=False)+"\n",encoding="utf-8",newline="\n")
+            with output_path.open("x", encoding="utf-8", newline="\n") as handle:
+                handle.write(json.dumps(report,indent=2,sort_keys=True,allow_nan=False)+"\n")
         except OSError as exc: raise IngestError(f"cannot write derived output: {exc}") from exc
     return report
 

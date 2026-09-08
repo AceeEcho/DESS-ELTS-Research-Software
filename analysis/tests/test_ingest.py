@@ -86,6 +86,17 @@ class IngestTests(unittest.TestCase):
         with self.assertRaisesRegex(IngestError,'numbers'):
             ingest_run(run,cal)
 
+    def test_nonunit_raw_quaternion_and_missing_calibration_id_are_rejected(self):
+        root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
+        samples=[json.loads(line) for line in (run/'samples.ndjson').read_text().splitlines()]
+        samples[0]['weapon']['pose']['orientation']['w']=2; self.refresh(run,samples=samples)
+        with self.assertRaisesRegex(IngestError,'unit length'):
+            ingest_run(run,cal)
+        samples[0]['weapon']['pose']['orientation']['w']=1; self.refresh(run,samples=samples)
+        cal.write_text(json.dumps({'muzzleOffsetMeters':[0,0,0],'boreDirectionLocal':[0,0,1],'zeroCorrectionQuaternion':[0,0,0,1]}))
+        with self.assertRaisesRegex(IngestError,'calibrationId'):
+            ingest_run(run,cal)
+
     def test_target_updates_replace_old_and_destroyed_target_is_not_aim_candidate(self):
         root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
         samples=[json.loads(line) for line in (run/'samples.ndjson').read_text().splitlines()]

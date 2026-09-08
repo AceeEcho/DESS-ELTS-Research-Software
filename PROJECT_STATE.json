@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-08T06:01:30.035873+00:00",
+  "generatedAtUtc": "2026-09-08T06:47:56.266656+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,8 +11,8 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 146,
-    "eventSetSha256": "51f07edcba3baf1cdb45106741731e8006b6bcc4399eddbcd46bf1de02cfea64"
+    "eventCount": 152,
+    "eventSetSha256": "0af1acc746510467f6435d1f94a2592f93d6272cad8e690901d297996297fc87"
   },
   "current": {
     "mode": "working",
@@ -42,11 +42,10 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "DEV-08.S001",
-    "activeStepIds": [
-      "DEV-08.S001"
-    ],
+    "primaryStepId": "DEV-09.S001",
+    "activeStepIds": [],
     "nextEligibleStepIds": [
+      "DEV-11.S001",
       "P0.2.S001",
       "P0.4.S001",
       "P0.5.S001"
@@ -68,8 +67,6 @@
       "D-14",
       "D-16",
       "D-17",
-      "DEV-08",
-      "DEV-08.S001",
       "DEV-09",
       "DEV-09.S001",
       "DEV-11",
@@ -282,21 +279,7 @@
     "selectedPhaseId": "DEV",
     "selectedLane": "synthetic_development_only"
   },
-  "activeWork": [
-    {
-      "owner": "agent:codex-astra",
-      "taskId": "DEV-08",
-      "atomicStepId": "DEV-08.S001",
-      "branch": "work/dev08",
-      "claimedPaths": [
-        "unity/Assets/ELTS/Session",
-        "unity/Assets/ELTS/Operator",
-        "tools/runtime-tests/SessionChecks.cs",
-        "tools/runtime-tests/SessionChecks.csproj",
-        "docs/modules/session.md"
-      ]
-    }
-  ],
+  "activeWork": [],
   "tasks": {
     "P0.1": {
       "status": "not_started",
@@ -1487,23 +1470,45 @@
       "blockers": []
     },
     "DEV-08": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "d8cd53b351badcbe2cdd06febf061bb74cb409130f0932205cc2d473009fccee",
+      "status": "done",
+      "revision": 7,
+      "lastEventHash": "100168e223f819b3b3c3b01e8d9f98c416d30e0e9b4afd1b82b1e6c1790dfb1e",
       "owner": "agent:codex-astra",
       "branch": "work/dev08",
-      "claimedPaths": [
-        "docs/modules/session.md",
-        "tools/runtime-tests/SessionChecks.cs",
-        "tools/runtime-tests/SessionChecks.csproj",
-        "unity/Assets/ELTS/Operator",
-        "unity/Assets/ELTS/Session"
+      "claimedPaths": [],
+      "evidence": [
+        {
+          "id": "DEV-08-acceptance",
+          "path": "project-management/progress/evidence/DEV-08.json",
+          "sha256": "d5ea315774fe955ff6de85fbff9cf767ed18ec1c0f23ab176010b6d57fcec90c",
+          "targetIds": [
+            "DEV-08.S001",
+            "DEV-08.V001",
+            "DEV-08"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "SessionChecks; SessionRecordingAdapterChecks; SessionAcquisitionChecks Release; SessionInteropFixture --output test-results/dev08-session-final; analysis ingest and strict verification; scripts/test.ps1 -Suite unity-play; scripts/build.ps1 -Output build/dev08-layout; standalone -eltsSessionScreenshot; build manifest verification",
+          "result": "pass",
+          "sourceRevision": "50e796a69efdeabe935ccb9573b97b53d9cad0bd",
+          "recordedAtUtc": "2026-09-08T06:47:36.193039+00:00",
+          "limitations": [
+            "Synthetic fixtures and unmeasured geometry only; manual-clock four-block fixture is not a20-minute wall-clock test",
+            "UI callbacks exercised through Toolkit navigation events; native mouse/keyboard and physical display assignment unverified",
+            "Real tracking, calibration, apparatus connection, physical timing and gates remain pending",
+            "DEV08 link is an explicit lifecycle fixture pendingDEV11; D04 motion andD12 sync remain provisional",
+            "Short-tail acquisition spin uses CPU to reduce timer oversleep; observed diagnostics do not pass full-load250Hz or physical timing criteria"
+          ]
+        }
       ],
-      "evidence": [],
       "blockers": []
     },
     "DEV-09": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -1549,7 +1554,7 @@
       "blockers": []
     },
     "DEV-11": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -3107,9 +3112,9 @@
       "blockers": []
     },
     "DEV-08.S001": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "d8cd53b351badcbe2cdd06febf061bb74cb409130f0932205cc2d473009fccee",
+      "status": "done",
+      "revision": 3,
+      "lastEventHash": "029a0b3267898eea68a77b89cbffdc9dda8b557bafe65d357d1bdba6eb858150",
       "owner": "agent:codex-astra",
       "branch": "work/dev08",
       "claimedPaths": [
@@ -3119,21 +3124,79 @@
         "tools/runtime-tests/SessionChecks.csproj",
         "docs/modules/session.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "DEV-08-acceptance",
+          "path": "project-management/progress/evidence/DEV-08.json",
+          "sha256": "d5ea315774fe955ff6de85fbff9cf767ed18ec1c0f23ab176010b6d57fcec90c",
+          "targetIds": [
+            "DEV-08.S001",
+            "DEV-08.V001",
+            "DEV-08"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "SessionChecks; SessionRecordingAdapterChecks; SessionAcquisitionChecks Release; SessionInteropFixture --output test-results/dev08-session-final; analysis ingest and strict verification; scripts/test.ps1 -Suite unity-play; scripts/build.ps1 -Output build/dev08-layout; standalone -eltsSessionScreenshot; build manifest verification",
+          "result": "pass",
+          "sourceRevision": "50e796a69efdeabe935ccb9573b97b53d9cad0bd",
+          "recordedAtUtc": "2026-09-08T06:47:36.193039+00:00",
+          "limitations": [
+            "Synthetic fixtures and unmeasured geometry only; manual-clock four-block fixture is not a20-minute wall-clock test",
+            "UI callbacks exercised through Toolkit navigation events; native mouse/keyboard and physical display assignment unverified",
+            "Real tracking, calibration, apparatus connection, physical timing and gates remain pending",
+            "DEV08 link is an explicit lifecycle fixture pendingDEV11; D04 motion andD12 sync remain provisional",
+            "Short-tail acquisition spin uses CPU to reduce timer oversleep; observed diagnostics do not pass full-load250Hz or physical timing criteria"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-08.V001": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 6,
+      "lastEventHash": "559387afe7cbf65e1d7f9f3b49e8a02384954bd07e76c05bf9a382b04a12729a",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev08",
+      "claimedPaths": [
+        "project-management/progress/evidence/DEV-08.json"
+      ],
+      "evidence": [
+        {
+          "id": "DEV-08-acceptance",
+          "path": "project-management/progress/evidence/DEV-08.json",
+          "sha256": "d5ea315774fe955ff6de85fbff9cf767ed18ec1c0f23ab176010b6d57fcec90c",
+          "targetIds": [
+            "DEV-08.S001",
+            "DEV-08.V001",
+            "DEV-08"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "SessionChecks; SessionRecordingAdapterChecks; SessionAcquisitionChecks Release; SessionInteropFixture --output test-results/dev08-session-final; analysis ingest and strict verification; scripts/test.ps1 -Suite unity-play; scripts/build.ps1 -Output build/dev08-layout; standalone -eltsSessionScreenshot; build manifest verification",
+          "result": "pass",
+          "sourceRevision": "50e796a69efdeabe935ccb9573b97b53d9cad0bd",
+          "recordedAtUtc": "2026-09-08T06:47:36.193039+00:00",
+          "limitations": [
+            "Synthetic fixtures and unmeasured geometry only; manual-clock four-block fixture is not a20-minute wall-clock test",
+            "UI callbacks exercised through Toolkit navigation events; native mouse/keyboard and physical display assignment unverified",
+            "Real tracking, calibration, apparatus connection, physical timing and gates remain pending",
+            "DEV08 link is an explicit lifecycle fixture pendingDEV11; D04 motion andD12 sync remain provisional",
+            "Short-tail acquisition spin uses CPU to reduce timer oversleep; observed diagnostics do not pass full-load250Hz or physical timing criteria"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-09.S001": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -3234,7 +3297,7 @@
       "blockers": []
     },
     "DEV-11.S001": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -5756,8 +5819,8 @@
       "hash": "0b0f12c54f933d68b7ba0e6e230cf33d630d4281214c6d2b2eb012e37261aaf9"
     },
     "task:DEV-08": {
-      "revision": 1,
-      "hash": "d8cd53b351badcbe2cdd06febf061bb74cb409130f0932205cc2d473009fccee"
+      "revision": 7,
+      "hash": "100168e223f819b3b3c3b01e8d9f98c416d30e0e9b4afd1b82b1e6c1790dfb1e"
     }
   },
   "integrity": {

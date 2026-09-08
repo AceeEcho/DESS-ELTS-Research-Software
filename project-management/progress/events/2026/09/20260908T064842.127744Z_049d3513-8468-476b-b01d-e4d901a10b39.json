@@ -1,0 +1,59 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "049d3513-8468-476b-b01d-e4d901a10b39",
+  "eventType": "task_started",
+  "recordedAtUtc": "2026-09-08T06:48:42.127744+00:00",
+  "occurredAtUtc": "2026-09-08T06:48:42.127744+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "DEV-11.S001"
+  },
+  "taskId": "DEV-11",
+  "fromStatus": "ready",
+  "toStatus": "in_progress",
+  "taskRevision": 1,
+  "previousTaskEventHash": null,
+  "causalEventHashes": [
+    "0b0f12c54f933d68b7ba0e6e230cf33d630d4281214c6d2b2eb012e37261aaf9",
+    "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d",
+    "100168e223f819b3b3c3b01e8d9f98c416d30e0e9b4afd1b82b1e6c1790dfb1e",
+    "2107017562779c7b0e22e39d5395bceceb97cfc4b2041d49b4cbee4a04cfc300",
+    "27702ce1ddd781eb8e7a4b4b1f19f260c7f69308b8bf01b4f1902aa2ae435664",
+    "40f50c895dea123b4d210c1cff83c218d858500206ff02861a9060cb1647095e",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "6d86b96019b4e9092bf2ba43110c0b086f5fcc37fd3dbe526812be5b55e66b4b",
+    "b456cff38d75cf98ff4a0017df409acc3f081e2f63c9346ba259914888548a5f",
+    "d157add7ed962d52f12b203d407aa000bfe9dbc8602bfe4acf2d8632d3b8907d",
+    "ff89ba440bf29decf3a60303ff022dc84b2cdcb84244aa4a4dfd9c100d94740b"
+  ],
+  "branch": "codex/dev11",
+  "claimedPaths": [
+    "unity/Assets/ELTS/Elts",
+    "unity/Assets/ELTS/Session",
+    "tools/runtime-tests/EltsSessionChecks.cs",
+    "tools/runtime-tests/EltsSessionChecks.csproj",
+    "docs/modules/elts-session.md"
+  ],
+  "expectedChecks": [
+    "Command/ack/loss/abort sequences logged",
+    "Reconnect never resumes active state",
+    "Explicit development WE/NE options do not decide D10"
+  ],
+  "stopConditions": [
+    "Shared contract conflict",
+    "Physical approval or equipment needed for a claim"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "Astra retains ownership and integration. Independent bounded Terra worker uses an isolated worktree; no worker edits progress.",
+  "approval": null,
+  "handoffTo": null
+}

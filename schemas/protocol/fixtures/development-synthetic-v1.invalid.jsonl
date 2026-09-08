@@ -1,0 +1,3 @@
+{"protocolVersion":"development-synthetic-v1","messageType":"START","sequence":1,"unityMonotonicTicks":0,"participantPseudonym":"x","block":"1","condition":"WE","durationTicks":1,"target":{"x":1}}
+{"protocolVersion":"development-synthetic-v1","messageType":"ARM","sequence":"2","unityMonotonicTicks":0}
+{"protocolVersion":"unknown","messageType":"PING","sequence":3,"unityMonotonicTicks":0}

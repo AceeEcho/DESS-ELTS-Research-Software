@@ -179,7 +179,7 @@ namespace Elts.Session
         private MonotonicTimestamp phaseStarted;
         private int blockIndex;
         private int rerun;
-        private bool linkEnabled;
+        private bool linkMayBeEnabled;
         private string? failure;
 
         public SessionEngine(ISharedClock clock, ISessionEventSequence sequence, SessionPlan plan, SessionTiming timing, ISessionEventSink sink, ISessionLink? link = null)
@@ -256,7 +256,8 @@ namespace Elts.Session
             }
 
             if (State != SessionState.BlockRunning || block == null) return;
-            foreach (var item in block.Update()) Record(item);
+            foreach (var item in block.Update())
+                if (!Record(item)) return;
             if (State != SessionState.BlockRunning || block.State != ScenarioBlockState.Completed) return;
             if (!StopLink()) return;
             Transition(SessionState.BlockEnded);
@@ -276,37 +277,53 @@ namespace Elts.Session
             block = new ScenarioBlockController(clock, sequence, blockId, DeterministicSeedFor(plan.ParticipantId, blockId), plan.ConditionDurationSeconds, plan.AllowsDevelopmentOnlyDurationOverride);
             phaseStarted = clock.Now;
             if (!Transition(SessionState.BlockRunning)) return;
-            foreach (var item in block.Start()) Record(item);
+            foreach (var item in block.Start())
+                if (!Record(item)) return;
         }
 
         public void EndBlock()
         {
             Require(SessionState.BlockRunning);
             Tick();
+            if (State == SessionState.BlockRunning)
+                throw new InvalidOperationException("A block can end only when its fixed duration has elapsed.");
         }
 
         /// <summary>Forwards an in-window shot through the active block and records every resulting event.</summary>
         public void Fire(IShotModel shotModel, ShotContext shot, IEnumerable<TargetEntity> targets, Func<TargetEntity, bool> isVisible)
         {
+            ExpireCurrentPhase();
             Require(SessionState.BlockRunning);
             if (block == null) throw new InvalidOperationException("The active block has not been initialized.");
-            foreach (var item in block.Fire(shotModel, shot, targets, isVisible)) Record(item);
+            foreach (var item in block.Fire(shotModel, shot, targets, isVisible))
+                if (!Record(item)) return;
         }
 
+        /// <summary>
+        /// Operator abort is available throughout an unfinished session. Only an active
+        /// block emits BlockAborted; setup and phase aborts preserve that distinction.
+        /// </summary>
         public void Abort(string reason)
         {
             if (String.IsNullOrWhiteSpace(reason)) throw new ArgumentException("An abort reason is required.", nameof(reason));
-            if (State == SessionState.Aborted) return;
-            if (State != SessionState.BlockRunning || block == null) throw new InvalidOperationException("Only a running block can be aborted.");
+            ExpireCurrentPhase();
+            if (State == SessionState.Aborted || State == SessionState.Failed || State == SessionState.SessionComplete) return;
 
-            foreach (var item in block.Abort(reason)) Record(item);
-            if (State != SessionState.BlockRunning || !StopLink()) return;
+            if (State == SessionState.BlockRunning && block != null)
+            {
+                foreach (var item in block.Abort(reason))
+                    if (!Record(item)) return;
+                if (State != SessionState.BlockRunning || !StopLink()) return;
+            }
+            else if (!StopLink()) return;
+
             Transition(SessionState.Aborted, LogField.String("reason", reason));
         }
 
         public void RerunCurrentBlock()
         {
-            if (State != SessionState.Aborted && State != SessionState.BlockEnded) throw new InvalidOperationException("Only an aborted or ended block can rerun.");
+            if ((State != SessionState.Aborted && State != SessionState.BlockEnded) || block == null)
+                throw new InvalidOperationException("Only an aborted or ended block can rerun.");
             rerun++;
             block = null;
             Transition(SessionState.BlockReady, LogField.NumberValue("rerunIndex", rerun), LogField.String("nextBlockId", CurrentBlockId ?? String.Empty));
@@ -314,6 +331,7 @@ namespace Elts.Session
 
         public void AddNote(string text)
         {
+            ExpireCurrentPhase();
             RequireOpenSession();
             if (String.IsNullOrWhiteSpace(text)) throw new ArgumentException("A note is required.", nameof(text));
             Record(Event("OperatorNote", LogField.String("text", text)));
@@ -321,8 +339,15 @@ namespace Elts.Session
 
         public void EmitProvisionalSyncMarker(string text)
         {
+            ExpireCurrentPhase();
             RequireOpenSession();
             Record(Event("SyncMarker", LogField.String("label", String.IsNullOrWhiteSpace(text) ? "provisional" : text), LogField.Boolean("provisional", true)));
+        }
+
+        private void ExpireCurrentPhase()
+        {
+            if (State == SessionState.Practice || State == SessionState.BlockRunning)
+                Tick();
         }
 
         private bool Transition(SessionState next, params LogField[] extra)
@@ -354,10 +379,13 @@ namespace Elts.Session
         private bool TrySetLink(bool enabled)
         {
             if (link == null) return false;
+            // A failed enable may still have reached the device. Preserve that uncertainty
+            // so Fail always makes one best-effort disable attempt before becoming terminal.
+            if (enabled) linkMayBeEnabled = true;
             try
             {
                 if (!link.TrySetEnabled(enabled)) return false;
-                linkEnabled = enabled;
+                if (!enabled) linkMayBeEnabled = false;
                 return true;
             }
             catch
@@ -368,7 +396,7 @@ namespace Elts.Session
 
         private bool StopLink()
         {
-            if (!linkEnabled) return true;
+            if (!linkMayBeEnabled) return true;
             if (TrySetLink(false)) return true;
             Fail("WE link stop failed.");
             return false;
@@ -377,12 +405,26 @@ namespace Elts.Session
         private void Fail(string message)
         {
             if (State == SessionState.Failed) return;
+            SessionState previous = State;
             failure = message;
             State = SessionState.Failed;
-            if (!linkEnabled) return;
+            RecordFailureTransition(previous, message);
+            if (!linkMayBeEnabled) return;
             try { link?.TrySetEnabled(false); }
             catch { }
-            finally { linkEnabled = false; }
+            finally { linkMayBeEnabled = false; }
+        }
+
+        private void RecordFailureTransition(SessionState previous, string message)
+        {
+            // This is deliberately non-recursive: the ordinary sink may itself be the
+            // failure source, but a healthy sink still receives terminal audit evidence.
+            try
+            {
+                sink.TryRecord(Event("SessionTransition", LogField.String("from", previous.ToString()),
+                    LogField.String("to", SessionState.Failed.ToString()), LogField.String("failure", message)));
+            }
+            catch { }
         }
 
         private void Require(SessionState expected)

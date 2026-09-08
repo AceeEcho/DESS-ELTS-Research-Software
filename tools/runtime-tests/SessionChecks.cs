@@ -29,6 +29,8 @@ static class SessionChecks
         ExerciseRerunIdentityAndClosedSessionRules();
         ExerciseSinkFailureFailsClosed();
         ExerciseLinkFailuresFailClosedWithoutInvalidTransition();
+        ExerciseOperatorAbortAcrossOpenStates();
+        ExerciseDeadlineFirstOperatorActions();
         Console.WriteLine("PASS: " + passed + " session checks");
     }
 
@@ -161,6 +163,62 @@ static class SessionChecks
             "a throwing start link is contained and fails closed");
     }
 
+    private static void ExerciseDeadlineFirstOperatorActions()
+    {
+        var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+        var events = new List<SessionEvent>();
+        var engine = NewEngine(clock, new Sink(events), new Link());
+        BeginFirstBlock(engine, clock);
+        engine.StartBlock();
+        clock.Advance(TimeSpan.FromSeconds(300));
+        engine.AddNote("deadline note");
+        engine.Abort("late abort");
+
+        int ended = events.FindIndex(e => e.EventType == "BlockEnded");
+        int note = events.FindIndex(e => e.EventType == "OperatorNote");
+        True(ended >= 0 && note > ended, "deadline expiry is recorded before a later operator note");
+        True(!events.Exists(e => e.EventType == "BlockAborted"), "late abort preserves normal block completion");
+    }
+
+    private static void ExerciseOperatorAbortAcrossOpenStates()
+    {
+        VerifyPhaseAbort(SessionState.Idle);
+        VerifyPhaseAbort(SessionState.SessionSetup);
+        VerifyPhaseAbort(SessionState.Calibration);
+        VerifyPhaseAbort(SessionState.Practice);
+        VerifyPhaseAbort(SessionState.BlockReady);
+        VerifyPhaseAbort(SessionState.Break);
+    }
+
+    private static void VerifyPhaseAbort(SessionState phase)
+    {
+        var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+        var engine = NewEngine(clock, new Sink(new List<SessionEvent>()), new Link());
+        if (phase != SessionState.Idle)
+        {
+            True(engine.StartSetup(Ready()).SetupAccepted, "phase abort setup accepted");
+            if (phase == SessionState.Calibration || phase == SessionState.Practice || phase == SessionState.BlockReady || phase == SessionState.Break) engine.Advance();
+            if (phase == SessionState.Practice || phase == SessionState.BlockReady || phase == SessionState.Break) engine.Advance();
+            if (phase == SessionState.BlockReady || phase == SessionState.Break)
+            {
+                clock.Advance(TimeSpan.FromSeconds(1));
+                engine.Tick();
+            }
+            if (phase == SessionState.Break)
+            {
+                engine.StartBlock();
+                clock.Advance(TimeSpan.FromSeconds(300));
+                engine.Tick();
+                engine.Advance();
+            }
+        }
+        True(engine.State == phase, "phase reached before abort: " + phase);
+        engine.Abort("operator abort");
+        True(engine.State == SessionState.Aborted, "operator abort works from " + phase);
+        if (phase != SessionState.Break) Throws(() => engine.RerunCurrentBlock(), "phase abort cannot rerun a phantom block: " + phase);
+    }
+
+
     private static SessionEngine NewEngine(ManualSharedClock clock, ISessionEventSink sink, ISessionLink link)
     {
         var plan = new SessionPlan("p1", new[] { "WE_MT", "NE_MT", "WE_FT", "NE_FT" }, 300, true);
@@ -235,7 +293,7 @@ static class SessionChecks
 
         public bool TrySetEnabled(bool enabled)
         {
-            if (enabled && ThrowOnEnable) throw new InvalidOperationException("enable failed");
+            if (enabled && ThrowOnEnable) { Enabled = true; throw new InvalidOperationException("enable failed"); }
             if (!enabled && ThrowOnDisable)
             {
                 Enabled = false;

@@ -174,7 +174,7 @@ namespace Elts.Rendering
         private static JObject Parse(string text)
         {
             if(text.Length>MaximumLineCharacters)throw new InvalidDataException("Replay JSON record is too large.");
-            RejectNonStandardJson(text);
+            ValidateJsonSyntax(text);
             using(var reader=new JsonTextReader(new StringReader(text)){DateParseHandling=DateParseHandling.None,MaxDepth=24})
             {
                 var result=JObject.Load(reader,new JsonLoadSettings{DuplicatePropertyNameHandling=DuplicatePropertyNameHandling.Error,CommentHandling=CommentHandling.Load});
@@ -216,6 +216,7 @@ namespace Elts.Rendering
             if(String.IsNullOrEmpty(status))throw new InvalidDataException("Frame status is required.");
             string[] parts=status.Split(new[]{" / "},StringSplitOptions.None);if(parts.Length!=2||!new[]{"Connected","Disconnected","Reconnecting"}.Contains(parts[0])||!new[]{"Unavailable","Valid","OutOfRange","DriverFault","RejectedNativePose"}.Contains(parts[1]))throw new InvalidDataException("Invalid frame status.");
             if(parts[1]=="Valid"?(parts[0]!="Connected"||!pose.HasValue):pose.HasValue)throw new InvalidDataException("Pose does not match frame status.");
+            if(pose.HasValue&&(!pose.Value.Position.IsFinite||!pose.Value.Orientation.IsUnit))throw new InvalidDataException("Invalid pose contents.");
         }
         private sealed class BoundedLines : IDisposable
         {
@@ -229,11 +230,18 @@ namespace Elts.Rendering
         {
             using(var stream=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.Read)){if(stream.Length>maximum)throw new InvalidDataException("Replay summary is too large.");using(var output=new MemoryStream((int)stream.Length)){stream.CopyTo(output,4096);return output.ToArray();}}
         }
-        private static void RejectNonStandardJson(string text)
-        {
-            bool quoted=false,escape=false;for(int i=0;i<text.Length;i++){char c=text[i];if(quoted){if(escape)escape=false;else if(c=='\\')escape=true;else if(c=='\"')quoted=false;continue;}if(c=='\"'){quoted=true;continue;}if(c=='\'')throw new InvalidDataException("Single-quoted JSON is unsupported.");if(c=='/'&&i+1<text.Length&&(text[i+1]=='/'||text[i+1]=='*'))throw new InvalidDataException("JSON comments are unsupported.");}
-            if(quoted||escape)throw new InvalidDataException("Unterminated JSON string.");
-        }
+        // Newtonsoft accepts several JavaScript extensions; this small grammar
+        // gate keeps the persisted products JSON RFC syntax before loading them.
+        private static void ValidateJsonSyntax(string text){int index=0;ParseJsonValue(text,ref index);SkipWhitespace(text,ref index);if(index!=text.Length)throw new InvalidDataException("Trailing JSON content.");}
+        private static void ParseJsonValue(string text,ref int index){SkipWhitespace(text,ref index);if(index>=text.Length)throw new InvalidDataException("Missing JSON value.");switch(text[index]){case '{':ParseJsonObject(text,ref index);break;case '[':ParseJsonArray(text,ref index);break;case '\"':ParseJsonString(text,ref index);break;case 't':Expect(text,ref index,"true");break;case 'f':Expect(text,ref index,"false");break;case 'n':Expect(text,ref index,"null");break;default:if(text[index]=='-'||char.IsDigit(text[index]))ParseJsonNumber(text,ref index);else throw new InvalidDataException("Unsupported JSON syntax.");break;}}
+        private static void ParseJsonObject(string text,ref int index){index++;SkipWhitespace(text,ref index);if(Take(text,ref index,'}'))return;while(true){SkipWhitespace(text,ref index);if(index>=text.Length||text[index]!='\"')throw new InvalidDataException("JSON object key must be quoted.");ParseJsonString(text,ref index);SkipWhitespace(text,ref index);Expect(text,ref index,":");ParseJsonValue(text,ref index);SkipWhitespace(text,ref index);if(Take(text,ref index,'}'))return;if(!Take(text,ref index,','))throw new InvalidDataException("Invalid JSON object separator.");SkipWhitespace(text,ref index);if(index<text.Length&&text[index]=='}')throw new InvalidDataException("Trailing JSON comma.");}throw new InvalidDataException("Unterminated JSON object.");}
+        private static void ParseJsonArray(string text,ref int index){index++;SkipWhitespace(text,ref index);if(Take(text,ref index,']'))return;while(true){ParseJsonValue(text,ref index);SkipWhitespace(text,ref index);if(Take(text,ref index,']'))return;if(!Take(text,ref index,','))throw new InvalidDataException("Invalid JSON array separator.");SkipWhitespace(text,ref index);if(index<text.Length&&text[index]==']')throw new InvalidDataException("Trailing JSON comma.");}throw new InvalidDataException("Unterminated JSON array.");}
+        private static void ParseJsonString(string text,ref int index){if(!Take(text,ref index,'\"'))throw new InvalidDataException("JSON string required.");while(index<text.Length){char c=text[index++];if(c=='\"')return;if(c<0x20)throw new InvalidDataException("Control character in JSON string.");if(c=='\\'){if(index>=text.Length)break;char escape=text[index++];if("\"\\/bfnrt".IndexOf(escape)<0){if(escape!='u'||index+4>text.Length||!IsHex(text[index])||!IsHex(text[index+1])||!IsHex(text[index+2])||!IsHex(text[index+3]))throw new InvalidDataException("Invalid JSON escape.");index+=4;}}}throw new InvalidDataException("Unterminated JSON string.");}
+        private static void ParseJsonNumber(string text,ref int index){if(Take(text,ref index,'-')&&index>=text.Length)throw new InvalidDataException("Invalid JSON number.");if(Take(text,ref index,'0')){if(index<text.Length&&char.IsDigit(text[index]))throw new InvalidDataException("Leading zero in JSON number.");}else{if(index>=text.Length||text[index]<'1'||text[index]>'9')throw new InvalidDataException("Invalid JSON number.");while(index<text.Length&&char.IsDigit(text[index]))index++;}if(Take(text,ref index,'.')){if(index>=text.Length||!char.IsDigit(text[index]))throw new InvalidDataException("Invalid JSON fraction.");while(index<text.Length&&char.IsDigit(text[index]))index++;}if(index<text.Length&&(text[index]=='e'||text[index]=='E')){index++;if(index<text.Length&&(text[index]=='+'||text[index]=='-'))index++;if(index>=text.Length||!char.IsDigit(text[index]))throw new InvalidDataException("Invalid JSON exponent.");while(index<text.Length&&char.IsDigit(text[index]))index++;}}
+        private static void SkipWhitespace(string text,ref int index){while(index<text.Length&&(text[index]==' '||text[index]=='\t'||text[index]=='\r'||text[index]=='\n'))index++;}
+        private static bool Take(string text,ref int index,char value){if(index<text.Length&&text[index]==value){index++;return true;}return false;}
+        private static void Expect(string text,ref int index,string value){if(index+value.Length>text.Length||String.CompareOrdinal(text,index,value,0,value.Length)!=0)throw new InvalidDataException("Invalid JSON token.");index+=value.Length;}
+        private static bool IsHex(char value)=>(value>='0'&&value<='9')||(value>='a'&&value<='f')||(value>='A'&&value<='F');
         private static string Hex(byte[] value)=>string.Concat(value.Select(b=>b.ToString("x2",CultureInfo.InvariantCulture)));
     }
 }

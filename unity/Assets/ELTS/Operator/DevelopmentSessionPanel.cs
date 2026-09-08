@@ -71,6 +71,7 @@ namespace Elts.Operator
             var template = Resources.Load<VisualTreeAsset>("ELTS/SessionPanel");
             if(template == null) throw new InvalidOperationException("Session panel asset is missing.");
             root = document.rootVisualElement;
+            root.AddToClassList("session-document");
             root.pickingMode = PickingMode.Ignore;
             root.style.unityFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             template.CloneTree(root);

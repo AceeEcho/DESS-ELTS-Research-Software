@@ -1,3 +1,8 @@
+.session-document {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+}
 .session-root {
     position: absolute;
     left: 10px;

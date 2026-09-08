@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,13 +17,13 @@ internal static class ReplayChecks
     {
         return "{\"schemaVersion\":\"elts.session-summary.v1\",\"runId\":\"replay-check\",\"complete\":"+(complete?"true":"false")+",\"error\":null,\"provenance\":{\"applicationVersion\":\"test\",\"sourceRevision\":\"rev\",\"configurationHash\":\""+config+"\",\"scenarioHash\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"fixtureHash\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"synthetic\":true,\"utcStartupAnchor\":\"2026-09-08T00:00:00Z\"},\"counts\":{\"droppedSamples\":0,\"writtenSamples\":1,\"writtenEvents\":1,\"writtenTargets\":3},\"checksumsSha256\":{\"samples.ndjson\":\""+Sha(Encoding.UTF8.GetBytes(sample))+"\",\"events.ndjson\":\""+Sha(Encoding.UTF8.GetBytes(events))+"\",\"targets.ndjson\":\""+Sha(Encoding.UTF8.GetBytes(targets))+"\"}}";
     }
-    private static string Make(string sample,string events,string targets,string summaryOverride=null)
+    private static string Make(string sample,string events,string targets,string? summaryOverride=null)
     {
         string dir=Path.Combine(Path.GetTempPath(),"elts-replay-check-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(dir);
         File.WriteAllText(Path.Combine(dir,"samples.ndjson"),sample,new UTF8Encoding(false));File.WriteAllText(Path.Combine(dir,"events.ndjson"),events,new UTF8Encoding(false));File.WriteAllText(Path.Combine(dir,"targets.ndjson"),targets,new UTF8Encoding(false));
         File.WriteAllText(Path.Combine(dir,"session-summary.json"),summaryOverride??Summary(sample,events,targets),new UTF8Encoding(false));return dir;
     }
-    private static string Sample(string head=null){head=head??"{\"trackerId\":\"head\",\"connection\":\"Disconnected\",\"validity\":\"Unavailable\",\"pose\":null}";return "{\"schemaVersion\":\"elts.samples.v1\",\"sequence\":1,\"monotonicTicks\":0,\"head\":"+head+",\"weapon\":{\"trackerId\":\"weapon\",\"connection\":\"Connected\",\"validity\":\"Valid\",\"pose\":{\"positionMeters\":{\"x\":0,\"y\":0,\"z\":0},\"orientation\":{\"x\":0,\"y\":0,\"z\":0,\"w\":1}}}}\n";}
+    private static string Sample(string? head=null){head=head??"{\"trackerId\":\"head\",\"connection\":\"Disconnected\",\"validity\":\"Unavailable\",\"pose\":null}";return "{\"schemaVersion\":\"elts.samples.v1\",\"sequence\":1,\"monotonicTicks\":0,\"head\":"+head+",\"weapon\":{\"trackerId\":\"weapon\",\"connection\":\"Connected\",\"validity\":\"Valid\",\"pose\":{\"positionMeters\":{\"x\":0,\"y\":0,\"z\":0},\"orientation\":{\"x\":0,\"y\":0,\"z\":0,\"w\":1}}}}\n";}
     private static readonly string Events="{\"schemaVersion\":\"elts.events.v1\",\"sequence\":1,\"monotonicTicks\":0,\"eventType\":\"RunStarted\",\"payload\":{\"mode\":\"synthetic\"}}\n";
     private static readonly string Targets="{\"schemaVersion\":\"elts.targets.v1\",\"sequence\":1,\"monotonicTicks\":0,\"targetId\":\"one\",\"blockId\":\"block\",\"lifecycle\":\"Spawned\",\"worldPositionMeters\":{\"x\":1,\"y\":2,\"z\":3},\"worldVelocityMetersPerSecond\":{\"x\":0,\"y\":0,\"z\":0},\"scenarioSeed\":1,\"scenarioVersion\":\"v1\"}\n"+
         "{\"schemaVersion\":\"elts.targets.v1\",\"sequence\":2,\"monotonicTicks\":50000000,\"targetId\":\"one\",\"blockId\":\"block\",\"lifecycle\":\"Updated\",\"worldPositionMeters\":{\"x\":4,\"y\":5,\"z\":6},\"worldVelocityMetersPerSecond\":{\"x\":0,\"y\":0,\"z\":0},\"scenarioSeed\":1,\"scenarioVersion\":\"v1\"}\n"+
@@ -43,9 +44,14 @@ internal static class ReplayChecks
         Reject(Make(Sample(),new string(' ',RecordedReplay.MaximumLineCharacters+1)+"\n",Targets),"oversize record was accepted");
         Reject(Make(Sample(),Events.Replace("{\"mode\":\"synthetic\"}","{/*comment*/\"mode\":\"synthetic\"}"),Targets),"commented JSON was accepted");
         Reject(Make(Sample(),Events.Replace("\"mode\":\"synthetic\"","'mode':'synthetic'"),Targets),"single-quoted JSON was accepted");
+        Reject(Make(Sample(),Events.Replace("{\"mode\":\"synthetic\"}","{\"mode\":\"synthetic\",}"),Targets),"trailing comma was accepted");
+        Reject(Make(Sample(),Events.Replace("{\"mode\":\"synthetic\"}","{mode:\"synthetic\"}"),Targets),"unquoted key was accepted");
+        Reject(Make(Sample(),Events.Replace("\"mode\":\"synthetic\"","\"mode\":01"),Targets),"leading-zero number was accepted");
+        Reject(Make(Sample(),Events.Replace("\"mode\":\"synthetic\"","\"mode\":0x1"),Targets),"hex number was accepted");
         string pending=Path.Combine(Path.GetTempPath(),"elts-replay-pending-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(pending);File.WriteAllText(Path.Combine(pending,".session-summary.pending.json"),Summary(Sample(),Events,Targets));Reject(pending,"pending-only replay was accepted");
-        bool constructorRejected=false;try{new RecordedReplay(null,null,"rev","x","y",true);}catch(ArgumentException){constructorRejected=true;}Check(constructorRejected,"constructor accepted null/invalid input");
+        bool constructorRejected=false;try{new RecordedReplay(null!,null!,"rev","x","y",true);}catch(ArgumentException){constructorRejected=true;}Check(constructorRejected,"constructor accepted null/invalid input");
         bool invalidPose=false;try{new RecordedReplay(new[]{new ReplayFrame(0,null,null,"Connected / Valid","Disconnected / Unavailable")},new ReplayTarget[0],"rev","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",true);}catch(InvalidDataException){invalidPose=true;}Check(invalidPose,"constructor accepted invalid pose status");
+        bool defaultPose=false;try{new RecordedReplay(new[]{new ReplayFrame(0,new Elts.Geometry.RigidPose(),null,"Connected / Valid","Disconnected / Unavailable")},new ReplayTarget[0],"rev","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",true);}catch(InvalidDataException){defaultPose=true;}Check(defaultPose,"constructor accepted default pose");
         bool invalidLifecycle=false;try{new RecordedReplay(new[]{new ReplayFrame(0,null,null,"Disconnected / Unavailable","Disconnected / Unavailable")},new[]{new ReplayTarget(0,"block/one","Bogus",new Elts.Geometry.Vector3d(0,0,0))},"rev","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",true);}catch(InvalidDataException){invalidLifecycle=true;}Check(invalidLifecycle,"constructor accepted invalid lifecycle");
         foreach(string path in args){if(Directory.Exists(path)){var loaded=RecordedReplay.Load(path);Check(loaded.FrameCount>0,"supplied generated log had no frames");}}
         Console.WriteLine("PASS: "+checks+" replay checks");

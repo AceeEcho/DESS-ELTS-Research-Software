@@ -19,6 +19,9 @@ JSON is consumed with bounded buffers: no product line or summary can allocate
 past the configured limits before rejection. The accepted event payload key
 grammar matches the logging contract (`^[A-Za-z0-9_.-]+$`, maximum 256
 characters); comments and single-quoted JSON are rejected.
+The syntax gate also rejects trailing commas, unquoted property names, leading
+zeroes, hexadecimal numbers, and other JavaScript-only numeric forms before
+the Newtonsoft reader is invoked.
 
 Loaded arrays are cloned and exposed through value results. Target queries use
 per-target timestamp histories and binary search, so repeated scrubbing does

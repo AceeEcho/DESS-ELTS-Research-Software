@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from tools.build.package import ROOT, create_package, package_files, verify_package
-from tools.build.provenance import finalize
+from tools.build.provenance import finalize, sha
 
 
 class PackageTests(unittest.TestCase):
@@ -17,10 +17,14 @@ class PackageTests(unittest.TestCase):
         self.build = self.root / "source build"
         self.build.mkdir()
         (self.build / "ELTS-Synthetic.exe").write_bytes(b"unit-test-only-not-executable")
+        config = self.build / "ELTS-Synthetic_Data/StreamingAssets/config-generated/effective-config.json"
+        config.parent.mkdir(parents=True)
+        config.write_text('{"machine":{"dataRoot":"data/synthetic"}}', encoding="utf-8")
         finalize(self.build, {"mode": "synthetic-development", "studyReady": False,
                              "version": "fixture", "commit": "fixture-revision", "dirty": False})
         self.report = self.root / "passing-report.json"
-        self.report.write_text('{"result":"pass","mode":"synthetic-development"}', encoding="utf-8")
+        self.report.write_text(json.dumps({"result":"pass", "mode":"synthetic-development",
+                                         "playerSha256":sha(self.build / "ELTS-Synthetic.exe")}), encoding="utf-8")
         self.output = self.root / "copied package with spaces"
 
     def tearDown(self):
@@ -61,6 +65,10 @@ class PackageTests(unittest.TestCase):
         runtime.mkdir(parents=True)
         (runtime / "events.ndjson").write_text("runtime output", encoding="utf-8")
         verify_package(self.output)
+        (runtime / "unexpected.dll").write_bytes(b"code is not a recording")
+        with self.assertRaises(ValueError):
+            verify_package(self.output)
+        (runtime / "unexpected.dll").unlink()
         (self.output / "player/ELTS-Synthetic.exe").write_bytes(b"changed")
         with self.assertRaises(ValueError):
             verify_package(self.output)
@@ -100,6 +108,12 @@ class PackageTests(unittest.TestCase):
 
     def test_failing_evidence_prevents_any_output(self):
         self.report.write_text('{"result":"fail"}', encoding="utf-8")
+        with self.assertRaises(ValueError):
+            self.create()
+        self.assertFalse(self.output.exists())
+
+    def test_unbound_passing_evidence_is_rejected(self):
+        self.report.write_text('{"result":"pass"}', encoding="utf-8")
         with self.assertRaises(ValueError):
             self.create()
         self.assertFalse(self.output.exists())

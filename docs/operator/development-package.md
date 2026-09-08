@@ -53,12 +53,16 @@ unchanged. Use the rendering/replay tools' path field to load the absolute path
 to `samples/synthetic-run` for recorded replay.
 
 `PACKAGE-MANIFEST.sha256` binds the player, documentation, tools, evidence and
-sample files. Verification permits newly generated recordings only below
-`player/data/synthetic/` and disposable Python bytecode caches. Changing packaged
+sample files. Verification permits only expected recording, reservation and
+calibration filenames below `player/data/synthetic/`, plus disposable analysis/tool
+Python bytecode caches. Changing packaged
 code, configuration or sample data fails integrity verification. Hashes detect
 changes; they are not signatures or research/safety approval.
 
-`package-info.json` identifies the package recipe and player revision. The player
+`package-info.json` identifies the package recipe and player revision. Each evidence
+report is bound either to the player binary hash or to a Git revision with the same
+versioned runtime/configuration sources. This source comparison does not turn a
+console fixture into a standalone or hardware test. The player
 retains its own `build-info.json` and `MANIFEST.sha256`. A `dirty` source marker is
 reported truthfully; consult its recorded source snapshot hashes. Evidence in
 `evidence/` states which checks ran and their limits. Copied-output testing on this

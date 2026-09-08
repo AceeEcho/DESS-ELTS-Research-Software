@@ -1,10 +1,13 @@
 """Version-aware, read-only ingest of completed ELTS logging runs."""
 from __future__ import annotations
-import argparse, hashlib, json, math, statistics, re
+import argparse, hashlib, json, math, statistics, re, sys
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from tools.logging.verify_run import VerificationError, strict_json, verify_run
 PRODUCTS = ("samples.ndjson", "events.ndjson", "targets.ndjson", "session-summary.json")
 SAMPLE_SCHEMA = "elts.samples.v1"
 EVENT_SCHEMA = "elts.events.v1"
@@ -18,8 +21,8 @@ class IngestError(ValueError):
 
 def _load_json(path: Path) -> Any:
     try:
-        with path.open("r", encoding="utf-8") as f: return json.load(f, parse_constant=lambda x: (_ for _ in ()).throw(ValueError(x)))
-    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+        return strict_json(path.read_text(encoding="utf-8"), str(path))
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError, VerificationError) as exc:
         raise IngestError(f"cannot parse {path.name}: {exc}") from exc
 
 def _schema(value: Any, expected: str, where: str) -> None:
@@ -47,14 +50,18 @@ def _require_sha(value: Any, name: str) -> str:
 
 def _finite_vector(value: Any, name: str) -> tuple[float, float, float]:
     if not isinstance(value, (list, tuple)) or len(value) != 3: raise IngestError(f"{name} must contain three numbers")
-    try: result = tuple(float(x) for x in value)
+    try:
+        if any(type(x) not in (int, float) for x in value): raise TypeError
+        result = tuple(float(x) for x in value)
     except (TypeError, ValueError) as exc: raise IngestError(f"{name} must contain three numbers") from exc
     if not all(math.isfinite(x) for x in result): raise IngestError(f"{name} must be finite")
     return result
 
 def _finite_quat(value: Any, name: str) -> tuple[float, float, float, float]:
     if not isinstance(value, (list, tuple)) or len(value) != 4: raise IngestError(f"{name} must contain four numbers")
-    try: q = tuple(float(x) for x in value)
+    try:
+        if any(type(x) not in (int, float) for x in value): raise TypeError
+        q = tuple(float(x) for x in value)
     except (TypeError, ValueError) as exc: raise IngestError(f"{name} must contain four numbers") from exc
     n = math.sqrt(sum(x*x for x in q))
     if not math.isfinite(n) or n <= 1e-12: raise IngestError(f"{name} must be a nonzero finite quaternion")
@@ -96,8 +103,8 @@ def _records(path: Path, expected: str) -> list[dict[str, Any]]:
     with handle:
         for line_no, line in enumerate(handle, 1):
             if not line.strip(): raise IngestError(f"blank line at {path.name}:{line_no}")
-            try: value=json.loads(line)
-            except json.JSONDecodeError as exc: raise IngestError(f"malformed JSON at {path.name}:{line_no}: {exc.msg}") from exc
+            try: value=strict_json(line, f"{path.name}:{line_no}")
+            except (json.JSONDecodeError, VerificationError) as exc: raise IngestError(f"malformed JSON at {path.name}:{line_no}: {exc}") from exc
             _schema(value, expected, f"{path.name}:{line_no}")
             sequence = value.get("sequence")
             ticks = value.get("monotonicTicks")
@@ -108,6 +115,18 @@ def _records(path: Path, expected: str) -> list[dict[str, Any]]:
             previous_sequence=sequence; previous_ticks=ticks; result.append(value)
     return result
 
+def _output_path(directory: Path, calibration: Path, output: str | Path | None) -> Path | None:
+    if output is None:
+        return None
+    destination = Path(output).resolve(strict=False)
+    run_root = directory.resolve(strict=True)
+    cal_path = calibration.resolve(strict=True)
+    if destination == cal_path or run_root == destination or run_root in destination.parents:
+        raise IngestError("derived output must not replace a raw product or calibration")
+    if destination.exists():
+        raise IngestError(f"derived output already exists; refusing overwrite: {destination}")
+    return destination
+
 def _sample_valid(sample: dict[str, Any]) -> bool:
     """Return true only when both paired trackers have usable valid poses."""
     for role in ("head", "weapon"):
@@ -117,8 +136,14 @@ def _sample_valid(sample: dict[str, Any]) -> bool:
 
 def ingest_run(run_directory: str | Path, calibration: str | Path, output: str | Path | None = None) -> dict[str, Any]:
     """Read a complete v1 run and write only a derived report when output is given."""
-    directory=Path(run_directory); cal=_calibration(Path(calibration))
+    directory=Path(run_directory); calibration_path=Path(calibration)
     if not directory.is_dir(): raise IngestError(f"run directory does not exist: {directory}")
+    try:
+        verify_run(directory)
+    except VerificationError as exc:
+        raise IngestError(f"logging verification failed: {exc}") from exc
+    output_path = _output_path(directory, calibration_path, output)
+    cal=_calibration(calibration_path)
     raw={}
     for name in PRODUCTS:
         path=directory/name
@@ -136,23 +161,33 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
         expected = _require_sha(checksums.get(name), f"checksumsSha256.{name}")
         if expected != raw[name]["sha256"]: raise IngestError(f"{name} checksum does not match summary")
     samples=_records(directory/"samples.ndjson", SAMPLE_SCHEMA); events=_records(directory/"events.ndjson", EVENT_SCHEMA); targets=_records(directory/"targets.ndjson", TARGET_SCHEMA)
-    target_state={}; target_by_tick=[]
+    target_by_tick=[]
     for row in targets:
         _require_string(row.get("targetId"), "targetId")
         _require_string(row.get("blockId"), "blockId")
         _finite_vector([row.get("worldPositionMeters", {}).get(k) for k in ("x", "y", "z")], "worldPositionMeters")
-        target_state[row["targetId"]]=row
         target_by_tick.append((row["monotonicTicks"], row))
     valid=[]; invalid=0; errors=[]
+    current_targets: dict[tuple[str, str], dict[str, Any]] = {}
+    target_cursor = 0
     for row in samples:
         if not _sample_valid(row): invalid += 1; continue
         weapon=row["weapon"]; pose=weapon["pose"]; pos=tuple(float(pose["positionMeters"][k]) for k in ("x","y","z")); ori=tuple(float(pose["orientation"][k]) for k in ("x","y","z","w"))
         corrected=_qmul(ori, cal["zeroCorrectionQuaternion"]); muzzle=tuple(pos[i]+_qrotate(ori,cal["muzzleOffsetMeters"])[i] for i in range(3)); bore=_qrotate(corrected,cal["boreDirectionLocal"])
-        candidates=[]
         tick=row["monotonicTicks"]
-        for target_tick,t in target_by_tick:
-            if target_tick<=tick and t.get("lifecycle") != "Destroyed":
-                tp=t["worldPositionMeters"]; target_pos=(tp["x"],tp["y"],tp["z"]); candidates.append((target_pos, _angle(bore,_sub(target_pos,muzzle)), t["targetId"]))
+        candidates=[]
+        # Fold target snapshots in timestamp order. A newer update replaces the
+        # prior position; destruction removes that target from aim candidates.
+        while target_cursor < len(target_by_tick) and target_by_tick[target_cursor][0] <= tick:
+            _, target = target_by_tick[target_cursor]
+            key = (target["blockId"], target["targetId"])
+            if target.get("lifecycle") == "Destroyed":
+                current_targets.pop(key, None)
+            else:
+                current_targets[key] = target
+            target_cursor += 1
+        for t in current_targets.values():
+            tp=t["worldPositionMeters"]; target_pos=(tp["x"],tp["y"],tp["z"]); candidates.append((target_pos, _angle(bore,_sub(target_pos,muzzle)), t["targetId"]))
         if candidates:
             target_pos, error, target_id=min(candidates,key=lambda x:x[1]); errors.append(error); valid.append({"sequence":row["sequence"],"monotonicTicks":tick,"targetId":target_id,"aimErrorDegrees":error})
         else: valid.append({"sequence":row["sequence"],"monotonicTicks":tick,"targetId":None,"aimErrorDegrees":None})
@@ -172,6 +207,9 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
         if "start" not in item or "end" not in item: continue
         if item["end"] - item["start"] != BLOCK_TICKS: raise IngestError(f"block {block_id!r} must be exactly 300 seconds")
         score_blocks.append((block_id, item["start"], item["end"]))
+    ordered_blocks = sorted(score_blocks, key=lambda block: block[1])
+    if any(previous[2] > current[1] for previous, current in zip(ordered_blocks, ordered_blocks[1:])):
+        raise IngestError("complete block intervals overlap")
     destroyed_seen = set()
     for event in events:
         if event.get("eventType") != "TargetDestroyed": continue
@@ -187,7 +225,9 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
     for event in events:
         for block_id, start_tick, end_tick in score_blocks:
             if start_tick <= event["monotonicTicks"] < end_tick:
-                if event.get("eventType") == "TargetDestroyed": blocks[block_id]["targetsDestroyed"] += 1
+                if event.get("eventType") == "TargetDestroyed":
+                    if event.get("payload", {}).get("blockId") == block_id:
+                        blocks[block_id]["targetsDestroyed"] += 1
                 if event.get("eventType") == "ShotFired": blocks[block_id]["shots"] += 1
                 break
     for row in samples:
@@ -211,8 +251,12 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
     expected_counts = {"writtenSamples": len(samples), "writtenEvents": len(events), "writtenTargets": len(targets)}
     for key, actual in expected_counts.items():
         if counts.get(key) != actual: raise IngestError(f"session summary {key} does not match input")
-    report={"analysisVersion":"elts.analysis.v1","source":{"runDirectory":str(directory.resolve()),"sessionSummary":provenance,"rawInputs":raw},"calibration":{**cal,"sha256":_sha(Path(calibration))[0]},"counts":{"samples":len(samples),"validSamples":sum(1 for x in samples if _sample_valid(x)),"invalidSamples":invalid,"events":len(events),"targets":len(targets)},"blocks":block_reports}
-    if output is not None: Path(output).write_text(json.dumps(report,indent=2,sort_keys=True,allow_nan=False)+"\n",encoding="utf-8",newline="\n")
+    report={"analysisVersion":"elts.analysis.v1","targetSelectionPolicy":"latest-nondestroyed-snapshot-per-block-target; nearest-angular-candidate","source":{"runDirectory":str(directory.resolve()),"sessionSummary":provenance,"rawInputs":raw},"calibration":{**cal,"sha256":_sha(calibration_path)[0]},"counts":{"samples":len(samples),"validSamples":sum(1 for x in samples if _sample_valid(x)),"invalidSamples":invalid,"events":len(events),"targets":len(targets)},"blocks":block_reports}
+    if output_path is not None:
+        try:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(json.dumps(report,indent=2,sort_keys=True,allow_nan=False)+"\n",encoding="utf-8",newline="\n")
+        except OSError as exc: raise IngestError(f"cannot write derived output: {exc}") from exc
     return report
 
 def main(argv=None):

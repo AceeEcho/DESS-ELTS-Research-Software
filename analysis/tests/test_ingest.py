@@ -5,6 +5,14 @@ sys.path.insert(0, str(Path(__file__).parents[1] / 'src'))
 from elts_analysis.ingest import BLOCK_TICKS, IngestError, ingest_run
 
 class IngestTests(unittest.TestCase):
+    def refresh(self, run, *, samples=None, events=None, targets=None):
+        summary=json.loads((run/'session-summary.json').read_text())
+        for name, rows, count in [('samples.ndjson', samples, 'writtenSamples'), ('events.ndjson', events, 'writtenEvents'), ('targets.ndjson', targets, 'writtenTargets')]:
+            if rows is None: continue
+            (run/name).write_text(''.join(json.dumps(x,separators=(',',':'))+'\n' for x in rows))
+            summary['counts'][count]=len(rows); summary['checksumsSha256'][name]=hashlib.sha256((run/name).read_bytes()).hexdigest()
+        (run/'session-summary.json').write_text(json.dumps(summary))
+
     def make_run(self, bad_schema=False, duplicate=False):
         root=Path(tempfile.mkdtemp()); run=root/'run'; run.mkdir()
         def sample(seq,tick,valid=True):
@@ -24,7 +32,7 @@ class IngestTests(unittest.TestCase):
         self.assertEqual(result['counts']['invalidSamples'],1); self.assertEqual(result['blocks'][0]['targetsDestroyed'],1); self.assertEqual(result['blocks'][0]['shots'],1); self.assertEqual(result['blocks'][0]['validSamples'],1); self.assertEqual(result['blocks'][0]['meanAimErrorDegrees'],0.0); self.assertEqual(result['source']['rawInputs']['samples.ndjson']['sha256'],hashlib.sha256((run/'samples.ndjson').read_bytes()).hexdigest())
     def test_unsupported_schema(self):
         root,run,cal=self.make_run(bad_schema=True); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True));
-        with self.assertRaisesRegex(IngestError,'unsupported schema'): ingest_run(run,cal)
+        with self.assertRaisesRegex(IngestError,'schemaVersion|logging verification'): ingest_run(run,cal)
     def test_duplicate_score_rejected(self):
         root,run,cal=self.make_run(duplicate=True); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True));
         with self.assertRaisesRegex(IngestError,'duplicate TargetDestroyed'): ingest_run(run,cal)
@@ -45,8 +53,49 @@ class IngestTests(unittest.TestCase):
     def test_summary_count_mismatch_rejected(self):
         root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
         summary=json.loads((run/'session-summary.json').read_text()); summary['counts']['writtenSamples']=999; (run/'session-summary.json').write_text(json.dumps(summary))
-        with self.assertRaisesRegex(IngestError,'writtenSamples'):
+        with self.assertRaisesRegex(IngestError,'writtenSamples|summary reports'):
             ingest_run(run,cal)
+
+    def test_duplicate_json_key_and_nonfinite_are_rejected(self):
+        root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
+        original=(run/'samples.ndjson').read_text(); (run/'samples.ndjson').write_text(original.replace('"sequence":1','"sequence":1,"sequence":1',1))
+        with self.assertRaisesRegex(IngestError,'Duplicate JSON key|verification'):
+            ingest_run(run,cal)
+        (run/'samples.ndjson').write_text(original.replace('"x":0','"x":NaN',1)); self.refresh(run, samples=[json.loads(line) for line in original.splitlines()])
+        # Restore the actual non-finite text after refresh, then refresh only its checksum.
+        (run/'samples.ndjson').write_text(original.replace('"x":0','"x":NaN',1)); summary=json.loads((run/'session-summary.json').read_text()); summary['checksumsSha256']['samples.ndjson']=hashlib.sha256((run/'samples.ndjson').read_bytes()).hexdigest(); (run/'session-summary.json').write_text(json.dumps(summary))
+        with self.assertRaisesRegex(IngestError,'Non-finite|verification'):
+            ingest_run(run,cal)
+
+    def test_output_cannot_overwrite_raw_or_existing_file(self):
+        root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
+        with self.assertRaisesRegex(IngestError,'raw product|calibration'):
+            ingest_run(run,cal,run/'samples.ndjson')
+        existing=root/'derived.json'; existing.write_text('keep')
+        with self.assertRaisesRegex(IngestError,'already exists'):
+            ingest_run(run,cal,existing)
+
+    def test_wrong_block_destroyed_event_is_not_scored(self):
+        root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
+        events=[json.loads(line) for line in (run/'events.ndjson').read_text().splitlines()]; events[2]['payload']['blockId']='other'; self.refresh(run,events=events)
+        result=ingest_run(run,cal); self.assertEqual(result['blocks'][0]['targetsDestroyed'],0)
+
+    def test_calibration_numeric_strings_are_rejected(self):
+        root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
+        cal.write_text(json.dumps({'calibrationId':'bad','muzzleOffsetMeters':['0',0,0],'boreDirectionLocal':[0,0,1],'zeroCorrectionQuaternion':[0,0,0,1]}))
+        with self.assertRaisesRegex(IngestError,'numbers'):
+            ingest_run(run,cal)
+
+    def test_target_updates_replace_old_and_destroyed_target_is_not_aim_candidate(self):
+        root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
+        samples=[json.loads(line) for line in (run/'samples.ndjson').read_text().splitlines()]
+        samples[1]['head']=samples[1]['weapon']={**samples[0]['head'], 'trackerId':'HEAD'}
+        samples[1]['weapon']['trackerId']='WEAPON'; samples.append({**samples[0], 'sequence':3, 'monotonicTicks':BLOCK_TICKS-1})
+        targets=[json.loads(line) for line in (run/'targets.ndjson').read_text().splitlines()]
+        targets += [{**targets[0], 'sequence':2, 'monotonicTicks':2, 'worldPositionMeters':{'x':1,'y':0,'z':1}}, {**targets[0], 'sequence':3, 'monotonicTicks':3, 'lifecycle':'Destroyed'}]
+        self.refresh(run,samples=samples,targets=targets)
+        result=ingest_run(run,cal); block=result['blocks'][0]
+        self.assertAlmostEqual(block['meanAimErrorDegrees'],22.5,places=5)
 if __name__=='__main__': unittest.main()
 
 

@@ -32,12 +32,12 @@ The focused harness is portable and does not hardcode a Newtonsoft.Json path:
 
 ```powershell
 dotnet run --project tools/runtime-tests/ReplayChecks.csproj `
-  -p:NewtonsoftPath="<verified Unity Editor>/Data/Managed/Newtonsoft.Json.dll" `
+  -p:NewtonsoftPath="<verified project package cache>/com.unity.nuget.newtonsoft-json@<hash>/Runtime/Newtonsoft.Json.dll" `
   -- <optional generated-log-directory>
 ```
 
 The optional directory can be a short generated log such as
-`main/test-results/dev04-publication` or `synthetic-soak`. The harness always
+`test-results/dev04-publication/synthetic-soak`. The harness always
 creates additional temporary fixtures covering valid loading, invalid poses,
 unsupported values, duplicate fields, non-finite values, missing products,
 tampered hashes, constructor validation, lifecycle seek, and invalid sampling.

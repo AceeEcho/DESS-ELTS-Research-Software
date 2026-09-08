@@ -155,6 +155,7 @@ namespace Elts.Operator
                 transport!.Advance(deltaSeconds);var frame=replay.FrameAt(transport.PositionSeconds);rawHead=frame.Head;rawWeapon=frame.Weapon;
                 foreach(var target in replay.TargetsAt(transport.PositionSeconds))visibleTargets.Add(target.Key,target.Value);
                 status="REPLAY | Head "+frame.HeadStatus+" | Weapon "+frame.WeaponStatus+" | raw sample t="+(frame.Ticks/10000000.0).ToString("F3")+" s";
+                if(replay.ConfigurationHash!=configuration.EffectiveSha256)status+=" | GEOMETRY USES CURRENT CONFIG, NOT RECORDED CONFIG";
             }
             else
             {
@@ -214,7 +215,7 @@ namespace Elts.Operator
             var area=new Rect(10,Screen.height-ControlsHeight+4,Screen.width-20,ControlsHeight-8);
             GUILayout.BeginArea(area,GUI.skin.box);controlScroll=GUILayout.BeginScrollView(controlScroll);
             GUILayout.Label("SINGLE-DISPLAY DEVELOPMENT EMULATION | Synthetic/unmeasured geometry | Study unavailable | Base station not connected");
-            GUILayout.Label(status);
+            var previousColor=GUI.color;if(!rawHead.HasValue||!rawWeapon.HasValue)GUI.color=new Color(1,0.4f,0.3f);GUILayout.Label(status);GUI.color=previousColor;
             if(Screen.width<MinimumWindowWidth)GUILayout.Label("Widen the window for easier diagnostics.");
             GUILayout.BeginHorizontal();
             if(GUILayout.Button("Synthetic demo",GUILayout.Width(120)))UseDemo();

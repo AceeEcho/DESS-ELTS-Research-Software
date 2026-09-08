@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Elts.Geometry;
 
 namespace Elts.Calibration
@@ -110,26 +111,131 @@ namespace Elts.Calibration
     }
 
     public enum DominantEye { Left, Right }
-    public sealed class EyeOffsetInput { public EyeOffsetInput(DominantEye eye, Vector3d trackerToEyeMeters) { if (!Enum.IsDefined(typeof(DominantEye), eye)) throw new ArgumentOutOfRangeException(nameof(eye)); Eye = eye; TrackerToEyeMeters = trackerToEyeMeters; } public DominantEye Eye { get; } public Vector3d TrackerToEyeMeters { get; } }
-    public sealed class AngularVerificationSummary { internal AngularVerificationSummary(double[] values) { ResidualDegrees = values; double sum = 0, max = 0; foreach (var v in values) { if (v < 0 || Double.IsNaN(v) || Double.IsInfinity(v)) throw new ArgumentException("Residuals must be finite and nonnegative."); sum += v; if (v > max) max = v; } MeanDegrees = sum / values.Length; MaxDegrees = max; } public IReadOnlyList<double> ResidualDegrees { get; } public double MeanDegrees { get; } public double MaxDegrees { get; } }
-    public static class AngularVerification { public static AngularVerificationSummary Summarize(IReadOnlyList<double> residualDegrees) { if (residualDegrees == null || residualDegrees.Count != 9) throw new ArgumentException("Exactly nine 3x3 residuals are required."); var values = new double[9]; for (int i = 0; i < 9; i++) values[i] = residualDegrees[i]; return new AngularVerificationSummary(values); } }
+
+    public sealed class EyeOffsetInput
+    {
+        public EyeOffsetInput(DominantEye eye, Vector3d trackerToEyeMeters)
+        {
+            if (!Enum.IsDefined(typeof(DominantEye), eye)) throw new ArgumentOutOfRangeException(nameof(eye));
+            Eye = eye;
+            TrackerToEyeMeters = trackerToEyeMeters;
+        }
+
+        public DominantEye Eye { get; }
+        public Vector3d TrackerToEyeMeters { get; }
+    }
+
+    public sealed class AngularVerificationSummary
+    {
+        internal AngularVerificationSummary(double[] values)
+        {
+            ResidualDegrees = values;
+            double sum = 0;
+            double maximum = 0;
+            foreach (double value in values)
+            {
+                if (value < 0 || Double.IsNaN(value) || Double.IsInfinity(value))
+                    throw new ArgumentException("Residuals must be finite and nonnegative.");
+                sum += value;
+                maximum = Math.Max(maximum, value);
+            }
+            MeanDegrees = sum / values.Length;
+            MaxDegrees = maximum;
+        }
+
+        public IReadOnlyList<double> ResidualDegrees { get; }
+        public double MeanDegrees { get; }
+        public double MaxDegrees { get; }
+    }
+
+    public static class AngularVerification
+    {
+        public static AngularVerificationSummary Summarize(IReadOnlyList<double> residualDegrees)
+        {
+            if (residualDegrees == null || residualDegrees.Count != 9)
+                throw new ArgumentException("Exactly nine 3x3 residuals are required.");
+            var values = new double[9];
+            for (int index = 0; index < values.Length; index++) values[index] = residualDegrees[index];
+            return new AngularVerificationSummary(values);
+        }
+    }
 
     public enum CalibrationWizardState { Idle, Capturing, Review, Accepted }
+
     public sealed class SyntheticCalibrationRecord
     {
-        public string Mode => "synthetic"; public bool StudyReady => false; public string Provenance { get; set; } = "synthetic-development-only"; public CalibrationWizardState State { get; set; }
+        public string Mode => "synthetic";
+        public bool StudyReady => false;
+        public string Provenance { get; set; } = "synthetic-development-only";
+        public CalibrationWizardState State { get; set; }
         public string? AcceptedSummary { get; set; }
+
         /// <summary>Small self-contained camelCase serialization for the synthetic state helper.</summary>
-        public string ToJson() => "{\"mode\":\"synthetic\",\"studyReady\":false,\"provenance\":\"" + Escape(Provenance) + "\",\"state\":\"" + State + "\",\"acceptedSummary\":\"" + Escape(AcceptedSummary ?? String.Empty) + "\"}";
-        private static string Escape(string value) => value.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r");
+        public string ToJson()
+        {
+            return "{\"mode\":\"synthetic\",\"studyReady\":false,\"provenance\":\"" + Escape(Provenance)
+                + "\",\"state\":\"" + State + "\",\"acceptedSummary\":\"" + Escape(AcceptedSummary ?? String.Empty) + "\"}";
+        }
+
+        private static string Escape(string value)
+        {
+            var escaped = new StringBuilder(value.Length + 8);
+            foreach (char character in value)
+            {
+                switch (character)
+                {
+                    case '"': escaped.Append("\\\""); break;
+                    case '\\': escaped.Append("\\\\"); break;
+                    case '\b': escaped.Append("\\b"); break;
+                    case '\f': escaped.Append("\\f"); break;
+                    case '\n': escaped.Append("\\n"); break;
+                    case '\r': escaped.Append("\\r"); break;
+                    case '\t': escaped.Append("\\t"); break;
+                    default:
+                        if (character < 0x20) escaped.Append("\\u").Append(((int)character).ToString("x4"));
+                        else escaped.Append(character);
+                        break;
+                }
+            }
+            return escaped.ToString();
+        }
     }
+
     public sealed class CalibrationWizard
     {
         public CalibrationWizardState State { get; private set; } = CalibrationWizardState.Idle;
-        public void BeginCapture() { Require(CalibrationWizardState.Idle); State = CalibrationWizardState.Capturing; }
-        public void Review() { Require(CalibrationWizardState.Capturing); State = CalibrationWizardState.Review; }
-        public void Redo() { Require(CalibrationWizardState.Review); State = CalibrationWizardState.Idle; } /// <summary>Creates a synthetic state record only. The caller must evaluate configured development thresholds before calling.</summary>
-        public SyntheticCalibrationRecord Accept(string summary) { Require(CalibrationWizardState.Review); if (String.IsNullOrWhiteSpace(summary)) throw new ArgumentException("A summary is required.", nameof(summary)); State = CalibrationWizardState.Accepted; return new SyntheticCalibrationRecord { State = State, AcceptedSummary = summary }; }
-        private void Require(CalibrationWizardState expected) { if (State != expected) throw new InvalidOperationException("Invalid wizard transition."); }
+
+        public void BeginCapture()
+        {
+            Require(CalibrationWizardState.Idle);
+            State = CalibrationWizardState.Capturing;
+        }
+
+        public void Review()
+        {
+            Require(CalibrationWizardState.Capturing);
+            State = CalibrationWizardState.Review;
+        }
+
+        public void Redo()
+        {
+            Require(CalibrationWizardState.Review);
+            State = CalibrationWizardState.Idle;
+        }
+
+        /// <summary>Creates a synthetic state record only. The caller must evaluate configured development thresholds before calling.</summary>
+        public SyntheticCalibrationRecord Accept(string summary)
+        {
+            Require(CalibrationWizardState.Review);
+            if (String.IsNullOrWhiteSpace(summary)) throw new ArgumentException("A summary is required.", nameof(summary));
+            State = CalibrationWizardState.Accepted;
+            return new SyntheticCalibrationRecord { State = State, AcceptedSummary = summary };
+        }
+
+        private void Require(CalibrationWizardState expected)
+        {
+            if (State != expected) throw new InvalidOperationException("Invalid wizard transition.");
+        }
     }
+
 }

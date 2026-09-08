@@ -1,0 +1,6 @@
+{"protocolVersion":"development-synthetic-v1","messageType":"HELLO","sequence":1,"unityMonotonicTicks":0,"applicationVersion":"fixture-v1"}
+{"protocolVersion":"development-synthetic-v1","messageType":"ARM","sequence":2,"unityMonotonicTicks":1}
+{"protocolVersion":"development-synthetic-v1","messageType":"START","sequence":3,"unityMonotonicTicks":2,"participantPseudonym":"synthetic-participant","block":"1","condition":"WE_MT","durationTicks":10000000}
+{"protocolVersion":"development-synthetic-v1","messageType":"PING","sequence":4,"unityMonotonicTicks":3}
+{"protocolVersion":"development-synthetic-v1","messageType":"STOP","sequence":5,"unityMonotonicTicks":4,"reason":"block_end"}
+{"protocolVersion":"development-synthetic-v1","messageType":"DISARM","sequence":6,"unityMonotonicTicks":5}

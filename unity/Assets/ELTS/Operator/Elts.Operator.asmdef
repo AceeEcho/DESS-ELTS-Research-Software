@@ -1,0 +1,5 @@
+{
+  "name": "Elts.Operator",
+  "references": ["Elts.Config", "Elts.Geometry", "Elts.Rendering"],
+  "autoReferenced": true
+}

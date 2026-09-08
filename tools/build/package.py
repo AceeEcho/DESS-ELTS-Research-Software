@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -28,6 +29,7 @@ PACKAGE_SCHEMA = "elts.development-package.v1"
 # Only this documented output directory may grow after the operator runs the
 # player. Packaged code/configuration/evidence remain checked byte-for-byte.
 RUNTIME_OUTPUT = "player/data/synthetic/"
+RUNTIME_SOURCE_PATHS = ("unity/Assets", "unity/Packages", "unity/ProjectSettings", "config")
 FILES = {
     "docs/operator/development-package.md": "README.md",
     "docs/operator/hardware-follow-up.md": "HARDWARE-FOLLOW-UP.md",
@@ -62,11 +64,52 @@ def package_files(root: Path) -> dict[str, str]:
             name = path.relative_to(root).as_posix()
             # Interpreter bytecode is disposable runtime output, not source.
             generated_bytecode = "__pycache__" in path.parts and path.suffix == ".pyc" and name.startswith(("analysis/", "tools/"))
-            if generated_bytecode or name.startswith(RUNTIME_OUTPUT):
+            if name.startswith(RUNTIME_OUTPUT):
+                relative = name[len(RUNTIME_OUTPUT):]
+                reservation = re.fullmatch(r"\.[A-Za-z0-9][A-Za-z0-9_.-]{0,79}\.reservation", relative)
+                product = re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,79}/(samples\.ndjson|events\.ndjson|targets\.ndjson|session-summary\.json|\.session-summary\.pending\.json|synthetic-calibration-[0-9a-f]{32}\.json)", relative)
+                if not (reservation or product):
+                    raise ValueError("Unexpected file in runtime recording directory: " + relative)
+                continue
+            if generated_bytecode:
                 continue
             if name != "PACKAGE-MANIFEST.sha256":
                 files[name] = sha(path)
     return files
+
+
+def evidence_binding(report: dict, build: Path, build_info: dict) -> dict:
+    """Bind evidence to this binary or to identical versioned runtime sources.
+
+    Runtime-source equivalence does not turn a .NET fixture into a standalone
+    player test; each report retains its own procedure and limitations.
+    """
+    if report.get("playerSha256") == sha(build / "ELTS-Synthetic.exe"):
+        return {"kind": "player-binary-sha256", "playerSha256": report["playerSha256"]}
+    revision = report.get("sourceRevision")
+    if not isinstance(revision, str) or not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise ValueError("Evidence needs a full sourceRevision or matching playerSha256")
+    result = subprocess.run(["git", "diff", "--quiet", build_info["commit"], revision, "--", *RUNTIME_SOURCE_PATHS], cwd=ROOT)
+    if result.returncode != 0:
+        raise ValueError("Evidence runtime sources differ from packaged player: " + revision)
+    return {"kind": "same-versioned-runtime-sources", "sourceRevision": revision,
+            "comparedWithPlayerRevision": build_info["commit"], "comparedPaths": list(RUNTIME_SOURCE_PATHS)}
+
+
+def verify_archive(archive: Path, directory: Path) -> None:
+    expected = {directory.name + "/" + name: digest for name, digest in package_files(directory).items()}
+    expected[directory.name + "/PACKAGE-MANIFEST.sha256"] = sha(directory / "PACKAGE-MANIFEST.sha256")
+    with zipfile.ZipFile(archive) as bundle:
+        names = bundle.namelist()
+        if len(names) != len(set(names)) or set(names) != set(expected):
+            raise ValueError("ZIP contains missing, extra or duplicate files")
+        for name, digest in expected.items():
+            checksum = hashlib.sha256()
+            with bundle.open(name) as source:
+                for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                    checksum.update(chunk)
+            if checksum.hexdigest() != digest:
+                raise ValueError("ZIP readback failed: " + name)
 
 
 def verify_package(directory: Path) -> dict:
@@ -112,9 +155,16 @@ def create_package(build: Path, output: Path, evidence: list[Path], sample_run: 
     if archive.exists():
         raise ValueError("Package archive already exists; choose a new output name")
     build_info = verify_player(build)
+    runtime_directory = build / "data/synthetic"
+    if runtime_directory.exists() and any(runtime_directory.rglob("*")):
+        raise ValueError("Package only a pristine player without runtime recordings")
+    effective = load_json(build / "ELTS-Synthetic_Data/StreamingAssets/config-generated/effective-config.json")
+    if effective["machine"]["dataRoot"] != "data/synthetic":
+        raise ValueError("This package recipe requires the documented data/synthetic output path")
     if not evidence:
         raise ValueError("At least one passing evidence report is required")
     reports = []
+    bindings = {}
     for path in evidence:
         path = path.resolve(strict=True)
         report = load_json(path)
@@ -122,6 +172,7 @@ def create_package(build: Path, output: Path, evidence: list[Path], sample_run: 
             raise ValueError("Evidence must be a passing JSON report: " + path.name)
         if path.name in {p.name for p in reports}:
             raise ValueError("Evidence filenames must be unique")
+        bindings[path.name] = evidence_binding(report, build, build_info)
         reports.append(path)
     if sample_run is not None:
         sample_run = sample_run.resolve(strict=True)
@@ -159,6 +210,7 @@ def create_package(build: Path, output: Path, evidence: list[Path], sample_run: 
         "playerSourceRevision": build_info["commit"], "playerSourceDirty": build_info["dirty"],
         "sourceBuildInfoSha256": sha(build / "build-info.json"),
         "evidenceSha256": {p.name: sha(p) for p in reports},
+        "evidenceBinding": bindings,
         "sampleRun": "samples/synthetic-run" if sample_run else None,
         "runtimeOutput": RUNTIME_OUTPUT, "secondMachineTest": "unavailable; same-machine copied-output tests only",
         "limitations": ["Synthetic and unmeasured configuration only", "No study release or physical safety acceptance", "Hashes are integrity records, not authenticated signatures"],
@@ -172,6 +224,7 @@ def create_package(build: Path, output: Path, evidence: list[Path], sample_run: 
         for path in sorted(output.rglob("*")):
             if path.is_file():
                 bundle.write(path, output.name + "/" + path.relative_to(output).as_posix())
+    verify_archive(archive, output)
     return {"result": "pass", "mode": "synthetic-development", "studyReady": False,
             "packageDirectory": str(output), "archive": str(archive), "archiveSha256": sha(archive), **info}
 

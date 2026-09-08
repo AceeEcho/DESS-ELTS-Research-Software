@@ -200,6 +200,8 @@ namespace Elts.Session
         public int RerunIndex => rerun;
         public string? Failure => failure;
         public bool TargetsActive => State == SessionState.BlockRunning;
+        /// <summary>True only when a completed or aborted real block can start a new attempt.</summary>
+        public bool CanRerun => (State == SessionState.Aborted || State == SessionState.BlockEnded) && block != null;
         public bool CanAdvance => State == SessionState.SessionSetup || State == SessionState.Calibration || State == SessionState.BlockEnded || State == SessionState.Break;
 
         public double RemainingSeconds

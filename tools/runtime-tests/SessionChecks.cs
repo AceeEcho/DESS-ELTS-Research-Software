@@ -84,7 +84,7 @@ static class SessionChecks
         string firstAttempt = engine.CurrentBlockId!;
         engine.StartBlock();
         engine.Abort("operator-stop");
-        True(engine.State == SessionState.Aborted, "abort works from a running block");
+        True(engine.State == SessionState.Aborted && engine.CanRerun, "abort works from a running block and permits its rerun");
         engine.Abort("repeat");
         True(engine.State == SessionState.Aborted, "abort is idempotent only after an abort");
         Throws(() => engine.AddNote("after abort"), "notes cannot be appended after a terminal abort");
@@ -214,7 +214,7 @@ static class SessionChecks
         }
         True(engine.State == phase, "phase reached before abort: " + phase);
         engine.Abort("operator abort");
-        True(engine.State == SessionState.Aborted, "operator abort works from " + phase);
+        True(engine.State == SessionState.Aborted && (phase == SessionState.Break || !engine.CanRerun), "operator abort works without a phantom rerun from " + phase);
         if (phase != SessionState.Break) Throws(() => engine.RerunCurrentBlock(), "phase abort cannot rerun a phantom block: " + phase);
     }
 

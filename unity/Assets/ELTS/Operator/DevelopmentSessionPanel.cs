@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Elts.Clock;
 using Elts.Config;
 using Elts.Geometry;
+using Elts.EltsLink;
 using Elts.Logging;
 using Elts.Scenario;
 using Elts.Session;
@@ -23,7 +24,7 @@ namespace Elts.Operator
     /// and calls the pure session engine; recording and acquisition own their
     /// background work. Every displayed readiness substitution is synthetic.
     /// </summary>
-    public sealed class DevelopmentSessionPanel : MonoBehaviour
+    public sealed partial class DevelopmentSessionPanel : MonoBehaviour
     {
         private const double ValidTrackingSeconds = 2;
         private const double MaximumSampleAgeSeconds = 0.25;
@@ -43,6 +44,7 @@ namespace Elts.Operator
         private DevelopmentSessionAcquisition? acquisition;
         private ISharedClock? clock;
         private SessionEventSequence? sequence;
+        private MockEltsLink? mockLink;
         private DevelopmentSessionScenario? scenario;
         private Task? operation;
         private string lastMessage = "", runId = "";
@@ -77,7 +79,7 @@ namespace Elts.Operator
             template.CloneTree(root);
             Field("conditionOrder").value = String.Join(",", view.Configuration.Session.ConditionOrder);
             Bind("createSession", () => Begin(CreateSessionAsync));
-            Bind("advance", () => Act(() => engine!.Advance()));
+            Bind("advance", () => Act(AdvanceWithCalibration));
             Bind("startBlock", () => Act(() => engine!.StartBlock()));
             Bind("endBlock", () => Act(() => engine!.EndBlock()));
             Bind("fire", () => Act(() => scenario!.Fire(acquisition?.Snapshot?.Weapon.Pose,acquisition?.Snapshot?.Head.Pose)));
@@ -86,6 +88,14 @@ namespace Elts.Operator
             Bind("addNote", () => Act(() => { engine!.AddNote(Field("note").value); Field("note").value=""; }));
             Bind("syncMarker", () => Act(() => engine!.EmitProvisionalSyncMarker("operator-button")));
             Bind("viewTools", () => SetVisible(false));
+            var neMode = root.Q<DropdownField>("neLinkMode");
+            neMode.choices = new List<string> { "Idle", "Armed" };
+            neMode.value = "Idle";
+            Bind("reconnectLink", () => Act(() => {
+                mockLink?.SimulateReconnect();
+                engine!.Abort("Operator simulated controller reconnect; explicit new attempt required.");
+            }));
+            InitializeCalibrationControls();
             SetVisible(true);
             RefreshLabels();
             Application.wantsToQuit += OnWantsToQuit;
@@ -142,12 +152,17 @@ namespace Elts.Operator
                     TimeSpan.FromSeconds(config.Runtime.LogFlushSeconds));
                 recording=new SessionRecordingAdapter(dataRoot,provenance,limits);
                 if(!await recording.ReserveAndStartAsync(runId)) throw new IOException("The recording could not be started.");
+                mockLink = new MockEltsLink(new SimulatedEltsController(clock));
+                var linkOptions = new SessionEltsLinkOptions((DevelopmentNeLinkMode)Enum.Parse(typeof(DevelopmentNeLinkMode),
+                    root.Q<DropdownField>("neLinkMode").value), applicationVersion:Application.version);
+                var sessionLink = new SessionEltsLinkAdapter(clock, sequence, recording, mockLink, linkOptions);
                 engine=new SessionEngine(clock,sequence,plan,
                     new SessionTiming(config.Session.PracticeDurationSeconds,config.Session.BreakDurationSeconds,true),
-                    recording,new DevelopmentSessionLink());
+                    recording,sessionLink);
                 scenario=new DevelopmentSessionScenario(config,clock,engine,recording,sequence);
                 StartAcquisition(config);
                 firstValidAt=-1; setupPending=true; closing=false;
+                ResetCalibration();
                 lastMessage="Checking two seconds of synthetic tracking…";
             }
             catch
@@ -213,7 +228,7 @@ namespace Elts.Operator
                                 ConfigurationHashesComputed=true,DiskFreeBytes=diskFreeBytes,
                                 LogWriterAlive=recording!.WriterHealthy,WeLinkReachable=true });
                             setupPending=false;
-                            lastMessage=report.SetupAccepted?"Synthetic checks passed. Continue to calibration placeholders.":String.Join(" ",report.Failures);
+                            lastMessage=report.SetupAccepted?"Synthetic checks passed. Continue to the calibration fixture wizard.":String.Join(" ",report.Failures);
                         }
                     }
                     else firstValidAt=-1;
@@ -241,14 +256,14 @@ namespace Elts.Operator
         {
             var config=view.Configuration;
             Label("configuration",config.Session.SessionId+" / "+config.Scenario.ScenarioId+"\nConfig "+config.EffectiveSha256.Substring(0,12)+" • 300 s blocks");
-            Label("selfCheck","Emulated: displays, SteamVR and link. Observed: synthetic poses, config hash, disk and writer. Study remains unavailable.");
+            Label("selfCheck","Emulated: displays and SteamVR. In-process mock controller; no device connection. Observed: synthetic poses, config, disk and writer. Study unavailable.");
             Label("recording",recording?.RunDirectory??"No recording open");
             Label("state",engine?.State.ToString()??"Idle");
             Label("countdown",engine==null?"No block running":(engine.CurrentCondition??"All conditions finished")+" • "+engine.RemainingSeconds.ToString("F1")+" s");
             Label("message",IsBusy?"Recording operation in progress…":(engine?.Failure??lastMessage));
             Label("tracking",view.TrackingStatus+"\n"+(acquisition?.ActualElapsedRateHz??0).ToString("F1")+" Hz observed • "+
-                (recording?.DroppedSampleCount??0)+" dropped • "+(diskFreeBytes/(double)(1024*1024*1024)).ToString("F1")+
-                " GB free\nFrames over 33 ms: "+frameHitches+" • "+(scenario?.LastShot??"No shot"));
+                (recording?.DroppedSampleCount??0)+" dropped • "+(diskFreeBytes==0?"Disk check pending":(diskFreeBytes/(double)(1024*1024*1024)).ToString("F1")+" GB free")+
+                "\nFrames over 33 ms: "+frameHitches+" • "+(scenario?.LastShot??"No shot"));
             root.Q<Button>("createSession").SetEnabled(!IsBusy && (engine==null || closing));
             root.Q<Button>("advance").SetEnabled(!IsBusy && engine?.CanAdvance==true);
             root.Q<Button>("startBlock").SetEnabled(!IsBusy && engine?.State==SessionState.BlockReady);
@@ -258,6 +273,11 @@ namespace Elts.Operator
             root.Q<Button>("rerun").SetEnabled(!IsBusy && engine?.CanRerun==true);
             root.Q<Button>("addNote").SetEnabled(!IsBusy && engine!=null && !closing);
             root.Q<Button>("syncMarker").SetEnabled(!IsBusy && engine!=null && !closing);
+            root.Q<DropdownField>("neLinkMode").SetEnabled(!IsBusy && (engine==null || closing));
+            root.Q<Button>("reconnectLink").SetEnabled(!IsBusy && engine!=null && !closing);
+            Label("linkStatus", "Mock controller: " + (mockLink?.State.ToString()??"not created") +
+                " • simulated permission " + (mockLink?.LedPermission==true?"true":"false") + ". D-10 pending.");
+            RefreshCalibrationControls();
         }
 
         private static string Hash(string text)
@@ -302,11 +322,6 @@ namespace Elts.Operator
                 lastMessage="Shutdown incomplete: "+exception.Message;
                 quitInProgress=false;
             }
-        }
-        /// <summary>DEV-08 lifecycle fixture; DEV-11 supplies the protocol adapter.</summary>
-        private sealed class DevelopmentSessionLink : ISessionLink
-        {
-            public bool TrySetEnabled(bool enabled) => true;
         }
     }
 }

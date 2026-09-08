@@ -3,8 +3,11 @@
 The repository workflow runs policy, local documentation links, accepted plan
 hashes, generated progress/schema consistency, dependency pins and Python suites
 on Windows and Ubuntu. Run its exact entry locally with
-`python tools/ci/check.py --baseline`. Python 3.12.14 matches the recorded baseline;
-the current Windows development host was also tested with 3.14.3.
+`python tools/ci/check.py --baseline`. CI pins Python 3.12.10, available for both
+Windows and Ubuntu in the official actions/python-versions manifest. The initial
+remote Windows run could not install 3.12.14; that version is the local bundled
+baseline, not an available Windows Actions distribution. The local development
+host was also tested with 3.14.3.
 
 The separate Unity workflow is manual and requires a provisioned Windows x64
 runner labeled `elts-unity-6000.3.23f1`, with that exact licensed Editor and Windows

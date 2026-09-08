@@ -1,78 +1,66 @@
-# User-requested development stopping point — 2026-09-08
+# Completed development lane — 2026-09-08
 
-The user asked to find a stopping point. Resume only when requested; no background
-build, soak, automation or worker is intended to continue after this handoff.
+The user requested stopping when all DEV cards are finished. DEV-01 through
+DEV-12 are now accepted in event-derived progress, and all twelve Trello cards
+have their completion flag set. No further baseline work is started at this
+checkpoint. The earlier pause is preserved in Git history.
 
-## Recorded progress
+## Verified state
 
-Validate `PROJECT_STATE.json` and the event store before editing. Bootstrap P0.3
-and DEV-01 through DEV-08 plus DEV-10 are accepted. DEV-09.S001 and DEV-11.S001
-remain **in progress** under their existing Astra claims. Their verification
-steps and task acceptance have not been recorded. DEV-12 has not started.
-This pause is not a fabricated blocker or task completion. G0 remains unpassed.
+`tools/progress/reduce.py --check` and `tools/progress/validate.py` pass with
+173 events. There are no active atomic steps. The next execution selection is
+`P0.2.S001` in the baseline lane; validate state and its predicates before any
+future work. Do not restart bootstrap or request PC-001 approval again.
 
-The apparatus is built. Testing equipment is unavailable. The entire development
-lane remains synthetic; measured calibration, hardware safety and study readiness
-are not established. Unity is pinned to and tested with **6000.3.23f1 LTS**.
+Immutable acceptance receipts are in `project-management/progress/evidence/`.
+The Trello readback and two reconciled flags (DEV-09 and DEV-11) are recorded in
+`project-management/progress/trello-dev-completion-2026-09-08.json`. Historical
+card descriptions still say NOT STARTED and list positions are unchanged; use
+the completion flags and canonical repository evidence for current progress.
 
-## Integrated source and evidence
+## Deliverable and evidence
 
-- Calibration solvers and state helper: `a476f63`, `25b54cb`, `3dfc25a`, `3843e07`.
-  Focused calibration checks pass (11). Known/noisy and degenerate pivot inputs,
-  corner orthogonalization, zeroing, angular residuals, input validation and JSON
-  control escaping are covered.
-- Operator calibration fixture and mock-link integration: `e6916a1`.
-  The actual Unity UI Toolkit test exercises create recording, calibration
-  rejection under tight limits, redo, acceptance/sidecar persistence, practice,
-  note and abort/recording closure. These are generated UI events, not native
-  mouse/keyboard evidence.
-- Session protocol integration: `a527c6d`, hardened by `ad7659d` and `e8321cc`.
-  Focused checks pass: 39 adapter checks and 51 session checks at `e8321cc`.
-  Tests cover WE/NE alternatives, typed
-  transcript, ACK correlation, retry, loss/reconnect, logging rejection and
-  exact 300-second endings. Clock jumps are manual-clock evidence, not a
-  20-minute physical or real-time session.
-  The final repair ensures a rejected transcript after START still sends a
-  best-effort simulated STOP and leaves the engine Failed with permission false.
-- Initial integrated Unity PlayMode evidence (five passing tests) is retained in
-  `diagnostics/dev09-11-initial-unity-play.xml` and `.log`, with report
-  `diagnostics/dev09-11-integration-play.json`. The final checkpoint run is
-  `diagnostics/dev09-11-checkpoint-play.json` with copied XML/log alongside it.
-- Progress validation passed with 154 events: catalog, exports, event chain,
-  generated state and handoff schemas. No progress events were added for this
-  pause.
+- Portable Windows package: `release/ELTS-Synthetic-Development-20260908.zip`
+  (69,203,744 bytes), with an extracted sibling directory.
+  SHA-256: `f816ba3fdbcead26c1fe4046aeed90d2feb47602e66cb80122ebab8f46653d8f`.
+- Setup and launch: `docs/operator/development-package.md`, also included as
+  `README.md`. Deferred equipment work: `docs/operator/hardware-follow-up.md`,
+  included as `HARDWARE-FOLLOW-UP.md`.
+- Exact Unity version: **6000.3.23f1 LTS**. Player source revision is
+  `003035f135a0e117928af7095d526d1bf87fb51f`; its identity truthfully retains
+  `-dirty`. Package recipe revision is `8d2688f`. Package metadata records
+  source/build hashes and the evidence binding; later fixture tests are bound
+  through unchanged versioned runtime inputs, not claimed as same-binary tests.
+- Five final Unity PlayMode tests pass (`diagnostics/dev09-wrap-play.json`).
+  Expanded standalone calibration UI was visually inspected after fixing label
+  wrapping and overlap (`diagnostics/dev09-calibration-complete.png`).
+- Runtime driver now includes the later C# suites and analysis checks; all pass
+  in `diagnostics/dev12-runtime.json`. Packaging/provenance checks pass (10),
+  as do driver tests (3); reports are retained under `diagnostics/dev12-*`.
+- Integrated session/logging/mock-link fixture executes four 300-second blocks
+  with a manual clock, verifies known shot/target outcomes and recorded replay,
+  and exercises abort/reconnect plus explicit rerun without overwriting output.
+  See `diagnostics/dev12-end-to-end.json` and `test-results/dev12-integrated/`.
+- A ZIP was extracted to a path containing spaces. Its actual copied player
+  passed startup; package verification, run verification and analysis commands
+  from the copied README passed. See `diagnostics/dev12-portability.json`.
+  The final ZIP passed full entry/hash readback and directory verification
+  (`diagnostics/dev12-final-package.json`, `diagnostics/dev12-final-verify.json`).
 
-## Resume work
+## Limits and next action
 
-1. Read the current DEV-09/DEV-11 claims and relevant module docs; do not restart
-   bootstrap or re-request PC-001 authorization.
-2. Finish their evidence review and create immutable acceptance receipts through
-   `docs/ai/agent-protocol.md`. Do not mark them complete from this handoff alone.
-3. Run a fresh standalone build and inspect the expanded calibration panel. The
-   last verified standalone graphical output is `build/dev08-layout` at
-   `50e796a69efd` (see its full build-info manifest); it predates the calibration
-   and protocol integration. Current code has Unity runtime checks but no new
-   standalone build at this stopping point.
-4. Only after DEV-09 and DEV-11 acceptance makes DEV-12 eligible, package and test
-   copied-output/path-with-spaces/end-to-end provenance, write the final setup
-   and hardware follow-up register, and report second-machine testing unavailable.
+The apparatus is built; testing equipment is unavailable. This is a synthetic
+software development package with `studyReady:false`. No physical or safety
+gate, measured calibration, final study decision, or mixed baseline parent task
+is completed by these DEV acceptances. No second machine was available.
 
-## Explicit limits and follow-up
+Calibration uses a known-transform virtual fixture and configurable provisional
+thresholds; accepting its sidecar does not overwrite the startup rig geometry.
+Manual-clock sessions are not real-time 20-minute apparatus trials. Native
+operator controls, active-player quit, physical displays/SteamVR, real controller
+behavior and study-machine performance still need the follow-up register.
 
-Calibration UI generates a virtual known-transform fixture. It does not acquire
-real pivot/corner/zero captures or apply accepted fixture output to the startup
-rig configuration. Thresholds are editable, provisional development values.
-The sidecar records inputs/results/config hash and has a SHA-256 in the operator
-note; the ordinary run verifier does not yet automatically validate sidecars.
-UI acceptance means reviewed and queued; final writer closure is a separate
-durability check. Editor recordings identify source as `editor-unversioned`;
-packaged identity tokens must be resolved against the verified build manifest.
-
-The common runtime test driver still lists only earlier runtime suites. Use
-explicit later suite commands until that driver is extended during packaging.
-Do not assume `-Suite runtime` includes Session, Calibration, Replay or Elts tests.
-Actual active-player quit, native controls, physical two-display/SteamVR behavior,
-real controller integration and study-machine performance remain unverified.
-
-All changes are local. No remote publication, merge, deployment or study release
-was performed. Existing original deliverables remain the architecture authorities.
+Resume only when requested. Revalidate generated state, inspect `P0.2.S001` and
+its dependencies, and preserve physical deferrals. No remote source publication,
+merge, deployment or study release was performed. Existing original deliverables
+remain architecture authorities. Unrelated `elts-simulation/` edits are preserved.

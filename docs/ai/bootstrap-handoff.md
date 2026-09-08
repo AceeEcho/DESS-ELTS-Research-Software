@@ -45,10 +45,10 @@ must not be substituted for them.
 
 The current user-requested stopping point is recorded in
 [the 2026-09-08 development handoff](development-checkpoint-2026-09-08.md).
-DEV-01 through DEV-08 and DEV-10 are accepted in generated progress. DEV-09.S001
-and DEV-11.S001 remain in progress; DEV-12 has not started. Resume those exact
-claims and their remaining evidence work after validating current state. Do not
-infer completion from code presence or this text.
+DEV-01 through DEV-12 are accepted in generated progress (173 validated events).
+All twelve Trello completion flags are set. The portable package and evidence
+are linked in that handoff. Work stops at the user-requested DEV boundary; the
+next baseline selection is P0.2.S001, subject to fresh validation on resumption.
 
 The baseline remains anchored at G0. The apparatus is built; testing equipment is
 unavailable. Real tracking/occlusion, calibration, display mapping/luminance,
@@ -58,4 +58,5 @@ complete mixed baseline tasks or physical gates.
 
 Remote GitHub workflow execution/protection and named research/safety reviewers
 remain pending controls under the [documented-ruleset route](../governance/repository-rules.md).
-No remote publication, merge, Trello action or study release was performed.
+The original bootstrap performed no remote publication, merge, Trello action or
+study release. Later DEV completion reconciliation is recorded in the current handoff.

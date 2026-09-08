@@ -11,7 +11,7 @@ from tools.logging.verify_run import VerificationError, strict_json, verify_run
 PRODUCTS = ("samples.ndjson", "events.ndjson", "targets.ndjson", "session-summary.json")
 SAMPLE_SCHEMA = "elts.samples.v1"
 EVENT_SCHEMA = "elts.events.v1"
-TARGET_SCHEMA = "elts.targets.v1"
+TARGET_SCHEMAS = ("elts.targets.v1", "elts.targets.v2")
 SUMMARY_SCHEMA = "elts.session-summary.v1"
 BLOCK_TICKS = 300 * 10_000_000
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -25,8 +25,9 @@ def _load_json(path: Path) -> Any:
     except (OSError, UnicodeError, json.JSONDecodeError, ValueError, VerificationError) as exc:
         raise IngestError(f"cannot parse {path.name}: {exc}") from exc
 
-def _schema(value: Any, expected: str, where: str) -> None:
-    if not isinstance(value, dict) or value.get("schemaVersion") != expected:
+def _schema(value: Any, expected: str | tuple[str, ...], where: str) -> None:
+    allowed = (expected,) if isinstance(expected, str) else expected
+    if not isinstance(value, dict) or value.get("schemaVersion") not in allowed:
         got = value.get("schemaVersion") if isinstance(value, dict) else None
         raise IngestError(f"unsupported schema at {where}: expected {expected}, got {got!r}")
 
@@ -99,7 +100,7 @@ def _calibration(path: Path) -> dict[str, Any]:
             "zeroCorrectionQuaternion": _finite_quat(value.get("zeroCorrectionQuaternion"), "zeroCorrectionQuaternion"),
             "calibrationId": calibration_id}
 
-def _records(path: Path, expected: str) -> list[dict[str, Any]]:
+def _records(path: Path, expected: str | tuple[str, ...]) -> list[dict[str, Any]]:
     result=[]; previous_sequence=0; previous_ticks=-1
     try: handle=path.open("r", encoding="utf-8")
     except OSError as exc: raise IngestError(f"cannot read {path.name}: {exc}") from exc
@@ -116,6 +117,8 @@ def _records(path: Path, expected: str) -> list[dict[str, Any]]:
             if not isinstance(ticks, int) or isinstance(ticks, bool) or ticks < 0 or ticks < previous_ticks:
                 raise IngestError(f"ordering violation at {path.name}:{line_no}: monotonicTicks must be nondecreasing")
             previous_sequence=sequence; previous_ticks=ticks; result.append(value)
+    if isinstance(expected, tuple) and len({row["schemaVersion"] for row in result}) > 1:
+        raise IngestError(f"mixed target schema versions in {path.name}")
     return result
 
 def _output_path(directory: Path, calibration: Path, output: str | Path | None) -> Path | None:
@@ -169,7 +172,7 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
     for name in ("samples.ndjson", "events.ndjson", "targets.ndjson"):
         expected = _require_sha(checksums.get(name), f"checksumsSha256.{name}")
         if expected != raw[name]["sha256"]: raise IngestError(f"{name} checksum does not match summary")
-    samples=_records(directory/"samples.ndjson", SAMPLE_SCHEMA); events=_records(directory/"events.ndjson", EVENT_SCHEMA); targets=_records(directory/"targets.ndjson", TARGET_SCHEMA)
+    samples=_records(directory/"samples.ndjson", SAMPLE_SCHEMA); events=_records(directory/"events.ndjson", EVENT_SCHEMA); targets=_records(directory/"targets.ndjson", TARGET_SCHEMAS)
     target_by_tick=[]
     for row in targets:
         _require_string(row.get("targetId"), "targetId")
@@ -191,7 +194,7 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
         while target_cursor < len(target_by_tick) and target_by_tick[target_cursor][0] <= tick:
             _, target = target_by_tick[target_cursor]
             key = (target["blockId"], target["targetId"])
-            if target.get("lifecycle") == "Destroyed":
+            if target.get("lifecycle") in ("Destroyed", "Despawned"):
                 current_targets.pop(key, None)
             else:
                 current_targets[key] = target

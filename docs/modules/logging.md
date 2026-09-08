@@ -37,3 +37,6 @@ The normal harness validates output JSON round-trips and file checksums, run-ID/
 The test seams are `ILogSinkFactory` and `ISessionSummaryPublisher`. They support deterministic failure/stall tests; production uses the default file implementations and does not permit a caller to supply log-file paths.
 
 Soak evidence also records the actual Git revision, runtime-source hashes, compiled harness hash, fixture/configuration hashes, elapsed duration, effective cadence, scheduling delays and producer enqueue timings. Fixture unit tests use explicit fixture provenance; the sustained run records its actual inputs. Busy waiting in this diagnostic producer aims for 250 Hz on Windows and can use one CPU core. It does not establish full Unity/display-load or hardware timing acceptance.
+## Target lifecycle compatibility
+
+New writers emit `elts.targets.v2`. Version 2 adds `Despawned` for a target that expires without a `TargetDestroyed` event. Readers accept an entirely v1 or entirely v2 `targets.ndjson` stream and reject a mixed stream. V1 remains strict and does not accept `Despawned`. Replay and analysis remove both `Destroyed` and `Despawned` snapshots from active aim candidates, but only a `TargetDestroyed` event contributes to the scored target-destruction count.

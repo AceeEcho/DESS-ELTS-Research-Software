@@ -26,7 +26,7 @@ SCHEMA_DIRECTORY = REPOSITORY_ROOT / "schemas" / "logs"
 PRODUCTS: tuple[tuple[str, str, str, str], ...] = (
     ("samples", "samples.ndjson", "samples.v1.schema.json", "writtenSamples"),
     ("events", "events.ndjson", "events.v1.schema.json", "writtenEvents"),
-    ("targets", "targets.ndjson", "targets.v1.schema.json", "writtenTargets"),
+    ("targets", "targets.ndjson", "", "writtenTargets"),
 )
 SUMMARY_FILE = "session-summary.json"
 SUMMARY_SCHEMA = "session-summary.v1.schema.json"
@@ -72,7 +72,8 @@ def _schemas() -> dict[str, Mapping[str, Any]]:
         return {
             "samples": load_json(SCHEMA_DIRECTORY / "samples.v1.schema.json"),
             "events": load_json(SCHEMA_DIRECTORY / "events.v1.schema.json"),
-            "targets": load_json(SCHEMA_DIRECTORY / "targets.v1.schema.json"),
+            "targets.v1": load_json(SCHEMA_DIRECTORY / "targets.v1.schema.json"),
+            "targets.v2": load_json(SCHEMA_DIRECTORY / "targets.v2.schema.json"),
             "summary": load_json(SCHEMA_DIRECTORY / SUMMARY_SCHEMA),
         }
     except (OSError, ValidationError) as exc:
@@ -100,8 +101,9 @@ def _require_safe_sample(sample: Mapping[str, Any], location: str) -> None:
             raise VerificationError(f"{location}.{role}: invalid tracking must have null pose")
 
 
-def _stream_product(run_directory: Path, product: str, file_name: str, schema: Mapping[str, Any],
-                    semantic_check: Callable[[Mapping[str, Any], str], None] | None) -> ProductResult:
+def _stream_product(run_directory: Path, product: str, file_name: str, schema: Mapping[str, Any] | None,
+                    semantic_check: Callable[[Mapping[str, Any], str], None] | None,
+                    target_schemas: Mapping[str, Mapping[str, Any]] | None = None) -> ProductResult:
     path = run_directory / file_name
     if not path.is_file():
         raise VerificationError(f"Missing required product: {file_name}")
@@ -111,6 +113,7 @@ def _stream_product(run_directory: Path, product: str, file_name: str, schema: M
     prior_ticks: int | None = None
     first_sequence: int | None = None
     first_ticks: int | None = None
+    target_schema_version: str | None = None
 
     try:
         with path.open("rb") as handle:
@@ -125,7 +128,17 @@ def _stream_product(run_directory: Path, product: str, file_name: str, schema: M
                 if not text.strip():
                     raise VerificationError(f"{location}: blank NDJSON line")
                 value = strict_json(text, location)
-                _validate(value, schema, location)
+                if product == "targets":
+                    version = value.get("schemaVersion") if isinstance(value, dict) else None
+                    if version not in ("elts.targets.v1", "elts.targets.v2"):
+                        raise VerificationError(f"{location}: unsupported target schemaVersion")
+                    if target_schema_version is None: target_schema_version = version
+                    elif version != target_schema_version: raise VerificationError(f"{location}: mixed target schema versions in one stream")
+                    if target_schemas is None: raise VerificationError(f"{location}: target schema registry is unavailable")
+                    _validate(value, target_schemas[version], location)
+                else:
+                    if schema is None: raise VerificationError(f"{location}: missing product schema")
+                    _validate(value, schema, location)
                 if not isinstance(value, dict):  # Schema validation should already provide this invariant.
                     raise VerificationError(f"{location}: expected JSON object")
                 sequence = value["sequence"]
@@ -145,6 +158,7 @@ def _stream_product(run_directory: Path, product: str, file_name: str, schema: M
     return ProductResult(product, lines, checksum.hexdigest(), first_sequence, prior_sequence, first_ticks, prior_ticks)
 
 
+
 def verify_run(run_directory: Path | str) -> dict[str, Any]:
     """Validate a complete, local v1 run and return a compact report dictionary.
 
@@ -154,6 +168,7 @@ def verify_run(run_directory: Path | str) -> dict[str, Any]:
     if not directory.is_dir():
         raise VerificationError(f"Run directory does not exist: {directory}")
     schemas = _schemas()
+    target_schemas = {"elts.targets.v1": schemas["targets.v1"], "elts.targets.v2": schemas["targets.v2"]}
     summary_path = directory / SUMMARY_FILE
     if not summary_path.is_file():
         raise VerificationError(f"Missing required closure record: {SUMMARY_FILE}")
@@ -173,7 +188,7 @@ def verify_run(run_directory: Path | str) -> dict[str, Any]:
     results: list[ProductResult] = []
     for product, file_name, _schema_name, count_name in PRODUCTS:
         semantic = _require_safe_sample if product == "samples" else None
-        result = _stream_product(directory, product, file_name, schemas[product], semantic)
+        result = _stream_product(directory, product, file_name, schemas.get(product), semantic, target_schemas)
         expected_checksum = summary["checksumsSha256"].get(file_name)
         if result.checksum_sha256 != expected_checksum:
             raise VerificationError(f"{file_name}: SHA-256 does not match session summary")

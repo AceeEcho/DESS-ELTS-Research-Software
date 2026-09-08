@@ -28,9 +28,13 @@ internal static class ReplayChecks
     private static readonly string Targets="{\"schemaVersion\":\"elts.targets.v1\",\"sequence\":1,\"monotonicTicks\":0,\"targetId\":\"one\",\"blockId\":\"block\",\"lifecycle\":\"Spawned\",\"worldPositionMeters\":{\"x\":1,\"y\":2,\"z\":3},\"worldVelocityMetersPerSecond\":{\"x\":0,\"y\":0,\"z\":0},\"scenarioSeed\":1,\"scenarioVersion\":\"v1\"}\n"+
         "{\"schemaVersion\":\"elts.targets.v1\",\"sequence\":2,\"monotonicTicks\":50000000,\"targetId\":\"one\",\"blockId\":\"block\",\"lifecycle\":\"Updated\",\"worldPositionMeters\":{\"x\":4,\"y\":5,\"z\":6},\"worldVelocityMetersPerSecond\":{\"x\":0,\"y\":0,\"z\":0},\"scenarioSeed\":1,\"scenarioVersion\":\"v1\"}\n"+
         "{\"schemaVersion\":\"elts.targets.v1\",\"sequence\":3,\"monotonicTicks\":100000000,\"targetId\":\"one\",\"blockId\":\"block\",\"lifecycle\":\"Destroyed\",\"worldPositionMeters\":{\"x\":4,\"y\":5,\"z\":6},\"worldVelocityMetersPerSecond\":{\"x\":0,\"y\":0,\"z\":0},\"scenarioSeed\":1,\"scenarioVersion\":\"v1\"}\n";
+    private static readonly string TargetsV2=Targets.Replace("elts.targets.v1","elts.targets.v2").Replace("Destroyed","Despawned").Replace("\"v1\"","\"v2\"");
     public static void Main(string[] args)
     {
         string dir=Make(Sample(),Events,Targets);var replay=RecordedReplay.Load(dir);Check(replay.FrameCount==1,"valid replay did not load");Check(replay.TargetsAt(0).Count==1,"spawn missing");Check(replay.TargetsAt(6).Count==1&&replay.TargetsAt(6)["block/one"].X==4,"target seek failed");Check(replay.TargetsAt(10).Count==0,"destroy lifecycle failed");
+        var expiryReplay=RecordedReplay.Load(Make(Sample(),Events,TargetsV2));Check(expiryReplay.TargetsAt(10).Count==0,"v2 expiry remained an active replay target");
+        Reject(Make(Sample(),Events,Targets.Replace("Destroyed","Despawned")),"v1 accepted Despawned");
+        Reject(Make(Sample(),Events,Targets+TargetsV2.Split('\n')[0]+"\n"),"mixed target versions were accepted");
         Check(RecordedReplay.Load(Make(Sample(),Events.Replace("\"mode\"","\"1.foo\""),Targets)).FrameCount==1,"schema payload key was rejected");
         string key256=new string('k',256);Check(RecordedReplay.Load(Make(Sample(),Events.Replace("\"mode\"","\""+key256+"\""),Targets)).FrameCount==1,"maximum schema payload key was rejected");
         string invalid=Make(Sample("{\"trackerId\":\"head\",\"connection\":\"Connected\",\"validity\":\"Invalid\",\"pose\":{}}"),Events,Targets);Reject(invalid,"invalid pose was accepted");

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "elts.targets.v2.schema.json",
+  "title": "ELTS v2 canonical target snapshot line",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sequence", "monotonicTicks", "targetId", "blockId", "lifecycle", "worldPositionMeters", "worldVelocityMetersPerSecond", "scenarioSeed", "scenarioVersion"],
+  "properties": {"schemaVersion": {"const": "elts.targets.v2"}, "sequence": {"type": "integer", "minimum": 1}, "monotonicTicks": {"type": "integer", "minimum": 0}, "targetId": {"$ref": "#/$defs/id"}, "blockId": {"$ref": "#/$defs/id"}, "lifecycle": {"enum": ["Spawned", "Updated", "Destroyed", "Despawned"]}, "worldPositionMeters": {"$ref": "#/$defs/vector"}, "worldVelocityMetersPerSecond": {"$ref": "#/$defs/vector"}, "scenarioSeed": {"type": "integer", "minimum": 0}, "scenarioVersion": {"type": "string", "minLength": 1, "maxLength": 256}},
+  "$defs": {"id": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+$", "maxLength": 256}, "vector": {"type": "object", "additionalProperties": false, "required": ["x", "y", "z"], "properties": {"x": {"type": "number"}, "y": {"type": "number"}, "z": {"type": "number"}}}}
+}

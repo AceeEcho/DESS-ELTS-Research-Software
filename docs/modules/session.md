@@ -18,11 +18,14 @@ Choose **Create synthetic recording**. A background operation reserves a unique
 output directory and starts the writer. A dedicated synthetic producer supplies
 raw paired observations to the writer and immutable snapshots to rendering. The
 preflight observes two seconds of fresh, valid synthetic data, configuration
-identity, available disk space and writer health. Displays, SteamVR and the
-DEV-08 lifecycle link are explicitly emulated. These substitutions never enable
+identity, available disk space and writer health. Displays and SteamVR are
+explicitly emulated; the controller uses the [in-process protocol adapter](elts-session.md).
+These substitutions never enable
 study readiness.
 
-**Continue** advances setup to the calibration placeholder and then practice.
+**Continue** advances setup to the [synthetic calibration fixture wizard](calibration.md).
+Generate, review and accept a fixture within its provisional limits before
+continuing to practice. The results do not replace measured rig calibration.
 Practice and break durations come from staged development session configuration.
 **Start block** starts the selected condition; its clock deadline is fixed at
 300 seconds. Targets appear only during `BlockRunning`; the operator test trigger

@@ -44,10 +44,11 @@ default paths. Use the exact pinned Unity 6000.3.23f1 Editor.
 
 For an opt-in standalone graphical probe, launch the resulting player with
 `-eltsViewScreenshot ABSOLUTE_NEW_PNG_PATH`. It exercises layout, prediction and
-dropout handlers, captures the development view and exits with an explicit log
+dropout handlers, renders the two real cameras to an offscreen PNG and exits with an explicit log
 marker. This is separate from the non-graphical bootstrap smoke probe. Runtime
 tests exercise the same control methods as the UI; they do not establish native
-mouse/keyboard interaction or physical display assignment.
+mouse/keyboard interaction or physical display assignment. The PNG captures camera
+geometry; the IMGUI controls are excluded from this offscreen render.
 
 Deferred evidence includes measured screen geometry, physical corner rods at
 multiple viewing positions, head/weapon mounts, real tracking and base station

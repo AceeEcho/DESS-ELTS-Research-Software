@@ -65,6 +65,8 @@ namespace Elts.Operator.Tests
                 Assert.That(root.Q<VisualElement>("sessionPanel").worldBound.height,Is.GreaterThan(100));
                 root.Q<Foldout>("calibrationWizard").value=true;
                 yield return null;
+                Assert.That(root.Q<Label>("selfCheck").resolvedStyle.whiteSpace,Is.EqualTo(WhiteSpace.Normal),
+                    "Long prerequisite text must wrap within the column");
                 Assert.That(root.Q<TextField>("eyeOffset").worldBound.yMax,
                     Is.LessThanOrEqualTo(root.Q<TextField>("calibrationThresholds").worldBound.yMin),
                     "Expanded calibration fields must retain separate layout space");

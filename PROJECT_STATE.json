@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-08T05:38:13.050941+00:00",
+  "generatedAtUtc": "2026-09-08T05:39:41.751510+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,8 +11,8 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 126,
-    "eventSetSha256": "46fd5ee2e307b5dead49647700407283c627e61cc8c6a9aede52cad06d7a4717"
+    "eventCount": 127,
+    "eventSetSha256": "63d4d8f9dca447be3e73183b68681495811b6570de1ed96740fe237a100c0ada"
   },
   "current": {
     "mode": "working",
@@ -45,10 +45,10 @@
     "primaryStepId": "DEV-06.S001",
     "activeStepIds": [
       "DEV-06.S001",
-      "DEV-07.S001"
+      "DEV-07.S001",
+      "DEV-10.S001"
     ],
     "nextEligibleStepIds": [
-      "DEV-10.S001",
       "P0.2.S001",
       "P0.4.S001",
       "P0.5.S001"
@@ -315,6 +315,20 @@
         "tools/runtime-tests/ScenarioChecks.cs",
         "tools/runtime-tests/ScenarioChecks.csproj",
         "docs/modules/scenario.md"
+      ]
+    },
+    {
+      "owner": "agent:codex-astra",
+      "taskId": "DEV-10",
+      "atomicStepId": "DEV-10.S001",
+      "branch": "work/dev-10",
+      "claimedPaths": [
+        "unity/Assets/ELTS/Elts",
+        "jetson",
+        "schemas/protocol",
+        "tools/runtime-tests/EltsLinkChecks.cs",
+        "tools/runtime-tests/EltsLinkChecks.csproj",
+        "docs/modules/elts-link.md"
       ]
     }
   ],
@@ -1488,12 +1502,19 @@
       "blockers": []
     },
     "DEV-10": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "e1f4be38617939f12950718026cd16b1f556dd3f19549016ff809b60c20b034d",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev-10",
+      "claimedPaths": [
+        "docs/modules/elts-link.md",
+        "jetson",
+        "schemas/protocol",
+        "tools/runtime-tests/EltsLinkChecks.cs",
+        "tools/runtime-tests/EltsLinkChecks.csproj",
+        "unity/Assets/ELTS/Elts"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -2988,12 +3009,19 @@
       "blockers": []
     },
     "DEV-10.S001": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "e1f4be38617939f12950718026cd16b1f556dd3f19549016ff809b60c20b034d",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev-10",
+      "claimedPaths": [
+        "unity/Assets/ELTS/Elts",
+        "jetson",
+        "schemas/protocol",
+        "tools/runtime-tests/EltsLinkChecks.cs",
+        "tools/runtime-tests/EltsLinkChecks.csproj",
+        "docs/modules/elts-link.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -5524,6 +5552,10 @@
     "task:DEV-07": {
       "revision": 1,
       "hash": "1c16bb2a387b17e96b7e7d76d5ef2e784a1cfa55e38c57e71381c76f271c0262"
+    },
+    "task:DEV-10": {
+      "revision": 1,
+      "hash": "e1f4be38617939f12950718026cd16b1f556dd3f19549016ff809b60c20b034d"
     }
   },
   "integrity": {

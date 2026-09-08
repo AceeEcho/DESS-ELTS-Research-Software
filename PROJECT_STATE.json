@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-08T05:55:38.353199+00:00",
+  "generatedAtUtc": "2026-09-08T05:56:26.677705+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,8 +11,8 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 139,
-    "eventSetSha256": "6936eabe588257e701c14933a808c3b6ee8dfc97e6c99838f67ecde20e119cdf"
+    "eventCount": 140,
+    "eventSetSha256": "75c866bda89370d987b3e4fbea150d501fb51697f364ba0189d7bca355003d05"
   },
   "current": {
     "mode": "working",
@@ -42,12 +42,12 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "DEV-10.S001",
+    "primaryStepId": "DEV-08.S001",
     "activeStepIds": [
+      "DEV-08.S001",
       "DEV-10.S001"
     ],
     "nextEligibleStepIds": [
-      "DEV-08.S001",
       "P0.2.S001",
       "P0.4.S001",
       "P0.5.S001"
@@ -286,6 +286,19 @@
     "selectedLane": "synthetic_development_only"
   },
   "activeWork": [
+    {
+      "owner": "agent:codex-astra",
+      "taskId": "DEV-08",
+      "atomicStepId": "DEV-08.S001",
+      "branch": "work/dev08",
+      "claimedPaths": [
+        "unity/Assets/ELTS/Session",
+        "unity/Assets/ELTS/Operator",
+        "tools/runtime-tests/SessionChecks.cs",
+        "tools/runtime-tests/SessionChecks.csproj",
+        "docs/modules/session.md"
+      ]
+    },
     {
       "owner": "agent:codex-astra",
       "taskId": "DEV-10",
@@ -1491,12 +1504,18 @@
       "blockers": []
     },
     "DEV-08": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "d8cd53b351badcbe2cdd06febf061bb74cb409130f0932205cc2d473009fccee",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev08",
+      "claimedPaths": [
+        "docs/modules/session.md",
+        "tools/runtime-tests/SessionChecks.cs",
+        "tools/runtime-tests/SessionChecks.csproj",
+        "unity/Assets/ELTS/Operator",
+        "unity/Assets/ELTS/Session"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -3086,12 +3105,18 @@
       "blockers": []
     },
     "DEV-08.S001": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "d8cd53b351badcbe2cdd06febf061bb74cb409130f0932205cc2d473009fccee",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev08",
+      "claimedPaths": [
+        "unity/Assets/ELTS/Session",
+        "unity/Assets/ELTS/Operator",
+        "tools/runtime-tests/SessionChecks.cs",
+        "tools/runtime-tests/SessionChecks.csproj",
+        "docs/modules/session.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -5673,6 +5698,10 @@
     "task:DEV-10": {
       "revision": 1,
       "hash": "e1f4be38617939f12950718026cd16b1f556dd3f19549016ff809b60c20b034d"
+    },
+    "task:DEV-08": {
+      "revision": 1,
+      "hash": "d8cd53b351badcbe2cdd06febf061bb74cb409130f0932205cc2d473009fccee"
     }
   },
   "integrity": {

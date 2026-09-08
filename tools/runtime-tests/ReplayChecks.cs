@@ -30,6 +30,8 @@ internal static class ReplayChecks
     public static void Main(string[] args)
     {
         string dir=Make(Sample(),Events,Targets);var replay=RecordedReplay.Load(dir);Check(replay.FrameCount==1,"valid replay did not load");Check(replay.TargetsAt(0).Count==1,"spawn missing");Check(replay.TargetsAt(6).Count==1&&replay.TargetsAt(6)["block/one"].X==4,"target seek failed");Check(replay.TargetsAt(10).Count==0,"destroy lifecycle failed");
+        Check(RecordedReplay.Load(Make(Sample(),Events.Replace("\"mode\"","\"1.foo\""),Targets)).FrameCount==1,"schema payload key was rejected");
+        string key256=new string('k',256);Check(RecordedReplay.Load(Make(Sample(),Events.Replace("\"mode\"","\""+key256+"\""),Targets)).FrameCount==1,"maximum schema payload key was rejected");
         string invalid=Make(Sample("{\"trackerId\":\"head\",\"connection\":\"Connected\",\"validity\":\"Invalid\",\"pose\":{}}"),Events,Targets);Reject(invalid,"invalid pose was accepted");
         Reject(Make(Sample(),Events.Replace("RunStarted","Unknown!"),Targets),"unsupported event was accepted");
         Reject(Make(Sample(),Events.Replace("\"mode\":\"synthetic\"","\"mode\":\"synthetic\",\"mode\":\"duplicate\""),Targets),"duplicate field was accepted");
@@ -37,7 +39,14 @@ internal static class ReplayChecks
         string missing=Make(Sample(),Events,Targets);File.Delete(Path.Combine(missing,"events.ndjson"));Reject(missing,"missing product was accepted");
         string tampered=Make(Sample(),Events,Targets);File.AppendAllText(Path.Combine(tampered,"samples.ndjson"),"\n");Reject(tampered,"hash tamper was accepted");
         Reject(Make(Sample(),Events,Targets,"{}"),"unsupported summary was accepted");
+        Reject(Make(Sample(),Events,Targets,new string(' ',RecordedReplay.MaximumLineCharacters*4+1)),"oversize summary was accepted");
+        Reject(Make(Sample(),new string(' ',RecordedReplay.MaximumLineCharacters+1)+"\n",Targets),"oversize record was accepted");
+        Reject(Make(Sample(),Events.Replace("{\"mode\":\"synthetic\"}","{/*comment*/\"mode\":\"synthetic\"}"),Targets),"commented JSON was accepted");
+        Reject(Make(Sample(),Events.Replace("\"mode\":\"synthetic\"","'mode':'synthetic'"),Targets),"single-quoted JSON was accepted");
+        string pending=Path.Combine(Path.GetTempPath(),"elts-replay-pending-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(pending);File.WriteAllText(Path.Combine(pending,".session-summary.pending.json"),Summary(Sample(),Events,Targets));Reject(pending,"pending-only replay was accepted");
         bool constructorRejected=false;try{new RecordedReplay(null,null,"rev","x","y",true);}catch(ArgumentException){constructorRejected=true;}Check(constructorRejected,"constructor accepted null/invalid input");
+        bool invalidPose=false;try{new RecordedReplay(new[]{new ReplayFrame(0,null,null,"Connected / Valid","Disconnected / Unavailable")},new ReplayTarget[0],"rev","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",true);}catch(InvalidDataException){invalidPose=true;}Check(invalidPose,"constructor accepted invalid pose status");
+        bool invalidLifecycle=false;try{new RecordedReplay(new[]{new ReplayFrame(0,null,null,"Disconnected / Unavailable","Disconnected / Unavailable")},new[]{new ReplayTarget(0,"block/one","Bogus",new Elts.Geometry.Vector3d(0,0,0))},"rev","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",true);}catch(InvalidDataException){invalidLifecycle=true;}Check(invalidLifecycle,"constructor accepted invalid lifecycle");
         foreach(string path in args){if(Directory.Exists(path)){var loaded=RecordedReplay.Load(path);Check(loaded.FrameCount>0,"supplied generated log had no frames");}}
         Console.WriteLine("PASS: "+checks+" replay checks");
     }

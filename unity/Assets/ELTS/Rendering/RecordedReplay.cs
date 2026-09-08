@@ -35,6 +35,7 @@ namespace Elts.Rendering
         // Bounded development viewer; larger studies belong in the streaming analysis package.
         public const int MaximumRecordsPerProduct = 1000000;
         public const int MaximumLineCharacters = 65536;
+        private const int MaximumSummaryBytes = MaximumLineCharacters * 4;
         private readonly ReplayFrame[] frames;
         private readonly ReplayTarget[] targets;
         // Per-target histories make repeated viewer scrubs proportional to the
@@ -106,7 +107,7 @@ namespace Elts.Rendering
             string root=Path.GetFullPath(directory);
             if((File.GetAttributes(root)&FileAttributes.ReparsePoint)!=0)throw new InvalidDataException("Replay directory cannot be a link.");
             string summaryPath=Path.Combine(root,"session-summary.json");
-            byte[] summaryBytes=File.ReadAllBytes(summaryPath);
+            byte[] summaryBytes=ReadBoundedBytes(summaryPath,MaximumSummaryBytes);
             string summaryText=new UTF8Encoding(false,true).GetString(summaryBytes);
             var summary=Parse(summaryText);
             Fields(summary,"schemaVersion","runId","complete","error","provenance","counts","checksumsSha256");
@@ -130,13 +131,12 @@ namespace Elts.Rendering
                 {
                     using(var sha=SHA256.Create())if(Hex(sha.ComputeHash(stream))!=HashText(hashes,filename))throw new InvalidDataException("Replay checksum mismatch: "+filename);
                     stream.Position=0;long previousSequence=0,previousTicks=-1;int count=0;
-                    using(var reader=new StreamReader(stream,new UTF8Encoding(false,true),false,4096,true))
+                    using(var reader=new BoundedLines(stream))
                     {
                         string? line;
                         while((line=reader.ReadLine())!=null)
                         {
                             if(++count>MaximumRecordsPerProduct)throw new InvalidDataException("Replay record limit exceeded.");
-                            if(line.Length>MaximumLineCharacters)throw new InvalidDataException("Replay JSON record is too large.");
                             var row=Parse(line);Equal(row,"schemaVersion","elts."+product.Item1+".v1");
                             long sequence=Integer(row,"sequence"),ticks=Integer(row,"monotonicTicks");
                             if(sequence<=previousSequence||ticks<previousTicks)throw new InvalidDataException("Nonmonotonic replay stream.");previousSequence=sequence;previousTicks=ticks;
@@ -158,7 +158,7 @@ namespace Elts.Rendering
                                 Fields(row,"schemaVersion","sequence","monotonicTicks","eventType","payload");Identifier(row,"eventType");
                                 foreach(var property in Object(row,"payload").Properties())
                                 {
-                                    if(!Regex.IsMatch(property.Name,@"^[A-Za-z][A-Za-z0-9_.-]*$")||property.Name.Length>128)throw new InvalidDataException("Invalid event payload key.");
+                                    if(!Regex.IsMatch(property.Name,@"^[A-Za-z0-9_.-]+$")||property.Name.Length>256)throw new InvalidDataException("Invalid event payload key.");
                                     var type=property.Value.Type;
                                     if(type!=JTokenType.String&&type!=JTokenType.Integer&&type!=JTokenType.Float&&type!=JTokenType.Boolean)throw new InvalidDataException("Unsupported event payload value.");
                                     if(type==JTokenType.Float&&!RenderNumbers.Finite((double)property.Value))throw new InvalidDataException("Nonfinite payload.");
@@ -174,6 +174,7 @@ namespace Elts.Rendering
         private static JObject Parse(string text)
         {
             if(text.Length>MaximumLineCharacters)throw new InvalidDataException("Replay JSON record is too large.");
+            RejectNonStandardJson(text);
             using(var reader=new JsonTextReader(new StringReader(text)){DateParseHandling=DateParseHandling.None,MaxDepth=24})
             {
                 var result=JObject.Load(reader,new JsonLoadSettings{DuplicatePropertyNameHandling=DuplicatePropertyNameHandling.Error,CommentHandling=CommentHandling.Load});
@@ -204,11 +205,34 @@ namespace Elts.Rendering
         private static void Fields(JObject value,params string[] names){if(value.Properties().Count()!=names.Length||names.Any(n=>value[n]==null))throw new InvalidDataException("Unknown or missing replay fields.");}
         private static void ValidateFrames(ReplayFrame[] values)
         {
-            long previous=-1; foreach(var frame in values){if(frame.Ticks<0||frame.Ticks<previous)throw new InvalidDataException("Nonmonotonic frame timestamps.");if(String.IsNullOrEmpty(frame.HeadStatus)||String.IsNullOrEmpty(frame.WeaponStatus))throw new InvalidDataException("Frame status is required.");previous=frame.Ticks;}
+            long previous=-1; foreach(var frame in values){if(frame.Ticks<0||frame.Ticks<previous)throw new InvalidDataException("Nonmonotonic frame timestamps.");ValidatePoseStatus(frame.Head,frame.HeadStatus);ValidatePoseStatus(frame.Weapon,frame.WeaponStatus);previous=frame.Ticks;}
         }
         private static void ValidateTargets(ReplayTarget[] values)
         {
-            long previous=-1; foreach(var target in values){if(target.Ticks<0||target.Ticks<previous)throw new InvalidDataException("Nonmonotonic target timestamps.");if(String.IsNullOrEmpty(target.Key)||String.IsNullOrEmpty(target.Lifecycle)||!RenderNumbers.Finite(target.Position.X)||!RenderNumbers.Finite(target.Position.Y)||!RenderNumbers.Finite(target.Position.Z))throw new InvalidDataException("Invalid target record.");previous=target.Ticks;}
+            long previous=-1; foreach(var target in values){if(target.Ticks<0||target.Ticks<previous)throw new InvalidDataException("Nonmonotonic target timestamps.");if(String.IsNullOrEmpty(target.Key)||!new[]{"Spawned","Updated","Destroyed"}.Contains(target.Lifecycle)||!RenderNumbers.Finite(target.Position.X)||!RenderNumbers.Finite(target.Position.Y)||!RenderNumbers.Finite(target.Position.Z))throw new InvalidDataException("Invalid target record.");previous=target.Ticks;}
+        }
+        private static void ValidatePoseStatus(RigidPose? pose,string status)
+        {
+            if(String.IsNullOrEmpty(status))throw new InvalidDataException("Frame status is required.");
+            string[] parts=status.Split(new[]{" / "},StringSplitOptions.None);if(parts.Length!=2||!new[]{"Connected","Disconnected","Reconnecting"}.Contains(parts[0])||!new[]{"Unavailable","Valid","OutOfRange","DriverFault","RejectedNativePose"}.Contains(parts[1]))throw new InvalidDataException("Invalid frame status.");
+            if(parts[1]=="Valid"?(parts[0]!="Connected"||!pose.HasValue):pose.HasValue)throw new InvalidDataException("Pose does not match frame status.");
+        }
+        private sealed class BoundedLines : IDisposable
+        {
+            private readonly StreamReader reader;
+            private readonly char[] buffer=new char[4096]; private int offset,length;
+            public BoundedLines(Stream stream){reader=new StreamReader(stream,new UTF8Encoding(false,true),false,4096,true);}
+            public string? ReadLine(){var line=new StringBuilder(256);while(true){if(offset==length){length=reader.Read(buffer,0,buffer.Length);offset=0;if(length==0)return line.Length==0?null:line.ToString();}while(offset<length){char c=buffer[offset++];if(c=='\n')return line.ToString();if(line.Length>=MaximumLineCharacters)throw new InvalidDataException("Replay JSON record is too large.");line.Append(c);}}}
+            public void Dispose(){reader.Dispose();}
+        }
+        private static byte[] ReadBoundedBytes(string path,int maximum)
+        {
+            using(var stream=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.Read)){if(stream.Length>maximum)throw new InvalidDataException("Replay summary is too large.");using(var output=new MemoryStream((int)stream.Length)){stream.CopyTo(output,4096);return output.ToArray();}}
+        }
+        private static void RejectNonStandardJson(string text)
+        {
+            bool quoted=false,escape=false;for(int i=0;i<text.Length;i++){char c=text[i];if(quoted){if(escape)escape=false;else if(c=='\\')escape=true;else if(c=='\"')quoted=false;continue;}if(c=='\"'){quoted=true;continue;}if(c=='\'')throw new InvalidDataException("Single-quoted JSON is unsupported.");if(c=='/'&&i+1<text.Length&&(text[i+1]=='/'||text[i+1]=='*'))throw new InvalidDataException("JSON comments are unsupported.");}
+            if(quoted||escape)throw new InvalidDataException("Unterminated JSON string.");
         }
         private static string Hex(byte[] value)=>string.Concat(value.Select(b=>b.ToString("x2",CultureInfo.InvariantCulture)));
     }

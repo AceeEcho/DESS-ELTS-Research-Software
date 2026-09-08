@@ -15,6 +15,11 @@ invalid or disconnected poses remain null and are never interpolated. The
 reader does not apply prediction, so the logged weapon pose remains raw (SCI-006
 and SCI-008).
 
+JSON is consumed with bounded buffers: no product line or summary can allocate
+past the configured limits before rejection. The accepted event payload key
+grammar matches the logging contract (`^[A-Za-z0-9_.-]+$`, maximum 256
+characters); comments and single-quoted JSON are rejected.
+
 Loaded arrays are cloned and exposed through value results. Target queries use
 per-target timestamp histories and binary search, so repeated scrubbing does
 not rescan a million-row target stream for every frame. This is a bounded viewer

@@ -1,0 +1,38 @@
+{
+  "targetId": "DEV-10",
+  "result": "pass",
+  "evidenceClass": "synthetic_test",
+  "command": "dotnet run --project tools/runtime-tests/EltsLinkChecks.csproj -p:NewtonsoftPath=<verified pinned Unity Newtonsoft.dll>; scripts/test.ps1 -Suite unity-play -Report diagnostics/dev10-integrated-play.json",
+  "summary": "Strict development-only ELTS protocol codec and simulated/null command links verified; no physical transport or apparatus access.",
+  "checks": [
+    "36 integrated deterministic checks passed for messagegrammar,schemas/factories,lifecycle,retry,sequence eviction,timeout,reconnect,EStoplatch and clockoffset math",
+    "Independent review confirmed seven initial findings resolved ataf3e349",
+    "Pinned Unity6000.3.23f1 integrated PlayMode compile/runtime suite passed"
+  ],
+  "limitations": [
+    "development-synthetic-v1 field spellings and timeout values are explicit fixtures,not actualcontroller compatibility",
+    "No network,serial,hardwaredeployment or physicalsafety validation",
+    "Existingcontrollercode,D03,D10,D13 and unavailablebenchequipment remain required for physical integration"
+  ],
+  "schemaVersion": 1,
+  "sourceRevision": "26695b6055371eec6ee36bc7019ac7d557745e5f",
+  "recordedAtUtc": "2026-09-08T06:01:17.578419+00:00",
+  "artifactSnapshotSha256": {
+    "unity/Assets/ELTS/Elts/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "unity/Assets/ELTS/Elts/Elts.EltsLink.asmdef": "c46a19915f5b4e8b7c5c4df1023a60b07dce7f2762645e02bb86d03f79b88e66",
+    "unity/Assets/ELTS/Elts/Elts.EltsLink.asmdef.meta": "4ce37978eaf23025dc683b2f4f3fec1334d5b99fe3cec9b24b6c93f6a7f41ec5",
+    "unity/Assets/ELTS/Elts/EltsLinkContracts.cs": "85fb28792e4605bd21eac9671493b619fffbf1b148dbe17d5dfc30818c54f02e",
+    "unity/Assets/ELTS/Elts/EltsLinkContracts.cs.meta": "234c39db34e1de8f5be2d5a8e9cc9266ab90332a52e85c85ca09ff1cddb54b44",
+    "unity/Assets/ELTS/Elts/SimulatedEltsLink.cs": "9b6a189f03db2ef2371cf9a586db477dea96e55603ff6ea971839fac68c5e861",
+    "unity/Assets/ELTS/Elts/SimulatedEltsLink.cs.meta": "729e7b70cb7853d4b8de437a7e6e82ba275a8c0367cd27ab29c3c5e92c4fe60e",
+    "schemas/protocol/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "schemas/protocol/elts-development-synthetic-v1.schema.json": "316fa64318de6a3a8c444621b4903c6988745d2bf3bbed1cfe2b7d8a5adaa86c",
+    "schemas/protocol/fixtures/development-synthetic-v1.invalid.jsonl": "313e2ea425751f51352cf1ea023882aef76ae09e71fbaf1724a75890b714c9bb",
+    "schemas/protocol/fixtures/development-synthetic-v1.lifecycle.jsonl": "1d063461fcd0c03ac39cafa50a6dfb798af79675d0183ad8c6c22713e1d400c5",
+    "tools/runtime-tests/EltsLinkChecks.cs": "bd650cebf9d097f0f1dc9d4b64e94ab7ad738cf9eb67e8e8277f3f0ffda16aab",
+    "tools/runtime-tests/EltsLinkChecks.csproj": "4e371b08b28ea454cc6ed243c7be1f565a55a34c3fa11f7609a281bb536f80a8",
+    "docs/modules/elts-link.md": "8091638a1c81b00a1ccdc25ab8aa568aad21051f2a9bcea318268f6509a38fb3",
+    "jetson/README.md": "bc70bee17d59c2c7f972f460fd41831c6e329d2fcceab2992657c501cd94811a",
+    "diagnostics/dev10-integrated-play.json": "670eaaacf334fe12c149e8966257742e132a5d31a70a95e7b57ff2a665ac13d5"
+  }
+}

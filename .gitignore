@@ -26,6 +26,7 @@ Thumbs.db
 /test-results/
 /diagnostics/
 /data/
+/unity/data/
 # Raw research/private deployment inputs must never enter source control.
 *.ulf
 *.pfx

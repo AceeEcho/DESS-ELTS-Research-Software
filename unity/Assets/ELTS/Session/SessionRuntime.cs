@@ -278,6 +278,12 @@ namespace Elts.Session
 
             block = new ScenarioBlockController(clock, sequence, blockId, DeterministicSeedFor(plan.ParticipantId, blockId), plan.ConditionDurationSeconds, plan.AllowsDevelopmentOnlyDurationOverride);
             phaseStarted = clock.Now;
+            // Each attempt is independently identifiable, including a rerun
+            // reserved in a new output directory by the recording adapter.
+            if (!Record(Event("BlockMetadata", LogField.String("blockId", blockId),
+                LogField.String("participantId", plan.ParticipantId), LogField.String("condition", condition),
+                LogField.String("conditionOrder", String.Join("|", plan.ConditionOrder)),
+                LogField.NumberValue("rerunIndex", rerun)))) return;
             if (!Transition(SessionState.BlockRunning)) return;
             foreach (var item in block.Start())
                 if (!Record(item)) return;
@@ -292,13 +298,18 @@ namespace Elts.Session
         }
 
         /// <summary>Forwards an in-window shot through the active block and records every resulting event.</summary>
-        public void Fire(IShotModel shotModel, ShotContext shot, IEnumerable<TargetEntity> targets, Func<TargetEntity, bool> isVisible)
+        public bool Fire(IShotModel shotModel, ShotContext shot, IEnumerable<TargetEntity> targets, Func<TargetEntity, bool> isVisible)
         {
             ExpireCurrentPhase();
             Require(SessionState.BlockRunning);
             if (block == null) throw new InvalidOperationException("The active block has not been initialized.");
+            bool shotRecorded = false;
             foreach (var item in block.Fire(shotModel, shot, targets, isVisible))
-                if (!Record(item)) return;
+            {
+                if (!Record(item)) return false;
+                if (item.EventType == "ShotFired") shotRecorded = true;
+            }
+            return shotRecorded;
         }
 
         /// <summary>

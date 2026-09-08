@@ -1,6 +1,6 @@
 """Version-aware, read-only ingest of completed ELTS logging runs."""
 from __future__ import annotations
-import argparse, hashlib, json, math, statistics
+import argparse, hashlib, json, math, statistics, re
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +11,7 @@ EVENT_SCHEMA = "elts.events.v1"
 TARGET_SCHEMA = "elts.targets.v1"
 SUMMARY_SCHEMA = "elts.session-summary.v1"
 BLOCK_TICKS = 300 * 10_000_000
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 class IngestError(ValueError):
     """Input is incomplete, malformed, unsupported, or violates analysis invariants."""
@@ -34,15 +35,27 @@ def _sha(path: Path) -> tuple[str, int]:
     except OSError as exc: raise IngestError(f"cannot read {path}: {exc}") from exc
     return digest.hexdigest(), size
 
+def _require_string(value: Any, name: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise IngestError(f"{name} must be a non-empty string")
+    return value
+
+def _require_sha(value: Any, name: str) -> str:
+    if not isinstance(value, str) or not SHA256_RE.fullmatch(value):
+        raise IngestError(f"{name} must be a lowercase SHA-256 hex digest")
+    return value
+
 def _finite_vector(value: Any, name: str) -> tuple[float, float, float]:
     if not isinstance(value, (list, tuple)) or len(value) != 3: raise IngestError(f"{name} must contain three numbers")
-    result = tuple(float(x) for x in value)
+    try: result = tuple(float(x) for x in value)
+    except (TypeError, ValueError) as exc: raise IngestError(f"{name} must contain three numbers") from exc
     if not all(math.isfinite(x) for x in result): raise IngestError(f"{name} must be finite")
     return result
 
 def _finite_quat(value: Any, name: str) -> tuple[float, float, float, float]:
     if not isinstance(value, (list, tuple)) or len(value) != 4: raise IngestError(f"{name} must contain four numbers")
-    q = tuple(float(x) for x in value)
+    try: q = tuple(float(x) for x in value)
+    except (TypeError, ValueError) as exc: raise IngestError(f"{name} must contain four numbers") from exc
     n = math.sqrt(sum(x*x for x in q))
     if not math.isfinite(n) or n <= 1e-12: raise IngestError(f"{name} must be a nonzero finite quaternion")
     return tuple(x/n for x in q)
@@ -86,8 +99,13 @@ def _records(path: Path, expected: str) -> list[dict[str, Any]]:
             try: value=json.loads(line)
             except json.JSONDecodeError as exc: raise IngestError(f"malformed JSON at {path.name}:{line_no}: {exc.msg}") from exc
             _schema(value, expected, f"{path.name}:{line_no}")
-            if value.get("sequence", 0) <= previous_sequence or value.get("monotonicTicks", -1) < previous_ticks: raise IngestError(f"ordering violation at {path.name}:{line_no}")
-            previous_sequence=value["sequence"]; previous_ticks=value["monotonicTicks"]; result.append(value)
+            sequence = value.get("sequence")
+            ticks = value.get("monotonicTicks")
+            if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence <= previous_sequence:
+                raise IngestError(f"ordering violation at {path.name}:{line_no}: sequence must increase")
+            if not isinstance(ticks, int) or isinstance(ticks, bool) or ticks < 0 or ticks < previous_ticks:
+                raise IngestError(f"ordering violation at {path.name}:{line_no}: monotonicTicks must be nondecreasing")
+            previous_sequence=sequence; previous_ticks=ticks; result.append(value)
     return result
 
 def _sample_valid(sample: dict[str, Any]) -> bool:
@@ -108,12 +126,21 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
         digest,size=_sha(path); raw[name]={"path":str(path),"sha256":digest,"bytes":size}
     summary=_load_json(directory/"session-summary.json"); _schema(summary,SUMMARY_SCHEMA,"session-summary.json")
     if summary.get("complete") is not True or summary.get("error") is not None: raise IngestError("session summary is not complete")
-    if summary.get("checksumsSha256",{}).get("samples.ndjson") != raw["samples.ndjson"]["sha256"]: raise IngestError("samples checksum does not match summary")
-    if summary.get("checksumsSha256",{}).get("events.ndjson") != raw["events.ndjson"]["sha256"]: raise IngestError("events checksum does not match summary")
-    if summary.get("checksumsSha256",{}).get("targets.ndjson") != raw["targets.ndjson"]["sha256"]: raise IngestError("targets checksum does not match summary")
+    provenance = summary.get("provenance")
+    if not isinstance(provenance, dict): raise IngestError("session summary provenance is required")
+    for key in ("configurationHash", "scenarioHash", "fixtureHash"):
+        _require_sha(provenance.get(key), f"provenance.{key}")
+    checksums = summary.get("checksumsSha256")
+    if not isinstance(checksums, dict): raise IngestError("session summary checksumsSha256 is required")
+    for name in ("samples.ndjson", "events.ndjson", "targets.ndjson"):
+        expected = _require_sha(checksums.get(name), f"checksumsSha256.{name}")
+        if expected != raw[name]["sha256"]: raise IngestError(f"{name} checksum does not match summary")
     samples=_records(directory/"samples.ndjson", SAMPLE_SCHEMA); events=_records(directory/"events.ndjson", EVENT_SCHEMA); targets=_records(directory/"targets.ndjson", TARGET_SCHEMA)
     target_state={}; target_by_tick=[]
     for row in targets:
+        _require_string(row.get("targetId"), "targetId")
+        _require_string(row.get("blockId"), "blockId")
+        _finite_vector([row.get("worldPositionMeters", {}).get(k) for k in ("x", "y", "z")], "worldPositionMeters")
         target_state[row["targetId"]]=row
         target_by_tick.append((row["monotonicTicks"], row))
     valid=[]; invalid=0; errors=[]
@@ -143,14 +170,16 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
     score_blocks = []
     for block_id, item in markers.items():
         if "start" not in item or "end" not in item: continue
-        if item["end"] <= item["start"] or item["end"] - item["start"] > BLOCK_TICKS: raise IngestError(f"block {block_id!r} must be a positive interval no longer than 300 seconds")
+        if item["end"] - item["start"] != BLOCK_TICKS: raise IngestError(f"block {block_id!r} must be exactly 300 seconds")
         score_blocks.append((block_id, item["start"], item["end"]))
     destroyed_seen = set()
     for event in events:
         if event.get("eventType") != "TargetDestroyed": continue
         payload = event.get("payload", {}); block_id, target_id = payload.get("blockId"), payload.get("targetId")
         if not isinstance(block_id, str) or not isinstance(target_id, str): raise IngestError(f"TargetDestroyed event {event['sequence']} requires scalar targetId and blockId")
-        if not [b for b in score_blocks if b[0] == block_id and b[1] <= event["monotonicTicks"] < b[2]]: raise IngestError(f"TargetDestroyed event {event['sequence']} is outside its explicit block interval")
+        # A destruction in an incomplete/aborted block cannot complete a DV and
+        # is retained in the raw stream without being assigned a score.
+        if not [b for b in score_blocks if b[0] == block_id and b[1] <= event["monotonicTicks"] < b[2]]: continue
         key = (block_id, target_id)
         if key in destroyed_seen: raise IngestError(f"duplicate TargetDestroyed for {target_id!r} in block {block_id!r}")
         destroyed_seen.add(key)
@@ -177,7 +206,12 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
         vals=b.pop("aimErrorsDegrees"); b["meanAimErrorDegrees"]=statistics.fmean(vals) if vals else None; b["medianAimErrorDegrees"]=statistics.median(vals) if vals else None; total=b["validSamples"]+b["invalidSamples"]; b["validSampleFraction"]=b["validSamples"]/total if total else None; block_reports.append(b)
     block_reports.sort(key=lambda x:x["startTicks"])
     if not block_reports: block_reports=[{"scoreStatus":"unavailable","reason":"no complete BlockStarted/BlockEnded interval in event stream"}]
-    report={"analysisVersion":"elts.analysis.v1","source":{"runDirectory":str(directory.resolve()),"sessionSummary":summary["provenance"],"rawInputs":raw},"calibration":cal,"counts":{"samples":len(samples),"validSamples":sum(1 for x in samples if _sample_valid(x)),"invalidSamples":invalid,"events":len(events),"targets":len(targets)},"blocks":block_reports}
+    counts = summary.get("counts")
+    if not isinstance(counts, dict): raise IngestError("session summary counts are required")
+    expected_counts = {"writtenSamples": len(samples), "writtenEvents": len(events), "writtenTargets": len(targets)}
+    for key, actual in expected_counts.items():
+        if counts.get(key) != actual: raise IngestError(f"session summary {key} does not match input")
+    report={"analysisVersion":"elts.analysis.v1","source":{"runDirectory":str(directory.resolve()),"sessionSummary":provenance,"rawInputs":raw},"calibration":{**cal,"sha256":_sha(Path(calibration))[0]},"counts":{"samples":len(samples),"validSamples":sum(1 for x in samples if _sample_valid(x)),"invalidSamples":invalid,"events":len(events),"targets":len(targets)},"blocks":block_reports}
     if output is not None: Path(output).write_text(json.dumps(report,indent=2,sort_keys=True,allow_nan=False)+"\n",encoding="utf-8",newline="\n")
     return report
 

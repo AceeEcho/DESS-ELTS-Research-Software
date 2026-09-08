@@ -18,12 +18,14 @@ namespace Elts.Session
         private readonly string dataRoot;
         private readonly SessionProvenance provenance;
         private readonly LoggingConfiguration options;
+        private readonly ILogSinkFactory? sinkFactory;
         private readonly SemaphoreSlim lifecycleGate = new SemaphoreSlim(1, 1);
         private readonly object sync = new object();
         private SessionLogWriter? writer;
         private string? runDirectory;
         private long droppedSampleCount;
         private bool disposed;
+        private bool? lastCloseSucceeded;
 
         public SessionRecordingAdapter(string dataRoot, SessionProvenance provenance, LoggingConfiguration? options = null)
         {
@@ -31,12 +33,22 @@ namespace Elts.Session
             this.dataRoot = dataRoot;
             this.provenance = provenance ?? throw new ArgumentNullException(nameof(provenance));
             this.options = options ?? new LoggingConfiguration();
+            sinkFactory = null;
+        }
+
+        internal SessionRecordingAdapter(string dataRoot, SessionProvenance provenance, LoggingConfiguration? options, ILogSinkFactory sinkFactory)
+        {
+            if (String.IsNullOrWhiteSpace(dataRoot)) throw new ArgumentException("A logging data root is required.", nameof(dataRoot));
+            this.dataRoot = dataRoot;
+            this.provenance = provenance ?? throw new ArgumentNullException(nameof(provenance));
+            this.options = options ?? new LoggingConfiguration();
+            this.sinkFactory = sinkFactory ?? throw new ArgumentNullException(nameof(sinkFactory));
         }
 
         /// <summary>Directory of the current or most recently closed unique run.</summary>
         public string? RunDirectory { get { lock (sync) return runDirectory; } }
-        public bool IsOpen { get { lock (sync) return writer != null && writer.IsWriterAlive; } }
-        public bool WriterHealthy { get { lock (sync) return writer != null && writer.Health.IsHealthy; } }
+        public bool IsOpen { get { lock (sync) return writer != null; } }
+        public bool WriterHealthy { get { lock (sync) return writer != null && writer.IsWriterAlive && writer.Health.IsHealthy; } }
         public long DroppedSampleCount { get { lock (sync) return writer?.DroppedSampleCount ?? droppedSampleCount; } }
 
         public async Task<bool> ReserveAndStartAsync(string runId)
@@ -50,13 +62,14 @@ namespace Elts.Session
                 try
                 {
                     var lease = await Task.Run(() => LoggingRunDirectory.ReserveUnique(dataRoot, runId)).ConfigureAwait(false);
-                    var next = new SessionLogWriter(lease, provenance, options);
+                    var next = new SessionLogWriter(lease, provenance, options, sinkFactory);
                     next.Start();
                     lock (sync)
                     {
                         writer = next;
                         runDirectory = lease.DirectoryPath;
                         droppedSampleCount = 0;
+                        lastCloseSucceeded = null;
                     }
                     return next.Health.IsHealthy;
                 }
@@ -82,17 +95,19 @@ namespace Elts.Session
                     closing = writer;
                     writer = null;
                 }
-                if (closing == null) return false;
+                if (closing == null) return lastCloseSucceeded ?? false;
 
                 try
                 {
                     var result = await Task.Run(() => closing.Close()).ConfigureAwait(false);
                     lock (sync) { droppedSampleCount = closing.DroppedSampleCount; }
-                    return result.Completed && result.CompleteOutput && closing.Health.IsHealthy;
+                    bool succeeded = result.Completed && result.CompleteOutput && closing.Health.IsHealthy;
+                    lock (sync) { lastCloseSucceeded = succeeded; }
+                    return succeeded;
                 }
                 catch
                 {
-                    lock (sync) { droppedSampleCount = closing.DroppedSampleCount; }
+                    lock (sync) { droppedSampleCount = closing.DroppedSampleCount; lastCloseSucceeded = false; }
                     return false;
                 }
                 finally
@@ -141,7 +156,7 @@ namespace Elts.Session
             if (disposed) return;
             disposed = true;
             CloseAsync().GetAwaiter().GetResult();
-            lifecycleGate.Dispose();
+
         }
 
         private void ThrowIfDisposed()

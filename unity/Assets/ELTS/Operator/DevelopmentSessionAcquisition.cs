@@ -29,7 +29,6 @@ namespace Elts.Operator
         private string? failure;
         private long acquiredCount;
         private long droppedCount;
-        private long skippedCount;
         private long startedTimestamp;
         private long lastTimestamp;
 
@@ -46,7 +45,7 @@ namespace Elts.Operator
         public TrackingSamplePair? Snapshot { get { lock (gate) return latest; } }
         public long AcquiredCount => Interlocked.Read(ref acquiredCount);
         public long DroppedCount => Interlocked.Read(ref droppedCount);
-        public long SkippedCount => Interlocked.Read(ref skippedCount);
+        public long SkippedCount => source.SkippedAcquisitionCount;
         public double ActualElapsedRateHz
         {
             get
@@ -81,7 +80,7 @@ namespace Elts.Operator
             }
             if (thread == null) return;
             await Task.Run(() => thread.Join(StopJoinMilliseconds)).ConfigureAwait(false);
-            if (thread.IsAlive) SetFailure("Synthetic acquisition did not stop within the bounded join interval.");
+            if (thread.IsAlive) throw new TimeoutException("Synthetic acquisition did not stop within the bounded join interval.");
             else source.Dispose();
         }
 
@@ -95,10 +94,14 @@ namespace Elts.Operator
                 while (!token.IsCancellationRequested)
                 {
                     bool hasHead = source.TryGetNext(out TrackingSample head);
-                    bool hasWeapon = source.TryGetNext(out TrackingSample weapon);
-                    if (!hasHead || !hasWeapon)
+                    if (!hasHead)
                     {
-                        Interlocked.Increment(ref skippedCount);
+                        next = WaitUntil(next, token);
+                        continue;
+                    }
+                    bool hasWeapon = source.TryGetNext(out TrackingSample weapon);
+                    if (!hasWeapon)
+                    {
                     }
                     else
                     {
@@ -126,7 +129,9 @@ namespace Elts.Operator
                 long remaining = target - Stopwatch.GetTimestamp();
                 if (remaining <= 0) return Stopwatch.GetTimestamp();
                 double milliseconds = remaining * 1000.0 / Stopwatch.Frequency;
-                if (milliseconds > 1) token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(Math.Min(milliseconds - 0.5, 20)));
+                // Windows timer waits can oversleep a 4 ms period. Sleep only
+                // while comfortably ahead, then bounded-spin for the tail.
+                if (milliseconds > 5) token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(Math.Min(milliseconds - 2, 20)));
                 else Thread.SpinWait(64);
             }
             return target;

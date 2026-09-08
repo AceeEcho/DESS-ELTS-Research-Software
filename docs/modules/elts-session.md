@@ -18,9 +18,13 @@ D-10 or authorizes a study behavior.
 
 Each sent command and reply is a typed `SessionEvent`: `EltsCommand`, `EltsAck`,
 `EltsNack`, `EltsState`, `EltsOffset`, or `EltsLinkLoss`. These use the injected
-shared monotonic clock and an injected sequence. Command retries are bounded and
-reuse one protocol sequence, allowing the mock controller's idempotence rules to
-apply. A reconnect produces a loss; the adapter never resumes the previous block.
+shared monotonic clock and an injected sequence. `EltsOffset` retains raw observed
+endpoint-minus-Unity ticks; it is not a synchronization estimate or study timing
+claim. Delivery-exception retries are bounded and reuse one protocol sequence,
+allowing the mock controller's idempotence rules to apply. NACKs are semantic
+protocol failures and are never retried. A reconnect latches a loss; only a new
+explicit block-attempt context can clear it, and the adapter never resumes the
+previous block.
 
 Run the synthetic check from the repository root with:
 

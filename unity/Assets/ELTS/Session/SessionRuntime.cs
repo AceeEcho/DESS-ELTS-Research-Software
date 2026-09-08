@@ -285,16 +285,25 @@ namespace Elts.Session
             }
 
             if (State != SessionState.BlockRunning || block == null) return;
-            if (link is ISessionConditionLink conditionLink && !conditionLink.Tick())
-            {
-                Fail("ELTS link heartbeat, time limit, or state check failed.");
-                return;
-            }
             foreach (var item in block.Update())
                 if (!Record(item)) return;
-            if (State != SessionState.BlockRunning || block.State != ScenarioBlockState.Completed) return;
-            if (!StopLink()) return;
-            Transition(SessionState.BlockEnded);
+            if (State != SessionState.BlockRunning) return;
+            if (block.State == ScenarioBlockState.Completed)
+            {
+                // At the exact deadline, completion and STOP take precedence over
+                // the mock's independent maximum-on-time de-permission check.
+                if (!StopLink()) return;
+                Transition(SessionState.BlockEnded);
+                return;
+            }
+            if (link is ISessionConditionLink conditionLink)
+            {
+                try
+                {
+                    if (!conditionLink.Tick()) Fail("ELTS link heartbeat, time limit, or state check failed.");
+                }
+                catch (Exception e) { Fail("ELTS link state check failed: " + e.Message); }
+            }
         }
 
         public void StartBlock()
@@ -302,11 +311,17 @@ namespace Elts.Session
             Require(SessionState.BlockReady);
             string condition = CurrentCondition ?? throw new InvalidOperationException("There is no remaining block.");
             string blockId = CurrentBlockId ?? throw new InvalidOperationException("There is no current block identity.");
-            if (link is ISessionConditionLink conditionLink && !conditionLink.PrepareBlock(
-                new SessionBlockLinkContext(plan.ParticipantId, blockId, condition, checked((long)(plan.ConditionDurationSeconds * TimeSpan.TicksPerSecond)))))
+            if (link is ISessionConditionLink conditionLink)
             {
-                Fail("ELTS link block preparation failed.");
-                return;
+                try
+                {
+                    if (!conditionLink.PrepareBlock(new SessionBlockLinkContext(plan.ParticipantId, blockId, condition, checked((long)(plan.ConditionDurationSeconds * TimeSpan.TicksPerSecond)))))
+                    {
+                        Fail("ELTS link block preparation failed.");
+                        return;
+                    }
+                }
+                catch (Exception e) { Fail("ELTS link block preparation failed: " + e.Message); return; }
             }
             if (condition.StartsWith("WE_", StringComparison.Ordinal) && !TrySetLink(true))
             {

@@ -7,6 +7,8 @@
     <Compile Include="../../unity/Assets/ELTS/Clock/SharedMonotonicClock.cs" Link="SharedMonotonicClock.cs" />
     <Compile Include="../../unity/Assets/ELTS/Geometry/Geometry.cs" Link="Geometry.cs" />
     <Compile Include="../../unity/Assets/ELTS/Logging/LoggingContracts.cs" Link="LoggingContracts.cs" />
+    <Compile Include="../../unity/Assets/ELTS/Logging/LogJson.cs" Link="LogJson.cs" />
+    <Compile Include="../../unity/Assets/ELTS/Logging/SessionLogWriter.cs" Link="SessionLogWriter.cs" />
     <Compile Include="../../unity/Assets/ELTS/Tracking/TrackingContracts.cs" Link="TrackingContracts.cs" />
   </ItemGroup>
 </Project>

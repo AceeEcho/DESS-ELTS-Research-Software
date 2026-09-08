@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-08T19:34:43.710647+00:00",
+  "generatedAtUtc": "2026-09-08T19:36:06.652225+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,8 +11,8 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 166,
-    "eventSetSha256": "29dc03687fba8d5530395650eb9619b7290046728d6b2023b06dbed5e1f90ad6"
+    "eventCount": 167,
+    "eventSetSha256": "b0341c8591c55d62c20fb58d6573249f152706a496f37142f28215167ed6b094"
   },
   "current": {
     "mode": "working",
@@ -43,7 +43,9 @@
   "execution": {
     "mode": "working",
     "primaryStepId": "DEV-12.S001",
-    "activeStepIds": [],
+    "activeStepIds": [
+      "DEV-12.S001"
+    ],
     "nextEligibleStepIds": [
       "P0.2.S001",
       "P0.4.S001",
@@ -274,7 +276,25 @@
     "selectedPhaseId": "DEV",
     "selectedLane": "synthetic_development_only"
   },
-  "activeWork": [],
+  "activeWork": [
+    {
+      "owner": "agent:codex-astra",
+      "taskId": "DEV-12",
+      "atomicStepId": "DEV-12.S001",
+      "branch": "codex/development-package",
+      "claimedPaths": [
+        "tools/build",
+        "tools/bootstrap/driver.py",
+        "tools/runtime-tests/DevelopmentInteropFixture.cs",
+        "tools/runtime-tests/DevelopmentInteropFixture.csproj",
+        "scripts/package-development.ps1",
+        "docs/operator/development-package.md",
+        "docs/operator/hardware-follow-up.md",
+        "docs/ai/bootstrap-handoff.md",
+        "docs/ai/development-checkpoint-2026-09-08.md"
+      ]
+    }
+  ],
   "tasks": {
     "P0.1": {
       "status": "not_started",
@@ -1616,12 +1636,22 @@
       "blockers": []
     },
     "DEV-12": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "8d02ac6b779cb7ba06234b66879a753f0ba33744f485c2db905b7031241e9f6a",
+      "owner": "agent:codex-astra",
+      "branch": "codex/development-package",
+      "claimedPaths": [
+        "docs/ai/bootstrap-handoff.md",
+        "docs/ai/development-checkpoint-2026-09-08.md",
+        "docs/operator/development-package.md",
+        "docs/operator/hardware-follow-up.md",
+        "scripts/package-development.ps1",
+        "tools/bootstrap/driver.py",
+        "tools/build",
+        "tools/runtime-tests/DevelopmentInteropFixture.cs",
+        "tools/runtime-tests/DevelopmentInteropFixture.csproj"
+      ],
       "evidence": [],
       "blockers": []
     }
@@ -3499,12 +3529,22 @@
       "blockers": []
     },
     "DEV-12.S001": {
-      "status": "ready",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
+      "status": "in_progress",
+      "revision": 1,
+      "lastEventHash": "8d02ac6b779cb7ba06234b66879a753f0ba33744f485c2db905b7031241e9f6a",
+      "owner": "agent:codex-astra",
+      "branch": "codex/development-package",
+      "claimedPaths": [
+        "tools/build",
+        "tools/bootstrap/driver.py",
+        "tools/runtime-tests/DevelopmentInteropFixture.cs",
+        "tools/runtime-tests/DevelopmentInteropFixture.csproj",
+        "scripts/package-development.ps1",
+        "docs/operator/development-package.md",
+        "docs/operator/hardware-follow-up.md",
+        "docs/ai/bootstrap-handoff.md",
+        "docs/ai/development-checkpoint-2026-09-08.md"
+      ],
       "evidence": [],
       "blockers": []
     },
@@ -6011,6 +6051,10 @@
     "task:DEV-11": {
       "revision": 7,
       "hash": "0b54d61f0488f25b4e011e48fe980733db41d6d148d0cf64110ba93fa5a4e82c"
+    },
+    "task:DEV-12": {
+      "revision": 1,
+      "hash": "8d02ac6b779cb7ba06234b66879a753f0ba33744f485c2db905b7031241e9f6a"
     }
   },
   "integrity": {

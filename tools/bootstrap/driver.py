@@ -229,9 +229,29 @@ def run(args) -> tuple[dict, Path]:
                         json_dll = candidates[0]
                     command("runtime-config", [dotnet, "run", "--project", "tools/runtime-tests/ConfigChecks.csproj",
                             "-p:NewtonsoftPath=" + str(json_dll), "--", str(ROOT / "unity/Assets/StreamingAssets/config-generated")], expected_output=" configuration checks")
-                    for project, banner in (("TrackingChecks", " tracking checks"), ("SyntheticTrackingChecks", " synthetic tracking checks"), ("Dev03ReviewChecks", "DEV-03 review regressions"), ("LoggingChecks", " logging checks"), ("LoggingThroughputChecks", " logging throughput checks")):
-                        if (ROOT / "tools/runtime-tests" / (project + ".csproj")).is_file():
-                            command(project, [dotnet, "run", "--project", "tools/runtime-tests/" + project + ".csproj"], expected_output=banner)
+                    # Explicit registry excludes fixture generators and soak
+                    # tools that need arguments or longer execution budgets.
+                    runtime_checks = (
+                        ("TrackingChecks", " tracking checks"),
+                        ("SyntheticTrackingChecks", " synthetic tracking checks"),
+                        ("Dev03ReviewChecks", "DEV-03 review regressions"),
+                        ("LoggingChecks", " logging checks"),
+                        ("LoggingPublicationChecks", " logging publication checks"),
+                        ("LoggingThroughputChecks", " logging throughput checks"),
+                        ("RenderingChecks", " rendering checks"),
+                        ("ReplayChecks", " replay checks"),
+                        ("ScenarioChecks", " scenario checks"),
+                        ("SessionChecks", " session checks"),
+                        ("SessionRecordingAdapterChecks", " session recording adapter checks"),
+                        ("SessionAcquisitionChecks", " session acquisition checks"),
+                        ("CalibrationChecks", " calibration checks"),
+                        ("EltsLinkChecks", " synthetic ELTS-link checks"),
+                        ("EltsSessionChecks", " ELTS session adapter checks"),
+                    )
+                    for project, banner in runtime_checks:
+                        command(project, [dotnet, "run", "--configuration", "Release", "--project",
+                                "tools/runtime-tests/" + project + ".csproj", "-p:NewtonsoftPath=" + str(json_dll)], expected_output=banner)
+                    command("analysis", py + ["-m", "unittest", "discover", "-s", "analysis/tests", "-p", "test_*.py", "-v"])
             if selected in {"all", "unity-edit", "unity-play"}:
                 smoke = ROOT / "unity/Assets/Tests/EditMode/Elts.EditModeTests.asmdef"
                 if not editor or not smoke.is_file():

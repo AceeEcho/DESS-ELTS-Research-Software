@@ -43,12 +43,12 @@ BOOT.S011 through BOOT.S025 retain individual immutable receipts. Active IDs are
 `P0.3.S001` followed by `BOOT.S002` through `BOOT.S026`; historical workbook suffixes
 must not be substituted for them.
 
-At this checkpoint, DEV-04.S001 is the ongoing development step: the logging
-implementation and failure/throughput checks are integrated, and the measured
-30-minute synthetic soak is still running. Validate its complete summary,
-all streamed schema/count/checksum checks and timing report before accepting
-DEV-04.S001 / DEV-04.V001 / DEV-04. Then use the reducer's eligible selection for
-the next independent development tasks. Do not infer completion from this text.
+The current user-requested stopping point is recorded in
+[the 2026-09-08 development handoff](development-checkpoint-2026-09-08.md).
+DEV-01 through DEV-08 and DEV-10 are accepted in generated progress. DEV-09.S001
+and DEV-11.S001 remain in progress; DEV-12 has not started. Resume those exact
+claims and their remaining evidence work after validating current state. Do not
+infer completion from code presence or this text.
 
 The baseline remains anchored at G0. The apparatus is built; testing equipment is
 unavailable. Real tracking/occlusion, calibration, display mapping/luminance,

@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-08T19:36:06.652225+00:00",
+  "generatedAtUtc": "2026-09-08T19:57:15.900568+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,8 +11,8 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 167,
-    "eventSetSha256": "b0341c8591c55d62c20fb58d6573249f152706a496f37142f28215167ed6b094"
+    "eventCount": 173,
+    "eventSetSha256": "c2cc5c12a223acb4d120c7bce26031320c4413c8908a2b24a03218f768470fbb"
   },
   "current": {
     "mode": "working",
@@ -42,12 +42,9 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "DEV-12.S001",
-    "activeStepIds": [
-      "DEV-12.S001"
-    ],
+    "primaryStepId": "P0.2.S001",
+    "activeStepIds": [],
     "nextEligibleStepIds": [
-      "P0.2.S001",
       "P0.4.S001",
       "P0.5.S001"
     ],
@@ -68,7 +65,6 @@
       "D-14",
       "D-16",
       "D-17",
-      "DEV-12.S001",
       "G0",
       "G1",
       "G2",
@@ -273,28 +269,10 @@
       "P8.7.S001",
       "P8.8.S001"
     ],
-    "selectedPhaseId": "DEV",
-    "selectedLane": "synthetic_development_only"
+    "selectedPhaseId": "P0",
+    "selectedLane": "baseline"
   },
-  "activeWork": [
-    {
-      "owner": "agent:codex-astra",
-      "taskId": "DEV-12",
-      "atomicStepId": "DEV-12.S001",
-      "branch": "codex/development-package",
-      "claimedPaths": [
-        "tools/build",
-        "tools/bootstrap/driver.py",
-        "tools/runtime-tests/DevelopmentInteropFixture.cs",
-        "tools/runtime-tests/DevelopmentInteropFixture.csproj",
-        "scripts/package-development.ps1",
-        "docs/operator/development-package.md",
-        "docs/operator/hardware-follow-up.md",
-        "docs/ai/bootstrap-handoff.md",
-        "docs/ai/development-checkpoint-2026-09-08.md"
-      ]
-    }
-  ],
+  "activeWork": [],
   "tasks": {
     "P0.1": {
       "status": "not_started",
@@ -1636,23 +1614,42 @@
       "blockers": []
     },
     "DEV-12": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "8d02ac6b779cb7ba06234b66879a753f0ba33744f485c2db905b7031241e9f6a",
+      "status": "done",
+      "revision": 7,
+      "lastEventHash": "600bf33c7d432b81130ab63b568223ac62f89327e8ee5a39083974e9727b699c",
       "owner": "agent:codex-astra",
       "branch": "codex/development-package",
-      "claimedPaths": [
-        "docs/ai/bootstrap-handoff.md",
-        "docs/ai/development-checkpoint-2026-09-08.md",
-        "docs/operator/development-package.md",
-        "docs/operator/hardware-follow-up.md",
-        "scripts/package-development.ps1",
-        "tools/bootstrap/driver.py",
-        "tools/build",
-        "tools/runtime-tests/DevelopmentInteropFixture.cs",
-        "tools/runtime-tests/DevelopmentInteropFixture.csproj"
+      "claimedPaths": [],
+      "evidence": [
+        {
+          "id": "DEV-12-acceptance",
+          "path": "project-management/progress/evidence/DEV-12.json",
+          "sha256": "c0e10e509f3eb95ae372bf1ef3c9f9f66efe37cf6db2661ed3abcd3ab6efee15",
+          "targetIds": [
+            "DEV-12.S001",
+            "DEV-12.V001",
+            "DEV-12"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "Expanded runtime driver (17 C# suites and analysis); 10 package/provenance tests; 3 driver tests; DevelopmentInteropFixture real writer/mock/replay; strict log verification and analysis; package-development.ps1; ZIP per-file readback; extracted copied-output startup and packaged analysis commands",
+          "result": "pass",
+          "sourceRevision": "8d2688fe3e031f5a38e109942a34fb31f770a38e",
+          "recordedAtUtc": "2026-09-08T19:56:50.433562+00:00",
+          "limitations": [
+            "Windows development machine only; second-machine test unavailable",
+            "Synthetic tracking, virtual calibration, mockcontroller and manualclock fixture only; no physical or study-ready claim",
+            "Copied-player startup is non-graphical3frames; graphical operatorpanel inspected separately",
+            "Player build dev-003035f135a0-dirty includes truthful unrelated source-dirty metadata; browser simulation edits preserved",
+            "Real study-PC displays/SteamVR, measured calibration, native controls, active-player quit, physical safety, investigator decisions and authenticated gates remain pending",
+            "No remote publication, merge, hardware deployment or study release"
+          ]
+        }
       ],
-      "evidence": [],
       "blockers": []
     }
   },
@@ -3529,9 +3526,9 @@
       "blockers": []
     },
     "DEV-12.S001": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "8d02ac6b779cb7ba06234b66879a753f0ba33744f485c2db905b7031241e9f6a",
+      "status": "done",
+      "revision": 3,
+      "lastEventHash": "7b7ac780e0ddc00cd264e6126c1dd95af3be8e0df263f0cc2e97535f7338c5a6",
       "owner": "agent:codex-astra",
       "branch": "codex/development-package",
       "claimedPaths": [
@@ -3545,17 +3542,77 @@
         "docs/ai/bootstrap-handoff.md",
         "docs/ai/development-checkpoint-2026-09-08.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "DEV-12-acceptance",
+          "path": "project-management/progress/evidence/DEV-12.json",
+          "sha256": "c0e10e509f3eb95ae372bf1ef3c9f9f66efe37cf6db2661ed3abcd3ab6efee15",
+          "targetIds": [
+            "DEV-12.S001",
+            "DEV-12.V001",
+            "DEV-12"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "Expanded runtime driver (17 C# suites and analysis); 10 package/provenance tests; 3 driver tests; DevelopmentInteropFixture real writer/mock/replay; strict log verification and analysis; package-development.ps1; ZIP per-file readback; extracted copied-output startup and packaged analysis commands",
+          "result": "pass",
+          "sourceRevision": "8d2688fe3e031f5a38e109942a34fb31f770a38e",
+          "recordedAtUtc": "2026-09-08T19:56:50.433562+00:00",
+          "limitations": [
+            "Windows development machine only; second-machine test unavailable",
+            "Synthetic tracking, virtual calibration, mockcontroller and manualclock fixture only; no physical or study-ready claim",
+            "Copied-player startup is non-graphical3frames; graphical operatorpanel inspected separately",
+            "Player build dev-003035f135a0-dirty includes truthful unrelated source-dirty metadata; browser simulation edits preserved",
+            "Real study-PC displays/SteamVR, measured calibration, native controls, active-player quit, physical safety, investigator decisions and authenticated gates remain pending",
+            "No remote publication, merge, hardware deployment or study release"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-12.V001": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 6,
+      "lastEventHash": "85eec06454a35bea737d0a1d2b8ba840ddd96dbd0fb0132675cae0dc29e75eb9",
+      "owner": "agent:codex-astra",
+      "branch": "codex/development-package",
+      "claimedPaths": [
+        "project-management/progress/evidence/DEV-12.json"
+      ],
+      "evidence": [
+        {
+          "id": "DEV-12-acceptance",
+          "path": "project-management/progress/evidence/DEV-12.json",
+          "sha256": "c0e10e509f3eb95ae372bf1ef3c9f9f66efe37cf6db2661ed3abcd3ab6efee15",
+          "targetIds": [
+            "DEV-12.S001",
+            "DEV-12.V001",
+            "DEV-12"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "Expanded runtime driver (17 C# suites and analysis); 10 package/provenance tests; 3 driver tests; DevelopmentInteropFixture real writer/mock/replay; strict log verification and analysis; package-development.ps1; ZIP per-file readback; extracted copied-output startup and packaged analysis commands",
+          "result": "pass",
+          "sourceRevision": "8d2688fe3e031f5a38e109942a34fb31f770a38e",
+          "recordedAtUtc": "2026-09-08T19:56:50.433562+00:00",
+          "limitations": [
+            "Windows development machine only; second-machine test unavailable",
+            "Synthetic tracking, virtual calibration, mockcontroller and manualclock fixture only; no physical or study-ready claim",
+            "Copied-player startup is non-graphical3frames; graphical operatorpanel inspected separately",
+            "Player build dev-003035f135a0-dirty includes truthful unrelated source-dirty metadata; browser simulation edits preserved",
+            "Real study-PC displays/SteamVR, measured calibration, native controls, active-player quit, physical safety, investigator decisions and authenticated gates remain pending",
+            "No remote publication, merge, hardware deployment or study release"
+          ]
+        }
+      ],
       "blockers": []
     },
     "P0.1.S001": {
@@ -6053,8 +6110,8 @@
       "hash": "0b54d61f0488f25b4e011e48fe980733db41d6d148d0cf64110ba93fa5a4e82c"
     },
     "task:DEV-12": {
-      "revision": 1,
-      "hash": "8d02ac6b779cb7ba06234b66879a753f0ba33744f485c2db905b7031241e9f6a"
+      "revision": 7,
+      "hash": "600bf33c7d432b81130ab63b568223ac62f89327e8ee5a39083974e9727b699c"
     }
   },
   "integrity": {

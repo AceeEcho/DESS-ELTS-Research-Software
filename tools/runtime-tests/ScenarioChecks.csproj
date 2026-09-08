@@ -3,6 +3,7 @@
   <ItemGroup>
     <Compile Include="ScenarioChecks.cs" />
     <Compile Include="../../unity/Assets/ELTS/Scenario/ScenarioRuntime.cs" Link="ScenarioRuntime.cs" />
+    <Compile Include="../../unity/Assets/ELTS/Session/SessionRuntime.cs" Link="SessionRuntime.cs" />
     <Compile Include="../../unity/Assets/ELTS/Clock/SharedMonotonicClock.cs" Link="SharedMonotonicClock.cs" />
     <Compile Include="../../unity/Assets/ELTS/Geometry/Geometry.cs" Link="Geometry.cs" />
     <Compile Include="../../unity/Assets/ELTS/Logging/LoggingContracts.cs" Link="LoggingContracts.cs" />

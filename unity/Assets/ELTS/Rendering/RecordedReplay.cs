@@ -29,7 +29,7 @@ namespace Elts.Rendering
         public readonly Vector3d Position;
         public ReplayTarget(long ticks,string key,string lifecycle,Vector3d position) {Ticks=ticks;Key=key;Lifecycle=lifecycle;Position=position;}
     }
-    /// <summary>Strict, read-only v1 replay. Load on a worker, then query immutable data on the main thread.</summary>
+        /// <summary>Strict, read-only v1/v2 replay. Load on a worker, then query immutable data on the main thread.</summary>
     public sealed class RecordedReplay
     {
         // Bounded development viewer; larger studies belong in the streaming analysis package.
@@ -86,7 +86,7 @@ namespace Elts.Rendering
             foreach(var pair in targetHistory)
             {
                 int index=LatestAt(pair.Value,ticks);
-                if(index<0||pair.Value[index].Lifecycle=="Destroyed") continue;
+                if(index<0||pair.Value[index].Lifecycle=="Destroyed"||pair.Value[index].Lifecycle=="Despawned") continue;
                 result.Add(pair.Key,pair.Value[index].Position);
             }
             return new ReadOnlyDictionary<string,Vector3d>(result);
@@ -123,6 +123,7 @@ namespace Elts.Rendering
             var counts=Object(summary,"counts");Fields(counts,"droppedSamples","writtenSamples","writtenEvents","writtenTargets");Integer(counts,"droppedSamples");
             var hashes=Object(summary,"checksumsSha256");Fields(hashes,"samples.ndjson","events.ndjson","targets.ndjson");
             var frames=new List<ReplayFrame>();var targets=new List<ReplayTarget>();
+            string? targetSchemaVersion=null;
             foreach(var product in new[]{("samples","writtenSamples"),("events","writtenEvents"),("targets","writtenTargets")})
             {
                 string filename=product.Item1+".ndjson",path=Path.Combine(root,filename);
@@ -137,7 +138,14 @@ namespace Elts.Rendering
                         while((line=reader.ReadLine())!=null)
                         {
                             if(++count>MaximumRecordsPerProduct)throw new InvalidDataException("Replay record limit exceeded.");
-                            var row=Parse(line);Equal(row,"schemaVersion","elts."+product.Item1+".v1");
+                            var row=Parse(line);
+                            if(product.Item1=="targets")
+                            {
+                                string version=Text(row,"schemaVersion");
+                                if(version!="elts.targets.v1"&&version!="elts.targets.v2")throw new InvalidDataException("Unsupported target schema version.");
+                                if(targetSchemaVersion==null)targetSchemaVersion=version;else if(targetSchemaVersion!=version)throw new InvalidDataException("Mixed target schema versions in replay stream.");
+                            }
+                            else Equal(row,"schemaVersion","elts."+product.Item1+".v1");
                             long sequence=Integer(row,"sequence"),ticks=Integer(row,"monotonicTicks");
                             if(sequence<=previousSequence||ticks<previousTicks)throw new InvalidDataException("Nonmonotonic replay stream.");previousSequence=sequence;previousTicks=ticks;
                             if(product.Item1=="samples")
@@ -149,7 +157,7 @@ namespace Elts.Rendering
                             else if(product.Item1=="targets")
                             {
                                 Fields(row,"schemaVersion","sequence","monotonicTicks","targetId","blockId","lifecycle","worldPositionMeters","worldVelocityMetersPerSecond","scenarioSeed","scenarioVersion");
-                                string lifecycle=Choice(row,"lifecycle","Spawned","Updated","Destroyed");
+                                string lifecycle=targetSchemaVersion=="elts.targets.v1"?Choice(row,"lifecycle","Spawned","Updated","Destroyed"):Choice(row,"lifecycle","Spawned","Updated","Destroyed","Despawned");
                                 Integer(row,"scenarioSeed");Text(row,"scenarioVersion");Vector(Object(row,"worldVelocityMetersPerSecond"));
                                 targets.Add(new ReplayTarget(ticks,Identifier(row,"blockId")+"/"+Identifier(row,"targetId"),lifecycle,Vector(Object(row,"worldPositionMeters"))));
                             }
@@ -209,7 +217,7 @@ namespace Elts.Rendering
         }
         private static void ValidateTargets(ReplayTarget[] values)
         {
-            long previous=-1; foreach(var target in values){if(target.Ticks<0||target.Ticks<previous)throw new InvalidDataException("Nonmonotonic target timestamps.");if(String.IsNullOrEmpty(target.Key)||!new[]{"Spawned","Updated","Destroyed"}.Contains(target.Lifecycle)||!RenderNumbers.Finite(target.Position.X)||!RenderNumbers.Finite(target.Position.Y)||!RenderNumbers.Finite(target.Position.Z))throw new InvalidDataException("Invalid target record.");previous=target.Ticks;}
+            long previous=-1; foreach(var target in values){if(target.Ticks<0||target.Ticks<previous)throw new InvalidDataException("Nonmonotonic target timestamps.");if(String.IsNullOrEmpty(target.Key)||!new[]{"Spawned","Updated","Destroyed","Despawned"}.Contains(target.Lifecycle)||!RenderNumbers.Finite(target.Position.X)||!RenderNumbers.Finite(target.Position.Y)||!RenderNumbers.Finite(target.Position.Z))throw new InvalidDataException("Invalid target record.");previous=target.Ticks;}
         }
         private static void ValidatePoseStatus(RigidPose? pose,string status)
         {

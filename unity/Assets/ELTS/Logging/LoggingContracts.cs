@@ -12,7 +12,9 @@ public static class LogSchemaVersions
 {
     public const string Samples = "elts.samples.v1";
     public const string Events = "elts.events.v1";
-    public const string Targets = "elts.targets.v1";
+    // Target expiry is a new observable lifecycle, so writers move to v2.
+    // Readers retain v1 support for historical runs.
+    public const string Targets = "elts.targets.v2";
     public const string SessionSummary = "elts.session-summary.v1";
 }
 
@@ -95,7 +97,8 @@ public enum TargetLifecycle
 {
     Spawned = 1,
     Updated = 2,
-    Destroyed = 3
+    Destroyed = 3,
+    Despawned = 4
 }
 
 /// <summary>Canonical world-frame target state. Screen coordinates are deliberately absent.</summary>

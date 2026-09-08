@@ -88,6 +88,9 @@ internal static class LoggingChecks
         True(sample.RootElement.GetProperty("head").GetProperty("pose").ValueKind == JsonValueKind.Object && sample.RootElement.GetProperty("weapon").GetProperty("pose").ValueKind == JsonValueKind.Null, "raw valid and invalid poses retain their explicit state");
         True(evt.RootElement.GetProperty("payload").GetProperty("pressed").GetBoolean(), "event typed payload round trips");
         True(target.RootElement.GetProperty("worldPositionMeters").GetProperty("z").GetDouble() == 5, "target world position remains canonical");
+        True(target.RootElement.GetProperty("schemaVersion").GetString() == "elts.targets.v2", "new target writer emits v2");
+        string expiry = LogJson.Target(new TargetSnapshot(2, new MonotonicTimestamp(1), "target-1", "block-1", TargetLifecycle.Despawned, Vector3d.Zero, Vector3d.Zero, 12, "synthetic-v2"));
+        True(expiry.Contains("\"schemaVersion\":\"elts.targets.v2\"") && expiry.Contains("\"lifecycle\":\"Despawned\""), "v2 expiry serializes explicitly");
         True(summary.RootElement.GetProperty("complete").GetBoolean(), "summary marks orderly session complete");
         foreach (string product in new[] { "samples.ndjson", "events.ndjson", "targets.ndjson" })
         {
@@ -254,4 +257,3 @@ internal static class LoggingChecks
         public override void Flush(bool durable) { entered.Set(); release.Wait(); }
     }
 }
-

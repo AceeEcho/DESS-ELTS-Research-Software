@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-08T05:39:41.751510+00:00",
+  "generatedAtUtc": "2026-09-08T05:55:38.353199+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,8 +11,8 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 127,
-    "eventSetSha256": "63d4d8f9dca447be3e73183b68681495811b6570de1ed96740fe237a100c0ada"
+    "eventCount": 139,
+    "eventSetSha256": "6936eabe588257e701c14933a808c3b6ee8dfc97e6c99838f67ecde20e119cdf"
   },
   "current": {
     "mode": "working",
@@ -42,13 +42,12 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "DEV-06.S001",
+    "primaryStepId": "DEV-10.S001",
     "activeStepIds": [
-      "DEV-06.S001",
-      "DEV-07.S001",
       "DEV-10.S001"
     ],
     "nextEligibleStepIds": [
+      "DEV-08.S001",
       "P0.2.S001",
       "P0.4.S001",
       "P0.5.S001"
@@ -70,10 +69,6 @@
       "D-14",
       "D-16",
       "D-17",
-      "DEV-06",
-      "DEV-06.S001",
-      "DEV-07",
-      "DEV-07.S001",
       "DEV-08",
       "DEV-08.S001",
       "DEV-09",
@@ -291,32 +286,6 @@
     "selectedLane": "synthetic_development_only"
   },
   "activeWork": [
-    {
-      "owner": "agent:codex-astra",
-      "taskId": "DEV-06",
-      "atomicStepId": "DEV-06.S001",
-      "branch": "work/dev-06",
-      "claimedPaths": [
-        "unity/Assets/ELTS/Rendering",
-        "unity/Assets/ELTS/Operator",
-        "tools/runtime-tests/RenderingChecks.cs",
-        "tools/runtime-tests/RenderingChecks.csproj",
-        "docs/modules/rendering.md"
-      ]
-    },
-    {
-      "owner": "agent:codex-astra",
-      "taskId": "DEV-07",
-      "atomicStepId": "DEV-07.S001",
-      "branch": "work/dev-07",
-      "claimedPaths": [
-        "unity/Assets/ELTS/Scenario",
-        "unity/Assets/ELTS/Session",
-        "tools/runtime-tests/ScenarioChecks.cs",
-        "tools/runtime-tests/ScenarioChecks.csproj",
-        "docs/modules/scenario.md"
-      ]
-    },
     {
       "owner": "agent:codex-astra",
       "taskId": "DEV-10",
@@ -1450,39 +1419,79 @@
       "blockers": []
     },
     "DEV-06": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "1605a514d95d4cf951b1f6986c6f892d1af2c15c6895f5fb6bbfbb50c49265b1",
+      "status": "done",
+      "revision": 7,
+      "lastEventHash": "d157add7ed962d52f12b203d407aa000bfe9dbc8602bfe4acf2d8632d3b8907d",
       "owner": "agent:codex-astra",
       "branch": "work/dev-06",
-      "claimedPaths": [
-        "docs/modules/rendering.md",
-        "tools/runtime-tests/RenderingChecks.cs",
-        "tools/runtime-tests/RenderingChecks.csproj",
-        "unity/Assets/ELTS/Operator",
-        "unity/Assets/ELTS/Rendering"
+      "claimedPaths": [],
+      "evidence": [
+        {
+          "id": "DEV-06-acceptance",
+          "path": "project-management/progress/evidence/DEV-06.json",
+          "sha256": "96fa4a53f51ebc2e0674412c75d9f57bfb666e51a97a14f1e17a3d8f3cee5fd3",
+          "targetIds": [
+            "DEV-06.S001",
+            "DEV-06.V001",
+            "DEV-06"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "RenderingChecks; ReplayChecks; scripts/test.ps1 -Suite unity-play; scripts/build.ps1 -Output build/dev06-aspect; standalone -eltsViewScreenshot; python -m tools.build.verify build/dev06-aspect",
+          "result": "pass",
+          "sourceRevision": "ef8acebe344b01bba8c2ad534a5d91f6c327cc14",
+          "recordedAtUtc": "2026-09-08T05:54:44.932238+00:00",
+          "limitations": [
+            "Synthetic geometry and display emulation only; no physical calibration or display assignment",
+            "Controls exercised through shared runtime handlers; native mouse/keyboard interaction unverified",
+            "Offscreen screenshot excludes IMGUI; no full-load timing or safety acceptance"
+          ]
+        }
       ],
-      "evidence": [],
       "blockers": []
     },
     "DEV-07": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "1c16bb2a387b17e96b7e7d76d5ef2e784a1cfa55e38c57e71381c76f271c0262",
+      "status": "done",
+      "revision": 7,
+      "lastEventHash": "40f50c895dea123b4d210c1cff83c218d858500206ff02861a9060cb1647095e",
       "owner": "agent:codex-astra",
       "branch": "work/dev-07",
-      "claimedPaths": [
-        "docs/modules/scenario.md",
-        "tools/runtime-tests/ScenarioChecks.cs",
-        "tools/runtime-tests/ScenarioChecks.csproj",
-        "unity/Assets/ELTS/Scenario",
-        "unity/Assets/ELTS/Session"
+      "claimedPaths": [],
+      "evidence": [
+        {
+          "id": "DEV-07-acceptance",
+          "path": "project-management/progress/evidence/DEV-07.json",
+          "sha256": "88044fafd19bd8f1279d79890117ad704d91aa656d3811919642fe35009b80c0",
+          "targetIds": [
+            "DEV-07.S001",
+            "DEV-07.V001",
+            "DEV-07"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "dotnet run --project tools/runtime-tests/ScenarioChecks.csproj; scripts/test.ps1 -Suite unity-play; ScenarioChecks --output test-results/dev07-interop; analysis/run_ingest.py test-results/dev07-interop/scenario-interop-300s --calibration analysis/fixtures/synthetic-calibration.json --output diagnostics/dev07-interop-ingest.json",
+          "result": "pass",
+          "sourceRevision": "ef8acebe344b01bba8c2ad534a5d91f6c327cc14",
+          "recordedAtUtc": "2026-09-08T05:55:18.762321+00:00",
+          "limitations": [
+            "Fixture advances a manual clock by300s; not a wall-clock session test",
+            "D04 motion and study decisions remain unresolved; development random-walk policy is explicitly provisional",
+            "No approved study tuning,pilot or physical evidence"
+          ]
+        }
       ],
-      "evidence": [],
       "blockers": []
     },
     "DEV-08": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -2917,9 +2926,9 @@
       "blockers": []
     },
     "DEV-06.S001": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "1605a514d95d4cf951b1f6986c6f892d1af2c15c6895f5fb6bbfbb50c49265b1",
+      "status": "done",
+      "revision": 3,
+      "lastEventHash": "b49b026a55f09b4cc3fb6771d0df45ca771e58ad018babfd6fb1194bb40eb793",
       "owner": "agent:codex-astra",
       "branch": "work/dev-06",
       "claimedPaths": [
@@ -2929,23 +2938,77 @@
         "tools/runtime-tests/RenderingChecks.csproj",
         "docs/modules/rendering.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "DEV-06-acceptance",
+          "path": "project-management/progress/evidence/DEV-06.json",
+          "sha256": "96fa4a53f51ebc2e0674412c75d9f57bfb666e51a97a14f1e17a3d8f3cee5fd3",
+          "targetIds": [
+            "DEV-06.S001",
+            "DEV-06.V001",
+            "DEV-06"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "RenderingChecks; ReplayChecks; scripts/test.ps1 -Suite unity-play; scripts/build.ps1 -Output build/dev06-aspect; standalone -eltsViewScreenshot; python -m tools.build.verify build/dev06-aspect",
+          "result": "pass",
+          "sourceRevision": "ef8acebe344b01bba8c2ad534a5d91f6c327cc14",
+          "recordedAtUtc": "2026-09-08T05:54:44.932238+00:00",
+          "limitations": [
+            "Synthetic geometry and display emulation only; no physical calibration or display assignment",
+            "Controls exercised through shared runtime handlers; native mouse/keyboard interaction unverified",
+            "Offscreen screenshot excludes IMGUI; no full-load timing or safety acceptance"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-06.V001": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 6,
+      "lastEventHash": "788d86bde5d07ba02b508d9ce8b00d9b42e43a54a6194e7aa9bb61dbacd6c5ed",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev-06",
+      "claimedPaths": [
+        "project-management/progress/evidence/DEV-06.json"
+      ],
+      "evidence": [
+        {
+          "id": "DEV-06-acceptance",
+          "path": "project-management/progress/evidence/DEV-06.json",
+          "sha256": "96fa4a53f51ebc2e0674412c75d9f57bfb666e51a97a14f1e17a3d8f3cee5fd3",
+          "targetIds": [
+            "DEV-06.S001",
+            "DEV-06.V001",
+            "DEV-06"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "RenderingChecks; ReplayChecks; scripts/test.ps1 -Suite unity-play; scripts/build.ps1 -Output build/dev06-aspect; standalone -eltsViewScreenshot; python -m tools.build.verify build/dev06-aspect",
+          "result": "pass",
+          "sourceRevision": "ef8acebe344b01bba8c2ad534a5d91f6c327cc14",
+          "recordedAtUtc": "2026-09-08T05:54:44.932238+00:00",
+          "limitations": [
+            "Synthetic geometry and display emulation only; no physical calibration or display assignment",
+            "Controls exercised through shared runtime handlers; native mouse/keyboard interaction unverified",
+            "Offscreen screenshot excludes IMGUI; no full-load timing or safety acceptance"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-07.S001": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "1c16bb2a387b17e96b7e7d76d5ef2e784a1cfa55e38c57e71381c76f271c0262",
+      "status": "done",
+      "revision": 3,
+      "lastEventHash": "53fdfb90d79951bac6c7ce3ad3c64e5872b2ec7450a5d6abcc3ad244b9481f14",
       "owner": "agent:codex-astra",
       "branch": "work/dev-07",
       "claimedPaths": [
@@ -2955,21 +3018,75 @@
         "tools/runtime-tests/ScenarioChecks.csproj",
         "docs/modules/scenario.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "DEV-07-acceptance",
+          "path": "project-management/progress/evidence/DEV-07.json",
+          "sha256": "88044fafd19bd8f1279d79890117ad704d91aa656d3811919642fe35009b80c0",
+          "targetIds": [
+            "DEV-07.S001",
+            "DEV-07.V001",
+            "DEV-07"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "dotnet run --project tools/runtime-tests/ScenarioChecks.csproj; scripts/test.ps1 -Suite unity-play; ScenarioChecks --output test-results/dev07-interop; analysis/run_ingest.py test-results/dev07-interop/scenario-interop-300s --calibration analysis/fixtures/synthetic-calibration.json --output diagnostics/dev07-interop-ingest.json",
+          "result": "pass",
+          "sourceRevision": "ef8acebe344b01bba8c2ad534a5d91f6c327cc14",
+          "recordedAtUtc": "2026-09-08T05:55:18.762321+00:00",
+          "limitations": [
+            "Fixture advances a manual clock by300s; not a wall-clock session test",
+            "D04 motion and study decisions remain unresolved; development random-walk policy is explicitly provisional",
+            "No approved study tuning,pilot or physical evidence"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-07.V001": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 6,
+      "lastEventHash": "7bc8b9149a9caa0ba37425728e0f1c44c6e91526d3dea44d34a30fdbdd769ad6",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev-07",
+      "claimedPaths": [
+        "project-management/progress/evidence/DEV-07.json"
+      ],
+      "evidence": [
+        {
+          "id": "DEV-07-acceptance",
+          "path": "project-management/progress/evidence/DEV-07.json",
+          "sha256": "88044fafd19bd8f1279d79890117ad704d91aa656d3811919642fe35009b80c0",
+          "targetIds": [
+            "DEV-07.S001",
+            "DEV-07.V001",
+            "DEV-07"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "dotnet run --project tools/runtime-tests/ScenarioChecks.csproj; scripts/test.ps1 -Suite unity-play; ScenarioChecks --output test-results/dev07-interop; analysis/run_ingest.py test-results/dev07-interop/scenario-interop-300s --calibration analysis/fixtures/synthetic-calibration.json --output diagnostics/dev07-interop-ingest.json",
+          "result": "pass",
+          "sourceRevision": "ef8acebe344b01bba8c2ad534a5d91f6c327cc14",
+          "recordedAtUtc": "2026-09-08T05:55:18.762321+00:00",
+          "limitations": [
+            "Fixture advances a manual clock by300s; not a wall-clock session test",
+            "D04 motion and study decisions remain unresolved; development random-walk policy is explicitly provisional",
+            "No approved study tuning,pilot or physical evidence"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-08.S001": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -5546,12 +5663,12 @@
       "hash": "2107017562779c7b0e22e39d5395bceceb97cfc4b2041d49b4cbee4a04cfc300"
     },
     "task:DEV-06": {
-      "revision": 1,
-      "hash": "1605a514d95d4cf951b1f6986c6f892d1af2c15c6895f5fb6bbfbb50c49265b1"
+      "revision": 7,
+      "hash": "d157add7ed962d52f12b203d407aa000bfe9dbc8602bfe4acf2d8632d3b8907d"
     },
     "task:DEV-07": {
-      "revision": 1,
-      "hash": "1c16bb2a387b17e96b7e7d76d5ef2e784a1cfa55e38c57e71381c76f271c0262"
+      "revision": 7,
+      "hash": "40f50c895dea123b4d210c1cff83c218d858500206ff02861a9060cb1647095e"
     },
     "task:DEV-10": {
       "revision": 1,

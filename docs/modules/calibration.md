@@ -8,7 +8,7 @@ The corner solver consumes four one-second capture means supplied by a caller. I
 
 Weapon zero maps a valid observed bore direction to a valid sighting direction, including a stable antiparallel case. Eye input records Left/Right and a finite three-component tracker-to-eye offset. The verification summary requires exactly nine finite angular residuals and reports mean and maximum degrees.
 
-`CalibrationWizard` supplies the pure state sequence `Idle → Capturing → Review → Accepted`, plus `Redo` from review. UI code owns instructions, real capture duration, hardware validity, and persistence. Synthetic acceptance is only a development record and cannot allow a session or study to proceed.
+`CalibrationWizard` supplies the pure state sequence `Idle → Capturing → Review → Accepted`, plus `Redo` from review. UI code owns instructions, real capture duration, hardware validity, and persistence. `Accept` is only a state helper; its caller must evaluate the configured development thresholds first. Synthetic acceptance cannot allow a session or study to proceed.
 
 Run the focused checks with:
 

@@ -79,8 +79,8 @@ namespace Elts.Operator
             if(!weapon.HasValue || !head.HasValue) { LastShot="Ignored: tracking unavailable"; return; }
             var ray=new BoreRay(weapon.Value,config.Rig.WeaponMuzzleOffsetM,config.Rig.WeaponZero,config.Rig.WeaponBoreLocalDirection).Ray;
             var eye=head.Value.TransformPoint(config.Rig.HeadEyeOffsetM);
-            engine.Fire(shots,new ShotContext(clock.Now,ray,true),population.ActiveTargets,target=>IsVisible(eye,target.Position));
-            LastShot="Shot logged";
+            bool accepted=engine.Fire(shots,new ShotContext(clock.Now,ray,true),population.ActiveTargets,target=>IsVisible(eye,target.Position));
+            LastShot=accepted?"Shot logged":"Shot not recorded (lockout or failure)";
             foreach(var target in population.History)
             {
                 if(target.State!=TargetState.Destroyed || (recordedStates.TryGetValue(target.Id,out var previous) && previous==TargetState.Destroyed)) continue;
@@ -127,6 +127,8 @@ namespace Elts.Operator
         private void RemoveRemainingTargets()
         {
             if(population==null) return;
+            // Destroyed is already a terminal recorded lifecycle. Only targets
+            // still active need a Despawned row when the block exits.
             foreach(var target in population.ActiveTargets) Record(target,TargetLifecycle.Despawned);
             population=null;definition=null;movement=null;positions.Clear();
         }

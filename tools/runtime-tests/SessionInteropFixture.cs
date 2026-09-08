@@ -88,7 +88,13 @@ static class SessionInteropFixture
         var target = new TargetEntity("target-" + number, new Vector3d(0, 0, 5), Vector3d.Zero, .1, clock.Now); target.Activate();
         string blockId = engine.CurrentBlockId!; long targetSequence = number * 2L + 1;
         Require(adapter.TryLogTarget(new TargetSnapshot(targetSequence, clock.Now, target.Id, blockId, TargetLifecycle.Spawned, target.Position, target.Velocity, number, "session-interop-v2")), "spawned target " + number);
-        engine.Fire(new HitscanShotModel(sequence), new ShotContext(clock.Now, new Ray3d(Vector3d.Zero, new Vector3d(0, 0, 1)), true), new[] { target }, _ => true);
+        // Separate the observation from the removal so the fixture has an
+        // unambiguous active target at the paired sample's logical timestamp.
+        clock.Advance(TimeSpan.FromMilliseconds(1));
+        var shotModel = new HitscanShotModel(sequence, TimeSpan.FromMilliseconds(20));
+        var shot = new ShotContext(clock.Now, new Ray3d(Vector3d.Zero, new Vector3d(0, 0, 1)), true);
+        Require(engine.Fire(shotModel, shot, new[] { target }, _ => true), "shot accepted and recorded");
+        Require(!engine.Fire(shotModel, shot, new[] { target }, _ => true), "lockout does not claim a recorded shot");
         Require(target.State == TargetState.Destroyed, "engine fire destroys canonical target " + number);
         Require(adapter.TryLogTarget(new TargetSnapshot(targetSequence + 1, clock.Now, target.Id, blockId, TargetLifecycle.Destroyed, target.Position, target.Velocity, number, "session-interop-v2")), "destroyed target " + number);
         if (includeOperatorAnnotations) { engine.AddNote("synthetic fixture annotation"); engine.EmitProvisionalSyncMarker("synthetic fixture marker"); }

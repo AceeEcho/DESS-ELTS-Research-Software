@@ -29,6 +29,11 @@ namespace Elts.Operator
         private const double MaximumSampleAgeSeconds = 0.25;
         private const long MinimumDiskBytes = 2L * 1024 * 1024 * 1024;
         private const string FixtureIdentity = "operator-synthetic-room-motion-v1";
+        private const double FrameHitchSeconds = 1.0 / 30;
+        private static readonly Vector3d HeadSwayM = new Vector3d(0.02,0.01,0);
+        private static readonly Vector3d WeaponOffsetM = new Vector3d(0.15,-0.18,0.1);
+        private static readonly Vector3d WeaponSwayM = new Vector3d(0.01,0.01,0);
+        private const double HeadSwayHz = 0.3, WeaponSwayHz = 0.2, WeaponYawRadians = 0.02;
         private DevelopmentView view = null!;
         private UIDocument document = null!;
         private PanelSettings panelSettings = null!;
@@ -44,11 +49,13 @@ namespace Elts.Operator
         private long diskFreeBytes;
         private double firstValidAt = -1;
         private bool setupPending, closing, destroyed;
+        private long frameHitches;
         private readonly Dictionary<string,Vector3d> visibleTargets = new Dictionary<string,Vector3d>();
 
         public SessionEngine? Engine => engine;
         public VisualElement PanelRoot => root;
         public bool IsBusy => operation != null;
+        public void SetDiagnosticRenderTarget(RenderTexture target) { panelSettings.targetTexture=target; }
 
         private void Awake()
         {
@@ -57,6 +64,7 @@ namespace Elts.Operator
             panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
             panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
             panelSettings.sortingOrder = 20;
+            panelSettings.themeStyleSheet = Resources.Load<ThemeStyleSheet>("ELTS/SessionTheme");
             document = gameObject.AddComponent<UIDocument>();
             document.panelSettings = panelSettings;
             var template = Resources.Load<VisualTreeAsset>("ELTS/SessionPanel");
@@ -115,34 +123,45 @@ namespace Elts.Operator
             runId=LoggingRunDirectory.ValidateRunId(Field("participant").value.Trim());
             var plan=new SessionPlan(runId, Field("conditionOrder").value.Split(',').Select(value=>value.Trim()));
             await CloseRecordingAsync();
-            clock=new SharedMonotonicClock();
-            sequence=new SessionEventSequence();
-            string dataRoot=Path.GetFullPath(Path.Combine(Application.dataPath,"..",config.Machine.DataRoot));
-            diskFreeBytes=await Task.Run(()=>new DriveInfo(Path.GetPathRoot(dataRoot)!).AvailableFreeSpace);
-            if(diskFreeBytes<MinimumDiskBytes) throw new IOException("At least 2 GB free disk space is required.");
-            // Application.version is the packaged build identity. The release
-            // manifest maps that token to its complete source revision.
-            var provenance=new SessionProvenance(Application.version, "build-"+Application.version,
-                config.EffectiveSha256,config.SourceRawSha256["scenario"],Hash(FixtureIdentity),true,clock.UtcStartupAnchor);
-            var limits=new LoggingConfiguration(config.Runtime.SampleQueueCapacity,config.Runtime.EventQueueCapacity,
-                TimeSpan.FromSeconds(config.Runtime.LogFlushSeconds));
-            recording=new SessionRecordingAdapter(dataRoot,provenance,limits);
-            if(!await recording.ReserveAndStartAsync(runId)) throw new IOException("The recording could not be started.");
-            engine=new SessionEngine(clock,sequence,plan,
-                new SessionTiming(config.Session.PracticeDurationSeconds,config.Session.BreakDurationSeconds,true),
-                recording,new DevelopmentSessionLink());
-            scenario=new DevelopmentSessionScenario(config,clock,engine,recording,sequence);
-            StartAcquisition(config);
-            firstValidAt=-1; setupPending=true; closing=false;
-            lastMessage="Checking two seconds of synthetic tracking…";
+            try
+            {
+                clock??=new SharedMonotonicClock();
+                sequence=new SessionEventSequence();
+                string dataRoot=Path.GetFullPath(Path.Combine(Application.dataPath,"..",config.Machine.DataRoot));
+                diskFreeBytes=await Task.Run(()=>new DriveInfo(Path.GetPathRoot(dataRoot)!).AvailableFreeSpace);
+                if(diskFreeBytes<MinimumDiskBytes) throw new IOException("At least 2 GB free disk space is required.");
+                // A packaged build identity maps to its complete revision in
+                // build-info.json. Editor recordings explicitly lack that identity.
+                string source=Application.isEditor?"editor-unversioned":"build-"+Application.version;
+                var provenance=new SessionProvenance(Application.version,source,
+                    config.EffectiveSha256,config.SourceRawSha256["scenario"],Hash(FixtureIdentity),true,clock.UtcStartupAnchor);
+                var limits=new LoggingConfiguration(config.Runtime.SampleQueueCapacity,config.Runtime.EventQueueCapacity,
+                    TimeSpan.FromSeconds(config.Runtime.LogFlushSeconds));
+                recording=new SessionRecordingAdapter(dataRoot,provenance,limits);
+                if(!await recording.ReserveAndStartAsync(runId)) throw new IOException("The recording could not be started.");
+                engine=new SessionEngine(clock,sequence,plan,
+                    new SessionTiming(config.Session.PracticeDurationSeconds,config.Session.BreakDurationSeconds,true),
+                    recording,new DevelopmentSessionLink());
+                scenario=new DevelopmentSessionScenario(config,clock,engine,recording,sequence);
+                StartAcquisition(config);
+                firstValidAt=-1; setupPending=true; closing=false;
+                lastMessage="Checking two seconds of synthetic tracking…";
+            }
+            catch
+            {
+                setupPending=false;closing=true;
+                if(engine!=null) engine.Abort("Synthetic session setup failed.");
+                await CloseRecordingAsync();
+                throw;
+            }
         }
 
         private void StartAcquisition(DevelopmentConfiguration config)
         {
             var screen=config.Rig.Display;
             var head=screen.Origin+screen.U*(screen.Width*0.5)+screen.V*(screen.Height*0.5)-screen.Normal*2;
-            var motion=new SyntheticMotionSettings(head,new Vector3d(0.02,0.01,0),0.3,
-                head+new Vector3d(0.15,-0.18,0.1),new Vector3d(0.01,0.01,0),0.2,0.02,0.2);
+            var motion=new SyntheticMotionSettings(head,HeadSwayM,HeadSwayHz,
+                head+WeaponOffsetM,WeaponSwayM,WeaponSwayHz,WeaponYawRadians,WeaponSwayHz);
             var settings=new SyntheticTrackingSettings(clock!,config.Scenario.Seed,config.Runtime.SampleRateHz,
                 config.Rig.HeadSerial,config.Rig.WeaponSerial,TimeSpan.FromSeconds(config.Runtime.TriggerLockoutSeconds),motion:motion);
             acquisition=new DevelopmentSessionAcquisition(settings,recording!.TryLogSample);
@@ -170,14 +189,16 @@ namespace Elts.Operator
         private void Update()
         {
             if(root == null) return;
+            if(Time.unscaledDeltaTime>FrameHitchSeconds) frameHitches++;
             if(operation != null && operation.IsCompleted) operation=null;
             if(engine != null && !IsBusy)
             {
                 var pair=acquisition?.Snapshot;
                 if(setupPending && engine.State==SessionState.Idle && pair.HasValue)
                 {
+                    long sampleAge=clock!.Now.Ticks-pair.Value.Head.Acquisition.Timestamp.Ticks;
                     if(pair.Value.Head.HasValidPose && pair.Value.Weapon.HasValidPose
-                        && clock!.Now.Ticks-pair.Value.Head.Acquisition.Timestamp.Ticks<=MaximumSampleAgeSeconds*TimeSpan.TicksPerSecond)
+                        && sampleAge>=0 && sampleAge<=MaximumSampleAgeSeconds*TimeSpan.TicksPerSecond)
                     {
                         if(firstValidAt<0) firstValidAt=clock!.Now.Elapsed.TotalSeconds;
                         if(clock!.Now.Elapsed.TotalSeconds-firstValidAt>=ValidTrackingSeconds)
@@ -222,7 +243,9 @@ namespace Elts.Operator
             Label("state",engine?.State.ToString()??"Idle");
             Label("countdown",engine==null?"No block running":(engine.CurrentCondition??"All conditions finished")+" • "+engine.RemainingSeconds.ToString("F1")+" s");
             Label("message",IsBusy?"Recording operation in progress…":(engine?.Failure??lastMessage));
-            Label("tracking",view.TrackingStatus);
+            Label("tracking",view.TrackingStatus+"\n"+(acquisition?.ActualElapsedRateHz??0).ToString("F1")+" Hz observed • "+
+                (recording?.DroppedSampleCount??0)+" dropped • "+(diskFreeBytes/(double)(1024*1024*1024)).ToString("F1")+
+                " GB free\nFrames over 33 ms: "+frameHitches+" • "+(scenario?.LastShot??"No shot"));
             root.Q<Button>("createSession").SetEnabled(!IsBusy && (engine==null || closing));
             root.Q<Button>("advance").SetEnabled(!IsBusy && engine?.CanAdvance==true);
             root.Q<Button>("startBlock").SetEnabled(!IsBusy && engine?.State==SessionState.BlockReady);
@@ -242,7 +265,12 @@ namespace Elts.Operator
         {
             if(destroyed) return;
             destroyed=true;
-            try { if(operation!=null) await operation; await CloseRecordingAsync(); }
+            try
+            {
+                if(operation!=null) await operation;
+                engine?.Abort("application_shutdown");
+                await CloseRecordingAsync();
+            }
             catch(Exception exception) { Debug.LogError("ELTS_SESSION_CLOSE_FAIL "+exception.Message); }
             if(panelSettings!=null) Destroy(panelSettings);
         }

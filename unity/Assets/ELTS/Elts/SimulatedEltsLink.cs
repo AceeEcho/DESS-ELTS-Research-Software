@@ -35,6 +35,10 @@ public sealed class SimulatedEltsController
     private readonly Queue<long> replayOrder = new Queue<long>();
     private bool helloComplete, eStopLatched;
     private long heartbeatDeadlineTicks, activeDeadlineTicks;
+    // Highest command sequence accepted in this connection epoch. The bounded
+    // reply cache can forget payloads, but it must never permit an old message
+    // to execute again after eviction.
+    private long sequenceWatermark = -1;
     public EltsLinkState State { get; private set; } = EltsLinkState.Idle;
     public bool LedPermission { get; private set; }
     public SimulatedEltsController(ISharedClock clock, EltsLinkRuntimeOptions? options = null)
@@ -45,8 +49,18 @@ public sealed class SimulatedEltsController
     {
         if (command == null) throw new ArgumentNullException(nameof(command)); Advance();
         var fingerprint = command.Fingerprint;
-        if (replays.TryGetValue(command.Sequence, out var replay)) return replay.Fingerprint == fingerprint ? replay.Response : EltsMessage.Nack(command.Sequence, command.Type, clock.Now.Ticks, State, "sequence_conflict");
+        if (replays.TryGetValue(command.Sequence, out var replay))
+        {
+            if (replay.Fingerprint != fingerprint) return Nack(command, "sequence_conflict");
+            // Cached ACK data records the old command outcome. It must not be
+            // presented as a current permission/state after a timeout or guard.
+            if (replay.Response.State != State || replay.Response.LedPermission != LedPermission)
+                return Nack(command, "replay_state_changed");
+            return replay.Response;
+        }
+        if (command.Sequence <= sequenceWatermark) return Nack(command, "sequence_expired");
         var response = Process(command);
+        sequenceWatermark = command.Sequence;
         replays.Add(command.Sequence, new Replay(fingerprint, response)); replayOrder.Enqueue(command.Sequence);
         if (replayOrder.Count > options.ReplayCacheCapacity) replays.Remove(replayOrder.Dequeue());
         return response;
@@ -58,7 +72,7 @@ public sealed class SimulatedEltsController
         if (now >= heartbeatDeadlineTicks) Depermit();
         else if (now >= activeDeadlineTicks) Depermit();
     }
-    public void SimulateReconnect() { Depermit(); State = EltsLinkState.Idle; helloComplete = false; replays.Clear(); replayOrder.Clear(); }
+    public void SimulateReconnect() { Depermit(); State = EltsLinkState.Idle; helloComplete = false; replays.Clear(); replayOrder.Clear(); sequenceWatermark = -1; }
     public void SimulateEStop() { eStopLatched = true; Depermit(); }
     /// <summary>Fixture-only external intervention. It models neither wiring nor a real E-stop reset procedure.</summary>
     public void ReleaseSimulatedEStopForFixture() { eStopLatched = false; }

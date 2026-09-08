@@ -17,6 +17,7 @@ static class EltsSessionChecks
         ExerciseFourExactDeadlineBlocks();
         ExerciseBoundedIdempotentRetry();
         ExerciseRejectedTranscriptFailsBeforeSend();
+        ExerciseTranscriptFailureAfterStartStillDepermits();
         ExerciseInvalidAcknowledgementsFailClosed();
         ExerciseUnexpectedNeStateFailsClosed();
         ExerciseHeartbeatLossFailsClosed();
@@ -89,6 +90,16 @@ static class EltsSessionChecks
         True(!wrongStateAdapter.PrepareBlock(new SessionBlockLinkContext("synthetic-pseudonym", "WE_MT-attempt-01", "WE_MT", TimeSpan.TicksPerSecond)), "ACK state and permission must match the current mock state");
     }
 
+    static void ExerciseTranscriptFailureAfterStartStillDepermits()
+    {
+        var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch); var controller = new SimulatedEltsController(clock); var sink = new SwitchableSink(); var sequence = new SessionEventSequence();
+        var adapter = new SessionEltsLinkAdapter(clock, sequence, sink, new MockEltsLink(controller));
+        var engine = new SessionEngine(clock, sequence, new SessionPlan("synthetic-pseudonym", new[] { "WE_MT", "NE_MT", "WE_FT", "NE_FT" }, 300, true), new SessionTiming(0, 0, true), sink, adapter);
+        Begin(engine, clock); engine.StartBlock(); True(controller.LedPermission, "fixture starts synthetic permission before transcript failure");
+        sink.Accept = false; engine.Tick();
+        True(engine.State == SessionState.Failed && !controller.LedPermission, "rejected transcript after START still best-effort depermits mock controller");
+    }
+
     static void ExerciseUnexpectedNeStateFailsClosed()
     {
         var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch); var mock = new MockEltsLink(new SimulatedEltsController(clock)); var records = new List<SessionEvent>();
@@ -134,6 +145,7 @@ static class EltsSessionChecks
     static bool Strict(IReadOnlyList<SessionEvent> records) { long previous = 0; foreach (var item in records) { if (item.Sequence <= previous) return false; previous = item.Sequence; } return true; }
     sealed class Sink : ISessionEventSink { readonly List<SessionEvent> records; public Sink(List<SessionEvent> records) { this.records = records; } public bool TryRecord(SessionEvent item) { records.Add(item); return true; } }
     sealed class RejectingSink : ISessionEventSink { public bool TryRecord(SessionEvent item) => false; }
+    sealed class SwitchableSink : ISessionEventSink { public bool Accept = true; public bool TryRecord(SessionEvent item) => Accept; }
     sealed class ThrowOnceLink : IEltsLink
     {
         readonly IEltsLink inner; bool fail = true;

@@ -74,7 +74,12 @@ namespace Elts.Session
                 if (failed || !weBlock || context == null || !EnsureHelloAndArm()) return false;
                 return Send(EltsMessageType.Start, context, null);
             }
-            return Send(EltsMessageType.Stop, null, "block_end");
+            if (failed) { BestEffortStop(); return false; }
+            bool stopped = Send(EltsMessageType.Stop, null, "block_end");
+            // Logging can fail after START. Do not let that failure prevent the
+            // engine's terminal cleanup from sending a de-permission command.
+            if (!stopped && failed) BestEffortStop();
+            return stopped;
         }
 
         public bool Tick()
@@ -92,6 +97,16 @@ namespace Elts.Session
             if (link.State == EltsLinkState.Active && link.LedPermission) return true;
             if (link.State == EltsLinkState.Armed) return true;
             return Send(EltsMessageType.Hello, null, null) && Send(EltsMessageType.Arm, null, null);
+        }
+
+        private void BestEffortStop()
+        {
+            try
+            {
+                var command = EltsMessage.Command(EltsMessageType.Stop, nextCommandSequence++, clock.Now.Ticks, reason: "block_end");
+                link.Send(command);
+            }
+            catch { }
         }
 
         private bool Send(EltsMessageType type, SessionBlockLinkContext? start, string? reason)

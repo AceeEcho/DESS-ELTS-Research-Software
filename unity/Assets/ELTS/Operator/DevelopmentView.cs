@@ -204,7 +204,13 @@ namespace Elts.Operator
         private void LayoutCameras()
         {
             float bottom=Mathf.Min(0.65f,ControlsHeight/Mathf.Max(1,Screen.height)),top=1-BannerHeight/Mathf.Max(1,Screen.height);
-            participant.rect=new Rect(0,bottom,0.5f,Mathf.Max(0.1f,top-bottom));operatorCamera.rect=new Rect(0.5f,bottom,0.5f,Mathf.Max(0.1f,top-bottom));
+            float availableHeight=Mathf.Max(0.1f,top-bottom);
+            // Preserve the physical screen's width/height ratio inside the emulated
+            // preview. Stretching its frustum over a square viewport distorts targets.
+            float previewWidth=0.5f,previewHeight=previewWidth*Screen.width/(float)(screen.Width/screen.Height)/Mathf.Max(1,Screen.height);
+            if(previewHeight>availableHeight){previewHeight=availableHeight;previewWidth=previewHeight*Screen.height*(float)(screen.Width/screen.Height)/Mathf.Max(1,Screen.width);}
+            participant.rect=new Rect((0.5f-previewWidth)*0.5f,bottom+(availableHeight-previewHeight)*0.5f,previewWidth,previewHeight);
+            operatorCamera.rect=new Rect(0.5f,bottom,0.5f,availableHeight);
         }
         private void OnGUI()
         {

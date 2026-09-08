@@ -42,6 +42,7 @@ namespace Elts.Operator.Tests
                 yield return null;
                 Assert.That(view.Ready,Is.True,view.Error);
                 Assert.That(view.ParticipantCamera.cullingMask,Is.EqualTo(1<<DevelopmentView.StimulusLayer));
+                Assert.That(view.ParticipantCamera.pixelRect.width/view.ParticipantCamera.pixelRect.height,Is.EqualTo(view.DisplayPlane.Width/view.DisplayPlane.Height).Within(0.001));
                 Assert.That(view.OperatorCamera.cullingMask&(1<<DevelopmentView.OperatorLayer),Is.Not.Zero);
                 view.SetAnimation(true);view.SetPrediction(0);view.Refresh(0);var raw=view.RawHead.Value;
                 view.SetPrediction(0.02);view.Refresh(0);

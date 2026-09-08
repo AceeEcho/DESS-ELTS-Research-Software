@@ -28,6 +28,10 @@ namespace Elts.Operator
             { Debug.LogError("ELTS_SESSION_PROBE_FAIL invalid panel or output");Application.Quit(2);yield break; }
             var target=new RenderTexture(CaptureWidth,CaptureHeight,0,RenderTextureFormat.ARGB32,RenderTextureReadWrite.sRGB);
             target.Create();panel.SetDiagnosticRenderTarget(target);
+            // Optional presentation-only expansion: no recording, capture or
+            // calibration acceptance is performed by this render probe.
+            if(Array.IndexOf(Environment.GetCommandLineArgs(),"-eltsShowCalibration")>=0)
+                panel.PanelRoot.Q<Foldout>("calibrationWizard").value=true;
             // UI Toolkit renders its target panel during the player loop.
             for(int index=0;index<5;index++) yield return null;
             Debug.Log("ELTS_SESSION_LAYOUT root="+panel.PanelRoot.worldBound+" content="+panel.PanelRoot.Q<VisualElement>("sessionPanel").worldBound);

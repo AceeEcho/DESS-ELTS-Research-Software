@@ -15,7 +15,10 @@ def fixture_root(parent: Path) -> Path:
         # Tests model a fresh portable checkout, never this machine's overrides.
         shutil.copytree(ROOT / rel, root / rel, ignore=shutil.ignore_patterns("local.json", "local"))
     (root / "unity/Assets/StreamingAssets").mkdir(parents=True)
-    return root
+    # Windows hosted runners may spell TEMP with an 8.3 alias (RUNNER~1).
+    # Match stage()'s canonical root so absolute test outputs reach the intended
+    # symlink check instead of failing earlier on two spellings of the same root.
+    return root.resolve()
 
 class StageTests(unittest.TestCase):
     def test_display_orthogonality_matches_runtime_basis_tolerance(self):

@@ -60,6 +60,8 @@ namespace Elts.Operator.Tests
                 yield return null;
                 var root=panel.PanelRoot;
                 Assert.That(root.Q<Button>("createSession"),Is.Not.Null);
+                Assert.That(root.Q<VisualElement>("sessionPanel").worldBound.width,Is.GreaterThan(100));
+                Assert.That(root.Q<VisualElement>("sessionPanel").worldBound.height,Is.GreaterThan(100));
                 root.Q<TextField>("participant").value="synthetic-ui-"+Guid.NewGuid().ToString("N");
                 Submit(root.Q<Button>("createSession"));
                 float deadline=Time.realtimeSinceStartup+15;

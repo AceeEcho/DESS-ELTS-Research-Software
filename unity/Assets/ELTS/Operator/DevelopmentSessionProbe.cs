@@ -3,6 +3,7 @@ using System.Collections;
 using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Elts.Operator
 {
@@ -29,11 +30,16 @@ namespace Elts.Operator
             target.Create();panel.SetDiagnosticRenderTarget(target);
             // UI Toolkit renders its target panel during the player loop.
             for(int index=0;index<5;index++) yield return null;
+            Debug.Log("ELTS_SESSION_LAYOUT root="+panel.PanelRoot.worldBound+" content="+panel.PanelRoot.Q<VisualElement>("sessionPanel").worldBound);
             var previous=RenderTexture.active;
             RenderTexture.active=target;
             var image=new Texture2D(CaptureWidth,CaptureHeight,TextureFormat.RGBA32,false);
             image.ReadPixels(new Rect(0,0,CaptureWidth,CaptureHeight),0,0);image.Apply();
             RenderTexture.active=previous;
+            int visiblePixels=0;
+            foreach(var pixel in image.GetPixels32()) if(pixel.a>0 && (pixel.r>0 || pixel.g>0 || pixel.b>0)) visiblePixels++;
+            if(visiblePixels<CaptureWidth*CaptureHeight/20)
+            { Debug.LogError("ELTS_SESSION_PROBE_FAIL blank panel");Application.Quit(2);yield break; }
             byte[] png=image.EncodeToPNG();
             var write=Task.Run(()=> { using(var stream=new FileStream(output,FileMode.CreateNew,FileAccess.Write)) stream.Write(png,0,png.Length); });
             while(!write.IsCompleted) yield return null;

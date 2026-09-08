@@ -37,6 +37,9 @@ namespace Elts.Rendering
         public const int MaximumLineCharacters = 65536;
         private readonly ReplayFrame[] frames;
         private readonly ReplayTarget[] targets;
+        // Per-target histories make repeated viewer scrubs proportional to the
+        // number of target identities, rather than rescanning every log row.
+        private readonly IReadOnlyDictionary<string, ReplayTarget[]> targetHistory;
         public string SourceRevision { get; }
         public string ConfigurationHash { get; }
         public string SummaryHash { get; }
@@ -46,11 +49,29 @@ namespace Elts.Rendering
         public int FrameCount => frames.Length;
         public RecordedReplay(ReplayFrame[] frames,ReplayTarget[] targets,string revision,string configHash,string summaryHash,bool synthetic)
         {
+            if(frames==null) throw new ArgumentNullException(nameof(frames));
+            if(targets==null) throw new ArgumentNullException(nameof(targets));
             if(frames.Length==0) throw new InvalidDataException("Replay has no samples.");
+            if(String.IsNullOrWhiteSpace(revision)||String.IsNullOrWhiteSpace(configHash)||String.IsNullOrWhiteSpace(summaryHash))
+                throw new ArgumentException("Replay provenance is required.");
+            if(!Regex.IsMatch(configHash,"^[a-f0-9]{64}$")||!Regex.IsMatch(summaryHash,"^[a-f0-9]{64}$"))
+                throw new ArgumentException("Replay hashes must be lowercase SHA-256 values.");
             this.frames=(ReplayFrame[])frames.Clone();this.targets=(ReplayTarget[])targets.Clone();
+            ValidateFrames(this.frames); ValidateTargets(this.targets);
             SourceRevision=revision;ConfigurationHash=configHash;SummaryHash=summaryHash;Synthetic=synthetic;
-            StartTicks=frames[0].Ticks;
-            DurationSeconds=(Math.Max(frames[frames.Length-1].Ticks,targets.Length==0?0:targets[targets.Length-1].Ticks)-StartTicks)/10000000.0;
+            StartTicks=this.frames[0].Ticks;
+            long endTicks=Math.Max(this.frames[this.frames.Length-1].Ticks,this.targets.Length==0?StartTicks:this.targets[this.targets.Length-1].Ticks);
+            if(endTicks<StartTicks) throw new InvalidDataException("Replay ends before it starts.");
+            DurationSeconds=(endTicks-StartTicks)/10000000.0;
+            var histories=new Dictionary<string,List<ReplayTarget>>(StringComparer.Ordinal);
+            foreach(var target in this.targets)
+            {
+                if(!histories.TryGetValue(target.Key,out var history)) histories.Add(target.Key,history=new List<ReplayTarget>());
+                history.Add(target);
+            }
+            var immutable=new Dictionary<string,ReplayTarget[]>(StringComparer.Ordinal);
+            foreach(var pair in histories) immutable.Add(pair.Key,pair.Value.ToArray());
+            targetHistory=new ReadOnlyDictionary<string,ReplayTarget[]>(immutable);
         }
         public ReplayFrame FrameAt(double seconds)
         {
@@ -61,8 +82,19 @@ namespace Elts.Rendering
         public IReadOnlyDictionary<string,Vector3d> TargetsAt(double seconds)
         {
             long ticks=AtTicks(seconds);var result=new Dictionary<string,Vector3d>(StringComparer.Ordinal);
-            foreach(var target in targets){if(target.Ticks>ticks)break;if(target.Lifecycle=="Destroyed")result.Remove(target.Key);else result[target.Key]=target.Position;}
+            foreach(var pair in targetHistory)
+            {
+                int index=LatestAt(pair.Value,ticks);
+                if(index<0||pair.Value[index].Lifecycle=="Destroyed") continue;
+                result.Add(pair.Key,pair.Value[index].Position);
+            }
             return new ReadOnlyDictionary<string,Vector3d>(result);
+        }
+        private static int LatestAt(ReplayTarget[] history,long ticks)
+        {
+            int left=0,right=history.Length-1,result=-1;
+            while(left<=right){int mid=left+((right-left)>>1);if(history[mid].Ticks<=ticks){result=mid;left=mid+1;}else right=mid-1;}
+            return result;
         }
         private long AtTicks(double seconds)
         {
@@ -74,7 +106,8 @@ namespace Elts.Rendering
             string root=Path.GetFullPath(directory);
             if((File.GetAttributes(root)&FileAttributes.ReparsePoint)!=0)throw new InvalidDataException("Replay directory cannot be a link.");
             string summaryPath=Path.Combine(root,"session-summary.json");
-            string summaryText=File.ReadAllText(summaryPath,new UTF8Encoding(false,true));
+            byte[] summaryBytes=File.ReadAllBytes(summaryPath);
+            string summaryText=new UTF8Encoding(false,true).GetString(summaryBytes);
             var summary=Parse(summaryText);
             Fields(summary,"schemaVersion","runId","complete","error","provenance","counts","checksumsSha256");
             Equal(summary,"schemaVersion","elts.session-summary.v1");
@@ -103,6 +136,7 @@ namespace Elts.Rendering
                         while((line=reader.ReadLine())!=null)
                         {
                             if(++count>MaximumRecordsPerProduct)throw new InvalidDataException("Replay record limit exceeded.");
+                            if(line.Length>MaximumLineCharacters)throw new InvalidDataException("Replay JSON record is too large.");
                             var row=Parse(line);Equal(row,"schemaVersion","elts."+product.Item1+".v1");
                             long sequence=Integer(row,"sequence"),ticks=Integer(row,"monotonicTicks");
                             if(sequence<=previousSequence||ticks<previousTicks)throw new InvalidDataException("Nonmonotonic replay stream.");previousSequence=sequence;previousTicks=ticks;
@@ -135,7 +169,7 @@ namespace Elts.Rendering
                     if(count!=Integer(counts,product.Item2))throw new InvalidDataException("Replay count mismatch: "+filename);
                 }
             }
-            using(var sha=SHA256.Create())return new RecordedReplay(frames.ToArray(),targets.ToArray(),Text(provenance,"sourceRevision"),HashText(provenance,"configurationHash"),Hex(sha.ComputeHash(Encoding.UTF8.GetBytes(summaryText))),(bool)provenance["synthetic"]!);
+            using(var sha=SHA256.Create())return new RecordedReplay(frames.ToArray(),targets.ToArray(),Text(provenance,"sourceRevision"),HashText(provenance,"configurationHash"),Hex(sha.ComputeHash(summaryBytes)),(bool)provenance["synthetic"]!);
         }
         private static JObject Parse(string text)
         {
@@ -168,6 +202,14 @@ namespace Elts.Rendering
         private static void Equal(JObject value,string key,string expected){if(Text(value,key)!=expected)throw new InvalidDataException("Unsupported "+key+"; expected "+expected);}
         private static JObject Object(JObject value,string key)=>value[key] as JObject??throw new InvalidDataException("Expected object: "+key);
         private static void Fields(JObject value,params string[] names){if(value.Properties().Count()!=names.Length||names.Any(n=>value[n]==null))throw new InvalidDataException("Unknown or missing replay fields.");}
+        private static void ValidateFrames(ReplayFrame[] values)
+        {
+            long previous=-1; foreach(var frame in values){if(frame.Ticks<0||frame.Ticks<previous)throw new InvalidDataException("Nonmonotonic frame timestamps.");if(String.IsNullOrEmpty(frame.HeadStatus)||String.IsNullOrEmpty(frame.WeaponStatus))throw new InvalidDataException("Frame status is required.");previous=frame.Ticks;}
+        }
+        private static void ValidateTargets(ReplayTarget[] values)
+        {
+            long previous=-1; foreach(var target in values){if(target.Ticks<0||target.Ticks<previous)throw new InvalidDataException("Nonmonotonic target timestamps.");if(String.IsNullOrEmpty(target.Key)||String.IsNullOrEmpty(target.Lifecycle)||!RenderNumbers.Finite(target.Position.X)||!RenderNumbers.Finite(target.Position.Y)||!RenderNumbers.Finite(target.Position.Z))throw new InvalidDataException("Invalid target record.");previous=target.Ticks;}
+        }
         private static string Hex(byte[] value)=>string.Concat(value.Select(b=>b.ToString("x2",CultureInfo.InvariantCulture)));
     }
 }

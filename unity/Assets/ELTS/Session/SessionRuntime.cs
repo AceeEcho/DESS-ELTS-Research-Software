@@ -161,6 +161,33 @@ namespace Elts.Session
 
     public interface ISessionEventSink { bool TryRecord(SessionEvent item); }
     public interface ISessionLink { bool TrySetEnabled(bool enabled); }
+    /// <summary>
+    /// Optional richer session-link seam. The engine calls PrepareBlock for every
+    /// condition, including NE, so an adapter can apply its explicit development
+    /// policy without letting the session engine decide D-10 behavior.
+    /// </summary>
+    public interface ISessionConditionLink : ISessionLink
+    {
+        bool PrepareBlock(SessionBlockLinkContext context);
+        bool Tick();
+    }
+
+    /// <summary>Immutable command context. Duration is monotonic TimeSpan ticks (100 ns).</summary>
+    public sealed class SessionBlockLinkContext
+    {
+        public SessionBlockLinkContext(string participantPseudonym, string blockId, string condition, long durationTicks)
+        {
+            if (String.IsNullOrWhiteSpace(participantPseudonym)) throw new ArgumentException("A participant pseudonym is required.", nameof(participantPseudonym));
+            if (String.IsNullOrWhiteSpace(blockId)) throw new ArgumentException("A block identity is required.", nameof(blockId));
+            if (String.IsNullOrWhiteSpace(condition)) throw new ArgumentException("A condition is required.", nameof(condition));
+            if (durationTicks <= 0) throw new ArgumentOutOfRangeException(nameof(durationTicks));
+            ParticipantPseudonym = participantPseudonym; BlockId = blockId; Condition = condition; DurationTicks = durationTicks;
+        }
+        public string ParticipantPseudonym { get; }
+        public string BlockId { get; }
+        public string Condition { get; }
+        public long DurationTicks { get; }
+    }
     public interface ISessionRecordingLifecycle { Task<bool> ReserveAndStartAsync(string runId); Task<bool> CloseAsync(); }
 
     /// <summary>
@@ -258,6 +285,11 @@ namespace Elts.Session
             }
 
             if (State != SessionState.BlockRunning || block == null) return;
+            if (link is ISessionConditionLink conditionLink && !conditionLink.Tick())
+            {
+                Fail("ELTS link heartbeat, time limit, or state check failed.");
+                return;
+            }
             foreach (var item in block.Update())
                 if (!Record(item)) return;
             if (State != SessionState.BlockRunning || block.State != ScenarioBlockState.Completed) return;
@@ -270,6 +302,12 @@ namespace Elts.Session
             Require(SessionState.BlockReady);
             string condition = CurrentCondition ?? throw new InvalidOperationException("There is no remaining block.");
             string blockId = CurrentBlockId ?? throw new InvalidOperationException("There is no current block identity.");
+            if (link is ISessionConditionLink conditionLink && !conditionLink.PrepareBlock(
+                new SessionBlockLinkContext(plan.ParticipantId, blockId, condition, checked((long)(plan.ConditionDurationSeconds * TimeSpan.TicksPerSecond)))))
+            {
+                Fail("ELTS link block preparation failed.");
+                return;
+            }
             if (condition.StartsWith("WE_", StringComparison.Ordinal) && !TrySetLink(true))
             {
                 Fail("WE link start failed.");

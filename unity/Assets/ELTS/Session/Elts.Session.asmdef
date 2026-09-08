@@ -1,6 +1,6 @@
 {
   "name": "Elts.Session",
   "rootNamespace": "Elts.Session",
-  "references": ["Elts.Clock", "Elts.Logging", "Elts.Scenario", "Elts.Tracking"],
+  "references": ["Elts.Clock", "Elts.Logging", "Elts.Scenario", "Elts.Tracking", "Elts.EltsLink"],
   "noEngineReferences": true
 }

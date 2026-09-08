@@ -105,6 +105,30 @@ class VerifyRunTests(unittest.TestCase):
         _refresh_summary(self.directory, counts={"droppedSamples": 0, "writtenSamples": 2, "writtenEvents": 1, "writtenTargets": 1})
         with self.assertRaisesRegex(VerificationError, "monotonicTicks moved backward"):
             verify_run(self.directory)
+
+    def test_target_stream_versions_are_strict_and_not_mixable(self) -> None:
+        target = _target()
+        target["schemaVersion"] = "elts.targets.v2"
+        target["lifecycle"] = "Despawned"
+        _write_json(self.directory / "targets.ndjson", target, newline=True)
+        _refresh_summary(self.directory)
+        self.assertTrue(verify_run(self.directory)["complete"])
+
+        target["schemaVersion"] = "elts.targets.v1"
+        _write_json(self.directory / "targets.ndjson", target, newline=True)
+        _refresh_summary(self.directory)
+        with self.assertRaisesRegex(VerificationError, "failed oneOf|lifecycle"):
+            verify_run(self.directory)
+
+        first = _target()
+        second = _target()
+        second["sequence"] = 2
+        second["schemaVersion"] = "elts.targets.v2"
+        (self.directory / "targets.ndjson").write_text(json.dumps(first, separators=(",", ":")) + "\n" + json.dumps(second, separators=(",", ":")) + "\n", encoding="utf-8")
+        _refresh_summary(self.directory, counts={"droppedSamples": 0, "writtenSamples": 1, "writtenEvents": 1, "writtenTargets": 2})
+        with self.assertRaisesRegex(VerificationError, "mixed target schema"):
+            verify_run(self.directory)
+
     def test_incomplete_summary_is_rejected(self) -> None:
         _refresh_summary(self.directory, complete=False)
         with self.assertRaisesRegex(VerificationError, "complete successful"):

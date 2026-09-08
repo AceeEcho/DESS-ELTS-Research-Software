@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-08T19:29:23.248172+00:00",
+  "generatedAtUtc": "2026-09-08T19:34:43.710647+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,8 +11,8 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 160,
-    "eventSetSha256": "16f3c25d8165f5aef0e783d4b0602beb8e95adeda16071793ae1aba438a36327"
+    "eventCount": 166,
+    "eventSetSha256": "29dc03687fba8d5530395650eb9619b7290046728d6b2023b06dbed5e1f90ad6"
   },
   "current": {
     "mode": "working",
@@ -42,10 +42,8 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "DEV-09.S001",
-    "activeStepIds": [
-      "DEV-09.S001"
-    ],
+    "primaryStepId": "DEV-12.S001",
+    "activeStepIds": [],
     "nextEligibleStepIds": [
       "P0.2.S001",
       "P0.4.S001",
@@ -68,8 +66,6 @@
       "D-14",
       "D-16",
       "D-17",
-      "DEV-09",
-      "DEV-09.S001",
       "DEV-12.S001",
       "G0",
       "G1",
@@ -278,21 +274,7 @@
     "selectedPhaseId": "DEV",
     "selectedLane": "synthetic_development_only"
   },
-  "activeWork": [
-    {
-      "owner": "agent:codex-astra",
-      "taskId": "DEV-09",
-      "atomicStepId": "DEV-09.S001",
-      "branch": "codex/dev09",
-      "claimedPaths": [
-        "unity/Assets/ELTS/Calibration",
-        "unity/Assets/ELTS/Operator",
-        "tools/runtime-tests/CalibrationChecks.cs",
-        "tools/runtime-tests/CalibrationChecks.csproj",
-        "docs/modules/calibration.md"
-      ]
-    }
-  ],
+  "activeWork": [],
   "tasks": {
     "P0.1": {
       "status": "not_started",
@@ -1521,19 +1503,42 @@
       "blockers": []
     },
     "DEV-09": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "27702ce1ddd781eb8e7a4b4b1f19f260c7f69308b8bf01b4f1902aa2ae435664",
+      "status": "done",
+      "revision": 7,
+      "lastEventHash": "5644999892ad022e785180634bfc90d8dbafc256db6a0c19be77314ecbd0273d",
       "owner": "agent:codex-astra",
       "branch": "codex/dev09",
-      "claimedPaths": [
-        "docs/modules/calibration.md",
-        "tools/runtime-tests/CalibrationChecks.cs",
-        "tools/runtime-tests/CalibrationChecks.csproj",
-        "unity/Assets/ELTS/Calibration",
-        "unity/Assets/ELTS/Operator"
+      "claimedPaths": [],
+      "evidence": [
+        {
+          "id": "DEV-09-acceptance",
+          "path": "project-management/progress/evidence/DEV-09.json",
+          "sha256": "f2d761eb9f43e3a6365707d7b56efb6b66489e35872ed1e38a0f91939b687840",
+          "targetIds": [
+            "DEV-09.S001",
+            "DEV-09.V001",
+            "DEV-09"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "CalibrationChecks; Unity 6000.3.23f1 PlayMode including fixture reject/redo/accept and layout regressions; standalone build and -eltsSessionScreenshot -eltsShowCalibration; manifest verification",
+          "result": "pass",
+          "sourceRevision": "f6fd33ba372384b5069d9aa05d8cc91be138efe1",
+          "recordedAtUtc": "2026-09-08T19:34:28.710670+00:00",
+          "limitations": [
+            "Generated virtual fixtures only; no measured pivot/corner/eye/zero calibration",
+            "D-17 limits remain provisional; fixture acceptance does not overwrite startup rig or enable study readiness",
+            "Corner and zero durations are virtual data descriptions, not measured capture timing",
+            "Sidecar SHA-256 is recorded in a note but the ordinary run verifier does not yet audit sidecars automatically",
+            "UI checks use Toolkit events; native input, real displays, hardware calibration and physical gates remain unverified",
+            "Build dirty flag truthfully includes preserved unrelated browser-simulation changes; full build provenance is retained"
+          ]
+        }
       ],
-      "evidence": [],
       "blockers": []
     },
     "DEV-10": {
@@ -1611,7 +1616,7 @@
       "blockers": []
     },
     "DEV-12": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -3243,9 +3248,9 @@
       "blockers": []
     },
     "DEV-09.S001": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "27702ce1ddd781eb8e7a4b4b1f19f260c7f69308b8bf01b4f1902aa2ae435664",
+      "status": "done",
+      "revision": 3,
+      "lastEventHash": "36bacfb1a785a47096d662726bc57f3a97f564dd8dc14c3a0528ceabab3938b3",
       "owner": "agent:codex-astra",
       "branch": "codex/dev09",
       "claimedPaths": [
@@ -3255,17 +3260,77 @@
         "tools/runtime-tests/CalibrationChecks.csproj",
         "docs/modules/calibration.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "DEV-09-acceptance",
+          "path": "project-management/progress/evidence/DEV-09.json",
+          "sha256": "f2d761eb9f43e3a6365707d7b56efb6b66489e35872ed1e38a0f91939b687840",
+          "targetIds": [
+            "DEV-09.S001",
+            "DEV-09.V001",
+            "DEV-09"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "CalibrationChecks; Unity 6000.3.23f1 PlayMode including fixture reject/redo/accept and layout regressions; standalone build and -eltsSessionScreenshot -eltsShowCalibration; manifest verification",
+          "result": "pass",
+          "sourceRevision": "f6fd33ba372384b5069d9aa05d8cc91be138efe1",
+          "recordedAtUtc": "2026-09-08T19:34:28.710670+00:00",
+          "limitations": [
+            "Generated virtual fixtures only; no measured pivot/corner/eye/zero calibration",
+            "D-17 limits remain provisional; fixture acceptance does not overwrite startup rig or enable study readiness",
+            "Corner and zero durations are virtual data descriptions, not measured capture timing",
+            "Sidecar SHA-256 is recorded in a note but the ordinary run verifier does not yet audit sidecars automatically",
+            "UI checks use Toolkit events; native input, real displays, hardware calibration and physical gates remain unverified",
+            "Build dirty flag truthfully includes preserved unrelated browser-simulation changes; full build provenance is retained"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-09.V001": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 6,
+      "lastEventHash": "0a6cf94dcd93a0f54893ef91fde8af6d02f1a6725d233986ed9d09f0c75326ad",
+      "owner": "agent:codex-astra",
+      "branch": "codex/dev09",
+      "claimedPaths": [
+        "project-management/progress/evidence/DEV-09.json"
+      ],
+      "evidence": [
+        {
+          "id": "DEV-09-acceptance",
+          "path": "project-management/progress/evidence/DEV-09.json",
+          "sha256": "f2d761eb9f43e3a6365707d7b56efb6b66489e35872ed1e38a0f91939b687840",
+          "targetIds": [
+            "DEV-09.S001",
+            "DEV-09.V001",
+            "DEV-09"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "CalibrationChecks; Unity 6000.3.23f1 PlayMode including fixture reject/redo/accept and layout regressions; standalone build and -eltsSessionScreenshot -eltsShowCalibration; manifest verification",
+          "result": "pass",
+          "sourceRevision": "f6fd33ba372384b5069d9aa05d8cc91be138efe1",
+          "recordedAtUtc": "2026-09-08T19:34:28.710670+00:00",
+          "limitations": [
+            "Generated virtual fixtures only; no measured pivot/corner/eye/zero calibration",
+            "D-17 limits remain provisional; fixture acceptance does not overwrite startup rig or enable study readiness",
+            "Corner and zero durations are virtual data descriptions, not measured capture timing",
+            "Sidecar SHA-256 is recorded in a note but the ordinary run verifier does not yet audit sidecars automatically",
+            "UI checks use Toolkit events; native input, real displays, hardware calibration and physical gates remain unverified",
+            "Build dirty flag truthfully includes preserved unrelated browser-simulation changes; full build provenance is retained"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-10.S001": {
@@ -3434,7 +3499,7 @@
       "blockers": []
     },
     "DEV-12.S001": {
-      "status": "not_started",
+      "status": "ready",
       "revision": 0,
       "lastEventHash": null,
       "owner": null,
@@ -5940,8 +6005,8 @@
       "hash": "100168e223f819b3b3c3b01e8d9f98c416d30e0e9b4afd1b82b1e6c1790dfb1e"
     },
     "task:DEV-09": {
-      "revision": 1,
-      "hash": "27702ce1ddd781eb8e7a4b4b1f19f260c7f69308b8bf01b4f1902aa2ae435664"
+      "revision": 7,
+      "hash": "5644999892ad022e785180634bfc90d8dbafc256db6a0c19be77314ecbd0273d"
     },
     "task:DEV-11": {
       "revision": 7,

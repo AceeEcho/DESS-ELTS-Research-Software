@@ -1,11 +1,17 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Elts.Clock;
 using Elts.Geometry;
 using Elts.Logging;
 using Elts.Scenario;
 using Elts.Session;
+using Elts.Tracking;
 
 static class ScenarioChecks
 {
@@ -14,7 +20,20 @@ static class ScenarioChecks
     static void Throws<T>(Action action, string name) where T : Exception
     { try { action(); throw new Exception("FAIL: " + name); } catch (T) { passed++; } }
 
-    static void Main()
+    static int Main(string[] args)
+    {
+        try
+        {
+            if (args.Length == 2 && args[0] == "--output") { WriteInteropFixture(args[1]); return 0; }
+            if (args.Length != 0) throw new ArgumentException("Usage: ScenarioChecks [--output DIRECTORY]");
+            RunChecks();
+            Console.WriteLine("PASS: " + passed + " scenario checks");
+            return 0;
+        }
+        catch (Exception error) { Console.Error.WriteLine(error); return 1; }
+    }
+
+    static void RunChecks()
     {
         var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
         var start = clock.Now;
@@ -115,7 +134,61 @@ static class ScenarioChecks
         Throws<ArgumentException>(() => new SessionPlan("p-01", new[] { "WE_MT", "NE_MT", "WE_FT", "NE_FT" }, 299), "duration override must be explicit");
         True(new SessionPlan("p-01", new[] { "WE_MT", "NE_MT", "WE_FT", "NE_FT" }, 10, true).AllowsDevelopmentOnlyDurationOverride, "development duration override is explicit and auditable");
         Throws<ArgumentException>(() => new ScenarioBlockController(clock, new SessionEventSequence(), "test", 1, 10), "block duration override must be explicit");
-        Console.WriteLine("PASS: " + passed + " scenario checks");
+    }
+
+    /// <summary>
+    /// Writes one compact completed synthetic block for the Python/analysis
+    /// consumers. The ManualSharedClock advances logical experiment time; it
+    /// does not wait for 300 seconds of wall-clock time.
+    /// </summary>
+    static void WriteInteropFixture(string outputDirectory)
+    {
+        if (String.IsNullOrWhiteSpace(outputDirectory)) throw new ArgumentException("An output directory is required.", nameof(outputDirectory));
+        string root = Path.GetFullPath(outputDirectory);
+        Directory.CreateDirectory(root);
+        var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+        string repository = FindRepositoryRoot();
+        string scenarioSource = Path.Combine(repository, "unity", "Assets", "ELTS", "Scenario", "ScenarioRuntime.cs");
+        string sessionSource = Path.Combine(repository, "unity", "Assets", "ELTS", "Session", "SessionRuntime.cs");
+        string developmentScenario = Path.Combine(repository, "config", "development", "scenario.json");
+        string sourceHash = HashText(HashFile(scenarioSource) + HashFile(sessionSource));
+        string fixtureHash = HashText("scenario-checks-interop-v1|one-valid-pair|one-target|one-hitscan|manual-300s");
+        string revision = GitRevision(repository);
+        var provenance = new SessionProvenance("scenario-checks-interop-v1", revision, HashFile(developmentScenario), sourceHash, fixtureHash, true, clock.UtcStartupAnchor);
+        LoggingRunLease lease = LoggingRunDirectory.ReserveUnique(root, "scenario-interop-300s");
+        using var writer = new SessionLogWriter(lease, provenance);
+        writer.Start();
+
+        var head = new TrackerId("SYNTHETIC-HEAD-001");
+        var weapon = new TrackerId("SYNTHETIC-WEAPON-001");
+        var stamp = TrackingAcquisitionStamp.Capture(clock, 1);
+        var pair = new TrackingSamplePair(TrackingSample.Valid(stamp, head, new RigidPose(Vector3d.Zero, Quaterniond.Identity)), TrackingSample.Valid(stamp, weapon, new RigidPose(Vector3d.Zero, Quaterniond.Identity)));
+        Require(writer.TryLogSample(pair), "fixture paired sample");
+
+        var sequence = new SessionEventSequence();
+        var block = new ScenarioBlockController(clock, sequence, "WE_FT", 1729);
+        var target = ActiveTarget("target-1", clock.Now, 5);
+        Require(writer.TryLogTarget(new TargetSnapshot(1, clock.Now, target.Id, "WE_FT", TargetLifecycle.Spawned, target.Position, target.Velocity, 1729, "scenario-checks-interop-v1")), "fixture spawned target");
+        var events = new List<SessionEvent>(block.Start());
+
+        clock.Advance(TimeSpan.FromSeconds(1));
+        events.AddRange(block.Fire(new HitscanShotModel(sequence), new ShotContext(clock.Now, ForwardRay(), true), new[] { target }, _ => true));
+        True(target.State == TargetState.Destroyed, "fixture hitscan destroys target");
+        Require(writer.TryLogTarget(new TargetSnapshot(2, clock.Now, target.Id, "WE_FT", TargetLifecycle.Destroyed, target.Position, target.Velocity, 1729, "scenario-checks-interop-v1")), "fixture destroyed target");
+
+        clock.Advance(TimeSpan.FromSeconds(299));
+        events.AddRange(block.Update());
+        if (block.State != ScenarioBlockState.Completed || events[events.Count - 1].Timestamp.Elapsed != TimeSpan.FromSeconds(300) || !IsStrictSequence(events))
+            throw new Exception("Fixture did not produce a strict completed 300-second block.");
+        foreach (SessionEvent item in events) Require(writer.TryLogEvent(item), "fixture event " + item.EventType);
+        LogCloseResult close = writer.Close(TimeSpan.FromSeconds(10));
+        if (!close.Completed || !close.CompleteOutput) throw new Exception("Fixture log close failed: " + close.Error);
+
+        int samples = CountLines(Path.Combine(lease.DirectoryPath, "samples.ndjson"));
+        int loggedEvents = CountLines(Path.Combine(lease.DirectoryPath, "events.ndjson"));
+        int targets = CountLines(Path.Combine(lease.DirectoryPath, "targets.ndjson"));
+        if (samples != 1 || loggedEvents != 5 || targets != 2) throw new Exception("Fixture output counts were unexpected.");
+        Console.WriteLine("FIXTURE: directory=" + lease.DirectoryPath + " samples=" + samples + " events=" + loggedEvents + " targets=" + targets + " complete=true manualClockSeconds=300");
     }
 
     static TargetEntity ActiveTarget(string id, MonotonicTimestamp timestamp, double z = 0)
@@ -125,4 +198,22 @@ static class ScenarioChecks
     { foreach (var field in item.Fields) if (field.Name == name) return field.Text; return null; }
     static bool IsStrictSequence(IReadOnlyList<SessionEvent> events)
     { for (int i = 1; i < events.Count; i++) if (events[i].Sequence != events[i - 1].Sequence + 1) return false; return true; }
+    static void Require(bool accepted, string name) { if (!accepted) throw new Exception("Unable to enqueue " + name + "."); }
+    static int CountLines(string path) => File.ReadAllLines(path, Encoding.UTF8).Length;
+    static string HashFile(string path) { if (!File.Exists(path)) throw new FileNotFoundException("Required source file is missing.", path); return HashBytes(File.ReadAllBytes(path)); }
+    static string HashText(string value) => HashBytes(Encoding.UTF8.GetBytes(value));
+    static string HashBytes(byte[] bytes) { using SHA256 hash = SHA256.Create(); return Convert.ToHexString(hash.ComputeHash(bytes)).ToLowerInvariant(); }
+    static string FindRepositoryRoot()
+    {
+        var current = new DirectoryInfo(Directory.GetCurrentDirectory());
+        while (current != null) { if (Directory.Exists(Path.Combine(current.FullName, ".git")) || File.Exists(Path.Combine(current.FullName, ".git"))) return current.FullName; current = current.Parent; }
+        throw new DirectoryNotFoundException("Unable to locate the repository root for fixture provenance.");
+    }
+    static string GitRevision(string repository)
+    {
+        using var process = new Process { StartInfo = new ProcessStartInfo("git", "rev-parse HEAD") { WorkingDirectory = repository, RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true } };
+        process.Start(); string output = process.StandardOutput.ReadToEnd().Trim(); string error = process.StandardError.ReadToEnd(); process.WaitForExit();
+        if (process.ExitCode != 0 || output.Length != 40) throw new InvalidOperationException("Unable to obtain the current Git revision: " + error);
+        return output;
+    }
 }

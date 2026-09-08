@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "project": "DESS-ELTS-Research-Software",
   "planVersion": "ELTS-build-plan-1.0+PC-001",
-  "generatedAtUtc": "2026-09-07T03:14:48.370328+00:00",
+  "generatedAtUtc": "2026-09-08T05:38:13.050941+00:00",
   "generatedFrom": {
     "workbookSha256": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
     "specificationSha256": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a",
@@ -11,8 +11,8 @@
     "approvedPlanSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
     "taskCatalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
     "authoritiesSha256": "ddfc087607b307a86e95088ad2dbc55545eacf79ba3ff2fc1cb9ed2c81f2ec94",
-    "eventCount": 120,
-    "eventSetSha256": "a7b8343cddb73143581621141b77321aa1e5fd50e44152d7f6d4b6ff66e8df53"
+    "eventCount": 126,
+    "eventSetSha256": "46fd5ee2e307b5dead49647700407283c627e61cc8c6a9aede52cad06d7a4717"
   },
   "current": {
     "mode": "working",
@@ -42,9 +42,8 @@
   },
   "execution": {
     "mode": "working",
-    "primaryStepId": "DEV-05.S001",
+    "primaryStepId": "DEV-06.S001",
     "activeStepIds": [
-      "DEV-05.S001",
       "DEV-06.S001",
       "DEV-07.S001"
     ],
@@ -71,8 +70,6 @@
       "D-14",
       "D-16",
       "D-17",
-      "DEV-05",
-      "DEV-05.S001",
       "DEV-06",
       "DEV-06.S001",
       "DEV-07",
@@ -294,16 +291,6 @@
     "selectedLane": "synthetic_development_only"
   },
   "activeWork": [
-    {
-      "owner": "agent:codex-astra",
-      "taskId": "DEV-05",
-      "atomicStepId": "DEV-05.S001",
-      "branch": "work/dev-05",
-      "claimedPaths": [
-        "analysis",
-        "docs/modules/analysis.md"
-      ]
-    },
     {
       "owner": "agent:codex-astra",
       "taskId": "DEV-06",
@@ -1413,16 +1400,39 @@
       "blockers": []
     },
     "DEV-05": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "b2d2bc561fec5abbe910a65e20fb9dbee0b3bca9dd6fbeb4417196b4a4d31417",
+      "status": "done",
+      "revision": 7,
+      "lastEventHash": "2107017562779c7b0e22e39d5395bceceb97cfc4b2041d49b4cbee4a04cfc300",
       "owner": "agent:codex-astra",
       "branch": "work/dev-05",
-      "claimedPaths": [
-        "analysis",
-        "docs/modules/analysis.md"
+      "claimedPaths": [],
+      "evidence": [
+        {
+          "id": "DEV-05-acceptance",
+          "path": "project-management/progress/evidence/DEV-05.json",
+          "sha256": "e3f61b658ecac64d6c5882e1aaf8237465b1fecb690f26cb3070acdc4f7dbee1",
+          "targetIds": [
+            "DEV-05.S001",
+            "DEV-05.V001",
+            "DEV-05"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "python -m unittest discover -s analysis/tests -v; python analysis/run_ingest.py test-results/dev04-publication/synthetic-soak --calibration analysis/fixtures/synthetic-calibration.json --output diagnostics/dev05-generated-ingest.json; verify raw hashes after ingest",
+          "result": "pass",
+          "sourceRevision": "0951a78e58950de450db1e1406c56b686e095ae1",
+          "recordedAtUtc": "2026-09-08T05:38:01.158908+00:00",
+          "limitations": [
+            "Synthetic development evidence only; no pilot-data or investigator acceptance",
+            "Nearest-angular active-target choice is explicitly recorded as a development analysis policy",
+            "Analysis currently loads records into memory; large study-volume streaming remains future optimization"
+          ]
+        }
       ],
-      "evidence": [],
       "blockers": []
     },
     "DEV-06": {
@@ -2809,26 +2819,80 @@
       "blockers": []
     },
     "DEV-05.S001": {
-      "status": "in_progress",
-      "revision": 1,
-      "lastEventHash": "b2d2bc561fec5abbe910a65e20fb9dbee0b3bca9dd6fbeb4417196b4a4d31417",
+      "status": "done",
+      "revision": 3,
+      "lastEventHash": "585502ac1503e35b77ad33a7de1575e8d5fc24e165f6e0fef5c1bfe982c827fb",
       "owner": "agent:codex-astra",
       "branch": "work/dev-05",
       "claimedPaths": [
         "analysis",
         "docs/modules/analysis.md"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "id": "DEV-05-acceptance",
+          "path": "project-management/progress/evidence/DEV-05.json",
+          "sha256": "e3f61b658ecac64d6c5882e1aaf8237465b1fecb690f26cb3070acdc4f7dbee1",
+          "targetIds": [
+            "DEV-05.S001",
+            "DEV-05.V001",
+            "DEV-05"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "python -m unittest discover -s analysis/tests -v; python analysis/run_ingest.py test-results/dev04-publication/synthetic-soak --calibration analysis/fixtures/synthetic-calibration.json --output diagnostics/dev05-generated-ingest.json; verify raw hashes after ingest",
+          "result": "pass",
+          "sourceRevision": "0951a78e58950de450db1e1406c56b686e095ae1",
+          "recordedAtUtc": "2026-09-08T05:38:01.158908+00:00",
+          "limitations": [
+            "Synthetic development evidence only; no pilot-data or investigator acceptance",
+            "Nearest-angular active-target choice is explicitly recorded as a development analysis policy",
+            "Analysis currently loads records into memory; large study-volume streaming remains future optimization"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-05.V001": {
-      "status": "not_started",
-      "revision": 0,
-      "lastEventHash": null,
-      "owner": null,
-      "branch": null,
-      "claimedPaths": [],
-      "evidence": [],
+      "status": "done",
+      "revision": 6,
+      "lastEventHash": "8f94b0f8ff0ae58419a384583be625bcab5f1df8195d0ead3cf2b624d0caf24f",
+      "owner": "agent:codex-astra",
+      "branch": "work/dev-05",
+      "claimedPaths": [
+        "project-management/progress/evidence/DEV-05.json"
+      ],
+      "evidence": [
+        {
+          "id": "DEV-05-acceptance",
+          "path": "project-management/progress/evidence/DEV-05.json",
+          "sha256": "e3f61b658ecac64d6c5882e1aaf8237465b1fecb690f26cb3070acdc4f7dbee1",
+          "targetIds": [
+            "DEV-05.S001",
+            "DEV-05.V001",
+            "DEV-05"
+          ],
+          "criteria": [
+            "outcome",
+            "verification",
+            "task-acceptance"
+          ],
+          "class": "synthetic_test",
+          "command": "python -m unittest discover -s analysis/tests -v; python analysis/run_ingest.py test-results/dev04-publication/synthetic-soak --calibration analysis/fixtures/synthetic-calibration.json --output diagnostics/dev05-generated-ingest.json; verify raw hashes after ingest",
+          "result": "pass",
+          "sourceRevision": "0951a78e58950de450db1e1406c56b686e095ae1",
+          "recordedAtUtc": "2026-09-08T05:38:01.158908+00:00",
+          "limitations": [
+            "Synthetic development evidence only; no pilot-data or investigator acceptance",
+            "Nearest-angular active-target choice is explicitly recorded as a development analysis policy",
+            "Analysis currently loads records into memory; large study-volume streaming remains future optimization"
+          ]
+        }
+      ],
       "blockers": []
     },
     "DEV-06.S001": {
@@ -5450,8 +5514,8 @@
       "hash": "6d86b96019b4e9092bf2ba43110c0b086f5fcc37fd3dbe526812be5b55e66b4b"
     },
     "task:DEV-05": {
-      "revision": 1,
-      "hash": "b2d2bc561fec5abbe910a65e20fb9dbee0b3bca9dd6fbeb4417196b4a4d31417"
+      "revision": 7,
+      "hash": "2107017562779c7b0e22e39d5395bceceb97cfc4b2041d49b4cbee4a04cfc300"
     },
     "task:DEV-06": {
       "revision": 1,

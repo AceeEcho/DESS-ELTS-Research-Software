@@ -31,6 +31,19 @@ static class EltsLinkChecks
         Throws<InvalidDataException>(() => EltsCodec.Decode("{\"protocolVersion\":\"development-synthetic-v1\",\"messageType\":\"ARM\",\"sequence\":1,\"sequence\":1,\"unityMonotonicTicks\":0}\n"), "duplicate JSON field is rejected");
         Throws<InvalidDataException>(() => EltsCodec.Decode("{protocolVersion:\"development-synthetic-v1\",\"messageType\":\"ARM\",\"sequence\":1,\"unityMonotonicTicks\":0}\n"), "unquoted JSON property is rejected");
         Throws<InvalidDataException>(() => EltsCodec.Decode("/* no comments */ {\"protocolVersion\":\"development-synthetic-v1\",\"messageType\":\"ARM\",\"sequence\":1,\"unityMonotonicTicks\":0}\n"), "JSON comments are rejected");
+        Throws<InvalidDataException>(() => EltsCodec.Decode("{'protocolVersion':'development-synthetic-v1','messageType':'ARM','sequence':1,'unityMonotonicTicks':0}\n"), "single-quoted JSON is rejected");
+        Throws<InvalidDataException>(() => EltsCodec.Decode("{\"protocolVersion\":\"development-synthetic-v1\",\"messageType\":\"ARM\",\"sequence\":1,\"unityMonotonicTicks\":0,}\n"), "trailing JSON comma is rejected");
+        Throws<InvalidDataException>(() => EltsCodec.Decode("{\"protocolVersion\":\"development-synthetic-v1\",\"messageType\":\"ARM\",\"sequence\":01,\"unityMonotonicTicks\":0}\n"), "leading-zero JSON number is rejected");
+        Throws<InvalidDataException>(() => EltsCodec.Decode("{\"protocolVersion\":\"development-synthetic-v1\",\"messageType\":\"ARM\",\"sequence\":0x1,\"unityMonotonicTicks\":0}\n"), "hex JSON number is rejected");
+        Throws<InvalidDataException>(() => EltsCodec.Decode("{\"protocolVersion\":\"development-synthetic-v1\",\"messageType\":\"ARM\",\"sequence\":+1,\"unityMonotonicTicks\":0}\n"), "plus-signed JSON number is rejected");
+        Throws<InvalidDataException>(() => EltsCodec.Decode("{\"protocolVersion\":\"development-synthetic-v1\",\"messageType\":\"ACK\",\"sequence\":1,\"jetsonMonotonicTicks\":0,\"command\":\"ACK\",\"state\":\"Idle\",\"ledPermission\":false}\n"), "ACK command must be a wire command");
+        Throws<InvalidDataException>(() => EltsCodec.Decode("{\"protocolVersion\":\"development-synthetic-v1\",\"messageType\":\"ACK\",\"sequence\":1,\"jetsonMonotonicTicks\":0,\"command\":\"PING\",\"state\":\"1\",\"ledPermission\":false}\n"), "numeric state string is rejected");
+        Throws<ArgumentException>(() => EltsMessage.Ack(1, EltsMessageType.Ack, 0, EltsLinkState.Idle, false), "ACK factory rejects response message types");
+        Throws<ArgumentOutOfRangeException>(() => EltsMessage.Ack(1, EltsMessageType.Ping, -1, EltsLinkState.Idle, false), "response factory rejects negative endpoint ticks");
+        Throws<ArgumentException>(() => new EltsMessage(new string('v', 257), EltsMessageType.Ping, 1), "message constructor rejects oversized protocol version");
+        Throws<ArgumentException>(() => EltsMessage.Command(EltsMessageType.Arm, 1, 0, applicationVersion: "unexpected"), "command factory rejects fields outside its wire shape");
+        Throws<ArgumentException>(() => EltsMessage.Command(EltsMessageType.Start, 1, 0), "START factory requires block context");
+        Throws<ArgumentException>(() => EltsMessage.Command(EltsMessageType.Stop, 1, 0, reason: "invalid"), "STOP factory restricts reasons");
         Throws<InvalidDataException>(() => EltsCodec.Decode("{\"protocolVersion\":\"controller-unknown\",\"messageType\":\"PING\",\"sequence\":1,\"unityMonotonicTicks\":0}\n"), "incompatible version is rejected");
     }
 
@@ -39,7 +52,7 @@ static class EltsLinkChecks
         var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
         var controller = new SimulatedEltsController(clock, new EltsLinkRuntimeOptions(3 * TimeSpan.TicksPerSecond, 30 * TimeSpan.TicksPerSecond, 3));
         var link = new MockEltsLink(controller);
-        var rejectedStart = Command(EltsMessageType.Start, 3, 0, new EltsBlockContext("synthetic-p", "1", "WE_MT", TimeSpan.TicksPerSecond));
+        var rejectedStart = Command(EltsMessageType.Start, 0, 0, new EltsBlockContext("synthetic-p", "1", "WE_MT", TimeSpan.TicksPerSecond));
         True(link.Send(rejectedStart).Type == EltsMessageType.Nack && !link.LedPermission, "START before HELLO/ARM cannot permit output");
         True(link.Send(Command(EltsMessageType.Hello, 1, 0)).Type == EltsMessageType.Ack, "HELLO is acknowledged");
         True(link.Send(Command(EltsMessageType.Arm, 2, 0)).State == EltsLinkState.Armed, "ARM enters Armed with permission inhibited");
@@ -52,6 +65,8 @@ static class EltsLinkChecks
         True(conflict.Type == EltsMessageType.Nack && conflict.Error == "sequence_conflict", "conflicting duplicate sequence is NACKed");
         clock.Advance(TimeSpan.FromSeconds(3)); link.Advance();
         True(link.State == EltsLinkState.Armed && !link.LedPermission, "three-second synthetic heartbeat lapse de-permits and returns Armed");
+        var staleReplay = link.Send(start);
+        True(staleReplay.Type == EltsMessageType.Nack && staleReplay.Error == "replay_state_changed" && staleReplay.State == EltsLinkState.Armed && staleReplay.LedPermission == null, "timed-out START replay never reports stale active permission");
         link.SimulateReconnect();
         True(link.State == EltsLinkState.Idle && !link.LedPermission && link.Send(start).Type == EltsMessageType.Nack, "reconnect never resumes Active and requires HELLO");
 
@@ -83,5 +98,13 @@ static class EltsLinkChecks
         var offset = new EltsClockOffsetEstimate(100, 160, 70);
         True(offset.UnitySentTicks == 100 && offset.UnityAckTicks == 160 && offset.JetsonTicks == 70 && offset.MidpointOffsetTicks == 60, "clock offset retains raw triplet and uses integer midpoint");
         Throws<ArgumentOutOfRangeException>(() => new EltsClockOffsetEstimate(20, 19, 0), "offset rejects an ACK earlier than send");
+
+        var replayClock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+        var shortCache = new SimulatedEltsController(replayClock, new EltsLinkRuntimeOptions(replayCacheCapacity: 1));
+        var shortLink = new MockEltsLink(shortCache);
+        var hello = Command(EltsMessageType.Hello, 1, 0);
+        shortLink.Send(hello); shortLink.Send(Command(EltsMessageType.Arm, 2, 0));
+        var expired = shortLink.Send(hello);
+        True(expired.Type == EltsMessageType.Nack && expired.Error == "sequence_expired" && shortLink.State == EltsLinkState.Armed, "evicted old sequence cannot execute again");
     }
 }

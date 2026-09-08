@@ -95,7 +95,8 @@
     display: { width:2.4, aspect:16/9, centerY:1.6 },
     participant: { distance:2.5, lateral:0, eyeHeight:1.67 },
     station: [0,2.75,0.12],
-    assembly: [-1.75,1.36,0.28],
+    // Metres: center below the display, with clearance above the turret tops.
+    assembly: { x:0, z:0.28, screenGap:0.08, topOffset:0.14 },
     virtualDepth:3.8,
     targetRadius:0.20,
     targetCenters: [[-1,1.8,-3.4],[0,1.45,-3.8],[1,2.12,-4.2]],
@@ -347,7 +348,8 @@
 
     // Geometry illustrates the three-turret assembly, not an actuation model.
     // Beams are diagram lines, not predictions of intensity, beam spread, or glare.
-    const assembly=CONFIG.assembly;
+    // Follow the lower screen edge when display width (and hence height) changes.
+    const assembly=[CONFIG.assembly.x,sy-sh-CONFIG.assembly.screenGap-CONFIG.assembly.topOffset,CONFIG.assembly.z];
     box(add(assembly,[0,-.17,0]),[.80,.07,.30],C.frame);
     rod(add(assembly,[0,-.17,0]),[assembly[0],.05,assembly[2]],.04,C.frame);
     box([assembly[0],.04,assembly[2]],[.60,.08,.50],C.frame);
@@ -368,7 +370,7 @@
     flush();drawParticipantDisplay(s);
     // An overlay ring locates the selected component even behind inspection geometry.
     const locations={display:[0,sy,0],head:headTracker,weapon:weaponTracker,
-      station:CONFIG.station,assembly:CONFIG.assembly,targets:s.targets[1]};
+      station:CONFIG.station,assembly,targets:s.targets[1]};
     const selected=locations[state.equipment];
     if(selected) {
       const p=project(selected);

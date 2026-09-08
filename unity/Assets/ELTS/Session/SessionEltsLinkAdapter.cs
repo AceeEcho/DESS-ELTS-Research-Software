@@ -42,6 +42,8 @@ namespace Elts.Session
         private long nextCommandSequence = 1;
         private SessionBlockLinkContext? context;
         private bool weBlock;
+        private bool failed;
+        private string? failedBlockId;
 
         public SessionEltsLinkAdapter(ISharedClock clock, ISessionEventSequence sequence, ISessionEventSink sink, IEltsLink link, SessionEltsLinkOptions? options = null)
         {
@@ -54,9 +56,12 @@ namespace Elts.Session
 
         public bool PrepareBlock(SessionBlockLinkContext value)
         {
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (failed && String.Equals(value.BlockId, failedBlockId, StringComparison.Ordinal)) return false;
+            if (failed) { failed = false; failedBlockId = null; }
             context = value ?? throw new ArgumentNullException(nameof(value));
             weBlock = value.Condition.StartsWith("WE_", StringComparison.Ordinal);
-            Record("EltsState", LogField.String("operation", "prepare"), LogField.String("blockId", value.BlockId), LogField.String("condition", value.Condition), LogField.String("neMode", options.NeMode.ToString()), LogField.String("state", link.State.ToString()), LogField.Boolean("ledPermission", link.LedPermission));
+            if (!Record("EltsState", LogField.String("operation", "prepare"), LogField.String("blockId", value.BlockId), LogField.String("condition", value.Condition), LogField.String("neMode", options.NeMode.ToString()), LogField.String("state", link.State.ToString()), LogField.Boolean("ledPermission", link.LedPermission))) return false;
             if (weBlock) return EnsureHelloAndArm();
             if (options.NeMode == DevelopmentNeLinkMode.Idle) return Send(EltsMessageType.Disarm, null, "operator");
             return EnsureHelloAndArm();
@@ -66,7 +71,7 @@ namespace Elts.Session
         {
             if (enabled)
             {
-                if (!weBlock || context == null || !EnsureHelloAndArm()) return false;
+                if (failed || !weBlock || context == null || !EnsureHelloAndArm()) return false;
                 return Send(EltsMessageType.Start, context, null);
             }
             return Send(EltsMessageType.Stop, null, "block_end");
@@ -74,9 +79,10 @@ namespace Elts.Session
 
         public bool Tick()
         {
+            if (failed) return false;
             try { link.Advance(); }
             catch (Exception e) { return Loss("advance", e); }
-            if (!weBlock) return Observe("ne_tick");
+            if (!weBlock) return ObserveNe();
             if (link.State != EltsLinkState.Active || !link.LedPermission) return Loss("active_permission_lost", null);
             return Send(EltsMessageType.Ping, null, null) && Observe("heartbeat");
         }
@@ -91,21 +97,21 @@ namespace Elts.Session
         private bool Send(EltsMessageType type, SessionBlockLinkContext? start, string? reason)
         {
             long wireSequence = nextCommandSequence++;
-            EltsMessage command = EltsMessage.Command(type, wireSequence, clock.Now.Ticks,
+            long commandUnityTicks = clock.Now.Ticks;
+            EltsMessage command = EltsMessage.Command(type, wireSequence, commandUnityTicks,
                 type == EltsMessageType.Hello ? options.ApplicationVersion : null,
                 type == EltsMessageType.Start ? new EltsBlockContext(start!.ParticipantPseudonym, start.BlockId, start.Condition, start.DurationTicks) : null,
                 type == EltsMessageType.Stop ? reason : null);
             for (int attempt = 1; attempt <= options.MaximumCommandAttempts; attempt++)
             {
-                Record("EltsCommand", LogField.String("command", EltsMessage.WireName(type)), LogField.NumberValue("commandSequence", wireSequence), LogField.NumberValue("attempt", attempt), LogField.NumberValue("unityTicks", command.UnityMonotonicTicks!.Value));
+                if (!Record("EltsCommand", LogField.String("command", EltsMessage.WireName(type)), LogField.NumberValue("commandSequence", wireSequence), LogField.NumberValue("attempt", attempt), LogField.NumberValue("unityTicks", commandUnityTicks))) return false;
                 try
                 {
                     EltsMessage reply = link.Send(command);
-                    RecordReply(reply, attempt);
-                    if (reply.Type == EltsMessageType.Ack && reply.AcknowledgedCommand == EltsMessage.WireName(type))
+                    if (!RecordReply(reply, attempt)) return false;
+                    if (IsExpectedAck(type, wireSequence, reply))
                     {
-                        Record("EltsState", LogField.String("operation", "ack"), LogField.String("state", link.State.ToString()), LogField.Boolean("ledPermission", link.LedPermission));
-                        return true;
+                        return Record("EltsState", LogField.String("operation", "ack"), LogField.String("state", link.State.ToString()), LogField.Boolean("ledPermission", link.LedPermission));
                     }
                     return Loss("nack_or_invalid_reply", null);
                 }
@@ -114,7 +120,7 @@ namespace Elts.Session
             return false;
         }
 
-        private void RecordReply(EltsMessage reply, int attempt)
+        private bool RecordReply(EltsMessage reply, int attempt)
         {
             string type = reply.Type == EltsMessageType.Ack ? "EltsAck" : reply.Type == EltsMessageType.Nack ? "EltsNack" : "EltsState";
             var fields = new List<LogField> { LogField.String("reply", EltsMessage.WireName(reply.Type)), LogField.NumberValue("commandSequence", reply.Sequence), LogField.NumberValue("attempt", attempt), LogField.String("state", reply.State?.ToString() ?? "unknown") };
@@ -123,22 +129,51 @@ namespace Elts.Session
             if (reply.Error != null) fields.Add(LogField.String("error", reply.Error));
             if (reply.JetsonMonotonicTicks.HasValue)
             {
+                long observedUnityTicks = clock.Now.Ticks;
                 fields.Add(LogField.NumberValue("jetsonTicks", reply.JetsonMonotonicTicks.Value));
-                Record("EltsOffset", LogField.NumberValue("commandSequence", reply.Sequence), LogField.NumberValue("unityTicks", clock.Now.Ticks), LogField.NumberValue("jetsonTicks", reply.JetsonMonotonicTicks.Value), LogField.NumberValue("endpointMinusUnityTicks", reply.JetsonMonotonicTicks.Value - clock.Now.Ticks));
+                if (!Record("EltsOffset", LogField.NumberValue("commandSequence", reply.Sequence), LogField.NumberValue("observedUnityTicks", observedUnityTicks), LogField.NumberValue("jetsonTicks", reply.JetsonMonotonicTicks.Value), LogField.NumberValue("endpointMinusObservedUnityTicks", reply.JetsonMonotonicTicks.Value - observedUnityTicks))) return false;
             }
-            Record(type, fields.ToArray());
+            return Record(type, fields.ToArray());
+        }
+
+        private bool IsExpectedAck(EltsMessageType command, long wireSequence, EltsMessage reply)
+        {
+            if (reply.Type != EltsMessageType.Ack || reply.Sequence != wireSequence || reply.AcknowledgedCommand != EltsMessage.WireName(command) ||
+                !reply.State.HasValue || !reply.LedPermission.HasValue || reply.State.Value != link.State || reply.LedPermission.Value != link.LedPermission) return false;
+            if (command == EltsMessageType.Hello) return reply.State == EltsLinkState.Idle && !reply.LedPermission.Value;
+            if (command == EltsMessageType.Arm) return reply.State == EltsLinkState.Armed && !reply.LedPermission.Value;
+            if (command == EltsMessageType.Start || command == EltsMessageType.Ping) return reply.State == EltsLinkState.Active && reply.LedPermission.Value;
+            if (command == EltsMessageType.Stop) return reply.State != EltsLinkState.Active && !reply.LedPermission.Value;
+            if (command == EltsMessageType.Disarm) return reply.State == EltsLinkState.Idle && !reply.LedPermission.Value;
+            return false;
         }
 
         private bool Observe(string operation)
         {
-            Record("EltsState", LogField.String("operation", operation), LogField.String("state", link.State.ToString()), LogField.Boolean("ledPermission", link.LedPermission));
-            return !weBlock || (link.State == EltsLinkState.Active && link.LedPermission);
+            return Record("EltsState", LogField.String("operation", operation), LogField.String("state", link.State.ToString()), LogField.Boolean("ledPermission", link.LedPermission)) &&
+                (link.State == EltsLinkState.Active && link.LedPermission);
+        }
+        private bool ObserveNe()
+        {
+            bool expected = !link.LedPermission && (options.NeMode == DevelopmentNeLinkMode.Idle ? link.State == EltsLinkState.Idle : link.State == EltsLinkState.Armed);
+            if (!Record("EltsState", LogField.String("operation", "ne_tick"), LogField.String("state", link.State.ToString()), LogField.Boolean("ledPermission", link.LedPermission))) return false;
+            return expected || Loss("ne_state_or_permission_changed", null);
         }
         private bool Loss(string operation, Exception? error)
         {
+            failed = true; failedBlockId = context?.BlockId;
             Record("EltsLinkLoss", LogField.String("operation", operation), LogField.String("state", link.State.ToString()), LogField.Boolean("ledPermission", link.LedPermission), LogField.String("detail", error == null ? "protocol_or_permission_failure" : error.GetType().Name));
             return false;
         }
-        private void Record(string type, params LogField[] fields) { sink.TryRecord(new SessionEvent(sequence.Next(), clock.Now, type, fields)); }
+        private bool Record(string type, params LogField[] fields)
+        {
+            try
+            {
+                if (sink.TryRecord(new SessionEvent(sequence.Next(), clock.Now, type, fields))) return true;
+            }
+            catch { }
+            failed = true; failedBlockId = context?.BlockId;
+            return false;
+        }
     }
 }

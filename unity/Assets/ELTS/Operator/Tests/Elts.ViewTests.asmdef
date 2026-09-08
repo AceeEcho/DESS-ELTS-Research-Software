@@ -1,0 +1,5 @@
+{
+  "name": "Elts.ViewTests",
+  "references": ["Elts.Operator", "Elts.Rendering", "Elts.Geometry"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

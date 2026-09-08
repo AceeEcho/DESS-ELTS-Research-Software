@@ -20,6 +20,7 @@
           <ui:Button name="startBlock" text="Start block" class="primary" />
           <ui:Button name="endBlock" text="End block" />
         </ui:VisualElement>
+        <ui:Button name="fire" text="Synthetic trigger (operator test)" />
         <ui:TextField name="abortReason" label="Reason" />
         <ui:VisualElement class="session-row">
           <ui:Button name="abort" text="Abort" class="abort" />

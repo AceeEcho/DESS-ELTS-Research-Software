@@ -1,0 +1,134 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using Elts.Clock;
+using Elts.Config;
+using Elts.Geometry;
+using Elts.Logging;
+using Elts.Scenario;
+using Elts.Session;
+
+namespace Elts.Operator
+{
+    /// <summary>
+    /// Synthetic scenario presentation and canonical target recording. Spawn
+    /// dimensions and random-walk timing below are development choices, not
+    /// approved D-04 tuning. All positions and velocities use room metres.
+    /// </summary>
+    public sealed class DevelopmentSessionScenario
+    {
+        private const int MaintainTargets = 3;
+        private const double SpawnHalfWidthM = 0.45, SpawnHalfHeightM = 0.25, SpawnHalfDepthM = 0.05;
+        private const double DirectionChangeSeconds = 1;
+        private readonly DevelopmentConfiguration config;
+        private readonly ISharedClock clock;
+        private readonly SessionEngine engine;
+        private readonly SessionRecordingAdapter recording;
+        private readonly HitscanShotModel shots;
+        private ScenarioPopulation? population;
+        private ScenarioDefinition? definition;
+        private IMovementBehaviour? movement;
+        private string? blockId;
+        private int seed;
+        private long targetSequence;
+        private readonly Dictionary<string,TargetState> recordedStates = new Dictionary<string,TargetState>();
+        private readonly Dictionary<string,Vector3d> positions = new Dictionary<string,Vector3d>();
+        public IReadOnlyDictionary<string,Vector3d> Positions => positions;
+        public string LastShot { get; private set; } = "No shot";
+
+        public DevelopmentSessionScenario(DevelopmentConfiguration config, ISharedClock clock,
+            SessionEngine engine, SessionRecordingAdapter recording, ISessionEventSequence sequence)
+        {
+            this.config=config;this.clock=clock;this.engine=engine;this.recording=recording;
+            shots=new HitscanShotModel(sequence,TimeSpan.FromSeconds(config.Runtime.TriggerLockoutSeconds));
+        }
+
+        public void Refresh(double deltaSeconds, RigidPose? head)
+        {
+            positions.Clear();
+            if(!engine.TargetsActive)
+            {
+                RemoveRemainingTargets();
+                return;
+            }
+            if(blockId!=engine.CurrentBlockId) BeginBlock();
+            if(population==null || definition==null || movement==null) return;
+            // Missing head data cannot invent visibility or a fresh spawn.
+            if(!head.HasValue) return;
+            var eye=head.Value.TransformPoint(config.Rig.HeadEyeOffsetM);
+            Func<Vector3d,bool> visible=point=>IsVisible(eye,point);
+            population.Reconcile(clock.Now,visible);
+            foreach(var target in population.History)
+            {
+                bool known=recordedStates.TryGetValue(target.Id,out var previous);
+                if(target.State==TargetState.Active)
+                {
+                    movement.Step(target,Math.Max(0,deltaSeconds),definition.SpawnVolume);
+                    Record(target,known?TargetLifecycle.Updated:TargetLifecycle.Spawned);
+                    positions.Add(target.Id,target.Position);
+                }
+                else if(!known || previous==TargetState.Active)
+                    Record(target,target.State==TargetState.Destroyed?TargetLifecycle.Destroyed:TargetLifecycle.Despawned);
+                recordedStates[target.Id]=target.State;
+            }
+        }
+
+        public void Fire(RigidPose? weapon, RigidPose? head)
+        {
+            if(!engine.TargetsActive || population==null) return;
+            if(!weapon.HasValue || !head.HasValue) { LastShot="Ignored: tracking unavailable"; return; }
+            var ray=new BoreRay(weapon.Value,config.Rig.WeaponMuzzleOffsetM,config.Rig.WeaponZero,config.Rig.WeaponBoreLocalDirection).Ray;
+            var eye=head.Value.TransformPoint(config.Rig.HeadEyeOffsetM);
+            engine.Fire(shots,new ShotContext(clock.Now,ray,true),population.ActiveTargets,target=>IsVisible(eye,target.Position));
+            LastShot="Shot logged";
+            foreach(var target in population.History)
+            {
+                if(target.State!=TargetState.Destroyed || (recordedStates.TryGetValue(target.Id,out var previous) && previous==TargetState.Destroyed)) continue;
+                Record(target,TargetLifecycle.Destroyed);
+                recordedStates[target.Id]=target.State;
+                positions.Remove(target.Id);
+                LastShot="Target destroyed";
+            }
+        }
+
+        private void BeginBlock()
+        {
+            RemoveRemainingTargets();
+            blockId=engine.CurrentBlockId;
+            var screen=config.Rig.Display;
+            var center=screen.Origin+screen.U*(screen.Width*0.5)+screen.V*(screen.Height*0.5)
+                +screen.Normal*config.Scenario.TargetDistanceM;
+            var bounds=new SpawnVolume(center-new Vector3d(SpawnHalfWidthM,SpawnHalfHeightM,SpawnHalfDepthM),
+                center+new Vector3d(SpawnHalfWidthM,SpawnHalfHeightM,SpawnHalfDepthM));
+            bool moving=engine.CurrentCondition!.EndsWith("_MT",StringComparison.Ordinal);
+            var adapter=DevelopmentScenarioAdapter.Create(config.Scenario,bounds,MaintainTargets,
+                moving?"RandomWalk":"Fixed","Hitscan","TargetsDestroyedCount");
+            definition=adapter.Definition;
+            seed=definition.BlockSeed("synthetic",blockId!);
+            population=new ScenarioPopulation(definition,new MaintainCountSpawnRule(seed));
+            movement=moving?(IMovementBehaviour)new RandomWalkMovement(seed,config.Scenario.TargetSpeedMps,
+                config.Scenario.TargetSpeedMps,DirectionChangeSeconds):new FixedMovement();
+            recordedStates.Clear();
+        }
+
+        private bool IsVisible(Vector3d eye, Vector3d target)
+        {
+            var direction=target-eye;
+            if(direction.Length<=0) return false;
+            return config.Rig.Display.Intersect(new Ray3d(eye,direction),out var distance,out _,out var u,out var v)
+                && distance<direction.Length && config.Rig.Display.IsInside(u,v);
+        }
+        private void Record(TargetEntity target, TargetLifecycle lifecycle)
+        {
+            if(!recording.TryLogTarget(new TargetSnapshot(++targetSequence,clock.Now,target.Id,blockId!,lifecycle,
+                target.Position,target.Velocity,seed,config.Scenario.ScenarioId)))
+                throw new InvalidOperationException("Critical target recording failed.");
+        }
+        private void RemoveRemainingTargets()
+        {
+            if(population==null) return;
+            foreach(var target in population.ActiveTargets) Record(target,TargetLifecycle.Despawned);
+            population=null;definition=null;movement=null;positions.Clear();
+        }
+    }
+}

@@ -20,7 +20,8 @@ namespace Elts.Operator
         // View-only choices are centralized here; physical layout comes from the staged rig configuration.
         public const int StimulusLayer = 30, OperatorLayer = 31;
         public const double NearMarginMeters = 0.05, FarDistanceMeters = 100;
-        private const float ControlsHeight = 220, BannerHeight = 76, MinimumWindowWidth = 900;
+        private const float DiagnosticControlsHeight = 220, SessionControlsHeight = 340, BannerHeight = 76, MinimumWindowWidth = 900;
+        private float ControlsHeight => SessionControlsVisible ? SessionControlsHeight : DiagnosticControlsHeight;
         private const float RodLengthMeters = 0.6f, LineWidthMeters = 0.007f;
         private const double MaximumFrameDeltaSeconds = 0.1;
         private static readonly Color Cyan = new Color(0.1f,0.85f,0.95f), Amber = new Color(1,0.65f,0.15f);
@@ -37,6 +38,9 @@ namespace Elts.Operator
         private RecordedReplay? replay;
         private ReplayTransport? transport;
         private Task<RecordedReplay>? loading;
+        private bool sessionAttached;
+        private RigidPose? sessionHead, sessionWeapon;
+        private readonly Dictionary<string,Vector3d> sessionTargets = new Dictionary<string,Vector3d>();
         private string replayPath = "", status = "", error = "";
         private bool simulateHeadDropout, simulateWeaponDropout, animate = true;
         private double demoTime, predictionSeconds, layoutOffsetX, layoutDepthOffset;
@@ -54,6 +58,10 @@ namespace Elts.Operator
         public double ReplayPosition => transport?.PositionSeconds ?? 0;
         public bool ReplayPlaying => transport?.IsPlaying ?? false;
         public ScreenPlane DisplayPlane => screen;
+        public DevelopmentConfiguration Configuration => configuration;
+        public bool SessionControlsVisible { get; set; }
+        public string TrackingStatus => status;
+        public RigidPose? RawWeapon => rawWeapon;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
@@ -61,7 +69,9 @@ namespace Elts.Operator
             // Explicit tests create their own instances; avoid unsolicited scene changes in the test runner.
             if (Array.IndexOf(Environment.GetCommandLineArgs(), "-runTests") >= 0) return;
             if (FindFirstObjectByType<DevelopmentView>() != null) return;
-            new GameObject("ELTS development views").AddComponent<DevelopmentView>();
+            var host = new GameObject("ELTS development views");
+            host.AddComponent<DevelopmentView>();
+            host.AddComponent<DevelopmentSessionPanel>();
         }
         private void Awake()
         {
@@ -145,12 +155,26 @@ namespace Elts.Operator
         public void SetReplayPlaying(bool playing){if(transport==null)throw new InvalidOperationException("Load a recording first.");if(playing)transport.Play();else transport.Pause();}
         public void Scrub(double seconds){if(transport==null)throw new InvalidOperationException("Load a recording first.");transport.Scrub(seconds);}
         public void UseDemo(){replay=null;transport=null;animate=true;error="";}
+        /// <summary>Display immutable raw acquisition snapshots; session targets are supplied only while a block runs.</summary>
+        public void SetSessionFrame(RigidPose? headPose, RigidPose? weaponPose, IReadOnlyDictionary<string,Vector3d> targets)
+        {
+            sessionAttached=true; sessionHead=headPose; sessionWeapon=weaponPose;
+            sessionTargets.Clear();
+            foreach(var item in targets) sessionTargets.Add(item.Key,item.Value);
+        }
+        public void DetachSession(){sessionAttached=false;sessionTargets.Clear();}
         public void Refresh(double deltaSeconds)
         {
             if(!Ready)return;
             if(deltaSeconds<0||double.IsNaN(deltaSeconds)||double.IsInfinity(deltaSeconds))throw new ArgumentOutOfRangeException(nameof(deltaSeconds));
             var visibleTargets=new Dictionary<string,Vector3d>();Vector3d headVelocity=Vector3d.Zero;
-            if(replay!=null)
+            if(sessionAttached)
+            {
+                rawHead=sessionHead;rawWeapon=sessionWeapon;
+                foreach(var item in sessionTargets)visibleTargets.Add(item.Key,item.Value);
+                status="SYNTHETIC SESSION | Head "+(rawHead.HasValue?"valid":"UNAVAILABLE")+" | Weapon "+(rawWeapon.HasValue?"valid":"UNAVAILABLE");
+            }
+            else if(replay!=null)
             {
                 transport!.Advance(deltaSeconds);var frame=replay.FrameAt(transport.PositionSeconds);rawHead=frame.Head;rawWeapon=frame.Weapon;
                 foreach(var target in replay.TargetsAt(transport.PositionSeconds))visibleTargets.Add(target.Key,target.Value);
@@ -215,9 +239,12 @@ namespace Elts.Operator
         private void OnGUI()
         {
             if(!Ready){GUI.Box(new Rect(10,80,Mathf.Max(300,Screen.width-20),70),"Development view unavailable: "+error);return;}
+            if(!SessionControlsVisible && GUI.Button(new Rect(Screen.width-180,40,165,28),"Session controls"))
+                GetComponent<DevelopmentSessionPanel>()?.SetVisible(true);
             GUI.Label(new Rect(16,BannerHeight,Screen.width/2-20,24),"PARTICIPANT PREVIEW — stimulus camera only");
             GUI.Label(new Rect(Screen.width/2+16,BannerHeight,Screen.width/2-20,24),"OPERATOR — drag to orbit; shift-drag to pan; wheel to zoom");
             if(!participant.enabled)GUI.Box(new Rect(20,BannerHeight+35,Screen.width/2-40,70),"PREVIEW PAUSED\nValid head pose in front of the screen required");
+            if(SessionControlsVisible)return;
             var area=new Rect(10,Screen.height-ControlsHeight+4,Screen.width-20,ControlsHeight-8);
             GUILayout.BeginArea(area,GUI.skin.box);controlScroll=GUILayout.BeginScrollView(controlScroll);
             GUILayout.Label("SINGLE-DISPLAY DEVELOPMENT EMULATION | Synthetic/unmeasured geometry | Study unavailable | Base station not connected");

@@ -218,3 +218,7 @@ if ($failures.Count) {
     exit 1
 }
 Write-Host ("PASS: {0} offline setup helper regression tests." -f $passes) -ForegroundColor Green
+# Some probes intentionally launch a failing executable. GitHub's PowerShell
+# wrapper propagates LASTEXITCODE after this script, so explicitly return the
+# suite outcome rather than the last negative-test probe's native exit code.
+exit 0

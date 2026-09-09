@@ -234,6 +234,7 @@ def run(args) -> tuple[dict, Path]:
                     runtime_checks = (
                         ("TrackingChecks", " tracking checks"),
                         ("SyntheticTrackingChecks", " synthetic tracking checks"),
+                        ("DesktopTrackingChecks", " desktop tracking checks"),
                         ("Dev03ReviewChecks", "DEV-03 review regressions"),
                         ("LoggingChecks", " logging checks"),
                         ("LoggingPublicationChecks", " logging publication checks"),

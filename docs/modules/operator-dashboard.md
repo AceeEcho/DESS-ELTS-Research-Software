@@ -7,6 +7,11 @@ apparatus previews remain beside it. Use Unity **6000.3.23f1 LTS** for source wo
 
 ## Start and operate
 
+For the integrated mouse/keyboard game, open `Assets/Scenes/ELTSDesktop.unity`
+in the Unity project and press Play, or use `OPEN-DESKTOP-TEST.cmd` with its new
+build. See [desktop input](desktop-input.md) for controls and the complete run.
+Choose the input source in Preparation before creating each recording.
+
 Run `OPEN-DASHBOARD.cmd` from the repository after building the Windows player into
 `build/operator-dashboard`. The build command is `./scripts/build.ps1 -Output
 build/operator-dashboard`; the output directory must be empty for a new build.

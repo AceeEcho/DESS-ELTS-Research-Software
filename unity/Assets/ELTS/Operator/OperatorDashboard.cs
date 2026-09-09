@@ -62,7 +62,8 @@ namespace Elts.Operator
                 catch(Exception exception) {workspaceFailure=exception.Message;}
             }
             BuildModuleRail();InitializeOrders();InitializeCheckpoints();InitializeSettings();
-            int participantWidth=768;
+            // Shared by the small dashboard preview and full desktop play view.
+            int participantWidth=1920;
             int participantHeight=Math.Max(128,(int)Math.Round(participantWidth*view.DisplayPlane.Height/view.DisplayPlane.Width));
             participantTexture=Texture("Dashboard participant",participantWidth,participantHeight);
             operatorTexture=Texture("Dashboard apparatus",640,400);

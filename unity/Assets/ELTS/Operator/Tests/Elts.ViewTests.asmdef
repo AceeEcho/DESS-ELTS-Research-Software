@@ -1,5 +1,7 @@
 {
   "name": "Elts.ViewTests",
-  "references": ["Elts.Operator", "Elts.Rendering", "Elts.Geometry", "Elts.Session", "Elts.Clock", "Elts.Logging", "Elts.Scenario"],
-  "optionalUnityReferences": ["TestAssemblies"]
+  "references": ["Elts.Operator", "Elts.Rendering", "Elts.Geometry", "Elts.Session", "Elts.Clock", "Elts.Logging", "Elts.Scenario", "Elts.Config", "Elts.Tracking", "Unity.Newtonsoft.Json", "Unity.InputSystem"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll", "Newtonsoft.Json.dll"]
 }

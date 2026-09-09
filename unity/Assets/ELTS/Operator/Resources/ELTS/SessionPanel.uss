@@ -10,6 +10,17 @@
     --accent: #00b3ff;
     --danger: #df8b91;
 }
+.dashboard.desktop-play { flex-direction: column; padding: 22px 28px; }
+.play-heading, .play-status, .play-actions { flex-direction: row; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.play-heading > .unity-button { min-width: 200px; margin-left: 20px; }
+.play-status { margin: 14px 0 10px 0; }
+.play-image { flex-grow: 1; flex-shrink: 1; min-height: 100px; background-color: #090d14; }
+.play-footer { padding: 14px 0 0 0; flex-shrink: 0; }
+.play-actions > .unity-label { flex-shrink: 1; margin-right: 20px; }
+.play-actions > .unity-button { min-width: 210px; }
+.play-reticle { position: absolute; width: 16px; height: 16px; }
+.reticle-horizontal { position: absolute; left: 0; top: 7px; width: 16px; height: 2px; background-color: #f5fbff; }
+.reticle-vertical { position: absolute; left: 7px; top: 0; width: 2px; height: 16px; background-color: #f5fbff; }
 .session-document { flex-grow: 1; color: var(--text); font-size: 14px; }
 .dashboard { position: absolute; left: 0; top: 0; right: 0; bottom: 0; flex-direction: row; background-color: var(--bg); }
 .dashboard .unity-label { white-space: normal; overflow: visible; -unity-text-overflow-position: end; flex-shrink: 0; margin: 0; }

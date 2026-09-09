@@ -72,6 +72,7 @@ namespace Elts.Operator.Tests
                     Is.LessThanOrEqualTo(root.Q<TextField>("calibrationThresholds").worldBound.yMin),
                     "Expanded calibration fields must retain separate layout space");
                 root.Q<TextField>("participant").value="synthetic-ui-"+Guid.NewGuid().ToString("N");
+                root.Q<DropdownField>("inputSource").value=DevelopmentSessionPanel.AutomatedInputOption;
                 panel.Dashboard.SelectModule("preparation",false);
                 Submit(root.Q<Button>("createSession"));
                 float deadline=Time.realtimeSinceStartup+15;

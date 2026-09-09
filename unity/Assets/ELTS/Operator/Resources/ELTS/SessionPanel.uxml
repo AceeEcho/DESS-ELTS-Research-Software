@@ -16,6 +16,8 @@
       <ui:ScrollView name="stageScroll" class="stage-scroll">
         <ui:VisualElement name="preparationModule" class="task-module">
           <ui:Label text="Session identity" class="section-title" /><ui:TextField name="participant" label="Test identifier" value="synthetic-01" />
+          <ui:DropdownField name="inputSource" label="Development input source" />
+          <ui:Button name="openDesktopPlay" text="Open desktop play view" /><ui:Label text="Create a recording below, then follow calibration and block preparation. Mouse clicks fire only in the play view during a running block." class="small muted" />
           <ui:Label text="Use a synthetic identifier. Each recording gets its own folder." class="small muted" />
           <ui:VisualElement class="section-heading"><ui:Label text="Condition order" class="section-title" /><ui:Label text="4 blocks · 5 minutes each" class="small muted" /></ui:VisualElement>
           <ui:DropdownField name="orderPreset" label="Preset" /><ui:VisualElement name="conditionList" class="reorder-list" />
@@ -38,6 +40,7 @@
           </ui:Foldout>
         </ui:VisualElement>
         <ui:VisualElement name="runModule" class="task-module hidden">
+          <ui:Button name="openDesktopPlayRun" text="Open desktop play view" class="primary" />
           <ui:Label text="Session progress" class="section-title" /><ui:VisualElement name="blockTimeline" /><ui:Label name="runGuidance" class="body-copy muted" />
           <ui:Button name="fire" text="Send synthetic test trigger" /><ui:Label text="Exercises recording and scoring; does not actuate hardware." class="small muted" />
           <ui:Button name="rerun" text="Re-run block in a new recording" /><ui:Label text="Previous recordings are retained. Reconnecting never resumes a block automatically." class="small muted" />

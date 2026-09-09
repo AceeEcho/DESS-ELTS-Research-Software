@@ -13,6 +13,11 @@ namespace Elts.Operator
     {
         private const int CaptureWidth = 1440, CaptureHeight = 960;
         private string output;
+        private sealed class StationaryDesktopControls : IDesktopControls
+        {
+            // Presentation-only capture has no focused window or physical input.
+            public DesktopControlFrame Read(IPanel panel) => new DesktopControlFrame(true,Vector2.zero,Vector3.zero);
+        }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
@@ -30,6 +35,8 @@ namespace Elts.Operator
             // Rounded UI Toolkit clipping needs a depth/stencil attachment.
             var target=new RenderTexture(CaptureWidth,CaptureHeight,24,RenderTextureFormat.ARGB32,RenderTextureReadWrite.sRGB);
             target.Create();panel.SetDiagnosticRenderTarget(target);
+            if(Array.IndexOf(Environment.GetCommandLineArgs(),"-eltsShowDesktop")>=0)
+            { panel.Desktop.Controls=new StationaryDesktopControls();panel.Desktop.SetOpen(true); }
             // Optional presentation-only expansion: no recording, capture or
             // calibration acceptance is performed by this render probe.
             if(Array.IndexOf(Environment.GetCommandLineArgs(),"-eltsShowCalibration")>=0)

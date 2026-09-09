@@ -15,6 +15,7 @@ namespace Elts.Operator
     /// Visual demo motion is frame-driven; this view is not a tracking acquisition loop.
     /// The same immutable observation path drives demo and recorded replay diagnostics.
     /// </summary>
+    [DefaultExecutionOrder(-200)]
     public sealed class DevelopmentView : MonoBehaviour
     {
         // View-only choices are centralized here; physical layout comes from the staged rig configuration.
@@ -151,7 +152,8 @@ namespace Elts.Operator
             if(loading!=null)throw new InvalidOperationException("Replay load is already in progress.");
             error="";loading=Task.Run(()=>RecordedReplay.Load(directory));
         }
-        public void AttachReplay(RecordedReplay recording){replay=recording??throw new ArgumentNullException(nameof(recording));transport=new ReplayTransport(recording.DurationSeconds);animate=false;error="";}
+        public void AttachReplay(RecordedReplay recording){DetachSession();replay=recording??throw new ArgumentNullException(nameof(recording));transport=new ReplayTransport(recording.DurationSeconds);animate=false;error="";}
+        public void ExitReplay(){replay=null;transport=null;animate=true;}
         public void SetReplayPlaying(bool playing){if(transport==null)throw new InvalidOperationException("Load a recording first.");if(playing)transport.Play();else transport.Pause();}
         public void Scrub(double seconds){if(transport==null)throw new InvalidOperationException("Load a recording first.");transport.Scrub(seconds);}
         public void UseDemo(){replay=null;transport=null;animate=true;error="";}

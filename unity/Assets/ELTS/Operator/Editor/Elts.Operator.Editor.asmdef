@@ -1,5 +1,6 @@
 {
   "name": "Elts.Operator.Editor",
   "includePlatforms": ["Editor"],
+  "references": ["Elts.Operator"],
   "autoReferenced": true
 }

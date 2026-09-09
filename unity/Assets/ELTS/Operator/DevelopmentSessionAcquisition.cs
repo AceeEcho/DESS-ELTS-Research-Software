@@ -18,10 +18,11 @@ namespace Elts.Operator
     public sealed class DevelopmentSessionAcquisition
     {
         private const int StopJoinMilliseconds = 2000;
-        private readonly SyntheticTrackingSettings settings;
         private readonly Func<TrackingSamplePair, bool> logger;
         private readonly object gate = new object();
-        private readonly SyntheticTrackingSource source;
+        // Lifecycle cancellation must stay reachable when capture/logging stalls.
+        private readonly object lifecycleGate = new object();
+        private readonly ITrackingSource source;
         private readonly double cadenceSeconds;
         private Thread? worker;
         private CancellationTokenSource? cancellation;
@@ -33,11 +34,17 @@ namespace Elts.Operator
         private long lastTimestamp;
 
         public DevelopmentSessionAcquisition(SyntheticTrackingSettings settings, Func<TrackingSamplePair, bool> logger)
+            : this(new SyntheticTrackingSource(settings ?? throw new ArgumentNullException(nameof(settings))), settings.SampleRateHz, logger)
+        { }
+
+        /// <summary>One acquisition/logging path for interchangeable paired pose sources.</summary>
+        public DevelopmentSessionAcquisition(ITrackingSource source, double sampleRateHz, Func<TrackingSamplePair, bool> logger)
         {
-            this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            this.source = source ?? throw new ArgumentNullException(nameof(source));
+            if (double.IsNaN(sampleRateHz) || double.IsInfinity(sampleRateHz) || sampleRateHz <= 0)
+                throw new ArgumentOutOfRangeException(nameof(sampleRateHz));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            source = new SyntheticTrackingSource(settings);
-            cadenceSeconds = 1.0 / settings.SampleRateHz;
+            cadenceSeconds = 1.0 / sampleRateHz;
         }
 
         public bool IsRunning => worker is { IsAlive: true };
@@ -45,7 +52,38 @@ namespace Elts.Operator
         public TrackingSamplePair? Snapshot { get { lock (gate) return latest; } }
         public long AcquiredCount => Interlocked.Read(ref acquiredCount);
         public long DroppedCount => Interlocked.Read(ref droppedCount);
-        public long SkippedCount => source.SkippedAcquisitionCount;
+        public long SkippedCount => (source as SyntheticTrackingSource)?.SkippedAcquisitionCount ?? 0;
+
+        /// <summary>
+        /// Capture and enqueue the exact pair used by a desktop trigger. The same
+        /// lock covers background polls and enqueue order, so a newer trigger pair
+        /// cannot overtake an older background sample. A rejected raw sample must
+        /// not produce a scored desktop shot.
+        /// </summary>
+        public bool TryCaptureForTrigger(out TrackingSamplePair pair)
+        {
+            lock (gate)
+            {
+                pair = default;
+                if (!IsRunning || cancellation == null || cancellation.IsCancellationRequested || failure != null) return false;
+                return CaptureAndLog(out pair);
+            }
+        }
+
+        private bool CaptureAndLog(out TrackingSamplePair pair)
+        {
+            pair = default;
+            if (!source.TryGetNext(out TrackingSample head)) return false;
+            if (!source.TryGetNext(out TrackingSample weapon))
+                throw new InvalidOperationException("A paired source must emit the weapon observation immediately after its head observation.");
+            pair = new TrackingSamplePair(head, weapon);
+            latest = pair;
+            Interlocked.Increment(ref acquiredCount);
+            bool admitted = logger(pair);
+            if (!admitted) Interlocked.Increment(ref droppedCount);
+            Interlocked.Exchange(ref lastTimestamp, Stopwatch.GetTimestamp());
+            return admitted;
+        }
         public double ActualElapsedRateHz
         {
             get
@@ -60,7 +98,7 @@ namespace Elts.Operator
 
         public void Start()
         {
-            lock (gate)
+            lock (lifecycleGate)
             {
                 if (IsRunning) throw new InvalidOperationException("Synthetic acquisition is already running.");
                 if (worker != null) throw new InvalidOperationException("Synthetic acquisition cannot be restarted.");
@@ -73,11 +111,15 @@ namespace Elts.Operator
         public async Task StopAsync()
         {
             Thread? thread;
-            lock (gate)
+            CancellationTokenSource? stopSignal;
+            lock (lifecycleGate)
             {
-                cancellation?.Cancel();
+                // Snapshot lifecycle handles quickly. Cancellation must not wait
+                // behind a deliberately blocked logger callback holding gate.
+                stopSignal = cancellation;
                 thread = worker;
             }
+            stopSignal?.Cancel();
             if (thread == null) return;
             await Task.Run(() => thread.Join(StopJoinMilliseconds)).ConfigureAwait(false);
             if (thread.IsAlive) throw new TimeoutException("Synthetic acquisition did not stop within the bounded join interval.");
@@ -93,24 +135,7 @@ namespace Elts.Operator
             {
                 while (!token.IsCancellationRequested)
                 {
-                    bool hasHead = source.TryGetNext(out TrackingSample head);
-                    if (!hasHead)
-                    {
-                        next = WaitUntil(next, token);
-                        continue;
-                    }
-                    bool hasWeapon = source.TryGetNext(out TrackingSample weapon);
-                    if (!hasWeapon)
-                    {
-                    }
-                    else
-                    {
-                        var pair = new TrackingSamplePair(head, weapon);
-                        lock (gate) latest = pair;
-                        Interlocked.Increment(ref acquiredCount);
-                        if (!logger(pair)) Interlocked.Increment(ref droppedCount);
-                    }
-                    Interlocked.Exchange(ref lastTimestamp, Stopwatch.GetTimestamp());
+                    lock (gate) CaptureAndLog(out _);
                     next = WaitUntil(next, token);
                 }
             }

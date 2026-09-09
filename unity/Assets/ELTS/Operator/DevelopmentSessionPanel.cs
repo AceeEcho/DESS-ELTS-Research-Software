@@ -24,6 +24,7 @@ namespace Elts.Operator
     /// and calls the pure session engine; recording and acquisition own their
     /// background work. Every displayed readiness substitution is synthetic.
     /// </summary>
+    [DefaultExecutionOrder(-150)]
     public sealed partial class DevelopmentSessionPanel : MonoBehaviour
     {
         private const double ValidTrackingSeconds = 2;
@@ -97,6 +98,7 @@ namespace Elts.Operator
             }));
             InitializeCalibrationControls();
             InitializeDashboard();
+            InitializeDesktop();
             SetVisible(true);
             RefreshLabels();
             Application.wantsToQuit += OnWantsToQuit;
@@ -104,6 +106,8 @@ namespace Elts.Operator
 
         public void SetVisible(bool visible)
         {
+            if(!visible)desktop?.SetOpen(false);
+            if(visible)view.ExitReplay();else view.DetachSession();
             view.SessionControlsVisible=visible;
             if(root != null) root.style.display=visible?DisplayStyle.Flex:DisplayStyle.None;
             dashboard?.SetVisible(visible);
@@ -135,6 +139,7 @@ namespace Elts.Operator
                 && engine.State != SessionState.Aborted && engine.State != SessionState.Failed)
                 throw new InvalidOperationException("Finish or abort the current session first.");
             var config=view.Configuration;
+            usingDesktopInput=root.Q<DropdownField>("inputSource").value==DesktopInputOption;
             runId=LoggingRunDirectory.ValidateRunId(Field("participant").value.Trim());
             var plan=new SessionPlan(runId, Field("conditionOrder").value.Split(',').Select(value=>value.Trim()));
             await CloseRecordingAsync();
@@ -149,7 +154,7 @@ namespace Elts.Operator
                 // build-info.json. Editor recordings explicitly lack that identity.
                 string source=Application.isEditor?"editor-unversioned":"build-"+Application.version;
                 var provenance=new SessionProvenance(Application.version,source,
-                    config.EffectiveSha256,config.SourceRawSha256["scenario"],Hash(FixtureIdentity),true,clock.UtcStartupAnchor);
+                    config.EffectiveSha256,config.SourceRawSha256["scenario"],Hash(usingDesktopInput?DesktopTrackingSource.SourceIdentity:FixtureIdentity),true,clock.UtcStartupAnchor);
                 var limits=new LoggingConfiguration(config.Runtime.SampleQueueCapacity,config.Runtime.EventQueueCapacity,
                     TimeSpan.FromSeconds(config.Runtime.LogFlushSeconds));
                 recording=new SessionRecordingAdapter(dataRoot,provenance,limits);
@@ -162,6 +167,7 @@ namespace Elts.Operator
                     new SessionTiming(config.Session.PracticeDurationSeconds,config.Session.BreakDurationSeconds,true),
                     recording,sessionLink);
                 scenario=new DevelopmentSessionScenario(config,clock,engine,recording,sequence);
+                RecordInputSource();
                 StartAcquisition(config);
                 firstValidAt=-1; setupPending=true; closing=false;
                 ResetCalibration();
@@ -178,6 +184,14 @@ namespace Elts.Operator
 
         private void StartAcquisition(DevelopmentConfiguration config)
         {
+            if(usingDesktopInput)
+            {
+                desktopSource=new DesktopTrackingSource(clock!,config.Rig.HeadSerial,config.Rig.WeaponSerial,
+                    TimeSpan.FromSeconds(MaximumSampleAgeSeconds));
+                desktop!.Attach(desktopSource);
+                acquisition=new DevelopmentSessionAcquisition(desktopSource,config.Runtime.SampleRateHz,recording!.TryLogSample);
+                acquisition.Start();return;
+            }
             var screen=config.Rig.Display;
             var head=screen.Origin+screen.U*(screen.Width*0.5)+screen.V*(screen.Height*0.5)-screen.Normal*2;
             var motion=new SyntheticMotionSettings(head,HeadSwayM,HeadSwayHz,
@@ -195,12 +209,14 @@ namespace Elts.Operator
             if(!await recording.ReserveAndStartAsync(runId)) throw new IOException("The rerun recording could not be started.");
             engine.RerunCurrentBlock();
             scenario=new DevelopmentSessionScenario(view.Configuration,clock!,engine,recording,sequence!);
+            RecordInputSource();
             StartAcquisition(view.Configuration);
             closing=false;
         }
 
         private async Task CloseRecordingAsync()
         {
+            desktop?.Detach();desktopSource=null;
             if(acquisition != null) { await acquisition.StopAsync(); acquisition=null; }
             if(recording != null && recording.IsOpen && !await recording.CloseAsync())
                 throw new IOException("Recording closure failed; retained files require inspection.");
@@ -247,11 +263,12 @@ namespace Elts.Operator
                     lastMessage=exception.Message;
                     engine.Abort("Scenario or logging failure: "+exception.Message);
                 }
-                view.SetSessionFrame(pair?.Head.Pose,pair?.Weapon.Pose,scenario?.Positions??visibleTargets);
+                if(view.SessionControlsVisible)view.SetSessionFrame(pair?.Head.Pose,pair?.Weapon.Pose,scenario?.Positions??visibleTargets);
                 if(!closing && (engine.State==SessionState.SessionComplete || engine.State==SessionState.Aborted || engine.State==SessionState.Failed))
                 { setupPending=false; closing=true; Begin(CloseRecordingAsync); }
             }
             RefreshLabels();
+            desktop?.Tick(Time.unscaledDeltaTime);
         }
 
         private void RefreshLabels()
@@ -269,6 +286,7 @@ namespace Elts.Operator
             root.Q<Button>("createSession").SetEnabled(!IsBusy && (engine==null || closing));
             Field("participant").SetEnabled(!IsBusy && (engine==null || closing));
             Field("conditionOrder").SetEnabled(!IsBusy && (engine==null || closing));
+            root.Q<DropdownField>("inputSource").SetEnabled(!IsBusy && (engine==null || closing));
             root.Q<Button>("advance").SetEnabled(!IsBusy && engine?.CanAdvance==true);
             root.Q<Button>("startBlock").SetEnabled(!IsBusy && engine?.State==SessionState.BlockReady);
             root.Q<Button>("endBlock").SetEnabled(!IsBusy && engine?.State==SessionState.BlockRunning && engine.RemainingSeconds<=0);
@@ -293,6 +311,7 @@ namespace Elts.Operator
         {
             if(destroyed) return;
             destroyed=true;
+            desktop?.Dispose();
             dashboard?.Dispose();
             Application.wantsToQuit -= OnWantsToQuit;
             try

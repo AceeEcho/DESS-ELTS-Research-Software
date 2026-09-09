@@ -35,6 +35,8 @@ namespace Elts.Operator
         private readonly Dictionary<string,Vector3d> positions = new Dictionary<string,Vector3d>();
         public IReadOnlyDictionary<string,Vector3d> Positions => positions;
         public string LastShot { get; private set; } = "No shot";
+        public int ShotCount { get; private set; }
+        public int HitCount { get; private set; }
 
         public DevelopmentSessionScenario(DevelopmentConfiguration config, ISharedClock clock,
             SessionEngine engine, SessionRecordingAdapter recording, ISessionEventSequence sequence)
@@ -74,12 +76,16 @@ namespace Elts.Operator
         }
 
         public void Fire(RigidPose? weapon, RigidPose? head)
+            => Fire(weapon,head,clock.Now);
+
+        public void Fire(RigidPose? weapon, RigidPose? head, MonotonicTimestamp observedAt)
         {
             if(!engine.TargetsActive || population==null) return;
             if(!weapon.HasValue || !head.HasValue) { LastShot="Ignored: tracking unavailable"; return; }
             var ray=new BoreRay(weapon.Value,config.Rig.WeaponMuzzleOffsetM,config.Rig.WeaponZero,config.Rig.WeaponBoreLocalDirection).Ray;
             var eye=head.Value.TransformPoint(config.Rig.HeadEyeOffsetM);
-            bool accepted=engine.Fire(shots,new ShotContext(clock.Now,ray,true),population.ActiveTargets,target=>IsVisible(eye,target.Position));
+            bool accepted=engine.Fire(shots,new ShotContext(observedAt,ray,true),population.ActiveTargets,target=>IsVisible(eye,target.Position));
+            if(accepted)ShotCount++;
             LastShot=accepted?"Shot logged":"Shot not recorded (lockout or failure)";
             foreach(var target in population.History)
             {
@@ -87,6 +93,7 @@ namespace Elts.Operator
                 Record(target,TargetLifecycle.Destroyed);
                 recordedStates[target.Id]=target.State;
                 positions.Remove(target.Id);
+                HitCount++;
                 LastShot="Target destroyed";
             }
         }
@@ -95,6 +102,7 @@ namespace Elts.Operator
         {
             RemoveRemainingTargets();
             blockId=engine.CurrentBlockId;
+            ShotCount=0;HitCount=0;LastShot="Aim at a target, then click and release.";
             var screen=config.Rig.Display;
             var center=screen.Origin+screen.U*(screen.Width*0.5)+screen.V*(screen.Height*0.5)
                 +screen.Normal*config.Scenario.TargetDistanceM;

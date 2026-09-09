@@ -68,8 +68,12 @@ the output directory must be empty. See [build provenance](../modules/windows-bu
 The standalone numerical/runtime checks additionally use the .NET SDK declared
 in `config/toolchain.json`; that SDK is not required to run a built Unity player.
 
-The root `FIRST-RUN.cmd` and `START-ELTS.cmd` are study entry-point skeletons.
-They currently fail closed with a structured report because study configuration,
-physical acceptance and release approval are pending. Use `bootstrap-dev.ps1`
-for development setup. `CHECK-SYSTEM.cmd` invokes development diagnostics; a pass
+The root `START-ELTS.cmd` now prepares development tools as needed, builds the
+synthetic dashboard, and opens it alongside this Unity project in the pinned editor.
+It reuses an unchanged build and saves startup output in `diagnostics/start-console.log`.
+Close the project's editor first when setup or rebuilding is needed. Generated
+startup builds live in distinct `build/start-elts-*` folders; older builds and data
+are preserved. `FIRST-RUN.cmd` and `scripts/start-study.ps1` remain study entry-point
+skeletons that fail closed while study configuration, physical acceptance and
+release approval are pending. `CHECK-SYSTEM.cmd` invokes development diagnostics; a pass
 does not authorize a study session. Every entry resolves its own repository path.

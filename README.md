@@ -11,8 +11,12 @@ It walks through GitHub Desktop, cloning this repository, installing the tools,
 editing both projects, and sending changes between computers.
 
 1. Clone this repository with GitHub Desktop into a normal local folder.
-2. Double-click [`SETUP-DEV.cmd`](SETUP-DEV.cmd). It reuses compatible tools,
-   installs missing prerequisites, imports Unity, and verifies the development setup.
+2. Double-click [`START-ELTS.cmd`](START-ELTS.cmd). On first use it prepares and
+   verifies the development setup, builds the synthetic dashboard, then opens
+   both the dashboard and the Unity project in Unity **6000.3.23f1 LTS**.
+   Complete any installation or Unity account/license prompts. Later starts reuse
+   the setup and unchanged build. Errors stay visible in the window and are saved
+   in `diagnostics/start-console.log`.
 3. Use `main` on each computer: **Pull → edit → review → commit → push**.
    Close Unity before pulling. Push your changes before switching computers.
 
@@ -20,6 +24,11 @@ editing both projects, and sending changes between computers.
 paths. The editable Unity project is in `unity/`; the editable browser simulation
 is in `elts-simulation/`. You get both in one clone. GitHub synchronizes committed
 source; caches, installed tools, local machine settings and private data stay local.
+
+If startup needs to rebuild while this project is open in Unity, close the editor
+and click `START-ELTS.cmd` again. Existing build folders and recordings are preserved.
+`SETUP-DEV.cmd` remains available for setup/verification alone. This launcher opens
+development software; it does not authorize a study or connect physical hardware.
 
 Existing developers can use the [developer quick start](docs/operator/developer-quick-start.md).
 The validated [PROJECT_STATE.json](PROJECT_STATE.json) is the current work record;

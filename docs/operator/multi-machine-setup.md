@@ -61,6 +61,15 @@ The setup script does not calibrate the physical ELTS apparatus or prove safety 
 
 ## Open the project
 
+**One-click startup:** double-click `START-ELTS.cmd` in the cloned repository.
+It runs setup automatically when needed, builds the synthetic dashboard, and opens
+both the dashboard and Unity Editor with this project. On first use, allow time for
+installation, import, tests and building; complete any Unity sign-in/license prompts.
+Repeat starts reuse the prepared tools and unchanged dashboard. If source changes
+require a rebuild while Unity is open, close that project and click the launcher
+again. Failure messages stay visible; the log is `diagnostics/start-console.log`.
+You can still use the manual editor-opening instructions below.
+
 For Unity, open Unity Hub, choose **Add/Open existing project**, and select the repository's `unity/` folder. Use Unity `6000.3.23f1` LTS exactly. If Hub offers to open the project with another editor version, stop and install/select the pinned version instead. Unity may spend time rebuilding its local cache; that cache is machine-specific and is not pushed.
 
 For the browser simulation, open `elts-simulation/README.md` and follow its current instructions. The source page is `elts-simulation/elts-environment.html`; `index.html` may be generated. Keep the simulation offline and do not treat its synthetic geometry as measured calibration.

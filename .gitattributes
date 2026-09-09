@@ -1,0 +1,16 @@
+# Portable source/generated text. Hashed accepted planning inputs retain their
+# original bytes (including their original CRLF) on every operating system.
+* text=auto eol=lf
+*.cmd text eol=crlf
+unity/Assets/ThirdParty/OpenVR/openvr_api.cs -text
+unity/Assets/ThirdParty/OpenVR/LICENSE -text
+unity/Assets/ThirdParty/OpenVR/UPSTREAM-README.md -text
+docs/plan/amendment-rules.json -text
+docs/plan/approved-plan.json -text
+*.docx -text
+*.xlsx -text
+*.pdf -text
+*.png -text
+*.dll -text
+*.exe -text
+*.zip -text

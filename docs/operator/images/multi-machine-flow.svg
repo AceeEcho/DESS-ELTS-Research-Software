@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="300" viewBox="0 0 1100 300" role="img" aria-labelledby="t d">
+  <title id="t">Multi machine Git workflow</title>
+  <desc id="d">A labelled diagram showing clone and setup on machine one, then commit and push to GitHub, then fetch and pull on machine two.</desc>
+  <rect width="1100" height="300" fill="#f6f8fa"/>
+  <g font-family="Arial, sans-serif" fill="#24292f">
+    <text x="40" y="42" font-size="24" font-weight="700">Illustration: two computers, one shared remote</text>
+    <rect x="40" y="80" width="250" height="140" rx="14" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+    <text x="65" y="115" font-size="19" font-weight="700">Computer 1</text>
+    <text x="65" y="148" font-size="17">Clone → setup</text>
+    <text x="65" y="177" font-size="17">Edit → commit → push</text>
+    <rect x="425" y="80" width="250" height="140" rx="14" fill="#fff3cd" stroke="#d39e00" stroke-width="3"/>
+    <text x="468" y="115" font-size="19" font-weight="700">GitHub remote</text>
+    <text x="462" y="153" font-size="17">main branch</text>
+    <text x="466" y="183" font-size="17">shared history</text>
+    <rect x="810" y="80" width="250" height="140" rx="14" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+    <text x="835" y="115" font-size="19" font-weight="700">Computer 2</text>
+    <text x="835" y="148" font-size="17">Clone → setup</text>
+    <text x="835" y="177" font-size="17">fetch → pull → edit</text>
+    <path d="M290 145h125" stroke="#111827" stroke-width="4" marker-end="url(#a)"/>
+    <path d="M675 145h125" stroke="#111827" stroke-width="4" marker-end="url(#a)"/>
+    <path d="M800 185H690" stroke="#6b7280" stroke-width="2" stroke-dasharray="8 8"/>
+    <path d="M415 185H305" stroke="#6b7280" stroke-width="2" stroke-dasharray="8 8"/>
+    <defs>
+      <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0 0l9 3-9 3z" fill="#111827"/>
+      </marker>
+    </defs>
+    <text x="380" y="260" font-size="16">One person pushes; the next person pulls before editing.</text>
+  </g>
+</svg>

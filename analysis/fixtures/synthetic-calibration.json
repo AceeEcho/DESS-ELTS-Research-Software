@@ -1,0 +1,6 @@
+{
+  "calibrationId": "synthetic-identity-v1",
+  "muzzleOffsetMeters": [0, 0, 0],
+  "boreDirectionLocal": [0, 0, 1],
+  "zeroCorrectionQuaternion": [0, 0, 0, 1]
+}

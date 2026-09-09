@@ -1,0 +1,54 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "4571d0e1-b5b7-403f-86d6-1bb621c7bec6",
+  "eventType": "task_started",
+  "recordedAtUtc": "2026-09-07T03:14:48.370328+00:00",
+  "occurredAtUtc": "2026-09-07T03:14:48.370328+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "DEV-07.S001"
+  },
+  "taskId": "DEV-07",
+  "fromStatus": "ready",
+  "toStatus": "in_progress",
+  "taskRevision": 1,
+  "previousTaskEventHash": null,
+  "causalEventHashes": [
+    "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d",
+    "1605a514d95d4cf951b1f6986c6f892d1af2c15c6895f5fb6bbfbb50c49265b1",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "6d86b96019b4e9092bf2ba43110c0b086f5fcc37fd3dbe526812be5b55e66b4b",
+    "b2d2bc561fec5abbe910a65e20fb9dbee0b3bca9dd6fbeb4417196b4a4d31417",
+    "b456cff38d75cf98ff4a0017df409acc3f081e2f63c9346ba259914888548a5f",
+    "ff89ba440bf29decf3a60303ff022dc84b2cdcb84244aa4a4dfd9c100d94740b"
+  ],
+  "branch": "work/dev-07",
+  "claimedPaths": [
+    "unity/Assets/ELTS/Scenario",
+    "unity/Assets/ELTS/Session",
+    "tools/runtime-tests/ScenarioChecks.cs",
+    "tools/runtime-tests/ScenarioChecks.csproj",
+    "docs/modules/scenario.md"
+  ],
+  "expectedChecks": [
+    "Exact approved-plan implementation and synthetic verification; source/config/fixture hashes retained"
+  ],
+  "stopConditions": [
+    "Shared contract conflict",
+    "Missing normative inputs",
+    "Hardware or investigator approval required"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "Begin eligible development implementation; isolated bounded workers and coordinator integration, physical gates remain pending.",
+  "approval": null,
+  "handoffTo": null
+}

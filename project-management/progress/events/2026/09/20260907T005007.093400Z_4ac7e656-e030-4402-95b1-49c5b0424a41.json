@@ -1,0 +1,43 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "4ac7e656-e030-4402-95b1-49c5b0424a41",
+  "eventType": "task_started",
+  "recordedAtUtc": "2026-09-07T00:50:07.093400+00:00",
+  "occurredAtUtc": "2026-09-07T00:11:11.780180+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "P0.3.S001"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "ready",
+  "toStatus": "in_progress",
+  "taskRevision": 1,
+  "previousTaskEventHash": null,
+  "causalEventHashes": [],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "project-management/bootstrap/"
+  ],
+  "expectedChecks": [
+    "git status: no repository",
+    "git ls-remote: exit 0, no refs",
+    "No PROJECT_STATE.json or progress events present"
+  ],
+  "stopConditions": [
+    "Evidence or ownership mismatch",
+    "Authority conflict"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "PC-001 journal 9bdf348ad13f150f26624a71f7a4c20e4804d73477cb750a9b56680d1c3d1aee: Completed read-only inventory and remote refs check before repository initialization.",
+  "approval": null,
+  "handoffTo": null
+}

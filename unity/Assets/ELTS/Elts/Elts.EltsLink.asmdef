@@ -1,0 +1,6 @@
+{
+  "name": "Elts.EltsLink",
+  "rootNamespace": "Elts.EltsLink",
+  "references": ["Elts.Clock", "Unity.Newtonsoft.Json"],
+  "noEngineReferences": true
+}

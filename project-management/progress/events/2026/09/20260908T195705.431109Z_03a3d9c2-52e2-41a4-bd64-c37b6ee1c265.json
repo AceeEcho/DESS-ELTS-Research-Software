@@ -1,0 +1,79 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "03a3d9c2-52e2-41a4-bd64-c37b6ee1c265",
+  "eventType": "verification_pending",
+  "recordedAtUtc": "2026-09-08T19:57:05.431109+00:00",
+  "occurredAtUtc": "2026-09-08T19:57:05.431109+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "DEV-12.V001"
+  },
+  "taskId": "DEV-12",
+  "fromStatus": "in_progress",
+  "toStatus": "verification_pending",
+  "taskRevision": 5,
+  "previousTaskEventHash": "a0dee6931e9692cc02ed2342d696409954be961ea0d7212ae7c3c03d410f9f77",
+  "causalEventHashes": [
+    "0b0f12c54f933d68b7ba0e6e230cf33d630d4281214c6d2b2eb012e37261aaf9",
+    "0b54d61f0488f25b4e011e48fe980733db41d6d148d0cf64110ba93fa5a4e82c",
+    "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d",
+    "100168e223f819b3b3c3b01e8d9f98c416d30e0e9b4afd1b82b1e6c1790dfb1e",
+    "2107017562779c7b0e22e39d5395bceceb97cfc4b2041d49b4cbee4a04cfc300",
+    "40f50c895dea123b4d210c1cff83c218d858500206ff02861a9060cb1647095e",
+    "5644999892ad022e785180634bfc90d8dbafc256db6a0c19be77314ecbd0273d",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "6d86b96019b4e9092bf2ba43110c0b086f5fcc37fd3dbe526812be5b55e66b4b",
+    "a0dee6931e9692cc02ed2342d696409954be961ea0d7212ae7c3c03d410f9f77",
+    "b456cff38d75cf98ff4a0017df409acc3f081e2f63c9346ba259914888548a5f",
+    "d157add7ed962d52f12b203d407aa000bfe9dbc8602bfe4acf2d8632d3b8907d",
+    "ff89ba440bf29decf3a60303ff022dc84b2cdcb84244aa4a4dfd9c100d94740b"
+  ],
+  "branch": "codex/development-package",
+  "claimedPaths": [
+    "project-management/progress/evidence/DEV-12.json"
+  ],
+  "expectedChecks": [],
+  "stopConditions": [],
+  "evidence": [
+    {
+      "id": "DEV-12-acceptance",
+      "path": "project-management/progress/evidence/DEV-12.json",
+      "sha256": "c0e10e509f3eb95ae372bf1ef3c9f9f66efe37cf6db2661ed3abcd3ab6efee15",
+      "targetIds": [
+        "DEV-12.S001",
+        "DEV-12.V001",
+        "DEV-12"
+      ],
+      "criteria": [
+        "outcome",
+        "verification",
+        "task-acceptance"
+      ],
+      "class": "synthetic_test",
+      "command": "Expanded runtime driver (17 C# suites and analysis); 10 package/provenance tests; 3 driver tests; DevelopmentInteropFixture real writer/mock/replay; strict log verification and analysis; package-development.ps1; ZIP per-file readback; extracted copied-output startup and packaged analysis commands",
+      "result": "pass",
+      "sourceRevision": "8d2688fe3e031f5a38e109942a34fb31f770a38e",
+      "recordedAtUtc": "2026-09-08T19:56:50.433562+00:00",
+      "limitations": [
+        "Windows development machine only; second-machine test unavailable",
+        "Synthetic tracking, virtual calibration, mockcontroller and manualclock fixture only; no physical or study-ready claim",
+        "Copied-player startup is non-graphical3frames; graphical operatorpanel inspected separately",
+        "Player build dev-003035f135a0-dirty includes truthful unrelated source-dirty metadata; browser simulation edits preserved",
+        "Real study-PC displays/SteamVR, measured calibration, native controls, active-player quit, physical safety, investigator decisions and authenticated gates remain pending",
+        "No remote publication, merge, hardware deployment or study release"
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "Portable synthetic development handoff packaged, verified and tested after ZIP extraction into a separate path containing spaces.",
+  "approval": null,
+  "handoffTo": null
+}

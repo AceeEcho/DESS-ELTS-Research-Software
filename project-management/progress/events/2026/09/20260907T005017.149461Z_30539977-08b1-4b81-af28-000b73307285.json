@@ -1,0 +1,68 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "30539977-08b1-4b81-af28-000b73307285",
+  "eventType": "verification_pending",
+  "recordedAtUtc": "2026-09-07T00:50:17.149461+00:00",
+  "occurredAtUtc": "2026-09-07T00:11:56.296006+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S004"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "in_progress",
+  "toStatus": "verification_pending",
+  "taskRevision": 11,
+  "previousTaskEventHash": "6700b043c682aecc14436c234473cd0bf894fb934b9e59c087e3abfe446de7c0",
+  "causalEventHashes": [
+    "6700b043c682aecc14436c234473cd0bf894fb934b9e59c087e3abfe446de7c0"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "project-management/",
+    "schemas/progress/",
+    "tools/progress/",
+    "docs/modules/progress.md"
+  ],
+  "expectedChecks": [
+    "Source and destination SHA-256 equality"
+  ],
+  "stopConditions": [
+    "Evidence or ownership mismatch",
+    "Authority conflict"
+  ],
+  "evidence": [
+    {
+      "id": "bootstrap-BOOT.S004",
+      "path": "project-management/progress/evidence/bootstrap-observations/BOOT.S004.json",
+      "sha256": "4c64c8bddefcb697a8d95d02d8d31b4adc513e015ccf24b1ef2def6082d07cba",
+      "targetIds": [
+        "BOOT.S004"
+      ],
+      "criteria": [
+        "outcome",
+        "verification"
+      ],
+      "class": "document",
+      "command": "Reviewed bootstrap journal and source-bound verification report",
+      "result": "pass",
+      "sourceRevision": "85e96d30ba377a49250fe39b0b45f81fa2a84ba6",
+      "recordedAtUtc": "2026-09-07T00:45:01.845715+00:00",
+      "limitations": [
+        "Software/bootstrap observation only; no physical acceptance or gate passage.",
+        "Original journal observation times differ from event import times."
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "PC-001 journal 943741188d67dcfe17fb5b7fe0310a5ab706376da5fc0e59aea707020c2d358c: Copied both immutable original deliverables and independently checked SHA-256 equality.",
+  "approval": null,
+  "handoffTo": null
+}

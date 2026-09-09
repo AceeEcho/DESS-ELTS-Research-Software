@@ -1,0 +1,48 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "6828ebf6-1561-4dec-9def-c1adbe054998",
+  "eventType": "task_started",
+  "recordedAtUtc": "2026-09-07T00:50:38.290400+00:00",
+  "occurredAtUtc": "2026-09-07T00:44:27.390933+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S010"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "ready",
+  "toStatus": "in_progress",
+  "taskRevision": 28,
+  "previousTaskEventHash": "ab0a64a53113b15eebb28c3be229cae084d52d7d4b9e152b5f7b768d0d5ac638",
+  "causalEventHashes": [
+    "ab0a64a53113b15eebb28c3be229cae084d52d7d4b9e152b5f7b768d0d5ac638"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "tools/progress/",
+    "schemas/progress/",
+    "docs/modules/progress.md"
+  ],
+  "expectedChecks": [
+    "11 planner tests passed",
+    "32 progress tests passed",
+    "Plan, schema and catalog drift checks passed",
+    "Immutable verification report binds source snapshot 31931d8"
+  ],
+  "stopConditions": [
+    "Evidence or ownership mismatch",
+    "Authority conflict"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "PC-001 journal a4921892d4cf5e705cc8673f521df33ebaea76c5cf988c19abe0aafcfe25b50e: Verified isolated baseline, active, verification, blocked, conflict, reopen, completed, publication-failure and malformed-evidence fixtures.",
+  "approval": null,
+  "handoffTo": null
+}

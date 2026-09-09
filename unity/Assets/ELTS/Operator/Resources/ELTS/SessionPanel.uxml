@@ -1,0 +1,61 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:Style src="SessionPanel.uss" />
+  <ui:VisualElement name="sessionPanel" class="session-root">
+    <ui:Label text="Synthetic session control" class="session-title" />
+    <ui:VisualElement class="session-columns">
+      <ui:ScrollView class="session-column">
+        <ui:Label text="SETUP" class="status" />
+        <ui:TextField name="participant" label="Test ID" value="synthetic-01" />
+        <ui:TextField name="conditionOrder" label="Order" value="WE_MT,NE_MT,WE_FT,NE_FT" />
+        <ui:Label name="configuration" class="small" />
+        <ui:DropdownField name="neLinkMode" label="Development NE" />
+        <ui:Button name="createSession" text="Create synthetic recording" class="primary" />
+        <ui:Label name="selfCheck" class="small warning" />
+        <ui:Label name="recording" class="small" />
+        <ui:Label name="linkStatus" class="small warning" />
+        <ui:Button name="reconnectLink" text="Simulate reconnect and abort" />
+      </ui:ScrollView>
+      <ui:ScrollView class="session-column">
+        <ui:Label name="state" text="Idle" class="session-title" />
+        <ui:Label name="countdown" text="No block running" class="status" />
+        <ui:Foldout name="calibrationWizard" text="Synthetic calibration wizard" value="false">
+          <ui:Label text="Generated fixture only. Pivot: 240 diversified poses; corners: virtual 1 s means; zero: virtual 2 s hold; 3×3 residuals. No measured calibration." class="small warning" />
+          <ui:DropdownField name="dominantEye" label="Eye (fixture)" />
+          <ui:TextField name="eyeOffset" label="Offset m, x,y,z" />
+          <ui:TextField name="calibrationThresholds" label="Limits: mm,mm,°,°,°" value="2,5,0.5,1,2" />
+          <ui:Label text="Limits: pivot RMS, corner error, corner angle, 3×3 mean, 3×3 max. Provisional development values; D-17 pending." class="small" />
+          <ui:Button name="captureCalibration" text="Generate synthetic calibration fixture" />
+          <ui:Label name="calibrationReview" class="small" text="No fixture captured." />
+          <ui:VisualElement class="session-row">
+            <ui:Button name="acceptCalibration" text="Accept development fixture" />
+            <ui:Button name="redoCalibration" text="Redo" />
+          </ui:VisualElement>
+        </ui:Foldout>
+        <ui:VisualElement class="session-row">
+          <ui:Button name="advance" text="Continue" />
+          <ui:Button name="startBlock" text="Start block" class="primary" />
+          <ui:Button name="endBlock" text="End block" />
+        </ui:VisualElement>
+        <ui:Button name="fire" text="Synthetic trigger (operator test)" />
+        <ui:TextField name="abortReason" label="Reason" />
+        <ui:VisualElement class="session-row">
+          <ui:Button name="abort" text="Abort" class="abort" />
+          <ui:Button name="rerun" text="Re-run block" />
+        </ui:VisualElement>
+        <ui:Label name="message" class="error" />
+      </ui:ScrollView>
+      <ui:ScrollView class="session-column">
+        <ui:Label text="OPERATOR NOTES" class="status" />
+        <ui:TextField name="note" multiline="true" />
+        <ui:VisualElement class="session-row">
+          <ui:Button name="addNote" text="Save note" />
+          <ui:Button name="syncMarker" text="Sync marker" />
+        </ui:VisualElement>
+        <ui:Label text="Sync markers are provisional (D-12)." class="small warning" />
+        <ui:Label name="tracking" class="small" />
+        <ui:Label text="Study unavailable: synthetic tracking, unmeasured calibration and emulated displays." class="small warning" />
+        <ui:Button name="viewTools" text="Open rendering / replay tools" />
+      </ui:ScrollView>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

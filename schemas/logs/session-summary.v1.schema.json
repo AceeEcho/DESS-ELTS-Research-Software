@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "elts.session-summary.v1.schema.json",
+  "title": "ELTS v1 session closure summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "complete", "error", "provenance", "counts", "checksumsSha256"],
+  "properties": {
+    "schemaVersion": {"const": "elts.session-summary.v1"}, "runId": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$", "maxLength": 80}, "complete": {"type": "boolean"}, "error": {"type": ["string", "null"]},
+    "provenance": {"type": "object", "additionalProperties": false, "required": ["applicationVersion", "sourceRevision", "configurationHash", "scenarioHash", "fixtureHash", "synthetic", "utcStartupAnchor"], "properties": {"applicationVersion": {"type": "string", "minLength": 1}, "sourceRevision": {"type": "string", "minLength": 1}, "configurationHash": {"$ref": "#/$defs/hash"}, "scenarioHash": {"$ref": "#/$defs/hash"}, "fixtureHash": {"$ref": "#/$defs/hash"}, "synthetic": {"type": "boolean"}, "utcStartupAnchor": {"type": "string", "format": "date-time"}}},
+    "counts": {"type": "object", "additionalProperties": false, "required": ["droppedSamples", "writtenSamples", "writtenEvents", "writtenTargets"], "properties": {"droppedSamples": {"type": "integer", "minimum": 0}, "writtenSamples": {"type": "integer", "minimum": 0}, "writtenEvents": {"type": "integer", "minimum": 0}, "writtenTargets": {"type": "integer", "minimum": 0}}},
+    "checksumsSha256": {"type": "object", "additionalProperties": false, "required": ["samples.ndjson", "events.ndjson", "targets.ndjson"], "properties": {"samples.ndjson": {"$ref": "#/$defs/hash"}, "events.ndjson": {"$ref": "#/$defs/hash"}, "targets.ndjson": {"$ref": "#/$defs/hash"}}}
+  },
+  "$defs": {"hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

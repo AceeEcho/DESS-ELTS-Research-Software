@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../unity/Assets/ELTS/Clock/SharedMonotonicClock.cs" Link="SharedMonotonicClock.cs" />
+    <Compile Include="../../unity/Assets/ELTS/Tracking/TrackingContracts.cs" Link="TrackingContracts.cs" />
+    <Compile Include="../../unity/Assets/ELTS/Tracking/SyntheticTrackingSource.cs" Link="SyntheticTrackingSource.cs" />
+    <Compile Include="../../unity/Assets/ELTS/Geometry/Geometry.cs" Link="Geometry.cs" />
+  </ItemGroup>
+</Project>

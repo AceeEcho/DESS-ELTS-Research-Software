@@ -1,0 +1,28 @@
+{
+  "targetId": "BOOT.S015",
+  "result": "pass",
+  "evidenceClass": "document",
+  "command": "Inspect six template purposes and required module/handoff/evidence metadata against specification and schemas",
+  "summary": "Added ADR, module-contract, handoff, evidence, validation and operator-document templates.",
+  "checks": [
+    "Six requested template categories present",
+    "Module headings match normative module contract",
+    "Handoff and evidence guidance matches versioned schema fields",
+    "Templates distinguish planned and observed results"
+  ],
+  "limitations": [
+    "Templates are guidance and contain no approval or completion record."
+  ],
+  "schemaVersion": 1,
+  "sourceRevision": "9b4ca2b743f3de609f114aff2ae49feedd20b83e",
+  "recordedAtUtc": "2026-09-07T00:57:56.597745+00:00",
+  "artifactSnapshotSha256": {
+    "docs/templates/adr.md": "3d27664cb31e7acd35ca01b4b318eae3f88b7cf6e5e296e77b6414c7531616c4",
+    "docs/templates/agent-handoff.md": "7813d4cf9d94464d0794ce5b9c143ff5dfe1a2a8f264cabe2cf6040f4b4669d5",
+    "docs/templates/evidence.md": "351a21661cb14b379add4192b226d3208bc29736c9e1ae977ca726a41830367d",
+    "docs/templates/module-contract.md": "4b906e283cb62a4b74e44a497de1f9b9bc15fad727eb79b1f6f29e1ce8e38478",
+    "docs/templates/operator-document.md": "776087a1a03e5405a74b9873128d4ece47e9c4329a54e4a05a146b00a58099e1",
+    "docs/templates/validation.md": "7d86ed8d7a2c09f5e660410a23f1045243200bef3f520fd1330aa27492212bd2",
+    "docs/ai/handoff-template.md": "89214f48714b796bd2ffcfbc25c190ce5d33909b4315dac44d0e92a46b1807d0"
+  }
+}

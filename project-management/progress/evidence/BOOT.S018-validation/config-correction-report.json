@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "action": "test",
+  "recordedAtUtc": "2026-09-07T01:37:02.935675+00:00",
+  "result": "pass",
+  "sourceRevision": "d685f85ab698415801ea2595fa6050066bbb4844",
+  "environment": {
+    "os": "Windows",
+    "python": "3.12.14",
+    "unityVersion": "6000.3.23f1"
+  },
+  "checks": [
+    {
+      "id": "python",
+      "result": "pass",
+      "message": "3.12.14",
+      "details": {}
+    },
+    {
+      "id": "unity-installation",
+      "result": "pass",
+      "message": "6000.3.23f1",
+      "details": {}
+    },
+    {
+      "id": "config",
+      "result": "pass",
+      "message": "exit 0",
+      "details": {
+        "command": [
+          "C:\\Users\\cadet\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+          "-X",
+          "utf8",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tools/config",
+          "-p",
+          "test_*.py",
+          "-v"
+        ],
+        "output": "diagnostics/test-config.log"
+      }
+    }
+  ],
+  "limitations": [
+    "Development diagnostics only; no physical, safety or gate acceptance."
+  ]
+}

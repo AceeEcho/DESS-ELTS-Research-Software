@@ -1,0 +1,72 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "ac4afe1c-4597-48bb-b3c5-e30ef935eda4",
+  "eventType": "unblocked",
+  "recordedAtUtc": "2026-09-07T01:28:20.737549+00:00",
+  "occurredAtUtc": "2026-09-07T01:28:20.737549+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S018"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "blocked",
+  "toStatus": "in_progress",
+  "taskRevision": 57,
+  "previousTaskEventHash": "10fc5416153a1095aaf900f269925ce3a2ed86c60f9c772cd86bb503f2360142",
+  "causalEventHashes": [
+    "10fc5416153a1095aaf900f269925ce3a2ed86c60f9c772cd86bb503f2360142",
+    "9dd0e60e40e368e777b7628ead17ec932106650a77ce363f92152e7fe7e6d868"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "scripts/",
+    "schemas/diagnostics/",
+    "tools/bootstrap/",
+    "docs/operator/developer-quick-start.md",
+    "README.md"
+  ],
+  "expectedChecks": [
+    "Portable entrypoints from other working directory",
+    "Idempotent bootstrap and structured failure reports"
+  ],
+  "stopConditions": [
+    "Verification fails"
+  ],
+  "evidence": [
+    {
+      "id": "basis-remediation",
+      "path": "project-management/progress/evidence/BOOT.S017-remediation.json",
+      "sha256": "414e557a3e76c1232754494dabb8297b98d5c0f52ef35b4d1c922aff2a4a77dd",
+      "targetIds": [
+        "BOOT.S017",
+        "BOOT.S018"
+      ],
+      "criteria": [
+        "outcome",
+        "verification",
+        "blocker-resolution"
+      ],
+      "class": "automated_test",
+      "command": "python -m unittest tools.config.test_stage -v; dotnet run ConfigChecks; dotnet run GeometryChecks; dotnet run ConfigChecks (exact project paths and Unity Newtonsoft reference)",
+      "result": "pass",
+      "sourceRevision": "c444010009eb1eb79ab7461a52aec49e5fd0c55e",
+      "recordedAtUtc": "2026-09-07T01:27:55.284756+00:00",
+      "limitations": [
+        "Symlink creation cases skipped because Windows host denies creating symlinks",
+        "Numerical synthetic checks only; no measured geometry or physical acceptance"
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "Verified staging parity correction clears script acceptance blocker.",
+  "approval": null,
+  "handoffTo": null
+}

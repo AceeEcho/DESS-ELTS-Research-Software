@@ -1,0 +1,23 @@
+ELTS implementation workbook
+"Execution baseline for repository architecture, portability, scientific integrity, and multi-agent work"
+,,,,,,,,,
+
+Workbook role,"Immutable bootstrap plan. After import, project-management/task-catalog.json is the machine-readable plan and PROJECT_STATE.json is the live generated status."
+Specification role,ELTS_Repository_Portability_and_Multi_LLM_Architecture_Specification.docx is the normative architecture contract. Scientific and safety invariants outrank all lower-level artifacts.
+Initial exact step,P0.3.S001 - inventory the repository without modifying or discarding existing work.
+First write,"Create the progress schemas, initial append-only event, reducer entry point, and generated PROJECT_STATE.json before making other architecture changes."
+Source of truth order,Approved research protocol and safety constraints; architecture specification; accepted ADRs; module contracts; this baseline plan and normalized task catalog; code comments.
+Live status precedence,PROJECT_STATE.json and its append-only source events override the editable Status columns in this workbook. Trello and GitHub Issues are coordination mirrors.
+Agent rule,"Read both deliverables in full, preserve unchanged copies, export normalized data, claim one bounded task, record a start event, implement, verify, attach evidence, and record a completion or blocker event."
+Decision rule,Never invent D-01 through D-18 values. Record a blocker or prepare an ADR when a human decision is required.
+Gate rule,G0 through G8 are hard gates. Completed tasks do not pass a gate. A gate requires an explicit evidence-backed pass event and any required human attestation.
+Repository,https://github.com/AceeEcho/DESS-ELTS-Research-Software
+Baseline date,2026-09-04
+Build-plan SHA-256,2EDA196256668AC23D5F80497ACB1A040BA8E28E1AA53FB6195C6AF75B71F01F
+
+Initial coding-agent directive
+"Read the specification and this workbook in full before editing. Inventory the repository and preserve all existing work. Create the event-sourced progress system first and make PROJECT_STATE.json report P0.3.S001 or the next valid atomic step. Preserve both source artifacts under project-management/baseline, hash them, export every registry to versioned JSON or CSV, and validate stable IDs. Work on a temporary branch. Do not push directly to main, invent open research decisions, weaken safety controls, place research data in Git, or mark work done without evidence. Finish each task by running its validation, updating affected documentation, emitting a progress event, regenerating PROJECT_STATE.json, and leaving a complete handoff.",,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,

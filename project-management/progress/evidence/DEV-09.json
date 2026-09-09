@@ -1,0 +1,49 @@
+{
+  "checks": [
+    "11 calibration checks cover known and noisy transforms, degeneracy/conditioning rejection, corner orthogonalization, antiparallel zero, residual summaries and input/JSON validation",
+    "5 Unity tests pass, including threshold rejection, redo, accepted sidecar persistence, practice, note, abort, non-overlapping fields and wrapped prerequisites",
+    "Standalone build dev-003035f135a0-dirty verifies against its artifact manifest; final expanded panel PNG inspected with no overlapping controls and correctly wrapped text",
+    "Fixture records all 240 poses, known inputs/outputs, provisional limits, configuration hash, build token and acceptance-note sidecar hash"
+  ],
+  "targetId": "DEV-09",
+  "result": "pass",
+  "limitations": [
+    "Generated virtual fixtures only; no measured pivot/corner/eye/zero calibration",
+    "D-17 limits remain provisional; fixture acceptance does not overwrite startup rig or enable study readiness",
+    "Corner and zero durations are virtual data descriptions, not measured capture timing",
+    "Sidecar SHA-256 is recorded in a note but the ordinary run verifier does not yet audit sidecars automatically",
+    "UI checks use Toolkit events; native input, real displays, hardware calibration and physical gates remain unverified",
+    "Build dirty flag truthfully includes preserved unrelated browser-simulation changes; full build provenance is retained"
+  ],
+  "summary": "Synthetic calibration math and operator review workflow verified; unmeasured fixtures remain unable to grant study readiness.",
+  "command": "CalibrationChecks; Unity 6000.3.23f1 PlayMode including fixture reject/redo/accept and layout regressions; standalone build and -eltsSessionScreenshot -eltsShowCalibration; manifest verification",
+  "evidenceClass": "synthetic_test",
+  "schemaVersion": 1,
+  "sourceRevision": "f6fd33ba372384b5069d9aa05d8cc91be138efe1",
+  "recordedAtUtc": "2026-09-08T19:34:28.710670+00:00",
+  "artifactSnapshotSha256": {
+    "unity/Assets/ELTS/Calibration/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "unity/Assets/ELTS/Calibration/CalibrationRuntime.cs": "18b5b25aa463936befe04cda1c375f3fe852d8c9950b21112067998bbcc1601f",
+    "unity/Assets/ELTS/Calibration/CalibrationRuntime.cs.meta": "c2386a809431ac19d981bdd6f99a090686f3cc36d1b4ea29c08d959ce03d1f33",
+    "unity/Assets/ELTS/Calibration/Elts.Calibration.asmdef": "9de3620d408ebf21b74097191be20e5f86ea408236cd3be3202bd12e245f1708",
+    "unity/Assets/ELTS/Calibration/Elts.Calibration.asmdef.meta": "ee343899a86f3d4a0e25908be19d8aed23f194882c8a9909e87244242d90b367",
+    "unity/Assets/ELTS/Operator/DevelopmentCalibrationPanel.cs": "cd62c6048136f677588dffefd472b8da3c036dbe1c42e55d72ef8fcce3b8cc87",
+    "unity/Assets/ELTS/Operator/DevelopmentSessionPanel.cs": "66abb1699d6a3badbb2bb82d0d63e487e9e30b9bb28f6ecb0f75ee58a86575d2",
+    "unity/Assets/ELTS/Operator/Resources/ELTS/SessionPanel.uxml": "2a8bced186dd9ecab1b883f0442747c8cc6b8f3d602349101f2f89a4b0cee2f0",
+    "unity/Assets/ELTS/Operator/Resources/ELTS/SessionPanel.uss": "ac52ce3446c297ba426d734fae0eea59121bea42d84bb43893547b0aef826f7e",
+    "unity/Assets/ELTS/Operator/Resources/ELTS/SessionTheme.tss": "cd4150f2a2ba7d4a16e76cc55ec27590ffe7bccf8553c6c2e4fa4a3b803778bc",
+    "unity/Assets/ELTS/Operator/Tests/DevelopmentSessionTests.cs": "781f9273c2cb6f11eea731863f7477c505558492cb7ae936f8ce75b322c05f1b",
+    "tools/runtime-tests/CalibrationChecks.cs": "40c74fd06ff061e3cb5d15a69bf836c5a3959c118c46001dbb046653b772f1dc",
+    "tools/runtime-tests/CalibrationChecks.csproj": "c488884f23f0f21409aa541a0a46cd955b5b6617f48054078bc36029451a7fb0",
+    "docs/modules/calibration.md": "8b5192da4429e2a68f46a02fe49ebef2b6ab4275d5b5c574d10b8c5b31dd6873",
+    "docs/modules/session.md": "0e9d9809e4b0e12437816fa086915b3ae9f8423d2452358c382072f872a908c0",
+    "diagnostics/dev09-calibration-final.txt": "a7bbaf4b49bf04275f2d40a89212cbab76a4f3508193d40e8a9112032627fb72",
+    "diagnostics/dev09-wrap-play.json": "b73e826d113d2f4243408489aec85e709ae1e0b4e7198f9674f3febe9764a31f",
+    "diagnostics/dev09-wrap-unity-play.xml": "94c545eae32d7a06d07b873ce47a4c9a04a73a02f51bf7abd9d265cf2d3610c7",
+    "diagnostics/dev09-complete-build.json": "4a3d0b71668d934de0df777300fdfeb3b26d99984325d9bc4bbda8dce57ec9ea",
+    "diagnostics/dev09-calibration-complete.png": "daae52fccfda1fadd364f08dbb2b160ec337f8c3f06f53e5ba093e48997c858c",
+    "diagnostics/dev09-calibration-complete.log": "7d59090d1b8d5c8f4bd8bb68e32d495c4c5573d3abb46efb9020e9cd0c8ebdd4",
+    "build/dev09-complete/build-info.json": "1b4c1f5de31402106bd7ab3b486b8a907a2e0492d0308a03c9c2ff85c650423a",
+    "build/dev09-complete/MANIFEST.sha256": "a682b044581ef29ce5fc22916f18a653e55b3ee94c0205fd439492ed50d64f85"
+  }
+}

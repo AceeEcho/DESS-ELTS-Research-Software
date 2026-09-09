@@ -1,0 +1,72 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "fd4cb200-18f4-4412-8ccd-d63a6e2e0a7e",
+  "eventType": "step_completed",
+  "recordedAtUtc": "2026-09-08T05:38:04.253096+00:00",
+  "occurredAtUtc": "2026-09-08T05:38:04.253096+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "DEV-05.S001"
+  },
+  "taskId": "DEV-05",
+  "fromStatus": "verification_pending",
+  "toStatus": "done",
+  "taskRevision": 3,
+  "previousTaskEventHash": "99cb05695fb6ee3f3778c58b9851f221a462eb35b3f4fc8bf84744e453c40b43",
+  "causalEventHashes": [
+    "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d",
+    "1605a514d95d4cf951b1f6986c6f892d1af2c15c6895f5fb6bbfbb50c49265b1",
+    "1c16bb2a387b17e96b7e7d76d5ef2e784a1cfa55e38c57e71381c76f271c0262",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "6d86b96019b4e9092bf2ba43110c0b086f5fcc37fd3dbe526812be5b55e66b4b",
+    "99cb05695fb6ee3f3778c58b9851f221a462eb35b3f4fc8bf84744e453c40b43",
+    "b456cff38d75cf98ff4a0017df409acc3f081e2f63c9346ba259914888548a5f",
+    "ff89ba440bf29decf3a60303ff022dc84b2cdcb84244aa4a4dfd9c100d94740b"
+  ],
+  "branch": "work/dev-05",
+  "claimedPaths": [
+    "analysis",
+    "docs/modules/analysis.md"
+  ],
+  "expectedChecks": [],
+  "stopConditions": [],
+  "evidence": [
+    {
+      "id": "DEV-05-acceptance",
+      "path": "project-management/progress/evidence/DEV-05.json",
+      "sha256": "e3f61b658ecac64d6c5882e1aaf8237465b1fecb690f26cb3070acdc4f7dbee1",
+      "targetIds": [
+        "DEV-05.S001",
+        "DEV-05.V001",
+        "DEV-05"
+      ],
+      "criteria": [
+        "outcome",
+        "verification",
+        "task-acceptance"
+      ],
+      "class": "synthetic_test",
+      "command": "python -m unittest discover -s analysis/tests -v; python analysis/run_ingest.py test-results/dev04-publication/synthetic-soak --calibration analysis/fixtures/synthetic-calibration.json --output diagnostics/dev05-generated-ingest.json; verify raw hashes after ingest",
+      "result": "pass",
+      "sourceRevision": "0951a78e58950de450db1e1406c56b686e095ae1",
+      "recordedAtUtc": "2026-09-08T05:38:01.158908+00:00",
+      "limitations": [
+        "Synthetic development evidence only; no pilot-data or investigator acceptance",
+        "Nearest-angular active-target choice is explicitly recorded as a development analysis policy",
+        "Analysis currently loads records into memory; large study-volume streaming remains future optimization"
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "Version-aware read-only synthetic analysis, invalid-pose exclusion, explicit calibration and fixed-block event-derived scoring verified.",
+  "approval": null,
+  "handoffTo": null
+}

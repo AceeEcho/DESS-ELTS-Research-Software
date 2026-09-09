@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-09-07T00:11:56.193408+00:00",
+  "actor": "agent:codex-astra",
+  "sourceHashes": {
+    "ELTS_Implementation_and_Progress_Workbook.xlsx": "65c66cbab533ccf0cee139dba9800d25acb2ea218abac0fe47808361477846ab",
+    "ELTS_Repository_Portability_and_Multi_LLM_Architecture_Specification.docx": "5cd1632d685a382876abc9cabb5d2da499c226d7c180d0c24422913c5aef531a"
+  },
+  "amendmentRulesSha256": "9ec4ef3a7c455cb7766cab2f708e90d936feab7e192a918e8736641a28fa7c7d",
+  "effectiveCatalogSha256": "0135c403a00c8cccee2b840f8367af24af5fb8c69ee9380876f4b19140b2dd80",
+  "sourcePlan": {
+    "available": false,
+    "expectedSha256": "2eda196256668ac23d5f80497acb1a040ba8e28e1aa53fb6195c6af75b71f01f"
+  },
+  "reading": "Original DOCX text verified against fully read extraction; original workbook sheets read through OOXML. PC-001 controls active bootstrap definitions.",
+  "checks": {
+    "planCheck": "passed",
+    "plannerTests": 11
+  }
+}

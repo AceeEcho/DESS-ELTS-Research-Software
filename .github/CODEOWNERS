@@ -1,0 +1,11 @@
+# Initial repository-owner routing. Named research/safety reviewers must be
+# appointed by the owner before protected study changes are approved.
+* @AceeEcho
+/docs/plan/ @AceeEcho
+/deliverables/ @AceeEcho
+/schemas/ @AceeEcho
+/config/ @AceeEcho
+/unity/Assets/ELTS/ @AceeEcho
+/jetson/ @AceeEcho
+/project-management/ @AceeEcho
+/.github/ @AceeEcho

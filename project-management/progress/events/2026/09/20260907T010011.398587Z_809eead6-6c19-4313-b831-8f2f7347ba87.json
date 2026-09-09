@@ -1,0 +1,63 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "809eead6-6c19-4313-b831-8f2f7347ba87",
+  "eventType": "step_completed",
+  "recordedAtUtc": "2026-09-07T01:00:11.398587+00:00",
+  "occurredAtUtc": "2026-09-07T01:00:11.398587+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "BOOT.S016"
+  },
+  "taskId": "P0.3",
+  "fromStatus": "verification_pending",
+  "toStatus": "done",
+  "taskRevision": 48,
+  "previousTaskEventHash": "aa62bbaf2bf7d6509231d7a1932bd459fe5807940bf0513118f66b27d89b38e2",
+  "causalEventHashes": [
+    "9dd0e60e40e368e777b7628ead17ec932106650a77ce363f92152e7fe7e6d868",
+    "aa62bbaf2bf7d6509231d7a1932bd459fe5807940bf0513118f66b27d89b38e2"
+  ],
+  "branch": "bootstrap/repository-governance",
+  "claimedPaths": [
+    "config/toolchain.json",
+    "schemas/build/toolchain.schema.json",
+    "docs/operator/toolchain.md"
+  ],
+  "expectedChecks": [],
+  "stopConditions": [],
+  "evidence": [
+    {
+      "id": "BOOT.S016-BOOT.S016",
+      "path": "project-management/progress/evidence/BOOT.S016.json",
+      "sha256": "4dbe04f2bd492308ee0da79b3a9ce1c9bd2ffcfc515ed89b09b68795fdc77178",
+      "targetIds": [
+        "BOOT.S016"
+      ],
+      "criteria": [
+        "outcome",
+        "verification"
+      ],
+      "class": "document",
+      "command": "Inspect Unity binary ProductVersion and CLI editors/license status; python --version; git --version; dotnet --list-sdks; validate toolchain schema",
+      "result": "pass",
+      "sourceRevision": "7ce043947bec6af38d2848c5dd64f3bda759ce88",
+      "recordedAtUtc": "2026-09-07T01:00:09.605865+00:00",
+      "limitations": [
+        "Editor runtime, Unity tests and Windows build remain separate pending checks.",
+        "Study machine and Jetson hardware baselines are not inferred."
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "Centralized the exact selected Unity patch and tool/dependency provenance, separating installation from runtime/study validation.",
+  "approval": null,
+  "handoffTo": null
+}

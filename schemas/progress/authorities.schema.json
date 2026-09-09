@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ELTS authorities v1",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "humans": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "actorId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "allowedTargets": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?:P\\d+\\.\\d+(?:\\.[SV]\\d{3})?|BOOT\\.S\\d{3}|DEV-\\d{2}(?:\\.[SV]\\d{3})?|G\\d(?:\\.\\d{2})?|D-\\d{2}|PC-\\d{3})$"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "authorityRecordPath": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+          },
+          "authorityRecordSha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "actorId",
+          "allowedTargets",
+          "authorityRecordPath",
+          "authorityRecordSha256"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "description",
+    "humans"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,317 @@
+[
+  [
+    "Risk register"
+  ],
+  [
+    "Build-plan risks plus repository portability, data, and multi-agent governance risks."
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  [],
+  [
+    "Risk ID",
+    "Risk",
+    "Effect",
+    "Mitigation",
+    "Verified By",
+    "Owner",
+    "Status",
+    "Evidence or Review Date",
+    "Notes"
+  ],
+  [
+    "R-01",
+    "ELTS emission degrades Lighthouse tracking in WE blocks",
+    "Loses exactly the data that matters",
+    "White phosphor COB LEDs emit negligibly above 750 nm (§8); bench test at full intensity",
+    "P7.2",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-02",
+    "Brio's Windows Hello IR illuminator is active under the Jetson pipeline",
+    "Same as R-01",
+    "Confirm the IR stream is not opened; include the Brio in the IR test",
+    "P7.2",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-03",
+    "ELTS light spills onto the display (washout)",
+    "Confounds glare with target visibility",
+    "Placement geometry (D-02); measured luminance on/off; aim limits on the ELTS if needed",
+    "P7.3",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-04",
+    "Single-station occlusion",
+    "Dropouts",
+    "Log validity flags; exclude, never interpolate; characterize rate; adjust station placement",
+    "P7.4",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-05",
+    "Head tracking error / mount shift makes the scene swim",
+    "Stimulus artifact",
+    "Rigid non-stretch headband; rigidity test; corner rods; small rendering-only prediction",
+    "P1.14, P3.3, P3.6",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-06",
+    "Tracking universe origin moves between sessions",
+    "Silent registration error",
+    "RawAndUncalibrated universe; daily bore-laser check; corner rods",
+    "P1.7, P5.9",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-07",
+    "Trackers swap roles between sessions",
+    "Weapon and head data exchanged",
+    "Serial-number binding; startup self-check shows which serial is which",
+    "P1.5, P4.12",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-08",
+    "Trigger reads false (role not held-in-hand)",
+    "No shots",
+    "Role set in SteamVR; self-check requires one trigger press before a session",
+    "P1.8, P4.12",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-09",
+    "Pose prediction contaminates the DV",
+    "Biased aim error",
+    "0 s prediction on the tracking thread; rendering prediction never enters the log",
+    "P2.3, P3.6",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-10",
+    "Two clocks (Unity, Jetson) drift",
+    "ELTS on/off misaligned with aim data",
+    "Ack timestamps and offset estimation per command; heartbeat; Jetson event log",
+    "P6.3, P6.11",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-11",
+    "LEDs stay on after a software failure",
+    "Exposure beyond protocol",
+    "Heartbeat timeout; max on-time guard; physical E-stop",
+    "P6.12",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-12",
+    "Dropped samples under load",
+    "Gaps in the DV",
+    "Lock-free ring buffer; sequence numbers; drop counter on the operator panel; soak tests",
+    "P2.5, P7.6",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-13",
+    "Operator view appears on the participant display",
+    "Contaminated stimulus",
+    "Fixed display assignment in config; identification splash; refusal with < 2 displays",
+    "P3.5",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-14",
+    "Frame hitches on the stimulus display",
+    "Stimulus artifact, possible aim disruption",
+    "Light scene; profiling; FrameHitch events logged",
+    "P3.7, P7.6",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-15",
+    "Data loss (crash, power)",
+    "Lost session",
+    "Per-block files; 250 ms flush; fsync at block end; nightly backup with checksums",
+    "P2.5, P8.3",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-16",
+    "Headband incompatible with eye tracker or IMU",
+    "Late redesign",
+    "Early compatibility fit with the real devices",
+    "§13.2",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-17",
+    "Scope creep from \"modular for future studies\"",
+    "Schedule",
+    "The extension points in §12.5 are the modularity; anything beyond them is deferred past study-v1.0",
+    "Phase reviews",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-18",
+    "Registration error with scale/skew components (does not cancel within-subjects)",
+    "Biased condition differences",
+    "Corner-probe tolerances on the lengths of U and V and on their angle; prioritize corner spacing over absolute position (§5.5)",
+    "P5.4, P7.5",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-19",
+    "Realistic replica on campus",
+    "Incident",
+    "Bright color, label, locked storage, written notice",
+    "P0.6, §13.4",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-20",
+    "Procurement lead time",
+    "Phase 1 slips",
+    "Order on day 1; Phase 2 proceeds on synthetic poses",
+    "P0.1, P2.9",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-21",
+    "Participant trips or bumps equipment while moving",
+    "Injury / rig shift",
+    "Clear standing zone; cable-free participant (trackers are wireless); daily rig check",
+    "D-02, P5.9",
+    "Assigned during planning",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-22",
+    "Agent or workbook status diverges from repository state",
+    "The team acts on stale progress",
+    "Append-only progress events, deterministic reducer, CI regeneration check; JSON state overrides workbook status",
+    "STATE-003, STATE-004",
+    "Repository maintainer",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-23",
+    "Two agents edit the same task or files concurrently",
+    "Conflicts or inconsistent implementations",
+    "One owner and branch per task; declared path claims; separate worktrees; reducer rejects divergent task event chains",
+    "AI-003, AI-012",
+    "Repository maintainer",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-24",
+    "Toolchain or dependency drift across machines",
+    "Builds or analyses cannot be reproduced",
+    "Exact versions, lockfiles, doctor reports, clean-machine portability tests",
+    "BUILD-001, BUILD-002, POR-009",
+    "Developer",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-25",
+    "Secrets, hardware identifiers, or research data enter the public repository",
+    "Privacy, security, or compliance incident",
+    "Templates only, deny patterns, secret/data scans, human review, private deployment overlays where required",
+    "DATA-001, DATA-002, CFG-005",
+    "Investigator and maintainer",
+    "open",
+    null,
+    null
+  ],
+  [
+    "R-26",
+    "An AI-generated change alters a scientific invariant or safety control",
+    "Invalid study data or unsafe operation",
+    "Invariant tests, protected paths, human approval, gate re-verification",
+    "AI-005, AI-006, SAFE-003",
+    "Investigator",
+    "open",
+    null,
+    null
+  ]
+]

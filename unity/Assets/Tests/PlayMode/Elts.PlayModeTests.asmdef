@@ -1,0 +1,5 @@
+{
+  "name": "Elts.PlayModeTests",
+  "references": ["Elts.Clock", "Elts.Geometry", "Elts.Tracking"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "actor": "agent:codex-astra",
+  "taskId": "P0.3",
+  "branch": "bootstrap/repository-governance",
+  "sourceRevision": "797374ef79c18b6ea079fd82ba45d6b70ff8be82",
+  "ownedPaths": [
+    "project-management/",
+    "schemas/progress/",
+    "tools/progress/",
+    "docs/modules/progress.md"
+  ],
+  "objective": "BOOT.S002 through BOOT.S011: preserve sources and establish independently tested event-derived progress.",
+  "checks": [
+    "baseline byte equality",
+    "approved plan drift check and 11 planner tests",
+    "schema negative fixtures",
+    "ordered transition, ownership, concurrency, evidence, gate and dependency fixtures",
+    "truthful journal import and no-diff repeated reduction"
+  ],
+  "stopConditions": [
+    "Unresolved authority conflict outside PC-001",
+    "Competing task/path owner",
+    "Missing exact contract required by current step"
+  ],
+  "startedAtUtc": "2026-09-07T00:11:56.259745+00:00",
+  "dispatchPolicy": "Spark unavailable in collaboration spawn model list; focused fixes local; Luna/Terra for independent work."
+}

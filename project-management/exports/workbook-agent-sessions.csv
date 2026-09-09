@@ -1,0 +1,25 @@
+Agent session handoff log
+Template for durable handoffs. The repository event store remains authoritative.
+,,,,,,,,,,,,,,
+
+Session ID,Actor,Model or Tool,Task ID,Atomic Step ID,Branch,Started UTC,Ended UTC,Outcome,Files Changed,Checks Run,Evidence,Blockers,Next Step,Handoff Path
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,

@@ -1,0 +1,16 @@
+test_baseline_import_matches_prior_independent_office_extraction (test_build_plan.ApprovedPlanTests.test_baseline_import_matches_prior_independent_office_extraction) ... ok
+test_changed_baseline_fails_closed (test_build_plan.ApprovedPlanTests.test_changed_baseline_fails_closed) ... ok
+test_config_clock_source_can_bootstrap_without_self_dependency (test_build_plan.ApprovedPlanTests.test_config_clock_source_can_bootstrap_without_self_dependency) ... ok
+test_cycles_and_unknown_references_are_rejected (test_build_plan.ApprovedPlanTests.test_cycles_and_unknown_references_are_rejected) ... ok
+test_d12_remains_at_rehearsal_not_at_early_interfaces (test_build_plan.ApprovedPlanTests.test_d12_remains_at_rehearsal_not_at_early_interfaces) ... ok
+test_development_allowed_before_g0_but_not_before_progress_bootstrap (test_build_plan.ApprovedPlanTests.test_development_allowed_before_g0_but_not_before_progress_bootstrap) ... ok
+test_development_done_never_implies_baseline_acceptance (test_build_plan.ApprovedPlanTests.test_development_done_never_implies_baseline_acceptance) ... ok
+test_global_work_continues_when_unity_bootstrap_is_blocked (test_build_plan.ApprovedPlanTests.test_global_work_continues_when_unity_bootstrap_is_blocked) ... ok
+test_real_and_synthetic_routes_are_alternatives (test_build_plan.ApprovedPlanTests.test_real_and_synthetic_routes_are_alternatives) ... ok
+test_sources_and_active_identity_counts (test_build_plan.ApprovedPlanTests.test_sources_and_active_identity_counts) ... ok
+test_unity_work_requires_verified_bootstrap_smoke_tests (test_build_plan.ApprovedPlanTests.test_unity_work_requires_verified_bootstrap_smoke_tests) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.406s
+
+OK

@@ -1,0 +1,44 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "3d0f48cc-fe46-4735-9a08-93a6c8fd147a",
+  "eventType": "task_started",
+  "recordedAtUtc": "2026-09-07T01:41:33.205486+00:00",
+  "occurredAtUtc": "2026-09-07T01:41:33.205486+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "atomic_step",
+    "id": "DEV-02.V001"
+  },
+  "taskId": "DEV-02",
+  "fromStatus": "ready",
+  "toStatus": "in_progress",
+  "taskRevision": 6,
+  "previousTaskEventHash": "4749af9fc1b3f56162b2217d726964b2af5600c94f3e018e7dd52e60fc53fc93",
+  "causalEventHashes": [
+    "4749af9fc1b3f56162b2217d726964b2af5600c94f3e018e7dd52e60fc53fc93",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "dddd1570ac71751853c8db1aef438cf6fa280949fb33739bef03a14cbb194e9a"
+  ],
+  "branch": "work/dev02-clock-tracking",
+  "claimedPaths": [
+    "docs/modules/tracking.md"
+  ],
+  "expectedChecks": [
+    "Review integrated tests and deferred physical obligations"
+  ],
+  "stopConditions": [
+    "Evidence invalid"
+  ],
+  "evidence": [],
+  "blockers": [],
+  "note": "Verify DEV-02 contracts against recorded synthetic checks.",
+  "approval": null,
+  "handoffTo": null
+}

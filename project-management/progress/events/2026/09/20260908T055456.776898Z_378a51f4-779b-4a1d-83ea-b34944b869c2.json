@@ -1,0 +1,70 @@
+{
+  "$schema": "../../../../../schemas/progress/progress-event.schema.json",
+  "schemaVersion": 1,
+  "eventId": "378a51f4-779b-4a1d-83ea-b34944b869c2",
+  "eventType": "task_completed",
+  "recordedAtUtc": "2026-09-08T05:54:56.776898+00:00",
+  "occurredAtUtc": "2026-09-08T05:54:56.776898+00:00",
+  "actor": {
+    "type": "agent",
+    "id": "codex-astra",
+    "tool": "Codex"
+  },
+  "planVersion": "ELTS-build-plan-1.0+PC-001",
+  "catalogSha256": "d17ba8b7575ffa0ebe2273fadb8c12b0adb5cdbcdd92828d8b69a1d381fc7bd0",
+  "target": {
+    "kind": "task",
+    "id": "DEV-06"
+  },
+  "taskId": "DEV-06",
+  "fromStatus": "verification_pending",
+  "toStatus": "done",
+  "taskRevision": 7,
+  "previousTaskEventHash": "788d86bde5d07ba02b508d9ce8b00d9b42e43a54a6194e7aa9bb61dbacd6c5ed",
+  "causalEventHashes": [
+    "0c7db9cf202d181c60aeba6796ffd0c79714ab72275c175007b2170276f2fa4d",
+    "1c16bb2a387b17e96b7e7d76d5ef2e784a1cfa55e38c57e71381c76f271c0262",
+    "2107017562779c7b0e22e39d5395bceceb97cfc4b2041d49b4cbee4a04cfc300",
+    "6725778212bf93d190ebc4fef0570d86603296a91ead1add455c9a0f5a4de61c",
+    "6d86b96019b4e9092bf2ba43110c0b086f5fcc37fd3dbe526812be5b55e66b4b",
+    "788d86bde5d07ba02b508d9ce8b00d9b42e43a54a6194e7aa9bb61dbacd6c5ed",
+    "b456cff38d75cf98ff4a0017df409acc3f081e2f63c9346ba259914888548a5f",
+    "e1f4be38617939f12950718026cd16b1f556dd3f19549016ff809b60c20b034d",
+    "ff89ba440bf29decf3a60303ff022dc84b2cdcb84244aa4a4dfd9c100d94740b"
+  ],
+  "branch": "work/dev-06",
+  "claimedPaths": [],
+  "expectedChecks": [],
+  "stopConditions": [],
+  "evidence": [
+    {
+      "id": "DEV-06-acceptance",
+      "path": "project-management/progress/evidence/DEV-06.json",
+      "sha256": "96fa4a53f51ebc2e0674412c75d9f57bfb666e51a97a14f1e17a3d8f3cee5fd3",
+      "targetIds": [
+        "DEV-06.S001",
+        "DEV-06.V001",
+        "DEV-06"
+      ],
+      "criteria": [
+        "outcome",
+        "verification",
+        "task-acceptance"
+      ],
+      "class": "synthetic_test",
+      "command": "RenderingChecks; ReplayChecks; scripts/test.ps1 -Suite unity-play; scripts/build.ps1 -Output build/dev06-aspect; standalone -eltsViewScreenshot; python -m tools.build.verify build/dev06-aspect",
+      "result": "pass",
+      "sourceRevision": "ef8acebe344b01bba8c2ad534a5d91f6c327cc14",
+      "recordedAtUtc": "2026-09-08T05:54:44.932238+00:00",
+      "limitations": [
+        "Synthetic geometry and display emulation only; no physical calibration or display assignment",
+        "Controls exercised through shared runtime handlers; native mouse/keyboard interaction unverified",
+        "Offscreen screenshot excludes IMGUI; no full-load timing or safety acceptance"
+      ]
+    }
+  ],
+  "blockers": [],
+  "note": "Verified synthetic development scope only; no baseline or physical gate acceptance.",
+  "approval": null,
+  "handoffTo": null
+}

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "elts.events.v1.schema.json",
+  "title": "ELTS v1 structured event line",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sequence", "monotonicTicks", "eventType", "payload"],
+  "properties": {"schemaVersion": {"const": "elts.events.v1"}, "sequence": {"type": "integer", "minimum": 1}, "monotonicTicks": {"type": "integer", "minimum": 0}, "eventType": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+$", "maxLength": 256}, "payload": {"type": "object", "propertyNames": {"pattern": "^[A-Za-z0-9_.-]+$", "maxLength": 256}, "additionalProperties": {"type": ["string", "number", "boolean"]}}}
+}

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "scenarioId",
+    "provisionalDevelopmentValues",
+    "seed",
+    "targetDistanceM",
+    "targetRadiusM",
+    "targetSpeedMps",
+    "targetLifetimeSeconds",
+    "spawnIntervalSeconds",
+    "spawnWidthM",
+    "spawnHeightM",
+    "ftHoldSeconds",
+    "mtMotion"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "scenarioId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provisionalDevelopmentValues": {
+      "const": true
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "targetDistanceM": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1000
+    },
+    "targetRadiusM": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 10
+    },
+    "targetSpeedMps": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "targetLifetimeSeconds": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "minimum": 0.001
+    },
+    "spawnIntervalSeconds": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "minimum": 0.001,
+      "maximum": 3600
+    },
+    "spawnWidthM": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1000
+    },
+    "spawnHeightM": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1000
+    },
+    "ftHoldSeconds": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "minimum": 0.001,
+      "maximum": 3600
+    },
+    "mtMotion": {
+      "enum": [
+        "sine"
+      ]
+    }
+  }
+}

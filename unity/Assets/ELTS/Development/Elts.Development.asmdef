@@ -1,0 +1,5 @@
+{
+  "name": "Elts.Development",
+  "rootNamespace": "Elts.Development",
+  "references": ["Elts.Config"]
+}

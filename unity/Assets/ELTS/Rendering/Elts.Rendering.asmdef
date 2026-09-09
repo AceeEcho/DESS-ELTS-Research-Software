@@ -1,0 +1,5 @@
+{
+  "name": "Elts.Rendering",
+  "references": ["Elts.Geometry", "Elts.Config", "Unity.Newtonsoft.Json"],
+  "autoReferenced": true
+}

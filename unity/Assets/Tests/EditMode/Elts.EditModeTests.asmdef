@@ -1,0 +1,6 @@
+{
+  "name": "Elts.EditModeTests",
+  "references": ["Elts.Config", "Elts.Geometry", "Elts.Tracking", "Elts.Clock", "Elts.Logging"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="500" viewBox="0 0 1060 500" role="img" aria-labelledby="title desc">
+  <title id="title">Where to review, commit, and push in GitHub Desktop</title>
+  <desc id="desc">Illustrated interface. Review the checked files and differences, type a summary, commit to main, then use Push origin in the top bar.</desc>
+  <rect width="1060" height="500" fill="#f6f8fa"/>
+  <g font-family="Arial, sans-serif" fill="#24292f">
+    <text x="35" y="40" font-size="24" font-weight="700">Illustration: save locally, then send to GitHub</text>
+    <text x="35" y="66" font-size="15">Simplified GitHub Desktop interface — button wording can vary by version.</text>
+    <rect x="35" y="88" width="990" height="367" rx="10" fill="#ffffff" stroke="#8c959f" stroke-width="2"/>
+    <path d="M36 150H1024 M375 150V454" stroke="#d0d7de" stroke-width="2"/>
+    <text x="55" y="113" font-size="13">Current repository</text>
+    <text x="55" y="137" font-size="17" font-weight="700">DESS-ELTS-Research-Software</text>
+    <text x="415" y="113" font-size="13">Current branch</text>
+    <text x="415" y="137" font-size="17" font-weight="700">main</text>
+    <rect x="800" y="101" width="195" height="37" rx="7" fill="#1a7f37"/>
+    <text x="897" y="126" text-anchor="middle" font-size="17" font-weight="700" fill="#ffffff">4. Push origin</text>
+    <text x="55" y="185" font-size="18" font-weight="700">1. Review Changes</text>
+    <rect x="55" y="211" width="17" height="17" rx="3" fill="#0969da"/>
+    <text x="82" y="225" font-size="15">README.md</text>
+    <rect x="55" y="244" width="17" height="17" rx="3" fill="#0969da"/>
+    <text x="82" y="258" font-size="15">elts-environment.html</text>
+    <text x="55" y="310" font-size="16" font-weight="700">2. Type a short summary</text>
+    <rect x="55" y="323" width="300" height="43" rx="5" fill="#f6f8fa" stroke="#8c959f"/>
+    <text x="67" y="350" font-size="15">Improve simulation heading</text>
+    <rect x="55" y="385" width="300" height="44" rx="7" fill="#0969da"/>
+    <text x="205" y="413" text-anchor="middle" font-size="17" font-weight="700" fill="#ffffff">3. Commit to main</text>
+    <text x="400" y="185" font-size="17" font-weight="700">Read what changed before committing</text>
+    <rect x="400" y="207" width="600" height="75" rx="6" fill="#dafbe1"/>
+    <text x="417" y="239" font-size="15">+ The updated text you intended to save</text>
+    <text x="417" y="264" font-size="15">+ Review each selected file in the Changes list</text>
+    <text x="410" y="334" font-size="17">Commit = saved on this computer.</text>
+    <text x="410" y="367" font-size="17">Push = available from GitHub.</text>
+    <text x="410" y="408" font-size="15">The other computer still needs to pull the changes.</text>
+    <text x="35" y="485" font-size="15">Push origin appears when you have local commits to upload. Wait for the upload to finish.</text>
+  </g>
+</svg>

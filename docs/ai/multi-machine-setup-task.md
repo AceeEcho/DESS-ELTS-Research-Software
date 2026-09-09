@@ -46,3 +46,16 @@
   `test-results/`. These are development checks, not physical or study acceptance.
 - Existing uncommitted `elts-simulation/` edits were preserved and are outside
   this maintenance commit. The committed simulation source is included in Git.
+- Clean GitHub checkout at `192df45218a884a67e6d723f821ccd041622f615`:
+  setup created local configuration, rebuilt the Unity cache, and reported `ready`;
+  all 29 check groups passed, including 3 EditMode and 5 PlayMode tests. This was
+  a separate clone in a path containing spaces on the same Windows computer,
+  with existing tools reused. Git object transfer used a dissociated local
+  reference; the resulting clone has no alternates dependency. Evidence is under
+  `build/Clean Clone With Spaces/diagnostics/` and `test-results/`.
+- GitHub Actions run `34378196043` passed on Windows and Linux for that revision.
+  The installer test harness now explicitly exits zero after passing checks,
+  preventing an intentional negative process probe from leaking its exit code.
+- Final launcher correction: prepend the Windows PowerShell module directory
+  when starting from PowerShell 7. Actual `SETUP-DEV.cmd -Check` passed; this fixes
+  inherited module discovery without changing the verified setup implementation.

@@ -63,6 +63,7 @@ namespace Elts.Operator.Tests
                 Assert.That(root.Q<Button>("createSession"),Is.Not.Null);
                 Assert.That(root.Q<VisualElement>("sessionPanel").worldBound.width,Is.GreaterThan(100));
                 Assert.That(root.Q<VisualElement>("sessionPanel").worldBound.height,Is.GreaterThan(100));
+                panel.Dashboard.SelectModule("calibration",false);
                 root.Q<Foldout>("calibrationWizard").value=true;
                 yield return null;
                 Assert.That(root.Q<Label>("selfCheck").resolvedStyle.whiteSpace,Is.EqualTo(WhiteSpace.Normal),
@@ -71,12 +72,15 @@ namespace Elts.Operator.Tests
                     Is.LessThanOrEqualTo(root.Q<TextField>("calibrationThresholds").worldBound.yMin),
                     "Expanded calibration fields must retain separate layout space");
                 root.Q<TextField>("participant").value="synthetic-ui-"+Guid.NewGuid().ToString("N");
+                panel.Dashboard.SelectModule("preparation",false);
                 Submit(root.Q<Button>("createSession"));
                 float deadline=Time.realtimeSinceStartup+15;
                 while((panel.Engine==null || panel.Engine.State==SessionState.Idle || panel.IsBusy) && Time.realtimeSinceStartup<deadline)
                     yield return null;
                 Assert.That(panel.Engine,Is.Not.Null);
                 Assert.That(panel.Engine.State,Is.EqualTo(SessionState.SessionSetup));
+                Assert.That(root.Q<TextField>("participant").enabledSelf,Is.False,"Active run identity cannot change");
+                Assert.That(root.Q<VisualElement>("conditionList").enabledSelf,Is.False,"Active condition order is locked");
                 Submit(root.Q<Button>("advance"));
                 Assert.That(panel.Engine.State,Is.EqualTo(SessionState.Calibration));
                 Assert.That(root.Q<Button>("advance").enabledSelf,Is.False);
@@ -96,6 +100,7 @@ namespace Elts.Operator.Tests
                 StringAssert.Contains("\"poses\"",calibrationText);
                 Submit(root.Q<Button>("advance"));
                 Assert.That(panel.Engine.State,Is.EqualTo(SessionState.Practice));
+                panel.Dashboard.SelectModule("notes",false);
                 root.Q<TextField>("note").value="Toolkit event path exercised";
                 Submit(root.Q<Button>("addNote"));
                 root.Q<TextField>("abortReason").value="synthetic UI test finished";

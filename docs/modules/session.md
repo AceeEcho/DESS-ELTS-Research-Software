@@ -8,8 +8,9 @@
 
 ## Operator development workflow
 
-The Unity player opens the UI Toolkit session panel below the two emulated camera
-views. Enter a synthetic test identifier and a permutation of `WE_MT`, `NE_MT`,
+The Unity player opens the [administrator dashboard](operator-dashboard.md), with
+task navigation, focused controls and two persistent emulated camera views.
+Enter a synthetic test identifier and a permutation of `WE_MT`, `NE_MT`,
 `WE_FT`, and `NE_FT`. The staged session and scenario templates and effective
 configuration hash are shown before creation. Template choices remain in the
 validated configuration pipeline; this panel does not read arbitrary JSON.

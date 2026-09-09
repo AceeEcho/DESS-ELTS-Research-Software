@@ -4,13 +4,14 @@ using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEngine.Rendering;
 
 namespace Elts.Operator
 {
     /// <summary>Opt-in UI render probe. Does not start a session or manipulate devices.</summary>
     public sealed class DevelopmentSessionProbe : MonoBehaviour
     {
-        private const int CaptureWidth = 1400, CaptureHeight = 360;
+        private const int CaptureWidth = 1440, CaptureHeight = 960;
         private string output;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
@@ -26,14 +27,39 @@ namespace Elts.Operator
             var panel=FindFirstObjectByType<DevelopmentSessionPanel>();
             if(panel==null || String.IsNullOrEmpty(output) || !Path.IsPathRooted(output) || File.Exists(output))
             { Debug.LogError("ELTS_SESSION_PROBE_FAIL invalid panel or output");Application.Quit(2);yield break; }
-            var target=new RenderTexture(CaptureWidth,CaptureHeight,0,RenderTextureFormat.ARGB32,RenderTextureReadWrite.sRGB);
+            // Rounded UI Toolkit clipping needs a depth/stencil attachment.
+            var target=new RenderTexture(CaptureWidth,CaptureHeight,24,RenderTextureFormat.ARGB32,RenderTextureReadWrite.sRGB);
             target.Create();panel.SetDiagnosticRenderTarget(target);
             // Optional presentation-only expansion: no recording, capture or
             // calibration acceptance is performed by this render probe.
             if(Array.IndexOf(Environment.GetCommandLineArgs(),"-eltsShowCalibration")>=0)
+            {
+                panel.Dashboard.SelectModule("calibration",false);
                 panel.PanelRoot.Q<Foldout>("calibrationWizard").value=true;
+            }
             // UI Toolkit renders its target panel during the player loop.
-            for(int index=0;index<5;index++) yield return null;
+            for(int index=0;index<30;index++) yield return null;
+            // Hidden Windows players may defer normal camera draws. Explicitly
+            // request the two preview targets for this opt-in capture only.
+            var view=FindFirstObjectByType<DevelopmentView>();
+            foreach(var camera in new[]{view.ParticipantCamera,view.OperatorCamera})
+            {
+                var request=new RenderPipeline.StandardRequest {destination=camera.targetTexture};
+                if(!RenderPipeline.SupportsRenderRequest(camera,request))
+                {Debug.LogError("ELTS_SESSION_PROBE_FAIL camera render request unsupported");Application.Quit(2);yield break;}
+                RenderPipeline.SubmitRenderRequest(camera,request);
+            }
+            for(int index=0;index<3;index++)yield return null;
+            yield return new WaitForEndOfFrame();
+            foreach(var camera in new[]{view.ParticipantCamera,view.OperatorCamera})
+            {
+                var cameraTarget=camera.targetTexture;
+                Debug.Log("ELTS_CAMERA_PROBE "+camera.name+" enabled="+camera.enabled+" target="+cameraTarget+" rect="+camera.rect);
+                var prior=RenderTexture.active;RenderTexture.active=cameraTarget;
+                var cameraImage=new Texture2D(cameraTarget.width,cameraTarget.height,TextureFormat.RGBA32,false);
+                cameraImage.ReadPixels(new Rect(0,0,cameraTarget.width,cameraTarget.height),0,0);cameraImage.Apply();RenderTexture.active=prior;
+                File.WriteAllBytes(output+"."+camera.name.Replace(" ","-")+".png",cameraImage.EncodeToPNG());Destroy(cameraImage);
+            }
             Debug.Log("ELTS_SESSION_LAYOUT root="+panel.PanelRoot.worldBound+" content="+panel.PanelRoot.Q<VisualElement>("sessionPanel").worldBound);
             var previous=RenderTexture.active;
             RenderTexture.active=target;

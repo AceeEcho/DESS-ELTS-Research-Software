@@ -227,6 +227,10 @@ namespace Elts.Operator
         }
         private void LayoutCameras()
         {
+            // Dashboard previews use camera-owned textures. Preserve full texture
+            // viewports and the participant's configured aspect ratio there.
+            if(participant.targetTexture!=null && operatorCamera.targetTexture!=null)
+            { participant.rect=new Rect(0,0,1,1);operatorCamera.rect=new Rect(0,0,1,1);return; }
             float bottom=Mathf.Min(0.65f,ControlsHeight/Mathf.Max(1,Screen.height)),top=1-BannerHeight/Mathf.Max(1,Screen.height);
             float availableHeight=Mathf.Max(0.1f,top-bottom);
             // Preserve the physical screen's width/height ratio inside the emulated
@@ -239,6 +243,7 @@ namespace Elts.Operator
         private void OnGUI()
         {
             if(!Ready){GUI.Box(new Rect(10,80,Mathf.Max(300,Screen.width-20),70),"Development view unavailable: "+error);return;}
+            if(SessionControlsVisible && participant.targetTexture!=null)return;
             if(!SessionControlsVisible && GUI.Button(new Rect(Screen.width-180,40,165,28),"Session controls"))
                 GetComponent<DevelopmentSessionPanel>()?.SetVisible(true);
             GUI.Label(new Rect(16,BannerHeight,Screen.width/2-20,24),"PARTICIPANT PREVIEW — stimulus camera only");
@@ -267,6 +272,14 @@ namespace Elts.Operator
                 if(evt.type==EventType.ScrollWheel){orbitDistance=Mathf.Clamp(orbitDistance+evt.delta.y*0.15f,0.5f,20);evt.Use();}
             }
         }
+        /// <summary>View-only orbit controls used by the dashboard image and keyboard.</summary>
+        public void AdjustOperatorView(Vector2 delta,bool pan,float zoom)
+        {
+            if(pan)orbitFocus+=operatorCamera.transform.right*(-delta.x*0.005f)+operatorCamera.transform.up*(delta.y*0.005f);
+            else {orbitYaw+=delta.x*0.4f;orbitPitch=Mathf.Clamp(orbitPitch+delta.y*0.4f,-80,80);}
+            orbitDistance=Mathf.Clamp(orbitDistance+zoom*0.15f,0.5f,20);
+        }
+        public void ResetOperatorView(){orbitYaw=145;orbitPitch=20;orbitDistance=4;orbitFocus=new Vector3(0,0,1.7f);}
         private void OnDestroy()
         {
             foreach(var camera in disabledCameras)if(camera!=null)camera.enabled=true;

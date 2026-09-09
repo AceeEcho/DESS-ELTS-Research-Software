@@ -1,61 +1,92 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
   <ui:Style src="SessionPanel.uss" />
-  <ui:VisualElement name="sessionPanel" class="session-root">
-    <ui:Label text="Synthetic session control" class="session-title" />
-    <ui:VisualElement class="session-columns">
-      <ui:ScrollView class="session-column">
-        <ui:Label text="SETUP" class="status" />
-        <ui:TextField name="participant" label="Test ID" value="synthetic-01" />
-        <ui:TextField name="conditionOrder" label="Order" value="WE_MT,NE_MT,WE_FT,NE_FT" />
-        <ui:Label name="configuration" class="small" />
-        <ui:DropdownField name="neLinkMode" label="Development NE" />
-        <ui:Button name="createSession" text="Create synthetic recording" class="primary" />
-        <ui:Label name="selfCheck" class="small warning" />
-        <ui:Label name="recording" class="small" />
-        <ui:Label name="linkStatus" class="small warning" />
-        <ui:Button name="reconnectLink" text="Simulate reconnect and abort" />
-      </ui:ScrollView>
-      <ui:ScrollView class="session-column">
-        <ui:Label name="state" text="Idle" class="session-title" />
-        <ui:Label name="countdown" text="No block running" class="status" />
-        <ui:Foldout name="calibrationWizard" text="Synthetic calibration wizard" value="false">
-          <ui:Label text="Generated fixture only. Pivot: 240 diversified poses; corners: virtual 1 s means; zero: virtual 2 s hold; 3×3 residuals. No measured calibration." class="small warning" />
-          <ui:DropdownField name="dominantEye" label="Eye (fixture)" />
-          <ui:TextField name="eyeOffset" label="Offset m, x,y,z" />
-          <ui:TextField name="calibrationThresholds" label="Limits: mm,mm,°,°,°" value="2,5,0.5,1,2" />
-          <ui:Label text="Limits: pivot RMS, corner error, corner angle, 3×3 mean, 3×3 max. Provisional development values; D-17 pending." class="small" />
-          <ui:Button name="captureCalibration" text="Generate synthetic calibration fixture" />
-          <ui:Label name="calibrationReview" class="small" text="No fixture captured." />
-          <ui:VisualElement class="session-row">
-            <ui:Button name="acceptCalibration" text="Accept development fixture" />
-            <ui:Button name="redoCalibration" text="Redo" />
-          </ui:VisualElement>
-        </ui:Foldout>
-        <ui:VisualElement class="session-row">
-          <ui:Button name="advance" text="Continue" />
-          <ui:Button name="startBlock" text="Start block" class="primary" />
-          <ui:Button name="endBlock" text="End block" />
-        </ui:VisualElement>
-        <ui:Button name="fire" text="Synthetic trigger (operator test)" />
-        <ui:TextField name="abortReason" label="Reason" />
-        <ui:VisualElement class="session-row">
-          <ui:Button name="abort" text="Abort" class="abort" />
-          <ui:Button name="rerun" text="Re-run block" />
-        </ui:VisualElement>
-        <ui:Label name="message" class="error" />
-      </ui:ScrollView>
-      <ui:ScrollView class="session-column">
-        <ui:Label text="OPERATOR NOTES" class="status" />
-        <ui:TextField name="note" multiline="true" />
-        <ui:VisualElement class="session-row">
-          <ui:Button name="addNote" text="Save note" />
-          <ui:Button name="syncMarker" text="Sync marker" />
-        </ui:VisualElement>
-        <ui:Label text="Sync markers are provisional (D-12)." class="small warning" />
-        <ui:Label name="tracking" class="small" />
-        <ui:Label text="Study unavailable: synthetic tracking, unmeasured calibration and emulated displays." class="small warning" />
-        <ui:Button name="viewTools" text="Open rendering / replay tools" />
-      </ui:ScrollView>
+  <ui:VisualElement name="sessionPanel" class="dashboard">
+    <ui:VisualElement name="workspaceRail" class="workspace-rail">
+      <ui:VisualElement class="brand"><ui:Label text="ELTS" class="brand-title" /><ui:Label text="Test administrator" class="muted" /></ui:VisualElement>
+      <ui:Label text="Synthetic workspace" class="mode-badge" />
+      <ui:Label text="Study use unavailable" class="small muted rail-hint" />
+      <ui:ScrollView name="moduleScroll" class="rail-scroll"><ui:VisualElement name="moduleList" /></ui:ScrollView>
+      <ui:Button name="goToCurrent" text="Go to current task" />
+      <ui:Button name="newCheckpointShortcut" text="+ Add administrator checkpoint" />
+      <ui:VisualElement class="rail-footer"><ui:Label name="workspaceSaveStatus" text="Workspace saved locally" class="small muted" /><ui:Button name="workspaceSettings" text="Workspace settings" /></ui:VisualElement>
     </ui:VisualElement>
+    <ui:VisualElement name="railSplitter" class="splitter" focusable="true" tooltip="Drag to resize task index. Arrow keys adjust width." />
+    <ui:VisualElement name="focusStage" class="focus-stage">
+      <ui:VisualElement class="stage-header"><ui:Label name="stageKicker" text="Session preparation" class="muted" /><ui:Label name="stageTitle" text="Prepare a test session" class="stage-title" /><ui:Label name="stageDescription" class="body-copy muted" /></ui:VisualElement>
+      <ui:ScrollView name="stageScroll" class="stage-scroll">
+        <ui:VisualElement name="preparationModule" class="task-module">
+          <ui:Label text="Session identity" class="section-title" /><ui:TextField name="participant" label="Test identifier" value="synthetic-01" />
+          <ui:Label text="Use a synthetic identifier. Each recording gets its own folder." class="small muted" />
+          <ui:VisualElement class="section-heading"><ui:Label text="Condition order" class="section-title" /><ui:Label text="4 blocks · 5 minutes each" class="small muted" /></ui:VisualElement>
+          <ui:DropdownField name="orderPreset" label="Preset" /><ui:VisualElement name="conditionList" class="reorder-list" />
+          <ui:TextField name="conditionOrder" label="Order codes" value="WE_MT,NE_MT,WE_FT,NE_FT" /><ui:Label name="conditionError" class="error" />
+          <ui:Label text="Drag blocks or use Move up / Move down before creating a session. Required conditions and block duration stay fixed." class="small muted" />
+          <ui:TextField name="presetName" label="Preset name" />
+          <ui:VisualElement class="button-row"><ui:Button name="savePreset" text="+ Save as preset" /><ui:Button name="updatePreset" text="Update preset" /><ui:Button name="removePreset" text="Remove preset" /></ui:VisualElement><ui:Label name="presetMessage" class="small muted" />
+          <ui:VisualElement class="section-divider" /><ui:Label text="Preflight" class="section-title" /><ui:VisualElement name="preflightList" />
+          <ui:Label name="configuration" class="small muted" /><ui:Label name="selfCheck" class="small muted" />
+
+        </ui:VisualElement>
+        <ui:VisualElement name="calibrationModule" class="task-module hidden">
+          <ui:Label text="Calibration fixture" class="section-title" /><ui:Label text="These controls exercise calibration with generated poses. Accepted results do not replace measured rig calibration." class="body-copy muted" />
+          <ui:Foldout name="calibrationWizard" text="Fixture inputs and review" value="true">
+            <ui:DropdownField name="dominantEye" label="Dominant eye" /><ui:TextField name="eyeOffset" label="Eye offset · m, x,y,z" />
+            <ui:TextField name="calibrationThresholds" label="Limits · mm,mm,°,°,°" value="2,5,0.5,1,2" />
+            <ui:Label text="Pivot RMS, corner error, corner angle, 3×3 mean and maximum. Provisional development limits; physical approval pending." class="small muted" />
+            <ui:Button name="captureCalibration" text="Generate synthetic calibration fixture" class="primary" /><ui:Label name="calibrationReview" class="review-output" text="No fixture captured. Create a recording and continue to calibration." />
+            <ui:VisualElement class="button-row"><ui:Button name="acceptCalibration" text="Accept development fixture" class="primary" /><ui:Button name="redoCalibration" text="Redo fixture" /></ui:VisualElement>
+          </ui:Foldout>
+        </ui:VisualElement>
+        <ui:VisualElement name="runModule" class="task-module hidden">
+          <ui:Label text="Session progress" class="section-title" /><ui:VisualElement name="blockTimeline" /><ui:Label name="runGuidance" class="body-copy muted" />
+          <ui:Button name="fire" text="Send synthetic test trigger" /><ui:Label text="Exercises recording and scoring; does not actuate hardware." class="small muted" />
+          <ui:Button name="rerun" text="Re-run block in a new recording" /><ui:Label text="Previous recordings are retained. Reconnecting never resumes a block automatically." class="small muted" />
+        </ui:VisualElement>
+        <ui:VisualElement name="notesModule" class="task-module hidden">
+          <ui:Label text="Operator notes" class="section-title" /><ui:Label text="Notes are timestamped in the active recording. Your draft stays here when you change tasks." class="body-copy muted" />
+          <ui:TextField name="note" label="Observation" multiline="true" class="note-input" />
+          <ui:VisualElement class="button-row"><ui:Button name="addNote" text="Save note" class="primary" /><ui:Button name="syncMarker" text="Add sync marker" /></ui:VisualElement>
+          <ui:Label text="Sync markers are provisional; synchronization approval remains pending." class="small muted" /><ui:Label name="notesFeedback" class="small muted" />
+        </ui:VisualElement>
+        <ui:VisualElement name="recordingsModule" class="task-module hidden">
+          <ui:Label text="Recording destination" class="section-title" /><ui:Label name="recording" class="path-output" /><ui:Label name="recordingHealth" class="body-copy muted" /><ui:Button name="openRecordingFolder" text="Open recording folder" />
+          <ui:VisualElement class="section-divider" /><ui:Label text="Rendering and replay" class="section-title" /><ui:Label text="Open the existing replay tools after the current recording has closed. Return with Session controls." class="body-copy muted" /><ui:Button name="viewTools" text="Open rendering / replay tools" />
+        </ui:VisualElement>
+        <ui:VisualElement name="devicesModule" class="task-module hidden">
+          <ui:Label text="Tracking and controller" class="section-title" /><ui:Label name="deviceBindings" class="body-copy" /><ui:Label name="linkStatus" class="review-output" />
+          <ui:DropdownField name="neLinkMode" label="Development NE link mode" /><ui:Label text="Choose the mock-controller behavior before creating a session. This is a development alternative, not an approved study setting." class="small muted" />
+          <ui:Button name="reconnectLink" text="Simulate reconnect and abort" class="danger-outline" /><ui:Label text="This ends the current attempt. Start an explicit rerun to continue testing." class="small muted" />
+          <ui:VisualElement class="section-divider" /><ui:Label text="Physical validation pending" class="section-title" /><ui:Label text="Measured calibration, tracker binding, display mapping, controller timing and the physical E-stop require testing equipment. This workspace cannot certify them." class="body-copy muted" />
+        </ui:VisualElement>
+        <ui:VisualElement name="checkpointsModule" class="task-module hidden">
+          <ui:Label text="Administrator checkpoints" class="section-title" /><ui:Label text="Local reminders for your test procedure. Completion marks are workflow notes, not physical validation or study approval." class="body-copy muted" />
+          <ui:VisualElement class="button-row"><ui:Button name="addCheckpoint" text="+ Add checkpoint" class="primary" /><ui:Button name="resetCheckpoints" text="Clear completion marks" /><ui:Button name="undoCheckpoint" text="Undo removal" /></ui:VisualElement>
+          <ui:Label name="checkpointEmpty" text="No administrator checkpoints yet. Add a checkpoint to describe a preparation or handoff task." class="empty-state" /><ui:VisualElement name="checkpointList" class="reorder-list" />
+          <ui:VisualElement name="checkpointEditor" class="checkpoint-editor hidden"><ui:TextField name="checkpointTitle" label="Checkpoint name" /><ui:TextField name="checkpointInstructions" label="Instructions" multiline="true" class="note-input" /><ui:Toggle name="checkpointComplete" label="Marked complete by administrator" /><ui:Button name="removeCheckpoint" text="Remove checkpoint" class="danger-outline" /></ui:VisualElement>
+          <ui:Label name="checkpointFeedback" class="small muted" />
+        </ui:VisualElement>
+      </ui:ScrollView>
+      <ui:VisualElement class="session-dock">
+        <ui:VisualElement class="section-heading"><ui:Label name="state" text="Ready to prepare" class="section-title" /><ui:Label name="countdown" text="No block running" class="small" /></ui:VisualElement>
+        <ui:ProgressBar name="sessionProgress" low-value="0" high-value="100" value="0" title="" /><ui:Label name="nextActionHint" class="small muted" />
+        <ui:VisualElement class="button-row"><ui:Button name="createSession" text="Create synthetic recording" class="primary spacious-action" /><ui:Button name="advance" text="Continue" class="primary" /><ui:Button name="startBlock" text="Start block" class="primary" /><ui:Button name="endBlock" text="End block" /></ui:VisualElement><ui:Label name="message" class="error" />
+        <ui:VisualElement class="stop-row"><ui:TextField name="abortReason" label="Stop reason" /><ui:Button name="abort" text="Abort session" class="abort" /></ui:VisualElement>
+      </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="liveSplitter" class="splitter" focusable="true" tooltip="Drag to resize live view. Arrow keys adjust width." />
+    <ui:VisualElement name="livePanel" class="live-panel">
+      <ui:VisualElement class="live-heading"><ui:Label text="Live session" class="section-title" /><ui:Label name="liveMode" text="Synthetic preview" class="small muted" /></ui:VisualElement>
+      <ui:ScrollView name="liveScroll" class="live-scroll"><ui:VisualElement name="liveList">
+        <ui:VisualElement name="participantCard" class="live-card"><ui:VisualElement class="live-card-heading"><ui:Button name="participantHandle" text="::" class="drag-handle" tooltip="Drag to reorder participant view" /><ui:Label text="Participant view" class="card-title" /></ui:VisualElement><ui:Image name="participantImage" class="camera-image" /><ui:Label name="participantStatus" text="Stimulus only · synthetic geometry" class="small muted" /></ui:VisualElement>
+        <ui:VisualElement name="operatorCard" class="live-card"><ui:VisualElement class="live-card-heading"><ui:Button name="operatorHandle" text="::" class="drag-handle" tooltip="Drag to reorder apparatus view" /><ui:Label text="Apparatus view" class="card-title" /></ui:VisualElement><ui:Image name="operatorImage" class="camera-image orbit-image" focusable="true" /><ui:Label text="Drag to orbit · Shift-drag to pan · Scroll to zoom" class="small muted" /><ui:Button name="resetOrbit" text="Reset view" /></ui:VisualElement>
+        <ui:VisualElement name="healthCard" class="live-card"><ui:VisualElement class="live-card-heading"><ui:Button name="healthHandle" text="::" class="drag-handle" tooltip="Drag to reorder session health" /><ui:Label text="Session health" class="card-title" /></ui:VisualElement><ui:Label name="tracking" class="small muted" /></ui:VisualElement>
+      </ui:VisualElement></ui:ScrollView><ui:Label text="Local development · no hardware actuation" class="small muted live-footnote" />
+    </ui:VisualElement>
+    <ui:VisualElement name="settingsBackdrop" class="overlay-backdrop hidden"><ui:VisualElement name="settingsPanel" class="settings-panel">
+      <ui:Label text="Workspace settings" class="stage-title" /><ui:Label text="Only this administrator workspace is affected." class="body-copy muted" /><ui:Toggle name="reducedMotion" label="Reduce motion" />
+      <ui:Slider name="railWidth" label="Task index width" low-value="210" high-value="330" value="240" show-input-field="true" /><ui:Slider name="liveWidth" label="Live view width" low-value="280" high-value="500" value="360" show-input-field="true" />
+      <ui:Label text="Drag dividers to adjust the layout directly. Preferences stay saved when the window is resized." class="small muted" /><ui:Button name="resetWorkspaceLayout" text="Restore default layout" /><ui:Label name="workspaceError" class="error" />
+      <ui:Button name="recoverWorkspace" text="Archive unreadable settings and start fresh" class="hidden" /><ui:Button name="closeSettings" text="Close settings" class="primary" />
+    </ui:VisualElement></ui:VisualElement>
   </ui:VisualElement>
 </ui:UXML>

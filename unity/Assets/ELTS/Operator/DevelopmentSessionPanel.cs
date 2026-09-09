@@ -79,13 +79,13 @@ namespace Elts.Operator
             template.CloneTree(root);
             Field("conditionOrder").value = String.Join(",", view.Configuration.Session.ConditionOrder);
             Bind("createSession", () => Begin(CreateSessionAsync));
-            Bind("advance", () => Act(AdvanceWithCalibration));
+            Bind("advance", () => { Act(AdvanceWithCalibration); dashboard?.FocusCurrentTask(); });
             Bind("startBlock", () => Act(() => engine!.StartBlock()));
             Bind("endBlock", () => Act(() => engine!.EndBlock()));
             Bind("fire", () => Act(() => scenario!.Fire(acquisition?.Snapshot?.Weapon.Pose,acquisition?.Snapshot?.Head.Pose)));
             Bind("abort", () => Act(() => engine!.Abort(Field("abortReason").value)));
             Bind("rerun", () => Begin(RerunAsync));
-            Bind("addNote", () => Act(() => { engine!.AddNote(Field("note").value); Field("note").value=""; }));
+            Bind("addNote", () => Act(() => { engine!.AddNote(Field("note").value); Field("note").value=""; Label("notesFeedback","Note saved in the active recording."); }));
             Bind("syncMarker", () => Act(() => engine!.EmitProvisionalSyncMarker("operator-button")));
             Bind("viewTools", () => SetVisible(false));
             var neMode = root.Q<DropdownField>("neLinkMode");
@@ -96,6 +96,7 @@ namespace Elts.Operator
                 engine!.Abort("Operator simulated controller reconnect; explicit new attempt required.");
             }));
             InitializeCalibrationControls();
+            InitializeDashboard();
             SetVisible(true);
             RefreshLabels();
             Application.wantsToQuit += OnWantsToQuit;
@@ -105,6 +106,7 @@ namespace Elts.Operator
         {
             view.SessionControlsVisible=visible;
             if(root != null) root.style.display=visible?DisplayStyle.Flex:DisplayStyle.None;
+            dashboard?.SetVisible(visible);
         }
         private TextField Field(string name) => root.Q<TextField>(name);
         private void Bind(string name, Action action) => root.Q<Button>(name).clicked += action;
@@ -265,6 +267,8 @@ namespace Elts.Operator
                 (recording?.DroppedSampleCount??0)+" dropped • "+(diskFreeBytes==0?"Disk check pending":(diskFreeBytes/(double)(1024*1024*1024)).ToString("F1")+" GB free")+
                 "\nFrames over 33 ms: "+frameHitches+" • "+(scenario?.LastShot??"No shot"));
             root.Q<Button>("createSession").SetEnabled(!IsBusy && (engine==null || closing));
+            Field("participant").SetEnabled(!IsBusy && (engine==null || closing));
+            Field("conditionOrder").SetEnabled(!IsBusy && (engine==null || closing));
             root.Q<Button>("advance").SetEnabled(!IsBusy && engine?.CanAdvance==true);
             root.Q<Button>("startBlock").SetEnabled(!IsBusy && engine?.State==SessionState.BlockReady);
             root.Q<Button>("endBlock").SetEnabled(!IsBusy && engine?.State==SessionState.BlockRunning && engine.RemainingSeconds<=0);
@@ -278,6 +282,7 @@ namespace Elts.Operator
             Label("linkStatus", "Mock controller: " + (mockLink?.State.ToString()??"not created") +
                 " • simulated permission " + (mockLink?.LedPermission==true?"true":"false") + ". D-10 pending.");
             RefreshCalibrationControls();
+            dashboard?.Refresh();
         }
 
         private static string Hash(string text)
@@ -288,6 +293,7 @@ namespace Elts.Operator
         {
             if(destroyed) return;
             destroyed=true;
+            dashboard?.Dispose();
             Application.wantsToQuit -= OnWantsToQuit;
             try
             {

@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="300" viewBox="0 0 1100 300" role="img" aria-labelledby="t d">
+  <title id="t">Daily commit and push loop</title>
+  <desc id="d">A labelled loop showing fetch and pull, edit, review changes, commit, and push origin.</desc>
+  <rect width="1100" height="300" fill="#f6f8fa"/>
+  <g font-family="Arial, sans-serif" fill="#24292f">
+    <text x="40" y="42" font-size="24" font-weight="700">Illustration: daily GitHub Desktop loop</text>
+    <g font-size="16" text-anchor="middle">
+      <rect x="45" y="115" width="170" height="70" rx="12" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+      <text x="130" y="145">Fetch + pull</text>
+      <text x="130" y="168">latest main</text>
+      <rect x="260" y="115" width="170" height="70" rx="12" fill="#fff3cd" stroke="#d39e00" stroke-width="2"/>
+      <text x="345" y="145">Edit</text>
+      <text x="345" y="168">source files</text>
+      <rect x="475" y="115" width="170" height="70" rx="12" fill="#fce7f3" stroke="#db2777" stroke-width="2"/>
+      <text x="560" y="145">Review</text>
+      <text x="560" y="168">Changes tab</text>
+      <rect x="690" y="115" width="170" height="70" rx="12" fill="#e0e7ff" stroke="#4f46e5" stroke-width="2"/>
+      <text x="775" y="145">Commit</text>
+      <text x="775" y="168">local checkpoint</text>
+      <rect x="905" y="115" width="150" height="70" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+      <text x="980" y="145">Push origin</text>
+      <text x="980" y="168">share</text>
+    </g>
+    <path d="M215 150h40" stroke="#111827" stroke-width="3" marker-end="url(#a)"/>
+    <path d="M430 150h40" stroke="#111827" stroke-width="3" marker-end="url(#a)"/>
+    <path d="M645 150h40" stroke="#111827" stroke-width="3" marker-end="url(#a)"/>
+    <path d="M860 150h40" stroke="#111827" stroke-width="3" marker-end="url(#a)"/>
+    <path d="M980 205c0 45-850 48-850 0" fill="none" stroke="#6b7280" stroke-width="2" stroke-dasharray="8 8" marker-end="url(#b)"/>
+    <defs>
+      <marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+        <path d="M0 0l8 3-8 3z" fill="#111827"/>
+      </marker>
+      <marker id="b" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+        <path d="M0 0l8 3-8 3z" fill="#6b7280"/>
+      </marker>
+    </defs>
+    <text x="385" y="260" font-size="16">Next session starts with fetch and pull again.</text>
+  </g>
+</svg>

@@ -33,7 +33,7 @@
         {
           "name": "Prepare development checkout",
           "shell": "pwsh",
-          "run": "./scripts/bootstrap.ps1"
+          "run": "./scripts/bootstrap-dev.ps1"
         },
         {
           "name": "EditMode",

@@ -5,7 +5,8 @@
       "branches": [
         "main",
         "bootstrap/**",
-        "work/**"
+        "work/**",
+        "codex/**"
       ]
     },
     "pull_request": {},
@@ -44,6 +45,12 @@
         {
           "name": "Policy, documentation, schemas and Python checks",
           "run": "python tools/ci/check.py --baseline"
+        },
+        {
+          "name": "Windows setup regression checks (no downloads or installs)",
+          "if": "runner.os == 'Windows'",
+          "shell": "powershell",
+          "run": "./tools/setup/test_setup.ps1 -PythonExecutable (Get-Command python).Source"
         }
       ]
     }

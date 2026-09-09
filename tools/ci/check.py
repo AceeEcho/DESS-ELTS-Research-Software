@@ -37,6 +37,9 @@ def policy():
 def documentation():
     # Validate Markdown file links, not illustrative code paths or network URLs.
     files = [ROOT / "README.md", *sorted((ROOT / "docs/ai").glob("*.md")), *sorted((ROOT / "docs/modules").glob("*.md"))]
+    # This guide is part of the clone handoff; broken local images must fail CI.
+    guide = ROOT / "docs/operator/multi-machine-setup.md"
+    if guide.exists(): files.append(guide)
     pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
     checked = 0
     for file in files:
@@ -76,9 +79,17 @@ def workflows():
     print("PASS: workflow syntax and action permissions/pins")
 
 
+def setup_pins():
+    manifest = json.loads((ROOT / "config/toolchain.json").read_text(encoding="utf-8"))
+    sdk = json.loads((ROOT / "global.json").read_text(encoding="utf-8"))["sdk"]
+    if sdk != {"version": manifest["standaloneTests"]["dotnetSdkVersion"], "rollForward": "disable", "allowPrerelease": False}:
+        raise ValueError("global.json must match the canonical .NET SDK pin without roll-forward")
+    print("PASS: .NET SDK selection matches the canonical toolchain")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baseline", action="store_true")
     args = parser.parse_args()
-    policy(); documentation(); workflows()
+    policy(); documentation(); workflows(); setup_pins()
     if args.baseline: run()

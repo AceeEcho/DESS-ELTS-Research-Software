@@ -5,7 +5,23 @@ a command-only ELTS link, immutable research logging, and offline analysis.
 The apparatus is built; testing equipment is currently unavailable. Current work
 uses explicitly synthetic inputs and does not qualify a study session.
 
-Start with the [developer quick start](docs/operator/developer-quick-start.md).
+**New computer or new to Git? Start with the
+[illustrated setup and two-computer guide](docs/operator/multi-machine-setup.md).**
+It walks through GitHub Desktop, cloning this repository, installing the tools,
+editing both projects, and sending changes between computers.
+
+1. Clone this repository with GitHub Desktop into a normal local folder.
+2. Double-click [`SETUP-DEV.cmd`](SETUP-DEV.cmd). It reuses compatible tools,
+   installs missing prerequisites, imports Unity, and verifies the development setup.
+3. Use `main` on each computer: **Pull → edit → review → commit → push**.
+   Close Unity before pulling. Push your changes before switching computers.
+
+[`OPEN-DEV-SHELL.cmd`](OPEN-DEV-SHELL.cmd) opens PowerShell with the detected tool
+paths. The editable Unity project is in `unity/`; the editable browser simulation
+is in `elts-simulation/`. You get both in one clone. GitHub synchronizes committed
+source; caches, installed tools, local machine settings and private data stay local.
+
+Existing developers can use the [developer quick start](docs/operator/developer-quick-start.md).
 The validated [PROJECT_STATE.json](PROJECT_STATE.json) is the current work record;
 its `execution` section selects eligible work while `current` preserves the baseline
 gate anchor. Do not infer progress from this README or a checklist.
@@ -35,8 +51,8 @@ python tools/progress/report.py
 
 These commands inspect local software state. Unity import, EditMode/PlayMode tests,
 Windows build, clean-copy validation, and physical acceptance have separate evidence.
-Unity must be exactly **6000.3.23f1 LTS**. Toolchain and portable script setup are
-tracked by the active bootstrap steps rather than assumed complete here.
+Unity must be exactly **6000.3.23f1 LTS**. New-machine setup results are retained in
+`diagnostics/setup-report.json`; detection alone is not a runtime test pass.
 
 The [verified bootstrap checkpoint](docs/ai/bootstrap-handoff.md) records the
 completed clean-clone, Unity test, Windows build and copied-player startup checks.

@@ -37,6 +37,14 @@
     "testedVersion": "1.0.0-beta.6",
     "requiredForExistingCheckout": false
   },
+  "windowsSetup": {
+    "pythonVersion": "3.13.15",
+    "pythonSha256": "edec09c4853aeae9ac36efb8c9f95b6b8e2fee65eee56d9767a8b7c69c574403",
+    "dotnetSha512": "9b8b88590e4da131bfd0da7aa089d0fc04d5418d5f8607ec13d55dc5a17b4399afd54d496c12657fa05c6c6546dc5eab930f26ac6c50f2d3a7712c0fb378c366",
+    "nodeVersion": "24.21.0",
+    "nodeSha256": "158f7685b44de51f6c0df1d153526cbcd3e1bc739a8dfc607721cef75de9e541",
+    "unityCliSha256": "8fee78dfc35bc1dbd7c975485b28105c33a9a8e2641afe20b630377bae1eb4ad"
+  },
   "dependencies": {
     "openvrManifest": "unity/Assets/ThirdParty/OpenVR/dependency.json",
     "pythonManifest": "analysis/pyproject.toml",

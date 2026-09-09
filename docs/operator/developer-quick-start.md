@@ -1,5 +1,12 @@
 # Developer quick start
 
+For an illustrated beginner walkthrough, use [setup on multiple computers](multi-machine-setup.md).
+On Windows x64, clone the repository and run root `SETUP-DEV.cmd` to install
+missing tools, import Unity packages, and run verification. Windows installation
+prompts and Unity account/license steps remain interactive when required.
+`OPEN-DEV-SHELL.cmd` loads this clone's detected tool paths into PowerShell.
+Use the manual steps below when tools are already installed or in custom locations.
+
 `scripts/verify.ps1` runs doctor and the complete currently available test set,
 retaining separate diagnostic reports. A deferred Unity check is explicitly
 reported and does not count as Unity runtime acceptance. Use `-PythonExecutable`
@@ -11,6 +18,8 @@ calibration, safety, timing, display, or study-readiness acceptance.
 
 1. Copy or clone the repository into a writable path; spaces are supported.
 2. Provide Python 3.10+ and the exact Unity version declared in the root README.
+   Full runtime verification also uses the pinned .NET SDK; the browser builder
+   uses Node.js. Automatic setup reads all pins from `config/toolchain.json`.
 3. From the repository root, run the first-run bootstrap once. It creates the
    local machine template without overwriting an existing local file and stages
    the synthetic generated configuration. From another directory, use the

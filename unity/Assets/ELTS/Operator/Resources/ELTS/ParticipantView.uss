@@ -1,0 +1,6 @@
+.participant-root { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+.participant-prompt { position: absolute; left: 0; right: 0; top: 0; bottom: 0; align-items: center; justify-content: center; background-color: rgba(5, 9, 16, 0.82); }
+.participant-title { font-size: 44px; color: rgb(239, 244, 252); -unity-font-style: bold; margin-bottom: 16px; -unity-text-align: middle-center; }
+.participant-subtitle { font-size: 20px; color: rgb(172, 189, 214); -unity-text-align: middle-center; }
+.participant-reticle { position: absolute; width: 18px; height: 18px; color: white; font-size: 23px; -unity-text-align: middle-center; }
+.participant-hidden { display: none; }

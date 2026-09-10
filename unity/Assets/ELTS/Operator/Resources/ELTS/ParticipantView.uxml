@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="ParticipantView.uss" />
+    <ui:VisualElement name="participantSurface" class="participant-root" picking-mode="Ignore">
+        <ui:Label name="participantReticle" text="+" class="participant-reticle" picking-mode="Ignore" />
+        <ui:VisualElement name="participantPrompt" class="participant-prompt" picking-mode="Ignore">
+            <ui:Label name="participantTitle" text="Please wait" class="participant-title" />
+            <ui:Label name="participantSubtitle" text="The administrator is preparing your test." class="participant-subtitle" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

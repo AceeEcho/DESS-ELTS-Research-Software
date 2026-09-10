@@ -1,0 +1,80 @@
+/* Standalone theme. The builder embeds this file so index.html stays portable.
+   Adjust these tokens to change the visual theme without touching scene logic. */
+:root {
+  color-scheme: dark;
+  --page: #0b121c;
+  --panel: #141f2c;
+  --field: #1c2b3b;
+  --line: #2b3b4c;
+  --text: #e7eef7;
+  --muted: #a3b3c5;
+  --accent: #89d6cf;
+  font: 14px/1.5 "Segoe UI", system-ui, sans-serif;
+  background: var(--page);
+  color: var(--text);
+}
+* { box-sizing: border-box; }
+body { margin: 0 auto; padding: 36px clamp(16px, 3vw, 48px); max-width: 1640px; }
+button, input, select { font: inherit; }
+.elts-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
+.elts-eyebrow { color: var(--accent); font-size: 11px; font-weight: 650; letter-spacing: .16em; }
+h1 { font-size: clamp(25px, 3vw, 34px); line-height: 1.2; font-weight: 600; letter-spacing: -.035em; margin: 7px 0 0; }
+.elts-status { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.elts-status::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 9px; vertical-align: middle; }
+.viz-row, .viz-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.elts-toolbar { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(180px, 1fr) auto auto; align-items: end; gap: 16px; margin-bottom: 22px; }
+.form-label { display: grid; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 500; min-width: 0; width: 100%; }
+.btn, .form-select { color: var(--text); background: var(--field); border: 1px solid var(--line); border-radius: 8px; min-height: 42px; font-size: 13px; }
+.form-select { width: 100%; min-width: 0; padding: 10px 30px 10px 12px; text-overflow: ellipsis; cursor: pointer; }
+.btn { padding: 10px 18px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+.btn:hover, .form-select:hover { border-color: #61788f; background-color: #243548; }
+[data-control="play"] { background: var(--accent); border-color: var(--accent); color: #102b2b; }
+[data-control="play"]:hover { background: #abe5df; color: #102b2b; }
+.elts-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 20px; align-items: start; }
+.elts-scene-panel, .elts-settings { min-width: 0; overflow: hidden; border: 1px solid var(--line); background: var(--panel); border-radius: 12px; }
+.elts-panel-heading { display: flex; justify-content: space-between; align-items: center; padding: 17px 20px; border-bottom: 1px solid var(--line); }
+.elts-panel-heading strong { font-size: 13px; font-weight: 600; }
+#elts-environment .elts-stage { margin-top: 0; background: #101b29; }
+#elts-environment [data-scene] { height: clamp(480px, 66vh, 740px); }
+#elts-environment .elts-preview { right: 16px; bottom: 16px; padding: 10px; width: 180px; background: #101b29ed; border: 1px solid var(--line); border-radius: 8px; }
+.elts-preview .text-small { font-size: 11px; color: var(--muted); }
+.elts-legend { justify-content: space-between; padding: 14px 20px; border-top: 1px solid var(--line); gap: 6px 16px; }
+.elts-equipment { padding: 18px 20px 0; }
+#elts-equipment-description { color: var(--muted); font-size: 12px; line-height: 1.7; margin: 12px 0 20px; }
+.elts-section-title { padding: 16px 20px 10px; border-top: 1px solid var(--line); font-size: 10px; letter-spacing: .12em; font-weight: 650; color: var(--muted); text-transform: uppercase; }
+.elts-sliders { display: grid; gap: 18px; padding: 6px 20px 22px; }
+.elts-sliders .form-label { grid-template-columns: 1fr auto; gap: 5px 8px; }
+.elts-sliders output { color: var(--text); font-size: 12px; font-weight: 600; }
+.form-range { grid-column: 1 / -1; width: 100%; margin: 0; height: 24px; accent-color: var(--accent); cursor: pointer; }
+/* Explicit Chromium tracks/thumbs prevent platform-default range styling. */
+.form-range { -webkit-appearance: none; appearance: none; background: transparent; }
+.form-range::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: #40546a; }
+.form-range::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border-radius: 50%; background: var(--accent); border: 2px solid #142a30; box-shadow: 0 0 0 1px var(--accent); }
+.form-range::-moz-range-track { height: 4px; border-radius: 4px; background: #40546a; }
+.form-range::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 1px solid var(--accent); }
+.elts-layers { display: grid; gap: 6px; padding: 0 20px 18px; }
+.form-check { display: flex; align-items: center; gap: 10px; min-height: 32px; font-size: 12px; cursor: pointer; }
+.form-check-input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+.elts-metrics { gap: 12px 28px; margin-top: 18px; padding: 14px 4px; color: var(--muted); }
+.elts-metrics strong { color: var(--accent); font-weight: 650; }
+.text-small { font-size: 12px; }
+.text-muted { color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.intro { border-top: 1px solid var(--line); padding-top: 18px; color: var(--muted); font-size: 12px; max-width: 100ch; line-height: 1.7; }
+@media (max-width: 1000px) {
+  .elts-workspace { grid-template-columns: minmax(0, 1fr); }
+  .elts-sliders { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+  .elts-layers { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+  #elts-environment [data-scene] { height: 500px; }
+}
+@media (max-width: 640px) {
+  body { padding: 22px 14px; }
+  .elts-header { align-items: start; flex-direction: column; gap: 12px; margin-bottom: 22px; }
+  .elts-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .elts-toolbar .form-label { grid-column: 1 / -1; }
+  .btn, .form-select { min-height: 44px; }
+  .elts-sliders { grid-template-columns: minmax(0, 1fr); }
+  #elts-environment [data-scene] { height: 400px; }
+  #elts-environment .elts-preview { width: 145px; right: 10px; bottom: 10px; }
+}

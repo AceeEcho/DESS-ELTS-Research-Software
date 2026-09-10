@@ -1,6 +1,6 @@
 # Synthetic configuration staging
 
-`tools/config/stage.py` is the BOOT.S017 configuration boundary. It reads only
+`tools/config/stage.py` is the configuration boundary. It reads only
 the explicit paths in `config/staging.json`, validates each object against its
 strict schema, applies cross-field geometry and machine-path checks, and emits
 `unity/Assets/StreamingAssets/config-generated/effective-config.json` and

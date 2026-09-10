@@ -1,9 +1,9 @@
 <div id="elts-environment">
-  <div class="viz-row">
-    <strong>ELTS · testing environment</strong>
-    <span class="text-small text-muted">Illustrative layout · synthetic motion · metres</span>
+  <div class="elts-header">
+    <div><span class="elts-eyebrow">ELTS / SPATIAL EXPLORER</span><h1>Testing environment</h1></div>
+    <span class="elts-status">Illustrative simulation</span>
   </div>
-  <div class="viz-controls" style="margin-top:12px">
+  <div class="viz-controls elts-toolbar">
     <label class="form-label">Condition
       <select class="form-select" data-control="condition">
         <option value="WE-MT">With ELTS · moving targets</option>
@@ -23,6 +23,9 @@
     <button class="btn" type="button" data-control="play">Pause motion</button>
     <button class="btn" type="button" data-control="reset">Reset scene</button>
   </div>
+  <div class="elts-workspace">
+  <section class="elts-scene-panel" aria-label="Environment view">
+  <div class="elts-panel-heading"><strong>Environment view</strong><span class="text-small text-muted">3D · metres</span></div>
   <div class="elts-stage">
     <canvas data-scene role="img" aria-label="Interactive 3D ELTS room with participant, mock rifle, display, tracking hardware, light assembly, and virtual targets. Drag to orbit; camera presets also support keyboard controls."></canvas>
     <div class="elts-preview">
@@ -30,8 +33,12 @@
       <canvas data-preview role="img" aria-label="Head-coupled target projection onto the physical display. No aiming crosshair is shown."></canvas>
     </div>
   </div>
-  <div class="viz-row text-small text-muted"><span>Drag to orbit · scroll to zoom</span><span>Solid room = physical · dashed floor = virtual space</span></div>
-  <div class="viz-controls" style="margin-top:14px">
+  <div class="viz-row elts-legend text-small text-muted"><span>Drag to orbit · scroll to zoom</span><span>Solid = physical · dashed = virtual</span></div>
+  </section>
+  <aside class="elts-settings" aria-label="Scene settings">
+  <div class="elts-panel-heading"><strong>Scene settings</strong></div>
+  <div class="elts-equipment">
+  <div class="viz-controls">
     <label class="form-label">Explore equipment
       <select class="form-select" data-control="equipment" aria-describedby="elts-equipment-description">
         <option value="overview">Whole environment</option>
@@ -45,7 +52,9 @@
     </label>
   </div>
   <p id="elts-equipment-description" class="text-small" aria-live="polite"></p>
-  <div class="viz-controls" style="margin-top:14px">
+  </div>
+  <div class="elts-section-title">Geometry</div>
+  <div class="viz-controls elts-sliders">
     <label class="form-label">Participant sideways <output data-value="lateral">0.00 m</output>
       <input class="form-range" data-control="lateral" aria-label="Participant sideways" type="range" min="-0.7" max="0.7" step="0.01" value="0">
     </label>
@@ -59,12 +68,15 @@
       <input class="form-range" data-control="width" aria-label="Display width" type="range" min="1.2" max="3.2" step="0.05" value="2.4">
     </label>
   </div>
-  <div class="viz-row">
+  <div class="elts-section-title">Display layers</div>
+  <div class="viz-row elts-layers">
     <label class="form-check"><input class="form-check-input" data-control="frustum" type="checkbox" checked><span class="form-check-label">View frustum</span></label>
     <label class="form-check"><input class="form-check-input" data-control="labels" type="checkbox" checked><span class="form-check-label">Labels</span></label>
     <label class="form-check"><input class="form-check-input" data-control="sway" type="checkbox" checked><span class="form-check-label">Demo head movement</span></label>
   </div>
-  <div class="viz-row text-small" style="margin-top:10px" data-metrics>
+  </aside>
+  </div>
+  <div class="viz-row text-small elts-metrics" data-metrics>
     <span>Angular aim error: <strong data-error>—</strong></span>
     <span data-aperture>—</span>
     <span data-emission>—</span>
@@ -83,6 +95,7 @@
     #elts-environment .elts-preview { width:125px; right:8px; bottom:8px; }
   }
 </style>
+<link rel="stylesheet" href="theme.css" data-standalone-theme>
 <script>
 (() => {
   'use strict';

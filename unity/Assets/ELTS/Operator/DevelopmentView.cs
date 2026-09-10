@@ -30,6 +30,7 @@ namespace Elts.Operator
         private ScreenPlane screen;
         private Camera participant = null!, operatorCamera = null!;
         private GameObject head = null!, weapon = null!, eyeMarker = null!;
+        private DevelopmentEnvironment? authoredEnvironment;
         private readonly List<LineRenderer> screenLines = new List<LineRenderer>(), frustumLines = new List<LineRenderer>(), rods = new List<LineRenderer>();
         private readonly Dictionary<string,GameObject> targetObjects = new Dictionary<string,GameObject>();
         private LineRenderer bore = null!, aim = null!, viewRay = null!;
@@ -61,6 +62,11 @@ namespace Elts.Operator
         public ScreenPlane DisplayPlane => screen;
         public DevelopmentConfiguration Configuration => configuration;
         public bool SessionControlsVisible { get; set; }
+        /// <summary>
+        /// Lets the dedicated participant display use the whole window. The operator
+        /// camera can continue rendering to its assigned diagnostic RenderTexture.
+        /// </summary>
+        public bool ParticipantOnly { get; set; }
         public string TrackingStatus => status;
         public RigidPose? RawWeapon => rawWeapon;
 
@@ -84,16 +90,29 @@ namespace Elts.Operator
                 predictionSeconds=configuration.Runtime.RenderHeadPredictionSeconds;
                 foreach(var camera in Camera.allCameras){disabledCameras.Add(camera);camera.enabled=false;}
                 stimulusMaterial=Material(new Color(0.65f,0.8f,0.9f));cyanMaterial=Material(Cyan);amberMaterial=Material(Amber);redMaterial=Material(Color.red);
-                participant=MakeCamera("Participant preview",1<<StimulusLayer,new Color(0.035f,0.05f,0.09f));
-                operatorCamera=MakeCamera("Operator diagnostics",(1<<StimulusLayer)|(1<<OperatorLayer),new Color(0.07f,0.075f,0.1f));
-                head=Sphere("Head tracker",OperatorLayer,0.06f,cyanMaterial);
-                weapon=Sphere("Weapon tracker",OperatorLayer,0.045f,amberMaterial);
+                authoredEnvironment=FindFirstObjectByType<DevelopmentEnvironment>();
+                // Saved edit previews explain the configured station before Play mode.
+                // Pose-driven markers and targets replace them while the application runs.
+                authoredEnvironment?.HideEditPreviewsForRuntime();
+                participant=authoredEnvironment!=null&&authoredEnvironment.HasAuthoredCameras
+                    ? authoredEnvironment.ParticipantCamera! : MakeCamera("Participant preview",1<<StimulusLayer,new Color(0.035f,0.05f,0.09f));
+                operatorCamera=authoredEnvironment!=null&&authoredEnvironment.HasAuthoredCameras
+                    ? authoredEnvironment.OperatorCamera! : MakeCamera("Operator diagnostics",(1<<StimulusLayer)|(1<<OperatorLayer),new Color(0.07f,0.075f,0.1f));
+                ConfigureCamera(participant,1<<StimulusLayer,new Color(0.035f,0.05f,0.09f));
+                ConfigureCamera(operatorCamera,(1<<StimulusLayer)|(1<<OperatorLayer),new Color(0.07f,0.075f,0.1f));
+                head=HeadMarker();
+                weapon=WeaponMarker();
                 eyeMarker=Sphere("Rendering eye",OperatorLayer,0.025f,Material(Color.white));
                 bore=Line("Zero-corrected bore",OperatorLayer,amberMaterial);aim=Line("Muzzle to target",OperatorLayer,Material(Color.magenta));viewRay=Line("Eye view ray",OperatorLayer,cyanMaterial);
                 for(int i=0;i<4;i++){screenLines.Add(Line("Display edge "+i,OperatorLayer,cyanMaterial));frustumLines.Add(Line("Off-axis frustum "+i,OperatorLayer,cyanMaterial));rods.Add(Line("Synthetic corner rod "+i,StimulusLayer,cyanMaterial));}
-                for(int x=-3;x<=3;x++)Segment("Floor longitudinal",new Vector3(x,-0.8f,1.5f),new Vector3(x,-0.8f,8),StimulusLayer,stimulusMaterial);
-                for(int z=2;z<=8;z++)Segment("Floor transverse",new Vector3(-3,-0.8f,z),new Vector3(3,-0.8f,z),StimulusLayer,stimulusMaterial);
-                for(int x=-2;x<=2;x++)Segment("Reference post",new Vector3(x,-0.8f,6),new Vector3(x,1.5f,6),StimulusLayer,stimulusMaterial);
+                if(authoredEnvironment==null || !authoredEnvironment.HasAuthoredScaffold)
+                {
+                    // Test fixtures and ad-hoc scenes still receive a compact runtime
+                    // scaffold. ELTSDesktop supplies this persistently in Edit mode.
+                    for(int x=-3;x<=3;x++)Segment("Floor longitudinal",new Vector3(x,-0.8f,1.5f),new Vector3(x,-0.8f,8),StimulusLayer,stimulusMaterial);
+                    for(int z=2;z<=8;z++)Segment("Floor transverse",new Vector3(-3,-0.8f,z),new Vector3(3,-0.8f,z),StimulusLayer,stimulusMaterial);
+                    for(int x=-2;x<=2;x++)Segment("Reference post",new Vector3(x,-0.8f,6),new Vector3(x,1.5f,6),StimulusLayer,stimulusMaterial);
+                }
                 replayPath=Path.GetFullPath(Path.Combine(Application.dataPath,"..",configuration.Machine.DataRoot));
                 Ready=true;Refresh(0);
             }
@@ -102,8 +121,12 @@ namespace Elts.Operator
         private Camera MakeCamera(string name,int mask,Color background)
         {
             var go=new GameObject(name);go.transform.SetParent(transform);var camera=go.AddComponent<Camera>();
+            ConfigureCamera(camera,mask,background);return camera;
+        }
+        private static void ConfigureCamera(Camera camera,int mask,Color background)
+        {
             camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=background;camera.cullingMask=mask;camera.depth=10;
-            camera.nearClipPlane=0.03f;camera.farClipPlane=(float)FarDistanceMeters;return camera;
+            camera.nearClipPlane=0.03f;camera.farClipPlane=(float)FarDistanceMeters;camera.enabled=true;
         }
         private Material Material(Color color)
         {
@@ -116,6 +139,27 @@ namespace Elts.Operator
         {
             var go=GameObject.CreatePrimitive(PrimitiveType.Sphere);go.name=name;go.layer=layer;go.transform.SetParent(transform);go.transform.localScale=Vector3.one*(radius*2);
             Destroy(go.GetComponent<Collider>());go.GetComponent<Renderer>().sharedMaterial=material;return go;
+        }
+        private GameObject HeadMarker()
+        {
+            var marker=Sphere("Participant head tracker",OperatorLayer,0.075f,cyanMaterial);
+            var nose=GameObject.CreatePrimitive(PrimitiveType.Sphere);nose.name="Forward-facing head reference";nose.layer=OperatorLayer;nose.transform.SetParent(marker.transform,false);
+            nose.transform.localPosition=new Vector3(0,0,0.075f);nose.transform.localScale=new Vector3(0.055f,0.04f,0.07f);
+            Destroy(nose.GetComponent<Collider>());nose.GetComponent<Renderer>().sharedMaterial=cyanMaterial;
+            return marker;
+        }
+        private GameObject WeaponMarker()
+        {
+            var marker=new GameObject("Weapon tracker and barrel");marker.layer=OperatorLayer;marker.transform.SetParent(transform);
+            MarkerPart(marker.transform,"Weapon body",PrimitiveType.Cube,new Vector3(0,0,0.17f),new Vector3(0.085f,0.075f,0.34f),amberMaterial);
+            MarkerPart(marker.transform,"Weapon bore axis",PrimitiveType.Cylinder,new Vector3(0,0,0.38f),new Vector3(0.032f,0.18f,0.032f),amberMaterial).transform.localRotation=Quaternion.Euler(90,0,0);
+            MarkerPart(marker.transform,"Weapon grip",PrimitiveType.Cube,new Vector3(0,-0.10f,0.05f),new Vector3(0.065f,0.18f,0.075f),amberMaterial).transform.localRotation=Quaternion.Euler(-20,0,0);
+            return marker;
+        }
+        private GameObject MarkerPart(Transform parent,string name,PrimitiveType primitive,Vector3 localPosition,Vector3 localScale,Material material)
+        {
+            var part=GameObject.CreatePrimitive(primitive);part.name=name;part.layer=OperatorLayer;part.transform.SetParent(parent,false);part.transform.localPosition=localPosition;part.transform.localScale=localScale;
+            Destroy(part.GetComponent<Collider>());part.GetComponent<Renderer>().sharedMaterial=material;return part;
         }
         private LineRenderer Line(string name,int layer,Material material)
         {
@@ -195,8 +239,8 @@ namespace Elts.Operator
             // Replay stays raw; no velocity is invented by interpolating adjacent observations.
             renderedHead=RenderHeadPrediction.Predict(rawHead,headVelocity,replay==null?predictionSeconds:0);
             head.SetActive(rawHead.HasValue);weapon.SetActive(rawWeapon.HasValue);eyeMarker.SetActive(renderedHead.HasValue);
-            if(rawHead.HasValue)head.transform.position=OffAxisCamera.ToUnity(rawHead.Value.Position);
-            if(rawWeapon.HasValue)weapon.transform.position=OffAxisCamera.ToUnity(rawWeapon.Value.Position);
+            if(rawHead.HasValue){head.transform.position=OffAxisCamera.ToUnity(rawHead.Value.Position);head.transform.rotation=ToUnity(rawHead.Value.Orientation);}
+            if(rawWeapon.HasValue){weapon.transform.position=OffAxisCamera.ToUnity(rawWeapon.Value.Position);weapon.transform.rotation=ToUnity(rawWeapon.Value.Orientation);}
             var corners=new[]{screen.Origin,screen.Origin+screen.U*screen.Width,screen.Origin+screen.U*screen.Width+screen.V*screen.Height,screen.Origin+screen.V*screen.Height};
             for(int i=0;i<4;i++){SetLine(screenLines[i],OffAxisCamera.ToUnity(corners[i]),OffAxisCamera.ToUnity(corners[(i+1)%4]));SetLine(rods[i],OffAxisCamera.ToUnity(corners[i]),OffAxisCamera.ToUnity(corners[i]+screen.Normal*RodLengthMeters));}
             participant.enabled=false;viewRay.enabled=false;
@@ -208,7 +252,12 @@ namespace Elts.Operator
                 {
                     OffAxisCamera.Apply(participant,new OffAxisProjection(screen,eye,NearMarginMeters,FarDistanceMeters));participant.enabled=true;
                     for(int i=0;i<4;i++){frustumLines[i].enabled=true;SetLine(frustumLines[i],OffAxisCamera.ToUnity(eye),OffAxisCamera.ToUnity(corners[i]));}
-                    viewRay.enabled=true;SetLine(viewRay,OffAxisCamera.ToUnity(eye),OffAxisCamera.ToUnity(screen.Origin+screen.U*screen.Width*0.5+screen.V*screen.Height*0.5));
+                    viewRay.enabled=true;
+                    // The eye frustum is prediction/rendering data. This separate ray
+                    // displays the raw tracked head's local +Z direction for operator
+                    // diagnosis, without implying that it intersects the display.
+                    var rawForward=rawHead!.Value.Orientation.Rotate(new Vector3d(0,0,1));
+                    SetLine(viewRay,OffAxisCamera.ToUnity(rawHead.Value.Position),OffAxisCamera.ToUnity(rawHead.Value.Position+rawForward*1.1));
                 }
                 catch(ArgumentException){status+=" | EYE OUTSIDE VALID SCREEN SIDE";}
             }
@@ -229,6 +278,12 @@ namespace Elts.Operator
         }
         private void LayoutCameras()
         {
+            if(ParticipantOnly)
+            {
+                participant.rect=new Rect(0,0,1,1);
+                operatorCamera.rect=new Rect(0,0,1,1);
+                return;
+            }
             // Dashboard previews use camera-owned textures. Preserve full texture
             // viewports and the participant's configured aspect ratio there.
             if(participant.targetTexture!=null && operatorCamera.targetTexture!=null)
@@ -244,6 +299,7 @@ namespace Elts.Operator
         }
         private void OnGUI()
         {
+            if(ParticipantOnly)return;
             if(!Ready){GUI.Box(new Rect(10,80,Mathf.Max(300,Screen.width-20),70),"Development view unavailable: "+error);return;}
             if(SessionControlsVisible && participant.targetTexture!=null)return;
             if(!SessionControlsVisible && GUI.Button(new Rect(Screen.width-180,40,165,28),"Session controls"))
@@ -281,7 +337,14 @@ namespace Elts.Operator
             else {orbitYaw+=delta.x*0.4f;orbitPitch=Mathf.Clamp(orbitPitch+delta.y*0.4f,-80,80);}
             orbitDistance=Mathf.Clamp(orbitDistance+zoom*0.15f,0.5f,20);
         }
+        /// <summary>Sets the diagnostic orbit in degrees and metres for deterministic external UI controls.</summary>
+        public void SetOperatorOrbit(float yaw,float pitch,float distance)
+        {
+            if(float.IsNaN(yaw)||float.IsInfinity(yaw)||float.IsNaN(pitch)||float.IsInfinity(pitch)||float.IsNaN(distance)||float.IsInfinity(distance))throw new ArgumentOutOfRangeException(nameof(yaw));
+            orbitYaw=yaw;orbitPitch=Mathf.Clamp(pitch,-80,80);orbitDistance=Mathf.Clamp(distance,0.5f,20);
+        }
         public void ResetOperatorView(){orbitYaw=145;orbitPitch=20;orbitDistance=4;orbitFocus=new Vector3(0,0,1.7f);}
+        private static Quaternion ToUnity(Quaterniond value) => new Quaternion((float)value.X,(float)value.Y,(float)value.Z,(float)value.W);
         private void OnDestroy()
         {
             foreach(var camera in disabledCameras)if(camera!=null)camera.enabled=true;

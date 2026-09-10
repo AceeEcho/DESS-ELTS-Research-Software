@@ -19,7 +19,7 @@ from tempfile import NamedTemporaryFile
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from tools.progress.schema import ValidationError, validate_file  # noqa: E402
+from tools.validation.schema import ValidationError, validate_file  # noqa: E402
 
 SCHEMAS = {"runtime": "runtime.schema.json", "rig": "rig.schema.json", "scenario": "scenario.schema.json", "session": "session.schema.json", "local": "local.schema.json"}
 STAGED_SCHEMAS = ("effective.schema.json", *SCHEMAS.values())

@@ -36,30 +36,23 @@ calibration, safety, timing, display, or study-readiness acceptance.
    own location, so the full path is required when the current directory is
    elsewhere.
 
-   The driver writes structured reports under `diagnostics/`; a failed check is
-   actionable evidence, not a reason to hand-edit generated state. Run the
-   five read-only verification commands in [README.md](../../README.md) as
-   their project-specific prerequisites become available.
+   The driver writes structured reports under `diagnostics/`. Fix the reported
+   input or failure before rerunning the affected check.
 
    The portable console identities are `geometry`, `config`, `runtime`,
    `unity-edit`, and `unity-play`; `-Suite all` runs the available subset and
    reports deferred Unity work without claiming a study result. Unity XML is
    accepted only when it is fresh and reports `Passed`.
-4. Read [the current state](../../PROJECT_STATE.json) and the exact active step in
-   [the approved plan](../plan/approved-plan.json). Use `execution.primaryStepId`.
-5. For implementation, follow [START-HERE.md](../ai/START-HERE.md). Do not hand-edit
-   generated state or append an event until its dependencies, claims, and evidence
-   validate. The writer rejects competing task branches and stale state.
+4. Work on the requested change using [AGENTS.md](../../AGENTS.md). Read relevant
+   source/contracts, edit, and run the affected checks. Setup is for a new machine
+   or changed prerequisites, not a step to repeat before each edit.
 
 If Python is not available, install a supported interpreter or invoke an existing
 supported interpreter by its full executable path. Do not assume a Codex-specific
-runtime path exists on another machine. Portable bootstrap/build scripts are added
-and verified by their own steps; consult state before relying on them.
+runtime path exists on another machine.
 
-A schema or state mismatch is a stop condition for dependent work. Preserve the
-error and reconcile the source/events; do not delete history or make the generated
-state match an expected status manually. A missing device blocks its physical
-checks while eligible synthetic work can continue under PC-001.
+A configuration/schema mismatch must be fixed before using that configuration.
+A missing device blocks its physical checks while synthetic work can continue.
 
 ## Development build and study entry points
 

@@ -1,4 +1,4 @@
-# Synthetic analysis ingest (DEV-05)
+# Synthetic analysis ingest
 
 `analysis/src/elts_analysis` provides a standard-library-only, read-only ingest for completed ELTS logging v1 runs. It consumes `samples.ndjson`, `events.ndjson`, `targets.ndjson`, and `session-summary.json`; it refuses missing, incomplete, tampered, or unsupported schema-version inputs. Raw products are never rewritten. The derived report records each raw product's absolute source path, byte count, SHA-256, the calibration SHA-256, and the session provenance copied from the closure summary. Summary counts and all three product hashes are checked before parsing.
 

@@ -1,22 +1,11 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ELTS testing environment</title><style>
-:root {color-scheme:dark; font:14px/1.5 system-ui,sans-serif; background:#101b29; color:#e3ecf5;}
-* {box-sizing:border-box;} body {margin:0; padding:24px; max-width:1100px; margin-inline:auto;}
-.viz-row,.viz-controls {display:flex; flex-wrap:wrap; align-items:center; gap:12px 20px;}
-.viz-controls {align-items:end;} .form-label {display:flex;flex-direction:column;gap:5px;flex:1 1 210px;}
-.btn,.form-select {font:inherit;color:inherit;background:#243545;border:1px solid #536575;border-radius:6px;padding:8px 12px;}
-.btn {cursor:pointer;} .btn:hover {background:#34475a;} .form-range {width:100%;accent-color:#75b7f7;}
-.form-check {display:inline-flex;align-items:center;gap:7px;} .form-check-input {accent-color:#75b7f7;width:16px;height:16px;}
-.text-small {font-size:12px;} .text-muted {color:#aabbca;} .sr-only {position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);}
-strong {font-weight:500;} :focus-visible {outline:2px solid #75e2d7;outline-offset:3px;} .intro {color:#aabbca;margin:20px 0 0;max-width:80ch;}
-@media(max-width:480px){body{padding:12px}.form-label{flex-basis:100%}.btn,.form-select{min-height:44px}}
-</style></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ELTS testing environment</title></head>
 <body><div id="elts-environment">
-  <div class="viz-row">
-    <strong>ELTS · testing environment</strong>
-    <span class="text-small text-muted">Illustrative layout · synthetic motion · metres</span>
+  <div class="elts-header">
+    <div><span class="elts-eyebrow">ELTS / SPATIAL EXPLORER</span><h1>Testing environment</h1></div>
+    <span class="elts-status">Illustrative simulation</span>
   </div>
-  <div class="viz-controls" style="margin-top:12px">
+  <div class="viz-controls elts-toolbar">
     <label class="form-label">Condition
       <select class="form-select" data-control="condition">
         <option value="WE-MT">With ELTS · moving targets</option>
@@ -36,6 +25,9 @@ strong {font-weight:500;} :focus-visible {outline:2px solid #75e2d7;outline-offs
     <button class="btn" type="button" data-control="play">Pause motion</button>
     <button class="btn" type="button" data-control="reset">Reset scene</button>
   </div>
+  <div class="elts-workspace">
+  <section class="elts-scene-panel" aria-label="Environment view">
+  <div class="elts-panel-heading"><strong>Environment view</strong><span class="text-small text-muted">3D · metres</span></div>
   <div class="elts-stage">
     <canvas data-scene role="img" aria-label="Interactive 3D ELTS room with participant, mock rifle, display, tracking hardware, light assembly, and virtual targets. Drag to orbit; camera presets also support keyboard controls."></canvas>
     <div class="elts-preview">
@@ -43,8 +35,12 @@ strong {font-weight:500;} :focus-visible {outline:2px solid #75e2d7;outline-offs
       <canvas data-preview role="img" aria-label="Head-coupled target projection onto the physical display. No aiming crosshair is shown."></canvas>
     </div>
   </div>
-  <div class="viz-row text-small text-muted"><span>Drag to orbit · scroll to zoom</span><span>Solid room = physical · dashed floor = virtual space</span></div>
-  <div class="viz-controls" style="margin-top:14px">
+  <div class="viz-row elts-legend text-small text-muted"><span>Drag to orbit · scroll to zoom</span><span>Solid = physical · dashed = virtual</span></div>
+  </section>
+  <aside class="elts-settings" aria-label="Scene settings">
+  <div class="elts-panel-heading"><strong>Scene settings</strong></div>
+  <div class="elts-equipment">
+  <div class="viz-controls">
     <label class="form-label">Explore equipment
       <select class="form-select" data-control="equipment" aria-describedby="elts-equipment-description">
         <option value="overview">Whole environment</option>
@@ -58,7 +54,9 @@ strong {font-weight:500;} :focus-visible {outline:2px solid #75e2d7;outline-offs
     </label>
   </div>
   <p id="elts-equipment-description" class="text-small" aria-live="polite"></p>
-  <div class="viz-controls" style="margin-top:14px">
+  </div>
+  <div class="elts-section-title">Geometry</div>
+  <div class="viz-controls elts-sliders">
     <label class="form-label">Participant sideways <output data-value="lateral">0.00 m</output>
       <input class="form-range" data-control="lateral" aria-label="Participant sideways" type="range" min="-0.7" max="0.7" step="0.01" value="0">
     </label>
@@ -72,12 +70,15 @@ strong {font-weight:500;} :focus-visible {outline:2px solid #75e2d7;outline-offs
       <input class="form-range" data-control="width" aria-label="Display width" type="range" min="1.2" max="3.2" step="0.05" value="2.4">
     </label>
   </div>
-  <div class="viz-row">
+  <div class="elts-section-title">Display layers</div>
+  <div class="viz-row elts-layers">
     <label class="form-check"><input class="form-check-input" data-control="frustum" type="checkbox" checked><span class="form-check-label">View frustum</span></label>
     <label class="form-check"><input class="form-check-input" data-control="labels" type="checkbox" checked><span class="form-check-label">Labels</span></label>
     <label class="form-check"><input class="form-check-input" data-control="sway" type="checkbox" checked><span class="form-check-label">Demo head movement</span></label>
   </div>
-  <div class="viz-row text-small" style="margin-top:10px" data-metrics>
+  </aside>
+  </div>
+  <div class="viz-row text-small elts-metrics" data-metrics>
     <span>Angular aim error: <strong data-error>—</strong></span>
     <span data-aperture>—</span>
     <span data-emission>—</span>
@@ -95,6 +96,87 @@ strong {font-weight:500;} :focus-visible {outline:2px solid #75e2d7;outline-offs
     #elts-environment [data-scene] { height:390px; }
     #elts-environment .elts-preview { width:125px; right:8px; bottom:8px; }
   }
+</style>
+<style>/* Standalone theme. The builder embeds this file so index.html stays portable.
+   Adjust these tokens to change the visual theme without touching scene logic. */
+:root {
+  color-scheme: dark;
+  --page: #0b121c;
+  --panel: #141f2c;
+  --field: #1c2b3b;
+  --line: #2b3b4c;
+  --text: #e7eef7;
+  --muted: #a3b3c5;
+  --accent: #89d6cf;
+  font: 14px/1.5 "Segoe UI", system-ui, sans-serif;
+  background: var(--page);
+  color: var(--text);
+}
+* { box-sizing: border-box; }
+body { margin: 0 auto; padding: 36px clamp(16px, 3vw, 48px); max-width: 1640px; }
+button, input, select { font: inherit; }
+.elts-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
+.elts-eyebrow { color: var(--accent); font-size: 11px; font-weight: 650; letter-spacing: .16em; }
+h1 { font-size: clamp(25px, 3vw, 34px); line-height: 1.2; font-weight: 600; letter-spacing: -.035em; margin: 7px 0 0; }
+.elts-status { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.elts-status::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 9px; vertical-align: middle; }
+.viz-row, .viz-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.elts-toolbar { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(180px, 1fr) auto auto; align-items: end; gap: 16px; margin-bottom: 22px; }
+.form-label { display: grid; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 500; min-width: 0; width: 100%; }
+.btn, .form-select { color: var(--text); background: var(--field); border: 1px solid var(--line); border-radius: 8px; min-height: 42px; font-size: 13px; }
+.form-select { width: 100%; min-width: 0; padding: 10px 30px 10px 12px; text-overflow: ellipsis; cursor: pointer; }
+.btn { padding: 10px 18px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+.btn:hover, .form-select:hover { border-color: #61788f; background-color: #243548; }
+[data-control="play"] { background: var(--accent); border-color: var(--accent); color: #102b2b; }
+[data-control="play"]:hover { background: #abe5df; color: #102b2b; }
+.elts-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 20px; align-items: start; }
+.elts-scene-panel, .elts-settings { min-width: 0; overflow: hidden; border: 1px solid var(--line); background: var(--panel); border-radius: 12px; }
+.elts-panel-heading { display: flex; justify-content: space-between; align-items: center; padding: 17px 20px; border-bottom: 1px solid var(--line); }
+.elts-panel-heading strong { font-size: 13px; font-weight: 600; }
+#elts-environment .elts-stage { margin-top: 0; background: #101b29; }
+#elts-environment [data-scene] { height: clamp(480px, 66vh, 740px); }
+#elts-environment .elts-preview { right: 16px; bottom: 16px; padding: 10px; width: 180px; background: #101b29ed; border: 1px solid var(--line); border-radius: 8px; }
+.elts-preview .text-small { font-size: 11px; color: var(--muted); }
+.elts-legend { justify-content: space-between; padding: 14px 20px; border-top: 1px solid var(--line); gap: 6px 16px; }
+.elts-equipment { padding: 18px 20px 0; }
+#elts-equipment-description { color: var(--muted); font-size: 12px; line-height: 1.7; margin: 12px 0 20px; }
+.elts-section-title { padding: 16px 20px 10px; border-top: 1px solid var(--line); font-size: 10px; letter-spacing: .12em; font-weight: 650; color: var(--muted); text-transform: uppercase; }
+.elts-sliders { display: grid; gap: 18px; padding: 6px 20px 22px; }
+.elts-sliders .form-label { grid-template-columns: 1fr auto; gap: 5px 8px; }
+.elts-sliders output { color: var(--text); font-size: 12px; font-weight: 600; }
+.form-range { grid-column: 1 / -1; width: 100%; margin: 0; height: 24px; accent-color: var(--accent); cursor: pointer; }
+/* Explicit Chromium tracks/thumbs prevent platform-default range styling. */
+.form-range { -webkit-appearance: none; appearance: none; background: transparent; }
+.form-range::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: #40546a; }
+.form-range::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border-radius: 50%; background: var(--accent); border: 2px solid #142a30; box-shadow: 0 0 0 1px var(--accent); }
+.form-range::-moz-range-track { height: 4px; border-radius: 4px; background: #40546a; }
+.form-range::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 1px solid var(--accent); }
+.elts-layers { display: grid; gap: 6px; padding: 0 20px 18px; }
+.form-check { display: flex; align-items: center; gap: 10px; min-height: 32px; font-size: 12px; cursor: pointer; }
+.form-check-input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+.elts-metrics { gap: 12px 28px; margin-top: 18px; padding: 14px 4px; color: var(--muted); }
+.elts-metrics strong { color: var(--accent); font-weight: 650; }
+.text-small { font-size: 12px; }
+.text-muted { color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.intro { border-top: 1px solid var(--line); padding-top: 18px; color: var(--muted); font-size: 12px; max-width: 100ch; line-height: 1.7; }
+@media (max-width: 1000px) {
+  .elts-workspace { grid-template-columns: minmax(0, 1fr); }
+  .elts-sliders { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+  .elts-layers { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+  #elts-environment [data-scene] { height: 500px; }
+}
+@media (max-width: 640px) {
+  body { padding: 22px 14px; }
+  .elts-header { align-items: start; flex-direction: column; gap: 12px; margin-bottom: 22px; }
+  .elts-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .elts-toolbar .form-label { grid-column: 1 / -1; }
+  .btn, .form-select { min-height: 44px; }
+  .elts-sliders { grid-template-columns: minmax(0, 1fr); }
+  #elts-environment [data-scene] { height: 400px; }
+  #elts-environment .elts-preview { width: 145px; right: 10px; bottom: 10px; }
+}
 </style>
 <script>
 (() => {
@@ -463,4 +545,4 @@ strong {font-weight:500;} :focus-visible {outline:2px solid #75e2d7;outline-offs
   frameId=requestAnimationFrame(frame);
 })();
 </script>
-<p class="intro">Concept visualization based on the ELTS briefing. Dimensions and movement are examples. LED paths are symbolic; no glare effect, hardware behavior, or study outcome is predicted. See README.md for assumptions and configuration.</p></body></html>
+<p class="intro">Concept visualization based on the ELTS briefing. Dimensions and movement are examples. LED paths are symbolic; no glare effect, hardware behavior, or study outcome is predicted.</p></body></html>

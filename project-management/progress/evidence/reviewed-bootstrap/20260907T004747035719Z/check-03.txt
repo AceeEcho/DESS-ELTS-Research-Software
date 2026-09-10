@@ -1,1 +1,0 @@
-PASS: seven progress contracts match generator

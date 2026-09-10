@@ -30,6 +30,8 @@ There is no hardware connection, empirical tracking data, CSV replay, shot scori
 
 `elts-environment.html` is the editable source. The `CONFIG` object at the beginning of its script groups geometry, colors, and motion defaults. The scene uses x = sideways, y = height, z = distance in front of the screen; the physical screen is at z = 0 and virtual targets have negative z.
 
+`theme.css` controls the standalone interface, with adjustable color tokens at the top. The editable scene loads this neighboring stylesheet when opened directly. The generated `index.html` embeds the same styles and can be copied and opened on its own. Wide windows show settings beside the scene; narrower windows stack them below it.
+
 The code separates vector/projection helpers, drawing primitives, time-based scenario generation, participant projection, scene composition, and controls. It uses a small canvas-based perspective renderer with depth-sorted faces, so it works offline without a GPU library. Overlapping transparent geometry can show sorting artifacts at unusual viewing angles.
 
 `build.mjs` wraps the fragment with a minimal standalone theme to create `index.html`. After editing, run `node build.mjs` in this directory (Node.js is needed only to rebuild, not to view). All paths are relative to the builder's location.

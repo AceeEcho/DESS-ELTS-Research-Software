@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ELTS Administrator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">E</span><div><strong>ELTS</strong><span>Administrator · synthetic test</span></div></div>
+    <div class="participant-status"><span class="eyebrow">PARTICIPANT</span><strong id="participant">—</strong><span id="runId" class="subtle">No run</span></div>
+    <div class="top-status"><span id="connectionDot" class="status-dot offline"></span><span id="connectionText">Connecting…</span><span class="divider"></span><span id="phaseText">Idle</span></div>
+    <button id="startParticipant" class="primary-btn">Start participant</button>
+  </header>
+
+  <main class="workspace" id="workspace">
+    <section class="view-pane pane">
+      <div class="pane-head"><div><span class="eyebrow">LIVE VIEW</span><h1>Outside view</h1></div><div class="view-tools"><span id="viewVersion" class="subtle">Waiting for camera</span><button id="windowed" class="icon-btn" title="Return participant window to windowed view">↗</button><button id="fullscreen" class="icon-btn" title="Show participant window fullscreen">⛶</button></div></div>
+      <div id="viewport" class="viewport" tabindex="0" aria-label="Live outside view. Drag to orbit.">
+        <img id="viewImage" alt="Live cached outside view" hidden>
+        <div id="viewPlaceholder" class="view-placeholder"><span class="placeholder-glyph">◈</span><strong>Waiting for outside view</strong><span>The outside camera will appear here when the run is ready.</span></div>
+        <div class="orbit-help">Drag to orbit · wheel to zoom</div>
+      </div>
+      <div class="view-legend" aria-label="Outside view legend">Head and gaze · Weapon and bore · Screen · Targets</div>
+      <div class="tracking-strip"><div><span class="eyebrow">HEAD TRACKING</span><strong id="headTracking">No signal</strong></div><div><span class="eyebrow">WEAPON TRACKING</span><strong id="weaponTracking">No signal</strong></div><div><span class="eyebrow">CAMERA</span><strong id="cameraInfo">0° · 0° · 4.0 m</strong></div></div>
+    </section>
+
+    <div id="splitHandle" class="split-handle" role="separator" aria-label="Resize panes" tabindex="0"></div>
+
+    <aside class="control-pane pane">
+      <div class="pane-head compact"><div><span class="eyebrow">OPERATOR CONTROL</span><h1>Test session</h1></div><span id="stateBadge" class="badge">IDLE</span></div>
+      <section class="task-card">
+        <div class="task-card-head"><div><span class="eyebrow">CURRENT TASK</span><h2 id="condition">No condition selected</h2></div><span id="remaining" class="countdown">—</span></div>
+        <div class="run-stats"><div><span class="eyebrow">ELAPSED</span><strong id="elapsed">00:00</strong></div><div><span class="eyebrow">SHOTS</span><strong id="shots">0</strong></div><div><span class="eyebrow">HITS</span><strong id="hits">0</strong></div><div><span class="eyebrow">ACCURACY</span><strong id="accuracy">—</strong></div></div>
+        <div id="armStatus" class="arm-status"><span class="status-dot"></span><span>Waiting for participant</span></div>
+        <button id="armButton" class="arm-btn" disabled>ARM TEST</button>
+        <div class="secondary-actions"><button id="disarmButton" class="ghost-btn" disabled>Disarm</button><button id="nextButton" class="ghost-btn" disabled>Next condition</button></div>
+      </section>
+
+      <section class="blocks-panel panel-section"><div class="section-title"><h2>Session runs</h2><span id="blockSummary" class="subtle">—</span></div><div class="blocks"><table class="runs-table"><thead><tr><th>Condition</th><th>Status</th><th>Hits</th><th>Shots</th></tr></thead><tbody id="blocks"></tbody></table></div></section>
+      <section class="notes-panel panel-section"><div class="section-title"><h2>Session notes</h2><button id="saveNote" class="link-btn">Add note</button></div><textarea id="noteText" rows="2" placeholder="Record an operator observation…"></textarea></section>
+      <section class="abort-panel"><button id="abortButton" class="danger-btn" disabled>Abort test</button><span id="recordingPath" class="subtle">Recording path unavailable</span></section>
+    </aside>
+  </main>
+
+  <div id="startDialog" class="overlay" hidden><form id="startForm" class="modal" novalidate><button type="button" class="close-btn" id="closeDialog">×</button><span class="eyebrow">NEW SESSION</span><h2>Start participant</h2><p class="modal-sub">Create the participant pipeline, then arm each condition when the setup is ready.</p><label class="field-label">Participant ID<input id="participantInput" required autocomplete="off" placeholder="e.g. P-014"></label><div class="field-label"><span>Condition order</span><span class="subtle">Use the arrows to set the run order.</span></div><ol id="conditionOrder" class="order-list"></ol><div id="startError" class="form-error" hidden></div><div class="modal-actions"><button type="button" class="ghost-btn" id="cancelDialog">Cancel</button><button class="primary-btn" type="submit">Create participant</button></div></form></div>
+  <div id="abortDialog" class="overlay" hidden><form id="abortForm" class="modal" novalidate><button type="button" class="close-btn" id="closeAbort">×</button><span class="eyebrow">STOP SESSION</span><h2>Abort test?</h2><p class="modal-sub">The current run will be stopped and marked with the reason below.</p><label class="field-label">Reason<textarea id="abortReason" rows="3" required placeholder="What caused the abort?"></textarea></label><div id="abortError" class="form-error" hidden></div><div class="modal-actions"><button type="button" class="ghost-btn" id="cancelAbort">Keep running</button><button class="danger-btn" type="submit">Abort test</button></div></form></div>
+  <script src="app.js"></script>
+</body>
+</html>

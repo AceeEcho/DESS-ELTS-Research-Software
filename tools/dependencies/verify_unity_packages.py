@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from tools.progress.schema import load_json, validate_file
+from tools.validation.schema import load_json, validate_file
 
 
 def verify(root=ROOT):

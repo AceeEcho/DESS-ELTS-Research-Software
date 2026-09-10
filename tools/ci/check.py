@@ -1,4 +1,4 @@
-"""Dependency-free repository policy, documentation and baseline CI entry."""
+"""Dependency-free source hygiene, documentation and software test entry."""
 from __future__ import annotations
 import argparse
 import json
@@ -8,11 +8,13 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
 
 def policy():
     files = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).decode().split("\0")
-    tracked = set(filter(None, files))
+    # Worktree deletions are legitimate before the user stages a cleanup.
+    tracked = {name for name in files if name and (ROOT / name).is_file()}
     forbidden = ("unity/Library/", "unity/Temp/", "unity/Logs/", "data/", "config/local/", "build/", "release/")
     for name in tracked:
         if name.startswith("unity/Assets/") and name.endswith(".meta"):
@@ -29,17 +31,14 @@ def policy():
         if name.startswith(("scripts/", "tools/", "unity/Assets/ELTS/")) and Path(name).suffix in {".py", ".ps1", ".cs"}:
             if re.search(r"[A-Za-z]:[/\\]Users[/\\]", (ROOT / name).read_text(encoding="utf-8")):
                 raise ValueError("Machine-specific user path in executable source: " + name)
-    # Accepted originals and immutable evidence retain historical content; they
-    # are verified by their hashes, not rewritten to satisfy source-code policy.
     print("PASS: repository paths, asset metadata and executable-source portability")
 
 
 def documentation():
+    from tools.build.package import FILES as package_files
+
     # Validate Markdown file links, not illustrative code paths or network URLs.
-    files = [ROOT / "README.md", *sorted((ROOT / "docs/ai").glob("*.md")), *sorted((ROOT / "docs/modules").glob("*.md"))]
-    # This guide is part of the clone handoff; broken local images must fail CI.
-    guide = ROOT / "docs/operator/multi-machine-setup.md"
-    if guide.exists(): files.append(guide)
+    files = [ROOT / "README.md", ROOT / "AGENTS.md", *sorted((ROOT / "docs").rglob("*.md"))]
     pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
     checked = 0
     for file in files:
@@ -48,7 +47,14 @@ def documentation():
         for match in pattern.finditer(content):
             target = match.group(1).split("#", 1)[0].strip("<>")
             if not target or re.match(r"[a-zA-Z]+:", target): continue
-            if not (file.parent / target).exists():
+            # The packaged README uses release-relative links. Resolve them
+            # through the actual packaging map instead of inventing source paths.
+            resolved = file.parent / target
+            if file == ROOT / "docs/operator/development-package.md":
+                source = next((src for src, dest in package_files.items() if dest == target), None)
+                if source is not None:
+                    resolved = ROOT / source
+            if not resolved.exists():
                 raise ValueError(f"Broken documentation link: {file.relative_to(ROOT)} -> {target}")
             checked += 1
     print(f"PASS: {checked} local documentation links")
@@ -56,12 +62,9 @@ def documentation():
 
 def run():
     commands = [
-        ["tools/plan/build_plan.py", "--check"],
-        ["tools/progress/build_schemas.py", "--check"],
-        ["tools/progress/validate.py"], ["tools/progress/reduce.py", "--check"],
         ["tools/dependencies/verify_openvr.py"], ["tools/dependencies/verify_unity_packages.py"],
     ]
-    for folder in ("plan", "progress", "config", "bootstrap", "dependencies", "build", "logging"):
+    for folder in ("validation", "config", "bootstrap", "dependencies", "build", "logging"):
         commands.append(["-m", "unittest", "discover", "-s", "tools/" + folder, "-p", "test_*.py"])
     for args in commands:
         subprocess.run([sys.executable, "-X", "utf8", *args], cwd=ROOT, check=True)

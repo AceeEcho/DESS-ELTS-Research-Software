@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from datetime import datetime, timezone
 from tools.bootstrap.driver import atomic_json, publish_new, relative_output, validate_unity_results
-from tools.progress.schema import load_json, validate_file
+from tools.validation.schema import load_json, validate_file
 
 class DriverTests(unittest.TestCase):
     def test_output_paths_reject_lexical_escape_and_allow_expected_roots(self):

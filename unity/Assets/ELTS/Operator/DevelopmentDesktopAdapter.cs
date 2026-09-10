@@ -50,7 +50,7 @@ namespace Elts.Operator
 
         public void SubmitDesktopTrigger()
         {
-            if(!CanDesktopFire || desktop?.IsOpen!=true)return;
+            if(!CanDesktopFire || (!SeparateAdministrator && desktop?.IsOpen!=true))return;
             try
             {
                 // Input and critical events are observed on the main thread.

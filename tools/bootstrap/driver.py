@@ -22,7 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from tools.config.stage import stage
-from tools.progress.schema import load_json, validate_file
+from tools.validation.schema import load_json, validate_file
 
 # Engineering timeouts, not study timing or exposure limits.
 PYTHON_TEST_TIMEOUT_SECONDS = 600
@@ -169,8 +169,6 @@ def run(args) -> tuple[dict, Path]:
         py = [sys.executable, "-X", "utf8"]
 
         if args.action in {"bootstrap", "doctor"}:
-            command("plan", py + ["tools/plan/build_plan.py", "--check"])
-            command("progress", py + ["tools/progress/validate.py"])
             for audit in ("verify_openvr.py", "verify_unity_packages.py"):
                 if (ROOT / "tools/dependencies" / audit).is_file():
                     command(audit.removesuffix(".py"), py + ["tools/dependencies/" + audit])
@@ -205,7 +203,7 @@ def run(args) -> tuple[dict, Path]:
 
         elif args.action == "test":
             selected = args.suite
-            for suite, folder in (("plan", "tools/plan"), ("progress", "tools/progress"), ("config", "tools/config"), ("bootstrap", "tools/bootstrap"), ("dependencies", "tools/dependencies"), ("build-provenance", "tools/build"), ("logging", "tools/logging")):
+            for suite, folder in (("validation", "tools/validation"), ("config", "tools/config"), ("bootstrap", "tools/bootstrap"), ("dependencies", "tools/dependencies"), ("build-provenance", "tools/build"), ("logging", "tools/logging")):
                 if selected in {"all", "baseline", suite}:
                     command(suite, py + ["-m", "unittest", "discover", "-s", folder, "-p", "test_*.py", "-v"])
             if selected in {"all", "geometry", "runtime"}:
@@ -291,7 +289,7 @@ def run(args) -> tuple[dict, Path]:
             raise ValueError("Study provisioning/packaging/startup is unavailable: approved study configuration, physical acceptance and release gates remain pending. Use development instructions.")
     except Exception as exc:
         report["result"] = "fail"
-        check("failure", "fail", str(exc), remediation="Reconcile the stated input/check, preserve diagnostics, and rerun. Do not change progress manually.")
+        check("failure", "fail", str(exc), remediation="Fix the stated input/check, preserve diagnostics, and rerun.")
     validate_file(report, ROOT / "schemas/diagnostics/doctor-report.schema.json")
     atomic_json(report_path, report)
     return report, report_path
@@ -301,7 +299,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--action", required=True, choices=ACTIONS)
     parser.add_argument("--unity-editor")
-    parser.add_argument("--suite", default="all", choices=("all", "baseline", "plan", "progress", "config", "geometry", "runtime", "unity-edit", "unity-play"))
+    parser.add_argument("--suite", default="all", choices=("all", "baseline", "validation", "config", "geometry", "runtime", "unity-edit", "unity-play"))
     parser.add_argument("--output")
     parser.add_argument("--report")
     parser.add_argument("--check", action="store_true")

@@ -1,1 +1,0 @@
-PASS: source hashes/counts, bootstrap mapping, references and dependency DAG; {'workItems': 103, 'atomicSteps': 267}. No progress state written.

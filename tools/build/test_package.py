@@ -1,5 +1,7 @@
 """Integrity/portability regressions; fixture executables are never launched."""
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -47,6 +49,14 @@ class PackageTests(unittest.TestCase):
         self.assertFalse(info["studyReady"])
         self.assertTrue((self.output / "analysis/run_ingest.py").is_file())
         self.assertEqual((self.output / "player/ELTS-Synthetic.exe").read_bytes(), b"unit-test-only-not-executable")
+        # A copied package must resolve the shared validator without this
+        # checkout, PYTHONPATH, or the removed management tooling on its path.
+        result = subprocess.run(
+            [sys.executable, "-I", str(self.output / "tools/build/package.py"),
+             "--verify", str(self.output)], cwd=self.root, capture_output=True,
+            text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["result"], "pass")
 
     def test_changed_document_and_unexpected_code_fail(self):
         self.create()

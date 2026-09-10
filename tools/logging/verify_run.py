@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
-from tools.progress.schema import ValidationError, load_json, validate
+from tools.validation.schema import ValidationError, load_json, validate
 
 
 class VerificationError(ValueError):

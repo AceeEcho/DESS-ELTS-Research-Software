@@ -268,7 +268,7 @@ namespace Elts.Operator
                 { setupPending=false; closing=true; Begin(CloseRecordingAsync); }
             }
             RefreshLabels();
-            desktop?.Tick(Time.unscaledDeltaTime);
+            if(!SeparateAdministrator) desktop?.Tick(Time.unscaledDeltaTime);
         }
 
         private void RefreshLabels()

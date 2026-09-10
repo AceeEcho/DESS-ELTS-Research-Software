@@ -23,7 +23,7 @@ if str(ROOT) not in sys.path:
 from tools.build.provenance import sha
 from tools.build.verify import verify as verify_player
 from tools.logging.verify_run import verify_run
-from tools.progress.schema import load_json
+from tools.validation.schema import load_json
 
 PACKAGE_SCHEMA = "elts.development-package.v1"
 # Only this documented output directory may grow after the operator runs the
@@ -38,7 +38,7 @@ FILES = {
     "docs/modules/elts-session.md": "docs/elts-session.md",
     "analysis/run_ingest.py": "analysis/run_ingest.py",
     "analysis/fixtures/synthetic-calibration.json": "analysis/fixtures/synthetic-calibration.json",
-    "tools/progress/schema.py": "tools/progress/schema.py",
+    "tools/validation/schema.py": "tools/validation/schema.py",
     "tools/logging/verify_run.py": "tools/logging/verify_run.py",
     "tools/build/provenance.py": "tools/build/provenance.py",
     "tools/build/verify.py": "tools/build/verify.py",

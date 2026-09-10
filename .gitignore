@@ -1,4 +1,4 @@
-# Generated caches/builds; original committed deliverables remain preserved.
+# Generated caches, builds and local runtime data.
 **/__pycache__/
 *.py[cod]
 .venv/
@@ -18,6 +18,8 @@ Thumbs.db
 /unity/[Rr]ecordings/
 /unity/*.csproj
 /unity/*.sln*
+/unity/Assets/InitTestScene*.unity
+/unity/Assets/InitTestScene*.unity.meta
 /unity/Assets/StreamingAssets/config-generated/
 /config/local/
 /config/local.json

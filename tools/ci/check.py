@@ -38,7 +38,7 @@ def documentation():
     from tools.build.package import FILES as package_files
 
     # Validate Markdown file links, not illustrative code paths or network URLs.
-    files = [ROOT / "README.md", ROOT / "AGENTS.md", *sorted((ROOT / "docs").rglob("*.md"))]
+    files = [ROOT / "README.md", *sorted((ROOT / "docs").rglob("*.md"))]
     pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
     checked = 0
     for file in files:

@@ -43,7 +43,7 @@ calibration, safety, timing, display, or study-readiness acceptance.
    `unity-edit`, and `unity-play`; `-Suite all` runs the available subset and
    reports deferred Unity work without claiming a study result. Unity XML is
    accepted only when it is fresh and reports `Passed`.
-4. Work on the requested change using [AGENTS.md](../../AGENTS.md). Read relevant
+4. Work on the requested change. Read relevant
    source/contracts, edit, and run the affected checks. Setup is for a new machine
    or changed prerequisites, not a step to repeat before each edit.
 

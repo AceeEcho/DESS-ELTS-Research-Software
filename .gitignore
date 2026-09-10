@@ -35,3 +35,31 @@ Thumbs.db
 *.pem
 .env
 .env.*
+
+# Local coding-agent configuration, instructions and session data.
+# Keep these out of source control at the root and in nested workspaces.
+.codex
+.claude/
+.claude.json
+.agents/
+.agent/
+AGENTS.md
+AGENTS.override.md
+CLAUDE.md
+CLAUDE.local.md
+claude.md
+.cursor/
+.cursorrules
+.windsurf/
+.windsurfrules
+.continue/
+.gemini/
+GEMINI.md
+.aider.conf.yml
+.aider.chat.history.md
+.aider.input.history
+.github/copilot-instructions.md
+.github/instructions/
+.github/agents/
+.github/prompts/
+.github/skills/

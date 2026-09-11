@@ -105,22 +105,31 @@ and SHA-256 checksums. A per-test checkpoint is useful recovery evidence but is 
 replacement for this final integrity summary. The analysis reader still requires a
 successfully finalized raw recording.
 
-The **Session notes** timeline shows accepted timestamped observations. **Recordings**
-lists local recordings, opens a descriptive attempt/notes review, downloads review
-counts as CSV, exports a finalized raw recording as a ZIP, and opens the data folder.
-The review is not an integrity verification or a research score; use the analysis
-reader for those checks. ZIP creation retains raw streams, calibration, checkpoints
-and the final summary, and publishes a unique archive only after writing succeeds.
-An active or incomplete raw recording cannot be exported as a finalized ZIP.
+The **Session notes** timeline shows accepted timestamped observations. The small
+**Data** button switches to the participant collection while administration keeps
+running. Search by participant ID or name, select a session, inspect its tests and
+notes, or page through original JSON records.
 
-Recordings now live in **collection data** at the project root, shared by the
-Unity Editor and all builds within that clone. Each participant gets a unique
-timestamped subfolder containing the raw streams and per-test save checkpoints;
-the final summary is written when the participant session closes. Exports are
-in **collection data/exports**. **Recordings → Open data folder** opens this location.
-The folder is excluded from Git. Previous recordings remain at their original
-locations. A standalone player copied outside a project clone saves to
-**collection data** beside its executable.
+The collection folder and SQLite database are initialized on dashboard startup.
+Raw streams are retained and indexed into SQLite after each checkpoint and final
+closure. **Refresh** imports existing recordings and retries secondary-copy errors.
+The viewer displays the actual configured folder and persistent errors. Optional
+browser preference storage is never required for the controls to initialize.
+
+**Export database** creates a whole-collection SQLite snapshot; **Export participant**
+creates a fresh database containing only the selected participant. **Download export**
+saves it through the browser. **Export original files** retains finalized raw files
+in a ZIP, and **Download review CSV** saves the descriptive test table. Exports are
+also retained in the configured folder's `exports` subdirectory.
+
+The default folder is **collection data** at the project root. Existing custom or
+older machine overlays retain their configured path, which **Open folder** opens.
+A standalone copy outside a project saves alongside its executable. Automated
+Unity test recordings use a separate temporary test directory.
+
+See [local participant collection](data-collection.md) for schema, identity, recovery,
+export guarantees and limitations. Synthetic data remains unsuitable for physical
+or study-readiness claims.
 
 Duration edits, pauses, resumes and early endings are recorded as explicit events.
 The analysis reader retains flexible synthetic timing summaries but excludes those

@@ -4,14 +4,20 @@
   const $ = (id) => document.getElementById(id);
   const conditions = ['WE_FT', 'WE_MT', 'NE_FT', 'NE_MT'];
   const token = decodeURIComponent(location.hash.replace(/^#/, ''));
-  const savedPane = Number(localStorage.getItem('elts-admin-pane'));
+  // Browser privacy policies can block preference storage. Controls and recording
+  // still work; only the optional layout preferences become session-local.
+  const preference = {
+    get(key) { try { return localStorage.getItem(key); } catch { return null; } },
+    set(key, value) { try { localStorage.setItem(key, value); } catch { /* Optional preference. */ } }
+  };
+  const savedPane = Number(preference.get('elts-admin-pane'));
   let imageLoading = false;
   let intakeShown = false, submitting = false, orbitPending = false, orbitDirty = false;
   let orbitLocalUntil = 0;
   let testActionBusy = false, stopBlockId = '', stopRunId = '';
   const durationDrafts = new Set(), durationSaves = new Map(), durationFeedback = new Map();
   let state = null, order = conditions.slice(), pollBusy = false, viewVersion = null;
-  let workflows;
+  let workflows, dataViewer;
   let refreshIdle = Promise.resolve();
   let orbit = { yaw: 0, pitch: 0, distance: 1 }, dragging = false, lastPoint = null;
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -44,6 +50,7 @@
   }
   function render() {
     if (!state) return;
+    dataViewer?.render(state);
   const phase = state.phase || state.state || 'idle';
   const running = /running|armed|ready|waiting/i.test(`${phase} ${state.state || ''}`);
   $('participant').textContent = state.participant || '—';
@@ -247,9 +254,9 @@
   $('settingsButton').addEventListener('click', () => { renderOrder(); $('settingsDialog').hidden = false; $('closeSettings').focus(); });
   $('closeSettings').addEventListener('click', () => { $('settingsDialog').hidden = true; $('settingsButton').focus(); });
   $('previewRate').addEventListener('change', () => command('previewRate', { fps: Number($('previewRate').value) }).catch(error => notifyError($('settingsError'), error)));
-  $('reduceMotion').checked = localStorage.getItem('elts-admin-reduced-motion') === 'true';
+  $('reduceMotion').checked = preference.get('elts-admin-reduced-motion') === 'true';
   document.body.classList.toggle('reduce-motion', $('reduceMotion').checked);
-  $('reduceMotion').addEventListener('change', () => { document.body.classList.toggle('reduce-motion', $('reduceMotion').checked); localStorage.setItem('elts-admin-reduced-motion', $('reduceMotion').checked); });
+  $('reduceMotion').addEventListener('change', () => { document.body.classList.toggle('reduce-motion', $('reduceMotion').checked); preference.set('elts-admin-reduced-motion', $('reduceMotion').checked); });
   $('windowed').addEventListener('click', () => command('windowed').catch((error) => { notifyError($('settingsError'), error); }));
   $('fullscreen').addEventListener('click', () => command('fullscreen').catch((error) => { notifyError($('settingsError'), error); }));
   // Coalesce camera changes; never queue a stream of stale orbit commands.
@@ -293,7 +300,7 @@
   $('splitHandle').addEventListener('pointerdown', (event) => { const workspace = $('workspace');
   const move = (e) => { const ratio = Math.max(.3, Math.min(.65, (workspace.getBoundingClientRect().right - e.clientX) / workspace.clientWidth));
   document.documentElement.style.setProperty('--pane', `${ratio * 100}%`);
-  localStorage.setItem('elts-admin-pane', ratio); };
+  preference.set('elts-admin-pane', ratio); };
   const done = () => { window.removeEventListener('pointermove', move);
   window.removeEventListener('pointerup', done); };
   window.addEventListener('pointermove', move);
@@ -303,7 +310,7 @@
   const current = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pane')) / 100;
   const next = Math.max(.3, Math.min(.65, current + (event.key === 'ArrowLeft' ? .02 : -.02)));
   document.documentElement.style.setProperty('--pane', `${next * 100}%`);
-  localStorage.setItem('elts-admin-pane', next); });
+  preference.set('elts-admin-pane', next); });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { closeDialog();
   closeAbort(); $('stopTestDialog').hidden = true; $('settingsDialog').hidden = true; $('exceptionDialog').hidden = true; $('recordingsDialog').hidden = true; $('settingsButton').focus(); }
   // Keep keyboard navigation inside the topmost open modal.
@@ -318,6 +325,7 @@
   }
   if (savedPane >= .3 && savedPane <= .65) document.documentElement.style.setProperty('--pane', `${savedPane * 100}%`);
   wire();
+  dataViewer = window.createDataViewer({command, refresh, escapeHtml, token});
   refresh();
   // Match the selected preview cadence without overlapping state requests.
   const poll = async () => {

@@ -226,9 +226,7 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
     try { await command(name, { id }); await refresh(); }
     catch (e) { error('recordingError', e); }
   }
-  $('recordingsButton').addEventListener('click', () => {
-    $('recordingsDialog').hidden = false; $('closeRecordings').focus(); archiveAction('listRecordings');
-  });
+
   $('closeRecordings').addEventListener('click', () => { $('recordingsDialog').hidden = true; $('recordingsButton').focus(); });
   $('refreshRecordings').addEventListener('click', () => archiveAction('listRecordings'));
   $('openDataFolder').addEventListener('click', () => archiveAction('openDataFolder'));

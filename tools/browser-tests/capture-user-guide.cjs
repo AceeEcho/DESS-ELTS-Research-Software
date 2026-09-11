@@ -19,6 +19,7 @@ let current = {
   conditionOrder: conditions.slice(), testDurations: Object.fromEntries(conditions.map(c => [c, 300])),
   editableDurations: conditions.slice(), blocks: [], remainingSeconds: 0, activeSeconds: 0,
   tracking: {}, camera: { yaw: 145, pitch: 20, distance: 4 },
+  data:{ready:true,busy:false,path:'collection data',message:'Local collection refreshed.',profiles:[{id:'demo-profile',code:'DEMO-001',name:'Demonstration participant',sessions:'1',modifiedUtc:'2026-09-11T12:00:00Z'}]},
   tools: { practiceSeconds: 10, breakSeconds: 60, saveStatus: 'No recording yet.', notes: [], checkpoints: [],
     schedule: conditions.slice(), queueIndex: 0, repeatable: [], readiness: [], calibration: {}, recordings: [] }
 };
@@ -37,6 +38,7 @@ const server = http.createServer(async (req, res) => {
     if (command.action === 'setDuration') current.testDurations[command.condition] = command.seconds;
     if (command.action === 'startBreak') { current.state = 'Break'; current.remainingSeconds = 22; current.tools.canStartBreak = false; }
     if (command.action === 'skipBreak') { current.state = 'BlockReady'; current.tools.canSkipBreak = false; }
+    if (command.action === 'viewParticipant') current.data.profile={participant:current.data.profiles[0],sessions:[{id:'demo-session',modifiedUtc:'2026-09-11T12:00:00Z',finalized:'1',review:JSON.stringify({attempts:[{condition:'WE_FT',blockId:'WE_FT-attempt-01',status:'Completed',hits:2,shots:3,activeSeconds:300,scoreStatus:'unavailable'}],notes:[{text:'Fictional demonstration. Participant reported comfortable posture.'}]})}]};
     if (command.action === 'listRecordings') current.tools.recordings = [{ id: 'DEMO-001-example', finalized: true }];
     if (command.action === 'reviewRecording') current.tools.review = { id: command.id, finalized: true,
       attempts: [{ blockId: 'WE_FT-attempt-01', condition: 'WE_FT', status: 'Completed', hits: 2, shots: 3, activeSeconds: 300, scoreStatus: 'unavailable' }],
@@ -44,7 +46,7 @@ const server = http.createServer(async (req, res) => {
     res.setHeader('Content-Type', 'application/json'); res.end('{"ok":true}'); return;
   }
   const name = req.url === '/' ? 'index.html' : req.url.slice(1);
-  if (!['index.html', 'app.js', 'workflows.js', 'styles.css'].includes(name)) { res.writeHead(404); res.end(); return; }
+  if (!['index.html', 'app.js', 'workflows.js', 'data-viewer.js', 'styles.css'].includes(name)) { res.writeHead(404); res.end(); return; }
   res.setHeader('Content-Type', name.endsWith('.js') ? 'text/javascript' : name.endsWith('.css') ? 'text/css' : 'text/html');
   res.end(fs.readFileSync(path.join(assets, name)));
 });
@@ -57,6 +59,7 @@ const server = http.createServer(async (req, res) => {
   // State comes through the same HTTP interface as the desktop application.
   async function settle() { await page.waitForTimeout(500); }
   async function shot(name, selector) {
+    if(process.argv.includes("--data-only") && !["01-dashboard","13-data-viewer"].includes(name))return;
     const target = selector ? page.locator(selector) : page;
     if (selector) await target.scrollIntoViewIfNeeded();
     await settle();
@@ -100,10 +103,10 @@ const server = http.createServer(async (req, res) => {
     await page.locator('#startBreak').click();
     await settle(); await shot('11-break-countdown', '#breakPanel');
     await page.locator('#recordingsButton').click();
-    await page.locator('[data-recording="DEMO-001-example"]').click();
-    await page.locator('#downloadReview:not(:disabled)').waitFor();
-    await shot('12-recordings', '#recordingsDialog .modal');
+    await page.locator('[data-profile-id="demo-profile"]').click();
+    await page.locator('#dataExportParticipant').waitFor();
+    await shot('13-data-viewer');
     assert.deepEqual(errors, []);
-    console.log('PASS: 12 user-guide screenshots from current dashboard assets.');
+    console.log('PASS: requested user-guide screenshots from current dashboard assets.');
   } finally { await browser.close(); server.close(); }
 })().catch(error => { console.error(error); server.close(); process.exitCode = 1; });

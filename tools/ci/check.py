@@ -15,7 +15,7 @@ def policy():
     files = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).decode().split("\0")
     # Worktree deletions are legitimate before the user stages a cleanup.
     tracked = {name for name in files if name and (ROOT / name).is_file()}
-    forbidden = ("unity/Library/", "unity/Temp/", "unity/Logs/", "data/", "config/local/", "build/", "release/")
+    forbidden = ("unity/Library/", "unity/Temp/", "unity/Logs/", "data/", "collection data/", "config/local/", "build/", "release/")
     for name in tracked:
         if name.startswith("unity/Assets/") and name.endswith(".meta"):
             metadata = (ROOT / name).read_bytes()

@@ -178,6 +178,7 @@ namespace Elts.Operator
             {
                 await CloseRecordingAsync();
                 if(!await recording.ReserveAndStartAsync(runId))throw new IOException("A separate repeat recording could not be created.");
+                await SaveParticipantIdentityAsync();
                 engine!.ReopenDevelopmentRepeat(condition,reason);
                 engine.SetDevelopmentDuration(condition,stationDurations[condition]);
                 engine.SetDevelopmentPhaseDurations(stationPracticeSeconds,stationBreakSeconds);
@@ -216,6 +217,7 @@ namespace Elts.Operator
                 string content=JsonConvert.SerializeObject(checkpoint,Formatting.Indented);
                 await Task.Run(()=>PublishReviewFile(path,content));
                 stationCheckpoints.Add(checkpoint);
+                await SyncCollectionRecording();
                 stationSaveStatus="Saved "+checkpoint.condition+" · "+checkpoint.blockId+" · "+checkpoint.savedUtc;
             }
             catch(Exception error)
@@ -235,7 +237,9 @@ namespace Elts.Operator
             File.Move(pending,path); // No overwrite, including repeated attempts.
         }
 
-        private string StationDataRoot => view.Configuration.Machine.ResolveDataRoot(Path.Combine(Application.dataPath,".."));
+        private string StationDataRoot => Array.IndexOf(Environment.GetCommandLineArgs(),"-runTests")>=0
+            ?Path.Combine(Application.temporaryCachePath,"elts-automated-recordings")
+            :view.Configuration.Machine.ResolveDataRoot(Path.Combine(Application.dataPath,".."));
 
         public void StationArchiveAction(string action,string id="")
         {
@@ -300,6 +304,8 @@ namespace Elts.Operator
         {
             // Only regular files directly owned by the recording are exported.
             // Refuse links instead of following them to unrelated local files.
+            if((File.GetAttributes(directory)&FileAttributes.ReparsePoint)!=0 || (File.GetAttributes(Path.GetDirectoryName(destination)!)&FileAttributes.ReparsePoint)!=0)
+                throw new IOException("Raw export folders cannot be links.");
             string pending=destination+".pending";
             using(var stream=new FileStream(pending,FileMode.CreateNew,FileAccess.Write))
             {
@@ -362,7 +368,8 @@ namespace Elts.Operator
         public void StationOpenDataFolder()
         {
             string directory=StationDataRoot;Directory.CreateDirectory(directory);
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(directory){UseShellExecute=true});
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", "\""+directory+"\""){UseShellExecute=true});
+            collectionMessage="Opened data folder: "+directory;
         }
     }
 }

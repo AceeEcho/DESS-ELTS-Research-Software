@@ -11,9 +11,15 @@
     <div class="brand"><span class="brand-mark">E</span><div><strong>ELTS</strong><span>Administrator · synthetic test</span></div></div>
     <div class="participant-status"><span class="eyebrow">PARTICIPANT</span><strong id="participant">—</strong><span id="runId" class="subtle">No run</span></div>
     <div class="top-status"><span id="connectionDot" class="status-dot offline"></span><span id="connectionText">Connecting…</span><span class="divider"></span><span id="phaseText">Idle</span></div>
-    <button id="recordingsButton" class="ghost-btn">Recordings</button><button id="startParticipant" class="primary-btn">New participant</button><button id="settingsButton" class="icon-btn" title="Settings" aria-label="Settings">⚙</button>
+    <button id="recordingsButton" class="ghost-btn" aria-pressed="false">Data</button><button id="startParticipant" class="primary-btn">New participant</button><button id="settingsButton" class="icon-btn" title="Settings" aria-label="Settings">⚙</button>
   </header>
 
+  <section id="dataWorkspace" class="data-workspace" hidden aria-label="Participant data viewer">
+    <div class="data-heading"><div><span class="eyebrow">LOCAL COLLECTION</span><h1>Participant data</h1><p>Sessions, test results and original records in one place.</p></div><div class="data-actions"><button id="dataRefresh" class="ghost-btn">Refresh</button><button id="dataFolder" class="ghost-btn">Open folder</button><button id="dataExportAll" class="primary-btn">Export database</button></div></div>
+    <p id="dataLive" class="data-live"></p>
+    <div class="data-storage"><span id="dataStatus" role="status"></span><a id="dataDownload" class="primary-btn" hidden>Download export</a><small id="dataPath"></small><p id="dataError" class="error-text" role="alert" hidden></p></div>
+    <div class="data-layout"><aside class="data-sidebar"><label for="dataSearch">Find a participant</label><input id="dataSearch" type="search" placeholder="Participant ID or name"><div id="dataProfiles"></div></aside><article id="dataProfile" class="data-profile"><h2>Your local participant collection</h2><p>Create a participant and complete a test to see saved data here. Existing recordings are indexed when you refresh.</p></article></div>
+  </section>
   <main class="workspace" id="workspace">
     <section class="view-pane pane">
       <div class="pane-head"><div><span class="eyebrow">LIVE VIEW</span><h1>Outside view</h1></div><div class="view-tools"><span id="viewVersion" class="subtle">Waiting for camera</span></div></div>
@@ -92,6 +98,7 @@
   <div id="exceptionDialog" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="exceptionTitle"><form id="exceptionForm" class="modal"><h2 id="exceptionTitle">Skip this test?</h2><p id="exceptionHelp" class="modal-sub"></p><label id="repeatChoice" class="field-label" hidden>Test to repeat<select id="repeatCondition"></select></label><label class="field-label">Reason<textarea id="exceptionReason" required maxlength="2000" rows="3"></textarea></label><p id="exceptionError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button type="button" id="cancelException" class="ghost-btn">Cancel</button><button id="confirmException" class="primary-btn">Confirm</button></div></form></div>
   <div id="recordingsDialog" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="recordingsTitle"><section class="modal recordings-modal"><button id="closeRecordings" class="close-btn" aria-label="Close recordings">×</button><h2 id="recordingsTitle">Recordings &amp; session review</h2><div class="secondary-actions"><button id="refreshRecordings" class="ghost-btn">Refresh list</button><button id="openDataFolder" class="ghost-btn">Open data folder</button></div><p id="archiveStatus" class="subtle" role="status"></p><div class="recording-layout"><div id="recordingList" class="recording-list" aria-label="Local recordings"></div><div><div id="recordingReview" class="recording-review"><p>Select a recording to review its attempts and notes.</p></div><div class="secondary-actions"><button id="downloadReview" class="ghost-btn" disabled>Download review CSV</button><button id="exportRecording" class="primary-btn" disabled>Export raw ZIP</button></div></div></div><p id="recordingError" class="form-error" role="alert" hidden></p></section></div>
   <script src="workflows.js"></script>
+  <script src="data-viewer.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

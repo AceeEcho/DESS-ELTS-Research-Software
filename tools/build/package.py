@@ -28,7 +28,8 @@ from tools.validation.schema import load_json
 PACKAGE_SCHEMA = "elts.development-package.v1"
 # Only this documented output directory may grow after the operator runs the
 # player. Packaged code/configuration/evidence remain checked byte-for-byte.
-RUNTIME_OUTPUT = "player/data/synthetic/"
+RUNTIME_OUTPUT = "player/collection data/"
+RUNTIME_OUTPUTS = (RUNTIME_OUTPUT, "player/data/synthetic/")
 RUNTIME_SOURCE_PATHS = ("unity/Assets", "unity/Packages", "unity/ProjectSettings", "config")
 FILES = {
     "docs/operator/development-package.md": "README.md",
@@ -57,6 +58,11 @@ def safe_relative(name: str) -> PurePosixPath:
 
 def package_files(root: Path) -> dict[str, str]:
     files = {}
+    runtime_outputs = list(RUNTIME_OUTPUTS)
+    config = root / "player/ELTS-Synthetic_Data/StreamingAssets/config-generated/effective-config.json"
+    if config.is_file():
+        configured = safe_relative(json.loads(config.read_text(encoding="utf-8"))["machine"]["dataRoot"]).as_posix()
+        runtime_outputs.append("player/" + configured + "/")
     for path in sorted(root.rglob("*")):
         if path.is_symlink() or (hasattr(path, "is_junction") and path.is_junction()):
             raise ValueError("Package must not contain symlinks or junctions")
@@ -64,8 +70,9 @@ def package_files(root: Path) -> dict[str, str]:
             name = path.relative_to(root).as_posix()
             # Interpreter bytecode is disposable runtime output, not source.
             generated_bytecode = "__pycache__" in path.parts and path.suffix == ".pyc" and name.startswith(("analysis/", "tools/"))
-            if name.startswith(RUNTIME_OUTPUT):
-                relative = name[len(RUNTIME_OUTPUT):]
+            runtime_prefix = next((prefix for prefix in runtime_outputs if name.startswith(prefix)), None)
+            if runtime_prefix:
+                relative = name[len(runtime_prefix):]
                 if not is_runtime_product(relative):
                     raise ValueError("Unexpected file in runtime recording directory: " + relative)
                 continue

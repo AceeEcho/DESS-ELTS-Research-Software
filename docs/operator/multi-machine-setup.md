@@ -62,9 +62,10 @@ The setup script does not calibrate the physical ELTS apparatus or prove safety 
 ## Open the project
 
 **One-click startup:** double-click `START-ELTS.cmd` in the cloned repository.
-It runs setup automatically when needed, builds the synthetic dashboard, and opens
-the dashboard and participant game. The Unity Editor is opened manually. On first use, allow time for
-installation, import, tests and building; complete any Unity sign-in/license prompts.
+It does the complete development start for you: setup when needed, a build or reuse
+of the verified synthetic player, and launch of the dashboard and participant game.
+The Unity Editor is opened manually. On first use, allow time for installation,
+import, tests and building; complete any Unity sign-in/license prompts.
 Repeat starts reuse the prepared tools and unchanged dashboard. If source changes
 require a rebuild while Unity is open, close that project and click the launcher
 again. Failure messages stay visible; the log is `diagnostics/start-console.log`.

@@ -241,6 +241,7 @@ def run(args) -> tuple[dict, Path]:
                         ("ReplayChecks", " replay checks"),
                         ("ScenarioChecks", " scenario checks"),
                         ("SessionChecks", " session checks"),
+                        ("CollectionChecks", " collection checks"),
                         ("SessionRecordingAdapterChecks", " session recording adapter checks"),
                         ("SessionAcquisitionChecks", " session acquisition checks"),
                         ("CalibrationChecks", " calibration checks"),

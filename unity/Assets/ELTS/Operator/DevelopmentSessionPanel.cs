@@ -150,7 +150,7 @@ namespace Elts.Operator
             {
                 clock??=new SharedMonotonicClock();
                 sequence=new SessionEventSequence();
-                string dataRoot=config.Machine.ResolveDataRoot(Path.Combine(Application.dataPath,".."));
+                string dataRoot=StationDataRoot;
                 diskFreeBytes=await Task.Run(()=>new DriveInfo(Path.GetPathRoot(dataRoot)!).AvailableFreeSpace);
                 if(diskFreeBytes<MinimumDiskBytes) throw new IOException("At least 2 GB free disk space is required.");
                 // A packaged build identity maps to its complete revision in
@@ -161,7 +161,8 @@ namespace Elts.Operator
                 var limits=new LoggingConfiguration(config.Runtime.SampleQueueCapacity,config.Runtime.EventQueueCapacity,
                     TimeSpan.FromSeconds(config.Runtime.LogFlushSeconds));
                 recording=new SessionRecordingAdapter(dataRoot,provenance,limits);
-                if(!await recording.ReserveAndStartAsync(runId)) throw new IOException("The recording could not be started.");
+                if(!await recording.ReserveAndStartAsync(runId)) throw new IOException("Cannot create recording in "+dataRoot+": "+recording.LastStartError);
+                await SaveParticipantIdentityAsync();
                 mockLink = new MockEltsLink(new SimulatedEltsController(clock));
                 var linkOptions = new SessionEltsLinkOptions((DevelopmentNeLinkMode)Enum.Parse(typeof(DevelopmentNeLinkMode),
                     root.Q<DropdownField>("neLinkMode").value), applicationVersion:Application.version);
@@ -218,6 +219,7 @@ namespace Elts.Operator
             if(engine == null || recording == null || !engine.CanRerun) return;
             await CloseRecordingAsync();
             if(!await recording.ReserveAndStartAsync(runId)) throw new IOException("The rerun recording could not be started.");
+            await SaveParticipantIdentityAsync();
             engine.RerunCurrentBlock();
             scenario=new DevelopmentSessionScenario(view.Configuration,clock!,engine,recording,sequence!);
             RecordInputSource();
@@ -234,6 +236,7 @@ namespace Elts.Operator
                 if(SeparateAdministrator)stationSaveStatus="SAVE FAILED: recording closure is incomplete; inspect retained files.";
                 throw new IOException("Recording closure failed; retained files require inspection.");
             }
+            if(SeparateAdministrator)await SyncCollectionRecording();
             if(SeparateAdministrator && recording?.RunDirectory!=null && engine!=null &&
                 !stationSaveStatus.StartsWith("SAVE FAILED",StringComparison.Ordinal) &&
                 File.Exists(Path.Combine(recording.RunDirectory,"session-summary.json")) &&

@@ -12,11 +12,13 @@ const output = path.join(root, 'test-results');
 fs.mkdirSync(output, { recursive: true });
 const conditions = ['WE_FT', 'WE_MT', 'NE_FT', 'NE_MT'];
 const commands = [];
+let rejectFolder = false;
 let current = {
   state: 'Idle', participant: '', runId: '', blockId: '', condition: '', canStartParticipant: true,
   conditionOrder: conditions.slice(), testDurations: Object.fromEntries(conditions.map(c => [c, 300])),
   editableDurations: conditions.slice(), blocks: [], remainingSeconds: 0, activeSeconds: 0,
   tracking: {}, camera: { yaw: 145, pitch: 20, distance: 4 },
+  data: {ready:true, busy:false, path:'collection data', message:'Local collection ready', profiles:[{id:'profile1',code:'P-001',name:'Fictional participant',sessions:'2',modifiedUtc:'2026-09-11T12:00:00Z'}]},
   tools: { practiceSeconds: 10, breakSeconds: 5, saveStatus: 'No recording yet.', notes: [], checkpoints: [],
     schedule: conditions.slice(), queueIndex: 0, repeatable: [], readiness: [], calibration: {}, recordings: [] }
 };
@@ -25,6 +27,7 @@ const server = http.createServer(async (req, res) => {
   if (req.url === '/api/command') {
     let data = ''; for await (const part of req) data += part;
     const command = JSON.parse(data); commands.push(command);
+    if(command.action === "openDataFolder" && rejectFolder){res.setHeader("Content-Type","application/json");res.end(JSON.stringify({ok:false,message:"Explorer could not open the folder."}));return;}
     if (command.action === 'applySetup') {
       current.conditionOrder = command.conditionOrder; current.testDurations = command.durations;
       current.tools.breakSeconds = command.breakSeconds; current.tools.practiceSeconds = command.practiceSeconds;
@@ -35,14 +38,18 @@ const server = http.createServer(async (req, res) => {
     if (command.action === 'setDuration') current.testDurations[command.condition] = command.seconds;
     if (command.action === 'startBreak') { current.state = 'Break'; current.remainingSeconds = 22; current.tools.canStartBreak = false; }
     if (command.action === 'skipBreak') { current.state = 'BlockReady'; current.tools.canSkipBreak = false; }
+    if (command.action === 'viewParticipant') current.data.profile = {participant:current.data.profiles[0],sessions:[{id:'session1',modifiedUtc:'2026-09-11T12:00:00Z',finalized:'1',review:JSON.stringify({attempts:[{condition:'WE_FT',blockId:'WE_FT-attempt-01',status:'Completed',hits:2,shots:3,activeSeconds:300}],notes:[{text:'<script>must remain text</script>'}]})}]};
+    if (command.action === 'viewDataRows') current.data.rows=[{offset:'0',json:JSON.stringify({eventType:'OperatorNote',payload:{text:'<img src=x onerror=alert(1)>'}})}];
+    if (command.action === 'exportParticipant' || command.action === 'exportDatabase') current.downloadId='fixture-export';
     if (command.action === 'listRecordings') current.tools.recordings = [{ id: 'synthetic-browser-test', finalized: true }];
     if (command.action === 'reviewRecording') current.tools.review = { id: command.id, finalized: true,
       attempts: [{ blockId: 'WE_FT-attempt-01', condition: 'WE_FT', status: 'Completed', hits: 2, shots: 3, activeSeconds: 300, scoreStatus: 'unavailable' }],
       notes: [{ text: '<script>must remain text</script>' }], limitation: 'Synthetic browser fixture.' };
     res.setHeader('Content-Type', 'application/json'); res.end('{"ok":true}'); return;
   }
+  if(req.url.startsWith('/api/download/')){res.setHeader('Content-Disposition','attachment; filename="fixture.sqlite"');res.end('SQL fixture bytes');return;}
   const name = req.url === '/' ? 'index.html' : req.url.slice(1);
-  if (!['index.html', 'app.js', 'workflows.js', 'styles.css'].includes(name)) { res.writeHead(404); res.end(); return; }
+  if (!['index.html', 'app.js', 'workflows.js', 'data-viewer.js', 'styles.css'].includes(name)) { res.writeHead(404); res.end(); return; }
   res.setHeader('Content-Type', name.endsWith('.js') ? 'text/javascript' : name.endsWith('.css') ? 'text/css' : 'text/html');
   res.end(fs.readFileSync(path.join(assets, name)));
 });
@@ -119,17 +126,52 @@ const server = http.createServer(async (req, res) => {
     await wait(() => current.state === 'BlockReady');
     assert.equal(commands.find(c => c.action === 'skipBreak').blockId, 'WE_FT-attempt-01', 'Skip break carries the displayed attempt identity');
     await page.locator('#recordingsButton').click();
-    await page.locator('[data-recording="synthetic-browser-test"]').click();
-    await page.locator('#downloadReview:not(:disabled)').waitFor();
-    const downloaded = page.waitForEvent('download'); await page.locator('#downloadReview').click();
-    assert.match((await downloaded).suggestedFilename(), /review.csv$/);
-    assert.equal(await page.locator('#recordingReview script').count(), 0, 'Stored notes cannot execute markup');
-    await page.locator('#closeRecordings').click();
+    await page.locator('[data-profile-id="profile1"]').click();
+    await page.locator('#dataExportParticipant').waitFor();
+    assert.equal(await page.locator('#workspace').isVisible(), false);
+    assert.equal(current.state, 'BlockReady', 'Data mode preserves test administration state');
+    assert.equal(await page.locator('#dataProfile script').count(), 0, 'Stored notes cannot execute markup');
+    await page.locator('#dataProfile summary').click();
+    await page.locator('#dataLoadRows').click();
+    await page.waitForFunction(() => document.getElementById('dataRawRows').textContent.includes('OperatorNote'));
+    assert.equal(await page.locator('#dataRawRows img').count(),0,'Raw JSON is escaped');
+    await page.locator('#dataExportParticipant').click();
+    await page.locator('#dataDownload').waitFor({state:'visible'});
+    const downloaded = page.waitForEvent('download'); await page.locator('#dataDownload').click();
+    assert.match((await downloaded).suggestedFilename(), /sqlite$/);
+    await page.locator('#dataExportAll').click(); await wait(()=>commands.some(c=>c.action==='exportDatabase'));
+    await page.locator('#dataFolder').click(); await wait(()=>commands.some(c=>c.action==='openDataFolder'));
+    rejectFolder = true; await page.locator('#dataFolder').click();
+    await page.waitForTimeout(500);
+    assert.match(await page.locator('#dataError').textContent(), /Explorer/, 'Command errors survive state polling');
+    rejectFolder = false; await page.locator('#dataFolder').click();
+    const csvDownload = page.waitForEvent('download'); await page.locator('#dataReviewCsv').click();
+    assert.match((await csvDownload).suggestedFilename(), /review.csv$/);
+    await page.locator('#dataSearch').fill('missing');
+    assert.equal(await page.locator('[data-profile-id]').count(),0,'Participant search filters profiles');
+    await page.locator('#dataSearch').fill('P-001');
+    current.data.error='Storage is read-only. Choose a writable local collection folder.';
+    await page.locator('#dataError').waitFor({state:'visible'});
+    assert.match(await page.locator('#dataError').textContent(),/read-only/,'Storage errors are visible');
+    current.data.error='';
+    await page.locator('#dataError').waitFor({state:'hidden'});
+    current.data.profile.sessions[0].review = JSON.stringify({attempts:[{condition:'WE_FT',blockId:'WE_FT-attempt-01',status:'Completed',hits:2,shots:3,activeSeconds:300}],notes:[{text:'Fictional demonstration. Participant reported comfortable posture.'}]});
+    await page.waitForFunction(()=>document.getElementById('dataProfile').textContent.includes('comfortable posture'));
+    await page.screenshot({path:path.join(output,'administrator-data.png'),fullPage:true});
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.screenshot({ path: path.join(output, 'administrator-mobile.png'), fullPage: true });
+    await page.screenshot({ path: path.join(output, 'administrator-data-mobile.png'), fullPage: true });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'Mobile page has no horizontal overflow');
+    await page.locator('#recordingsButton').click();
+    assert.equal(await page.locator('#workspace').isVisible(),true,'Toggle returns to test administration');
+    const restricted = await browser.newPage();
+    await restricted.addInitScript(() => Object.defineProperty(window, 'localStorage', {get(){throw new DOMException('Storage blocked','SecurityError');}}));
+    await restricted.goto(`http://127.0.0.1:${server.address().port}/#fixture`);
+    await restricted.waitForFunction(()=>document.getElementById('connectionText').textContent === 'Connected');
+    await restricted.locator('#recordingsButton').click();
+    assert.equal(await restricted.locator('#dataWorkspace').isVisible(),true,'Blocked browser preferences cannot disable controls');
+    await restricted.close();
     assert.deepEqual(errors, [], 'Dashboard has no browser errors');
-    console.log('PASS: administrator browser interactions (drag, cancel, keyboard, presets, timing, notes, review, CSV, mobile)');
+    console.log('PASS: administrator browser interactions (drag, cancel, keyboard, presets, timing, notes, participant profiles, SQL downloads, raw records, storage errors, mobile)');
   } catch (error) {
     await page.screenshot({ path: path.join(output, 'administrator-browser-failure.png'), fullPage: true });
     console.error('Browser errors:', errors);

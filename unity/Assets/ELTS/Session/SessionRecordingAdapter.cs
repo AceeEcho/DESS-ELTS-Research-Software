@@ -47,6 +47,7 @@ namespace Elts.Session
 
         /// <summary>Directory of the current or most recently closed unique run.</summary>
         public string? RunDirectory { get { lock (sync) return runDirectory; } }
+        public string LastStartError { get; private set; } = "";
         public bool IsOpen { get { lock (sync) return writer != null; } }
         public bool WriterHealthy { get { lock (sync) return writer != null && writer.IsWriterAlive && writer.Health.IsHealthy; } }
         public long DroppedSampleCount { get { lock (sync) return writer?.DroppedSampleCount ?? droppedSampleCount; } }
@@ -67,6 +68,7 @@ namespace Elts.Session
 
                 try
                 {
+                    LastStartError = "";
                     var lease = await Task.Run(() => LoggingRunDirectory.ReserveUnique(dataRoot, runId)).ConfigureAwait(false);
                     var next = new SessionLogWriter(lease, provenance, options, sinkFactory);
                     next.Start();
@@ -79,8 +81,9 @@ namespace Elts.Session
                     }
                     return next.Health.IsHealthy;
                 }
-                catch
+                catch(Exception error)
                 {
+                    LastStartError = error.Message;
                     return false;
                 }
             }

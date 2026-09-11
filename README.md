@@ -17,12 +17,12 @@ Use this guide to run the **development** version of the administrator dashboard
 ### 1. Open the software
 
 1. Use your local copy of the repository on the **development** branch. Finish any active session before updating it.
-2. Open the project folder and double-click **START-ELTS.cmd**. On first use, allow setup and the build to finish. Complete any Unity sign-in or license prompts.
+2. Open the project folder and double-click **START-ELTS.cmd**. This is the one button to use: it installs or reuses the required development tools, builds or reuses the verified player, then opens both the administrator dashboard and participant game. On first use, allow setup and the build to finish. Complete any Unity sign-in or license prompts.
 3. Two windows open: the **administrator dashboard** in your browser and the **participant game**. You do not need to open the Unity Editor to run a test.
 
 Need the project on a new computer? Follow the [illustrated setup guide](docs/operator/multi-machine-setup.md), choosing **development** for this version. The required Unity version is **6000.3.23f1 LTS**.
 
-![Dashboard overview: Recordings, New participant and the Settings gear are at the top right; test controls are in the right pane.](docs/operator/images/user-guide/01-dashboard.png)
+![Dashboard overview: Data, New participant and the Settings gear are at the top right; test controls are in the right pane.](docs/operator/images/user-guide/01-dashboard.png)
 
 | Where to look | What to do there |
 | --- | --- |
@@ -30,7 +30,7 @@ Need the project on a new computer? Follow the [illustrated setup guide](docs/op
 | **New participant**, top right | Enter participant details and begin a recording. |
 | **Test session**, right pane | Arm, pause, resume, stop and manage breaks. Scroll down for notes and save status. |
 | **Outside view**, left pane | Watch the camera view. Drag to orbit; use the mouse wheel to zoom. |
-| **Recordings**, top right | Review saved sessions and open their files. |
+| **Data**, top right | View participant profiles, saved sessions and exports. |
 
 The thin divider between the panes can be dragged to change their widths. Gray buttons become available when their action is allowed.
 
@@ -120,17 +120,26 @@ After each test ends:
 
 ### 8. Finish and find the saved data
 
-Click **Recordings**, then **Refresh list** if needed. Select a session on the left to review its attempts and notes.
+Click the small **Data** button at the top. It switches the dashboard to the participant collection. Click **Test administration** to return; switching views does not pause an active test.
 
-![Recordings window with a selected demonstration session, Open data folder, Download review CSV and Export raw ZIP.](docs/operator/images/user-guide/12-recordings.png)
+![Data viewer showing a fictional participant profile, saved sessions, results, notes and export controls.](docs/operator/images/user-guide/13-data-viewer.png)
 
-- **Open data folder:** opens **collection data** at the project root, beside the README and Start button. Each participant session has its own uniquely named subfolder.
-- **Download review CSV:** downloads the displayed review table through your browser.
-- **Export raw ZIP:** creates an archive of a finalized recording in **collection data/exports**.
+1. Find a participant by ID or name in the left panel. Reusing the same participant ID groups their sessions under one unique profile.
+2. Choose a saved session to see its test results and notes. Expand **Explore original records** to page through events, tracking samples or target records.
+3. Click **Refresh** to index existing recordings or pick up newly flushed data.
 
-Data is written continuously. Each finished or skipped test gets an automatic save checkpoint; you do not need to press a separate Save button. When the session closes, a final summary records file counts and integrity checksums. Wait for the session to finish saving before closing the app or starting another participant.
+- **Export database:** creates a standalone SQLite snapshot of the whole indexed collection.
+- **Export participant:** creates a standalone SQLite database containing only the selected participant and their sessions and records.
+- **Download export:** downloads the prepared file through your browser. Export copies also remain in the data folder's **exports** directory.
+- **Export original files:** creates a ZIP of the selected finalized session, preserving the original streams and checksums.
+- **Download review CSV:** downloads the displayed test table.
+- **Open folder:** opens the actual data folder shown in the viewer. The default is **collection data** beside the README and Start button; an older or customized machine configuration may select another folder.
 
-The **collection data** folder is excluded from Git: pushing the project does not back up recordings. Keep your data backup separately. Older recordings stay in their original folders. A standalone player copied outside the project saves beside its executable instead.
+The data folder and **collection.sqlite** are created when the administrator starts, even before the first participant. Raw data is written continuously. Each finished or skipped test saves a checkpoint and updates its SQL copy; the final recording closure updates SQL again. Exports contain the data indexed through the latest save or refresh. Wait for saving to finish before closing ELTS.
+
+Storage and export failures appear in the Data view and flag its button. If a SQL copy fails, the original raw files remain available; **Refresh** retries indexing. Browser privacy settings that block saved layout preferences do not disable the controls.
+
+The collection is local to this machine and excluded from Git. Pushing the project does not back up recordings or synchronize databases. Older recordings remain in their original folders; the viewer also checks the previous default **data/synthetic** location beside the current default folder. A standalone player copied outside the project saves beside its executable. See [data storage and recovery](docs/modules/data-collection.md) for the database layout and limits.
 
 ### If something does not look right
 

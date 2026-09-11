@@ -14,7 +14,8 @@ class BuildProvenanceTests(unittest.TestCase):
             config.parent.mkdir(parents=True)
             config.write_text('{"machine":{"dataRoot":"data/synthetic"}}', encoding="utf-8")
             finalize(root, {"mode": "synthetic-development", "studyReady": False, "version": "fixture"})
-            products = [".run-1.reservation", "run-1/events.ndjson", "run-1/test-checkpoint-WE_FT-attempt-01.json",
+            products = [".run-1.reservation", "run-1/events.ndjson", "run-1/participant.json", "collection.sqlite", "collection.sqlite-wal", "collection.sqlite-shm",
+                        "exports/participant-" + "b" * 32 + "-" + "c" * 32 + ".sqlite", "run-1/test-checkpoint-WE_FT-attempt-01.json",
                         "run-1/test-checkpoint-WE_FT-attempt-02.json.pending", "exports/run-1-" + "a" * 32 + ".zip"]
             for name in products:
                 product = root / "data/synthetic" / name

@@ -49,6 +49,14 @@ namespace Elts.Operator
         public string Token {get;}=Guid.NewGuid().ToString("N");
         public string Origin {get;}
         public string Url => Origin+"/#"+Token;
+        private readonly ConcurrentDictionary<string,string> exports=new ConcurrentDictionary<string,string>();
+        private string lastExport="",lastExportId="";
+        public string RegisterExport(string path)
+        {
+            if(path.Length==0)return "";
+            if(path!=lastExport){lastExport=path;lastExportId=Guid.NewGuid().ToString("N");exports[lastExportId]=path;}
+            return lastExportId;
+        }
 
         public AdministratorServer(string directory)
         {
@@ -62,17 +70,20 @@ namespace Elts.Operator
         public void PublishState(string json)=>Volatile.Write(ref state,Encoding.UTF8.GetBytes(json));
         public void PublishImage(byte[] jpeg)=>Volatile.Write(ref picture,jpeg);
         public bool TryTakeCommand(out PendingCommand command)=>commands.TryDequeue(out command);
+        private int connections;
         private void Serve()
         {
             while(!stopped)
             {
                 try
                 {
-                    using(var client=listener.AcceptTcpClient())
-                    {
-                        client.ReceiveTimeout=1500;client.SendTimeout=1500;
-                        using(var stream=client.GetStream())Handle(stream);
-                    }
+                    var client=listener.AcceptTcpClient();
+                    if(Interlocked.Increment(ref connections)>12){Interlocked.Decrement(ref connections);client.Dispose();continue;}
+                    ThreadPool.QueueUserWorkItem(_=> {
+                        try { using(client){client.ReceiveTimeout=1500;client.SendTimeout=10000;using(var stream=client.GetStream())Handle(stream);} }
+                        catch(Exception){ /* Isolate a disconnected download or malformed request. */ }
+                        finally {Interlocked.Decrement(ref connections);}
+                    });
                 }
                 catch(SocketException){if(stopped)return;}
                 catch(IOException){ }
@@ -106,7 +117,7 @@ namespace Elts.Operator
                 if(name=="content-length" && (!Int32.TryParse(value,out length)||length<0))length=MaximumCommandBytes+1;
             }
             if(host!=new Uri(Origin).Authority){Respond(stream,403,"text/plain",Array.Empty<byte>());return;}
-            if(route=="/api/view.jpg" && request[1].Contains("token="))
+            if((route=="/api/view.jpg" || route.StartsWith("/api/download/",StringComparison.Ordinal)) && request[1].Contains("token="))
             {
                 foreach(string part in request[1].Substring(request[1].IndexOf('?')+1).Split('&'))
                     if(part.StartsWith("token=",StringComparison.Ordinal))token=part.Substring(6);
@@ -115,10 +126,21 @@ namespace Elts.Operator
             {Respond(stream,403,"application/json",Encoding.UTF8.GetBytes("{\"ok\":false,\"message\":\"Open the administrator link from this Unity session.\"}"));return;}
             if(method=="GET")
             {
+                if(route.StartsWith("/api/download/",StringComparison.Ordinal))
+                {
+                    if(!exports.TryGetValue(route.Substring("/api/download/".Length),out var path) || !File.Exists(path))
+                    {Respond(stream,404,"text/plain",Encoding.UTF8.GetBytes("Export no longer available. Create a new export."));return;}
+                    using(var downloadFile=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.Read))
+                    {
+                        byte[] headers=Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: "+(path.EndsWith(".zip",StringComparison.OrdinalIgnoreCase)?"application/zip":"application/vnd.sqlite3")+"\r\nContent-Disposition: attachment; filename=\""+Path.GetFileName(path)+"\"\r\nContent-Length: "+downloadFile.Length+"\r\nConnection: close\r\nCache-Control: no-store\r\nReferrer-Policy: no-referrer\r\n\r\n");
+                        stream.Write(headers,0,headers.Length);downloadFile.CopyTo(stream);
+                    }
+                    return;
+                }
                 if(route=="/api/state"){Respond(stream,200,"application/json",Volatile.Read(ref state));return;}
                 if(route=="/api/view.jpg")
                 {var image=Volatile.Read(ref picture);Respond(stream,image.Length==0?204:200,"image/jpeg",image);return;}
-                string? file=route=="/"?"index.html":route=="/styles.css"?"styles.css":route=="/app.js"?"app.js":route=="/workflows.js"?"workflows.js":null;
+                string? file=route=="/"?"index.html":route=="/styles.css"?"styles.css":route=="/app.js"?"app.js":route=="/workflows.js"?"workflows.js":route=="/data-viewer.js"?"data-viewer.js":null;
                 if(file!=null && File.Exists(Path.Combine(directory,file)))
                 {Respond(stream,200,file.EndsWith("css")?"text/css":file.EndsWith("js")?"text/javascript":"text/html",File.ReadAllBytes(Path.Combine(directory,file)));return;}
                 Respond(stream,404,"text/plain",Encoding.UTF8.GetBytes("Not found"));return;

@@ -86,7 +86,7 @@ namespace Elts.Operator
                 ownsFramePacing=true;
             }
             Elts.Development.DevelopmentBanner.ShowInPlayer=false;
-            session.EnableSeparateAdministrator();view.ParticipantOnly=true;
+            session.EnableSeparateAdministrator();session.InitializeCollection();view.ParticipantOnly=true;
             view.ParticipantCamera.targetTexture=null;
             previewHeight=Mathf.RoundToInt(previewWidth*0.625f);
             outsideTexture=new RenderTexture(previewWidth,previewHeight,24,RenderTextureFormat.ARGB32){name="Administrator outside view"};outsideTexture.Create();
@@ -162,7 +162,7 @@ namespace Elts.Operator
                 if(!command.TryBegin())continue;
                 try
                 {
-                    if((string?)command.Payload["runId"]!=session.StationRunId)
+                    if(!IsDataAction((string?)command.Payload["action"]??"") && (string?)command.Payload["runId"]!=session.StationRunId)
                         throw new InvalidOperationException("The participant changed. Review the current session and try again.");
                     ApplyCommand(command.Payload);command.Complete("{\"ok\":true,\"message\":\"Action accepted.\"}");
                 }
@@ -176,6 +176,7 @@ namespace Elts.Operator
             if(Time.unscaledTime>=nextState)
             {nextState=Time.unscaledTime+1f/Mathf.Max(10,previewFramesPerSecond);server.PublishState(StateJson());}
         }
+        private static bool IsDataAction(string action)=>new[]{"refreshData","viewParticipant","viewDataRows","exportDatabase","exportParticipant","exportSessionRaw","openDataFolder","listRecordings","reviewRecording","exportRecording"}.Contains(action);
         public void ApplyCommand(JObject command)
         {
             string action=(string?)command["action"]??"";
@@ -209,6 +210,8 @@ namespace Elts.Operator
                     session.StationPreparationAction(action);CancelClick();break;
                 case "listRecordings":case "reviewRecording":case "exportRecording":
                     session.StationArchiveAction(action,(string?)command["id"]??"");break;
+                case "refreshData":case "viewParticipant":case "viewDataRows":case "exportDatabase":case "exportParticipant":case "exportSessionRaw":
+                    session.CollectionAction(command);break;
                 case "openDataFolder":session.StationOpenDataFolder();break;
                 case "next": session.StationNext();CancelClick();break;
                 case "abort": session.StationAbort((string?)command["reason"]??"");CancelClick();break;
@@ -327,7 +330,7 @@ namespace Elts.Operator
                 camera=new{yaw=orbitYaw,pitch=orbitPitch,distance=orbitDistance},viewVersion=imageVersion,
                 fullscreen=Screen.fullScreen,previewFps=previewFramesPerSecond,
                 synthetic=true,canNext=!session.IsBusy && (engine?.State==SessionState.BlockEnded || (engine?.State==SessionState.Break && engine.RemainingSeconds<=0)),
-                tools=session.StationToolsState
+                tools=session.StationToolsState, data=session.CollectionState, downloadId=server?.RegisterExport(session.CollectionExportPath)??""
             });
         }
         private static object Pose(RigidPose? pose)=>new{

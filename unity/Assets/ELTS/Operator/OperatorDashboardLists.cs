@@ -26,12 +26,6 @@ namespace Elts.Operator
         }
         private void ClearReorders(string prefix)
         {foreach(string key in reorders.Keys.Where(key=>key.StartsWith(prefix,StringComparison.Ordinal)).ToList()){reorders[key].Dispose();reorders.Remove(key);}}
-        private static void AddMoveButtons(VisualElement row,DashboardReorder reorder)
-        {
-            var buttons=new VisualElement();buttons.AddToClassList("row-controls");
-            var up=new Button(()=>reorder.MoveBy(-1)){text="Move up"};up.AddToClassList("move-button");buttons.Add(up);
-            var down=new Button(()=>reorder.MoveBy(1)){text="Move down"};down.AddToClassList("move-button");buttons.Add(down);row.Add(buttons);
-        }
         private static string ConditionName(string code)
         {
             switch(code){case "WE_MT":return "With ELTS · moving target";case "NE_MT":return "Without ELTS · moving target";
@@ -54,11 +48,11 @@ namespace Elts.Operator
                 var content=new VisualElement();content.AddToClassList("row-content");
                 var title=new Label(ConditionName(code));title.AddToClassList("row-title");content.Add(title);
                 var meta=new Label(code+" · 05:00");meta.AddToClassList("row-meta");content.Add(meta);row.Add(content);list.Add(row);
-                var reorder=RegisterReorder("condition:"+code,row,list,Q<ScrollView>("stageScroll"),handle,()=> {
+                RegisterReorder("condition:"+code,row,list,Q<ScrollView>("stageScroll"),handle,()=> {
                     conditionOrder.Clear();conditionOrder.AddRange(list.Children().Select(item=>(string)item.userData));
                     Workspace.ActiveConditionOrder=conditionOrder.ToList();QueueSave();
                     Q<TextField>("conditionOrder").SetValueWithoutNotify(String.Join(",",conditionOrder));UpdateConditionPositions();RefreshBlocks(read());
-                });AddMoveButtons(row,reorder);
+                });
             }
             Q<TextField>("conditionOrder").RegisterValueChangedCallback(evt=> {
                 var values=evt.newValue.Split(',').Select(value=>value.Trim()).ToArray();
@@ -196,7 +190,7 @@ namespace Elts.Operator
                 var select=new Button(()=>SelectCheckpoint(item.Id)){name="checkpoint-label-"+item.Id};select.AddToClassList("checkpoint-select");row.Add(select);list.Add(row);
                 var reorder=RegisterReorder("checkpoint:"+item.Id,row,list,Q<ScrollView>("stageScroll"),handle,()=> {
                     Workspace.Checkpoints=list.Children().Select(child=>Workspace.Checkpoints.First(value=>value.Id==(string)child.userData)).ToList();QueueSave();
-                });AddMoveButtons(row,reorder);
+                });
             }
             UpdateCheckpointLabels();Q<Button>("undoCheckpoint").SetEnabled(removedCheckpoint!=null);
             if(selectedCheckpoint.Length>0 && Workspace.Checkpoints.All(item=>item.Id!=selectedCheckpoint))selectedCheckpoint="";

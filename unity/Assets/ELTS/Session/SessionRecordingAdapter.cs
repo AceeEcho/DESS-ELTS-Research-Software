@@ -51,6 +51,12 @@ namespace Elts.Session
         public bool WriterHealthy { get { lock (sync) return writer != null && writer.IsWriterAlive && writer.Health.IsHealthy; } }
         public long DroppedSampleCount { get { lock (sync) return writer?.DroppedSampleCount ?? droppedSampleCount; } }
 
+        /// <summary>Durably save all data accepted before this boundary and keep recording.</summary>
+        public Task<bool> CheckpointAsync()
+        {
+            lock (sync) return writer?.CheckpointAsync() ?? Task.FromResult(false);
+        }
+
         public async Task<bool> ReserveAndStartAsync(string runId)
         {
             await lifecycleGate.WaitAsync().ConfigureAwait(false);

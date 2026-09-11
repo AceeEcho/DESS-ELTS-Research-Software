@@ -62,7 +62,8 @@ The standalone numerical/runtime checks additionally use the .NET SDK declared
 in `config/toolchain.json`; that SDK is not required to run a built Unity player.
 
 The root `START-ELTS.cmd` now prepares development tools as needed, builds the
-synthetic dashboard, and opens it alongside this Unity project in the pinned editor.
+synthetic application, and opens the dashboard and participant game. The Unity
+Editor stays closed unless you open the project manually.
 It reuses an unchanged build and saves startup output in `diagnostics/start-console.log`.
 Close the project's editor first when setup or rebuilding is needed. Generated
 startup builds live in distinct `build/start-elts-*` folders; older builds and data

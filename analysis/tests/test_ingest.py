@@ -30,6 +30,32 @@ class IngestTests(unittest.TestCase):
     def test_counts_and_invalid_exclusion(self):
         root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True)); result=ingest_run(run,cal)
         self.assertEqual(result['counts']['invalidSamples'],1); self.assertEqual(result['blocks'][0]['targetsDestroyed'],1); self.assertEqual(result['blocks'][0]['shots'],1); self.assertEqual(result['blocks'][0]['validSamples'],1); self.assertEqual(result['blocks'][0]['meanAimErrorDegrees'],0.0); self.assertEqual(result['source']['rawInputs']['samples.ndjson']['sha256'],hashlib.sha256((run/'samples.ndjson').read_bytes()).hexdigest())
+
+    def test_flexible_synthetic_timing_is_retained_without_standard_score(self):
+        root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
+        events=[json.loads(line) for line in (run/'events.ndjson').read_text().splitlines()]
+        events[-1]['monotonicTicks']=40*10_000_000
+        events[-1]['payload'].update(developmentTiming=True, activeSeconds=10, durationSeconds=20, reason='operator_stop')
+        self.refresh(run,events=events)
+        result=ingest_run(run,cal); block=result['blocks'][0]
+        self.assertEqual(block['scoreStatus'],'unavailable')
+        self.assertEqual(block['activeSeconds'],10)
+        self.assertEqual(block['termination'],'operator_stop')
+        self.assertNotIn('targetsDestroyed',block)
+
+    def test_unmarked_short_block_is_still_rejected(self):
+        root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
+        events=[json.loads(line) for line in (run/'events.ndjson').read_text().splitlines()]
+        events[-1]['monotonicTicks']=20*10_000_000; self.refresh(run,events=events)
+        with self.assertRaisesRegex(IngestError,'exactly 300 seconds'): ingest_run(run,cal)
+
+    def test_pause_cannot_be_counted_as_uninterrupted_standard_score(self):
+        root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
+        events=[json.loads(line) for line in (run/'events.ndjson').read_text().splitlines()]
+        events.insert(3,{'schemaVersion':'elts.events.v1','sequence':4,'monotonicTicks':4,'eventType':'BlockPaused','payload':{'blockId':'b1'}})
+        for index,event in enumerate(events,1): event['sequence']=index
+        self.refresh(run,events=events)
+        self.assertEqual(ingest_run(run,cal)['blocks'][0]['scoreStatus'],'unavailable')
     def test_unsupported_schema(self):
         root,run,cal=self.make_run(bad_schema=True); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True));
         with self.assertRaisesRegex(IngestError,'schemaVersion|logging verification'): ingest_run(run,cal)
@@ -130,5 +156,4 @@ class IngestTests(unittest.TestCase):
         result=ingest_run(run,cal); block=result['blocks'][0]
         self.assertAlmostEqual(block['meanAimErrorDegrees'],22.5,places=5)
 if __name__=='__main__': unittest.main()
-
 

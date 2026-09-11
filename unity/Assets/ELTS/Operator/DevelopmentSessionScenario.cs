@@ -37,6 +37,7 @@ namespace Elts.Operator
         public string LastShot { get; private set; } = "No shot";
         public int ShotCount { get; private set; }
         public int HitCount { get; private set; }
+        public string? RecordedBlockId => blockId;
 
         public DevelopmentSessionScenario(DevelopmentConfiguration config, ISharedClock clock,
             SessionEngine engine, SessionRecordingAdapter recording, ISessionEventSequence sequence)
@@ -47,6 +48,9 @@ namespace Elts.Operator
 
         public void Refresh(double deltaSeconds, RigidPose? head)
         {
+            // Preserve target identity, position, movement state and score across a
+            // pause. Acquisition continues, but no target updates or shots occur.
+            if(engine.State == SessionState.BlockPaused)return;
             positions.Clear();
             if(!engine.TargetsActive)
             {
@@ -59,7 +63,9 @@ namespace Elts.Operator
             if(!head.HasValue) return;
             var eye=head.Value.TransformPoint(config.Rig.HeadEyeOffsetM);
             Func<Vector3d,bool> visible=point=>IsVisible(eye,point);
-            population.Reconcile(clock.Now,visible);
+            // Target lifetime and respawn delays follow active test time as well.
+            // Logged snapshots below still use the unchanged acquisition clock.
+            population.Reconcile(new MonotonicTimestamp(checked((long)(engine.CurrentActiveSeconds*TimeSpan.TicksPerSecond))),visible);
             foreach(var target in population.History)
             {
                 bool known=recordedStates.TryGetValue(target.Id,out var previous);

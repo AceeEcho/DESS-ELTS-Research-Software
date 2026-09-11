@@ -9,7 +9,7 @@ using Elts.Scenario;
 
 namespace Elts.Session
 {
-    public enum ScenarioBlockState { Ready, Running, Completed, Aborted }
+    public enum ScenarioBlockState { Ready, Running, Completed, Aborted, Paused }
 
     /// <summary>
     /// Session timing uses only the injected shared monotonic clock. Completion is
@@ -18,7 +18,10 @@ namespace Elts.Session
     public sealed class ScenarioBlockController
     {
         private readonly ISharedClock clock;
-        private readonly long durationTicks;
+        private long durationTicks;
+        private readonly bool developmentControls;
+        private long accumulatedActiveTicks;
+        private bool modifiedTiming;
         private readonly string blockId;
         private readonly int seed;
         private readonly ISessionEventSequence sequence;
@@ -45,10 +48,17 @@ namespace Elts.Session
             this.blockId = blockId;
             this.seed = seed;
             durationTicks = checked((long)(durationSeconds * TimeSpan.TicksPerSecond));
+            developmentControls = allowDevelopmentOnlyDurationOverride;
+            modifiedTiming = durationSeconds != 300;
             State = ScenarioBlockState.Ready;
         }
 
         public ScenarioBlockState State { get; private set; }
+        public bool HasModifiedTiming => modifiedTiming;
+        public double DurationSeconds => durationTicks / (double)TimeSpan.TicksPerSecond;
+        public long ActiveTicks => accumulatedActiveTicks + (State == ScenarioBlockState.Running
+            ? Math.Max(0, Math.Min(clock.Now.Ticks, deadline.Ticks) - startedAt.Ticks) : 0);
+        public double RemainingSeconds => Math.Max(0, durationTicks - ActiveTicks) / (double)TimeSpan.TicksPerSecond;
 
         public IReadOnlyList<SessionEvent> Start()
         {
@@ -56,19 +66,79 @@ namespace Elts.Session
             startedAt = clock.Now;
             deadline = new MonotonicTimestamp(checked(startedAt.Ticks + durationTicks));
             State = ScenarioBlockState.Running;
-            return new[] { Event(startedAt, "BlockStarted", LogField.NumberValue("seed", seed)) };
+            return new[] { Event(startedAt, "BlockStarted", LogField.NumberValue("seed", seed),
+                LogField.NumberValue("durationSeconds", DurationSeconds), LogField.Boolean("developmentTiming", modifiedTiming)) };
         }
 
         public IReadOnlyList<SessionEvent> Update()
         {
             if (State != ScenarioBlockState.Running || clock.Now < deadline) return Array.Empty<SessionEvent>();
+            accumulatedActiveTicks = durationTicks;
             State = ScenarioBlockState.Completed;
-            return new[] { Event(deadline, "BlockEnded") };
+            return new[] { EndEvent(deadline, "elapsed") };
+        }
+
+        // Pauses leave the shared acquisition clock alone. Only the block's active
+        // time stops, so raw samples and operator events retain their real ordering.
+        public IReadOnlyList<SessionEvent> Pause()
+        {
+            RequireDevelopment();
+            if(State != ScenarioBlockState.Running)throw new InvalidOperationException("Only a running test can pause.");
+            var now = clock.Now;
+            if(now >= deadline)
+            {
+                accumulatedActiveTicks = durationTicks; State = ScenarioBlockState.Completed;
+                return new[] { EndEvent(deadline, "elapsed") };
+            }
+            accumulatedActiveTicks += now.Ticks - startedAt.Ticks;
+            State = ScenarioBlockState.Paused; modifiedTiming = true;
+            return new[] { Event(now, "BlockPaused", LogField.NumberValue("activeSeconds", ActiveTicks/(double)TimeSpan.TicksPerSecond)) };
+        }
+
+        public IReadOnlyList<SessionEvent> Resume()
+        {
+            RequireDevelopment();
+            if(State != ScenarioBlockState.Paused)throw new InvalidOperationException("Only a paused test can resume.");
+            // Reject delayed trigger observations from before this new active segment.
+            startedAt = clock.Now;
+            deadline = new MonotonicTimestamp(checked(startedAt.Ticks + durationTicks - accumulatedActiveTicks));
+            State = ScenarioBlockState.Running;
+            return new[] { Event(startedAt, "BlockResumed", LogField.NumberValue("remainingSeconds", RemainingSeconds)) };
+        }
+
+        public void ChangeDuration(double seconds)
+        {
+            RequireDevelopment();
+            if(State != ScenarioBlockState.Paused)throw new InvalidOperationException("Pause the test before changing its duration.");
+            SessionEngine.ValidateDevelopmentDuration(seconds);
+            long ticks = checked((long)(seconds * TimeSpan.TicksPerSecond));
+            if(ticks <= ActiveTicks)throw new ArgumentException("Duration must exceed the time already played. Use Stop test to finish now.");
+            durationTicks = ticks; modifiedTiming = true;
+        }
+
+        public IReadOnlyList<SessionEvent> Stop()
+        {
+            RequireDevelopment();
+            if(State != ScenarioBlockState.Running && State != ScenarioBlockState.Paused)
+                throw new InvalidOperationException("Only a running or paused test can stop.");
+            accumulatedActiveTicks = ActiveTicks;
+            State = ScenarioBlockState.Completed; modifiedTiming = true;
+            return new[] { EndEvent(clock.Now, "operator_stop") };
+        }
+
+        private SessionEvent EndEvent(MonotonicTimestamp at, string reason) => Event(at, "BlockEnded",
+            LogField.String("reason", reason), LogField.NumberValue("durationSeconds", DurationSeconds),
+            LogField.NumberValue("activeSeconds", ActiveTicks/(double)TimeSpan.TicksPerSecond),
+            LogField.Boolean("developmentTiming", modifiedTiming));
+
+        private void RequireDevelopment()
+        {
+            if(!developmentControls)throw new InvalidOperationException("Flexible test controls require an explicit development session.");
         }
 
         public IReadOnlyList<SessionEvent> Abort(string reason)
         {
-            if (State != ScenarioBlockState.Running) throw new InvalidOperationException("Only a running block can be aborted.");
+            if (State != ScenarioBlockState.Running && State != ScenarioBlockState.Paused) throw new InvalidOperationException("Only a running or paused block can be aborted.");
             if (String.IsNullOrWhiteSpace(reason)) throw new ArgumentException("An abort reason is required.", nameof(reason));
             State = ScenarioBlockState.Aborted;
             return new[] { Event(clock.Now, "BlockAborted", LogField.String("reason", reason)) };
@@ -97,7 +167,7 @@ namespace Elts.Session
         }
     }
 
-    public enum SessionState { Idle, SessionSetup, Calibration, Practice, BlockReady, BlockRunning, BlockEnded, Break, SessionComplete, Aborted, Failed }
+    public enum SessionState { Idle, SessionSetup, Calibration, Practice, BlockReady, BlockRunning, BlockEnded, Break, SessionComplete, Aborted, Failed, BlockPaused }
 
     public sealed class SessionTiming
     {
@@ -200,6 +270,12 @@ namespace Elts.Session
         private readonly ISessionEventSequence sequence;
         private readonly SessionPlan plan;
         private readonly SessionTiming timing;
+        // Development repeats extend the execution queue without rewriting the
+        // participant's original condition order or reusing an attempt identity.
+        private readonly List<string> schedule;
+        private readonly Dictionary<string, int> attemptCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+        private readonly HashSet<string> finishedConditions = new HashSet<string>(StringComparer.Ordinal);
+        private double breakSeconds, practiceSeconds;
         private readonly ISessionEventSink sink;
         private readonly ISessionLink? link;
         private ScenarioBlockController? block;
@@ -208,6 +284,8 @@ namespace Elts.Session
         private int rerun;
         private bool linkMayBeEnabled;
         private string? failure;
+        private readonly Dictionary<string,double> durations = new Dictionary<string,double>(StringComparer.Ordinal);
+        public const double MinimumDevelopmentDurationSeconds = 1, MaximumDevelopmentDurationSeconds = 3600;
 
         public SessionEngine(ISharedClock clock, ISessionEventSequence sequence, SessionPlan plan, SessionTiming timing, ISessionEventSink sink, ISessionLink? link = null)
         {
@@ -215,18 +293,63 @@ namespace Elts.Session
             this.sequence = sequence ?? throw new ArgumentNullException(nameof(sequence));
             this.plan = plan ?? throw new ArgumentNullException(nameof(plan));
             this.timing = timing ?? throw new ArgumentNullException(nameof(timing));
+            schedule = plan.ConditionOrder.ToList();
+            breakSeconds = timing.BreakSeconds;
+            practiceSeconds = timing.PracticeSeconds;
             this.sink = sink ?? throw new ArgumentNullException(nameof(sink));
             this.link = link;
+            foreach(string condition in plan.ConditionOrder)durations[condition] = plan.ConditionDurationSeconds;
             State = SessionState.Idle;
         }
 
         public SessionState State { get; private set; }
-        public string? CurrentCondition => blockIndex < plan.ConditionOrder.Count ? plan.ConditionOrder[blockIndex] : null;
+        public string? CurrentCondition => blockIndex < schedule.Count ? schedule[blockIndex] : null;
         public string? CurrentBlockId => CurrentCondition == null ? null : CurrentCondition + "-attempt-" + (rerun + 1).ToString("D2");
         public int CurrentBlockIndex => blockIndex;
         public int RerunIndex => rerun;
         public string? Failure => failure;
         public bool TargetsActive => State == SessionState.BlockRunning;
+        public bool CurrentBlockStoppedEarly { get; private set; }
+        public bool CurrentBlockSkipped { get; private set; }
+        public bool CurrentBlockModifiedTiming => block?.HasModifiedTiming ?? false;
+        public double BreakDurationSeconds => breakSeconds;
+        public double PracticeDurationSeconds => practiceSeconds;
+        public IReadOnlyList<string> ScheduledConditions => schedule.AsReadOnly();
+        public IReadOnlyCollection<string> FinishedConditions => finishedConditions;
+        public bool CanScheduleRepeat => plan.AllowsDevelopmentOnlyDurationOverride &&
+            (State == SessionState.BlockReady || State == SessionState.BlockEnded || State == SessionState.Break);
+        public bool CanReopenForRepeat => plan.AllowsDevelopmentOnlyDurationOverride && State == SessionState.SessionComplete;
+        public double CurrentDurationSeconds => CurrentCondition == null ? 0 : durations[CurrentCondition];
+        public double CurrentActiveSeconds => block?.ActiveTicks/(double)TimeSpan.TicksPerSecond ?? 0;
+        public double DurationFor(string condition) => durations[condition];
+        public bool CanChangeDuration(string condition)
+        {
+            if(!plan.AllowsDevelopmentOnlyDurationOverride || !durations.ContainsKey(condition) ||
+                State == SessionState.SessionComplete || State == SessionState.Aborted || State == SessionState.Failed)return false;
+            if (condition == CurrentCondition)
+                return State != SessionState.BlockRunning && State != SessionState.BlockEnded && State != SessionState.Break;
+            return schedule.Skip(blockIndex + 1).Contains(condition);
+        }
+
+        public static void ValidateDevelopmentDuration(double seconds)
+        {
+            if(Double.IsNaN(seconds) || Double.IsInfinity(seconds) || seconds < MinimumDevelopmentDurationSeconds || seconds > MaximumDevelopmentDurationSeconds)
+                throw new ArgumentException("Test duration must be between 1 and 3600 seconds.");
+        }
+
+        public void SetDevelopmentDuration(string condition, double seconds)
+        {
+            ValidateDevelopmentDuration(seconds);
+            if(!CanChangeDuration(condition))throw new InvalidOperationException("Pause the current test before editing it; finished tests cannot change.");
+            double previous = durations[condition];
+            if(previous == seconds)return;
+            if(condition == CurrentCondition && State == SessionState.BlockPaused)block!.ChangeDuration(seconds);
+            if(!Record(Event("BlockDurationChanged", LogField.String("condition", condition),
+                LogField.String("blockId", condition == CurrentCondition ? CurrentBlockId! : condition+"-attempt-01"),
+                LogField.NumberValue("previousSeconds", previous), LogField.NumberValue("durationSeconds", seconds),
+                LogField.Boolean("developmentTiming", true))))return;
+            durations[condition] = seconds;
+        }
         /// <summary>True only when a completed or aborted real block can start a new attempt.</summary>
         public bool CanRerun => (State == SessionState.Aborted || State == SessionState.BlockEnded) && block != null;
         public bool CanAdvance => State == SessionState.SessionSetup || State == SessionState.Calibration || State == SessionState.BlockEnded || State == SessionState.Break;
@@ -235,9 +358,9 @@ namespace Elts.Session
         {
             get
             {
-                if (State == SessionState.BlockRunning && block != null) return Math.Max(0, plan.ConditionDurationSeconds - (clock.Now.Elapsed - phaseStarted.Elapsed).TotalSeconds);
-                if (State == SessionState.Practice) return Math.Max(0, timing.PracticeSeconds - (clock.Now.Elapsed - phaseStarted.Elapsed).TotalSeconds);
-                if (State == SessionState.Break) return Math.Max(0, timing.BreakSeconds - (clock.Now.Elapsed - phaseStarted.Elapsed).TotalSeconds);
+                if ((State == SessionState.BlockRunning || State == SessionState.BlockPaused) && block != null) return block.RemainingSeconds;
+                if (State == SessionState.Practice) return Math.Max(0, practiceSeconds - (clock.Now.Elapsed - phaseStarted.Elapsed).TotalSeconds);
+                if (State == SessionState.Break) return Math.Max(0, breakSeconds - (clock.Now.Elapsed - phaseStarted.Elapsed).TotalSeconds);
                 return 0;
             }
         }
@@ -268,17 +391,15 @@ namespace Elts.Session
             }
             else if (State == SessionState.Break)
             {
-                if (clock.Now.Elapsed - phaseStarted.Elapsed < TimeSpan.FromSeconds(timing.BreakSeconds)) return;
-                blockIndex++;
-                rerun = 0;
-                Transition(blockIndex >= plan.ConditionOrder.Count ? SessionState.SessionComplete : SessionState.BlockReady);
+                if (RemainingSeconds > 0) return;
+                FinishBreak();
             }
             else throw new InvalidOperationException("This state cannot advance.");
         }
 
         public void Tick()
         {
-            if (State == SessionState.Practice && clock.Now.Elapsed - phaseStarted.Elapsed >= TimeSpan.FromSeconds(timing.PracticeSeconds))
+            if (State == SessionState.Practice && clock.Now.Elapsed - phaseStarted.Elapsed >= TimeSpan.FromSeconds(practiceSeconds))
             {
                 Transition(SessionState.BlockReady);
                 return;
@@ -293,6 +414,7 @@ namespace Elts.Session
                 // At the exact deadline, completion and STOP take precedence over
                 // the mock's independent maximum-on-time de-permission check.
                 if (!StopLink()) return;
+                finishedConditions.Add(CurrentCondition!);
                 Transition(SessionState.BlockEnded);
                 return;
             }
@@ -315,7 +437,7 @@ namespace Elts.Session
             {
                 try
                 {
-                    if (!conditionLink.PrepareBlock(new SessionBlockLinkContext(plan.ParticipantId, blockId, condition, checked((long)(plan.ConditionDurationSeconds * TimeSpan.TicksPerSecond)))))
+                    if (!conditionLink.PrepareBlock(new SessionBlockLinkContext(plan.ParticipantId, blockId, condition, checked((long)(CurrentDurationSeconds * TimeSpan.TicksPerSecond)))))
                     {
                         Fail("ELTS link block preparation failed.");
                         return;
@@ -329,7 +451,10 @@ namespace Elts.Session
                 return;
             }
 
-            block = new ScenarioBlockController(clock, sequence, blockId, DeterministicSeedFor(plan.ParticipantId, blockId), plan.ConditionDurationSeconds, plan.AllowsDevelopmentOnlyDurationOverride);
+            block = new ScenarioBlockController(clock, sequence, blockId, DeterministicSeedFor(plan.ParticipantId, blockId), CurrentDurationSeconds, plan.AllowsDevelopmentOnlyDurationOverride);
+            CurrentBlockStoppedEarly = false;
+            CurrentBlockSkipped = false;
+            attemptCounts[condition] = rerun + 1;
             phaseStarted = clock.Now;
             // Each attempt is independently identifiable, including a rerun
             // reserved in a new output directory by the recording adapter.
@@ -348,6 +473,152 @@ namespace Elts.Session
             Tick();
             if (State == SessionState.BlockRunning)
                 throw new InvalidOperationException("A block can end only when its fixed duration has elapsed.");
+        }
+
+        public void PauseDevelopmentBlock()
+        {
+            RequireDevelopmentControls(); Tick();
+            if(State == SessionState.BlockEnded)return; // Deadline wins over a late pause.
+            Require(SessionState.BlockRunning);
+            foreach(var item in block!.Pause())if(!Record(item))return;
+            if(!StopLink())return;
+            if(block.State == ScenarioBlockState.Completed)finishedConditions.Add(CurrentCondition!);
+            Transition(block.State == ScenarioBlockState.Completed ? SessionState.BlockEnded : SessionState.BlockPaused);
+        }
+
+        public void ResumeDevelopmentBlock()
+        {
+            RequireDevelopmentControls(); Require(SessionState.BlockPaused);
+            // The simulated controller receives the remaining active duration,
+            // never the paused wall time or a renewed full-length block.
+            if(link is ISessionConditionLink conditionLink)
+            {
+                try {
+                    if(!conditionLink.PrepareBlock(new SessionBlockLinkContext(plan.ParticipantId, CurrentBlockId!, CurrentCondition!,
+                        checked((long)(block!.RemainingSeconds*TimeSpan.TicksPerSecond)))))
+                    {Fail("ELTS link resume preparation failed.");return;}
+                } catch(Exception e) {Fail("ELTS link resume preparation failed: "+e.Message);return;}
+            }
+            if(CurrentCondition!.StartsWith("WE_", StringComparison.Ordinal) && !TrySetLink(true))
+            {Fail("WE link resume failed.");return;}
+            foreach(var item in block!.Resume())if(!Record(item))return;
+            Transition(SessionState.BlockRunning);
+        }
+
+        public void StopDevelopmentBlock()
+        {
+            RequireDevelopmentControls(); Tick();
+            if(State == SessionState.BlockEnded)return;
+            if(State != SessionState.BlockRunning && State != SessionState.BlockPaused)
+                throw new InvalidOperationException("Only a running or paused test can stop.");
+            if(!StopLink())return;
+            foreach(var item in block!.Stop())if(!Record(item))return;
+            CurrentBlockStoppedEarly = true;
+            finishedConditions.Add(CurrentCondition!);
+            Transition(SessionState.BlockEnded);
+        }
+
+        public static void ValidateDevelopmentPhaseDuration(double seconds)
+        {
+            if (Double.IsNaN(seconds) || Double.IsInfinity(seconds) || seconds < 0 || seconds > MaximumDevelopmentDurationSeconds)
+                throw new ArgumentException("Practice and break durations must be between 0 and 3600 seconds.");
+        }
+
+        public void SetDevelopmentPhaseDurations(double practice, double rest)
+        {
+            RequireDevelopmentControls();
+            ValidateDevelopmentPhaseDuration(practice); ValidateDevelopmentPhaseDuration(rest);
+            if (State == SessionState.SessionComplete || State == SessionState.Aborted || State == SessionState.Failed)
+                throw new InvalidOperationException("This session has closed.");
+            if (!Record(Event("PhaseDurationsChanged", LogField.NumberValue("practiceSeconds", practice),
+                LogField.NumberValue("breakSeconds", rest), LogField.Boolean("developmentTiming", true)))) return;
+            // Editing a live break changes its total length, not its start time.
+            practiceSeconds = practice; breakSeconds = rest;
+        }
+
+        public void SkipDevelopmentBreak()
+        {
+            RequireDevelopmentControls(); Require(SessionState.Break);
+            if (!Record(Event("BreakSkipped", LogField.NumberValue("remainingSeconds", RemainingSeconds),
+                LogField.String("afterBlockId", CurrentBlockId!)))) return;
+            FinishBreak();
+        }
+
+        private void FinishBreak()
+        {
+            blockIndex++;
+            rerun = CurrentCondition != null && attemptCounts.TryGetValue(CurrentCondition, out int count) ? count : 0;
+            block = null; CurrentBlockSkipped = false; CurrentBlockStoppedEarly = false;
+            Transition(blockIndex >= schedule.Count ? SessionState.SessionComplete : SessionState.BlockReady);
+        }
+
+        public void SkipDevelopmentTest(string reason)
+        {
+            RequireDevelopmentControls(); Require(SessionState.BlockReady);
+            if (String.IsNullOrWhiteSpace(reason)) throw new ArgumentException("A reason is required to skip a test.");
+            if (!Record(Event("BlockSkipped", LogField.String("blockId", CurrentBlockId!),
+                LogField.String("condition", CurrentCondition!), LogField.String("reason", reason.Trim())))) return;
+            // Skipping is not a zero-score test and emits no BlockStarted/BlockEnded.
+            attemptCounts[CurrentCondition!] = rerun + 1;
+            finishedConditions.Add(CurrentCondition!);
+            block = null; CurrentBlockSkipped = true; CurrentBlockStoppedEarly = false;
+            Transition(SessionState.BlockEnded);
+        }
+
+        public void QueueDevelopmentRepeat(string condition, string reason)
+        {
+            RequireDevelopmentControls();
+            if (!CanScheduleRepeat || !finishedConditions.Contains(condition))
+                throw new InvalidOperationException("Choose a finished or skipped test between tests.");
+            if (String.IsNullOrWhiteSpace(reason)) throw new ArgumentException("A reason is required to repeat a test.");
+            int position = State == SessionState.BlockReady ? blockIndex : blockIndex + 1;
+            if (schedule.Skip(position).Contains(condition)) throw new InvalidOperationException("That test is already queued.");
+            if (!Record(Event("TestRepeatQueued", LogField.String("condition", condition),
+                LogField.String("reason", reason.Trim()), LogField.NumberValue("queueIndex", position)))) return;
+            schedule.Insert(position, condition);
+            if (State == SessionState.BlockReady)
+            {
+                rerun = attemptCounts[condition];
+                block = null; CurrentBlockSkipped = false; CurrentBlockStoppedEarly = false;
+            }
+        }
+
+        public void RestartDevelopmentPractice()
+        {
+            RequireDevelopmentControls();
+            if (State != SessionState.Practice && !(State == SessionState.BlockReady && blockIndex == 0))
+                throw new InvalidOperationException("Practice can restart before the first test.");
+            if (!Record(Event("PracticeRestarted"))) return;
+            phaseStarted = clock.Now;
+            Transition(SessionState.Practice);
+        }
+
+        /// <summary>The caller must reserve a fresh recording before reopening a finished session.</summary>
+        public void ReopenDevelopmentRepeat(string condition, string reason)
+        {
+            RequireDevelopmentControls(); Require(SessionState.SessionComplete);
+            if (!finishedConditions.Contains(condition) || String.IsNullOrWhiteSpace(reason))
+                throw new ArgumentException("Choose a finished test and provide a reason.");
+            if (!Record(Event("SessionMetadata", LogField.String("participantId", plan.ParticipantId),
+                LogField.String("conditionOrder", String.Join("|", plan.ConditionOrder))))) return;
+            if (!Record(Event("TestRepeatQueued", LogField.String("condition", condition), LogField.String("reason", reason.Trim()),
+                LogField.NumberValue("queueIndex", schedule.Count)))) return;
+            schedule.Add(condition);
+            rerun = attemptCounts[condition]; block = null;
+            CurrentBlockSkipped = false; CurrentBlockStoppedEarly = false;
+            Transition(SessionState.BlockReady);
+        }
+
+        public void FinishDevelopmentPractice()
+        {
+            RequireDevelopmentControls(); Require(SessionState.Practice);
+            if (!Record(Event("PracticeFinishedEarly", LogField.NumberValue("remainingSeconds", RemainingSeconds)))) return;
+            Transition(SessionState.BlockReady);
+        }
+
+        private void RequireDevelopmentControls()
+        {
+            if(!plan.AllowsDevelopmentOnlyDurationOverride)throw new InvalidOperationException("Flexible test controls require an explicit development session.");
         }
 
         /// <summary>Forwards an in-window shot through the active block and records every resulting event.</summary>
@@ -375,11 +646,11 @@ namespace Elts.Session
             ExpireCurrentPhase();
             if (State == SessionState.Aborted || State == SessionState.Failed || State == SessionState.SessionComplete) return;
 
-            if (State == SessionState.BlockRunning && block != null)
+            if ((State == SessionState.BlockRunning || State == SessionState.BlockPaused) && block != null)
             {
                 foreach (var item in block.Abort(reason))
                     if (!Record(item)) return;
-                if (State != SessionState.BlockRunning || !StopLink()) return;
+                if (State == SessionState.Failed || !StopLink()) return;
             }
             else if (!StopLink()) return;
 

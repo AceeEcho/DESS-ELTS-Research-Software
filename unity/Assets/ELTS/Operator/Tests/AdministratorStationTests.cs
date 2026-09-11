@@ -30,6 +30,101 @@ namespace Elts.Operator.Tests
             {var value=Frame;Frame=new DesktopControlFrame(value.Focused,value.Pointer,value.Movement);return value;}
         }
         [UnityTest]
+        public IEnumerator PausedTestKeepsTargetsAndRecordingAndCanStopIndependently()
+        {
+            var host=new GameObject("Flexible administrator test fixture");
+            var view=host.AddComponent<DevelopmentView>();var session=host.AddComponent<DevelopmentSessionPanel>();
+            var clock=new ManualSharedClock(DateTimeOffset.UtcNow);
+            typeof(DevelopmentSessionPanel).GetField("clock",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(session,clock);
+            var station=host.AddComponent<DevelopmentTestStation>();station.OpenAdministratorAutomatically=false;
+            var input=new Input();station.Controls=input;
+            try
+            {
+                for(int i=0;i<5;i++)yield return null;
+                station.ApplyCommand(new JObject{["action"]="setDuration",["condition"]="WE_FT",["seconds"]=20});
+                station.ApplyCommand(new JObject{["action"]="setDuration",["condition"]="WE_MT",["seconds"]=40});
+                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="pause-test",
+                    ["conditionOrder"]=new JArray("WE_FT","WE_MT","NE_FT","NE_MT")});
+                float limit=Time.realtimeSinceStartup+20;
+                while(session.Engine?.State!=SessionState.BlockReady && Time.realtimeSinceStartup<limit)
+                { ReviewFixtureWhenReady(session,station);clock.Advance(TimeSpan.FromSeconds(.1));yield return null; }
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),session.StationMessage);
+                station.ApplyCommand(new JObject{["action"]="arm"});
+                input.Frame=new DesktopControlFrame(true,new Vector2(300,300),Vector3.zero,pressed:true);yield return null;
+                input.Frame=new DesktopControlFrame(true,new Vector2(300,300),Vector3.zero,released:true);yield return null;
+                Assert.That(session.Engine.RemainingSeconds,Is.EqualTo(20).Within(.001));
+                string run=session.StationRecordingPath, blockId=session.DesktopBlockId;
+                var scenario=(DevelopmentSessionScenario)typeof(DevelopmentSessionPanel).GetField("scenario",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(session);
+                input.Frame=new DesktopControlFrame(true,new Vector2(300,300),Vector3.zero,pressed:true);yield return null;
+                // Keep the simulated controller heartbeat alive during active time.
+                for(int second=0;second<3;second++){clock.Advance(TimeSpan.FromSeconds(1));yield return null;}
+                // A fixture can land exactly in a target respawn gap. Wait for an
+                // actual target before asserting that pause preserves its identity.
+                limit=Time.realtimeSinceStartup+5;
+                while(scenario.Positions.Count==0 && Time.realtimeSinceStartup<limit)
+                {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                double played=session.Engine.CurrentActiveSeconds;
+                station.ApplyCommand(new JObject{["action"]="pause",["blockId"]=blockId});yield return null;
+                var frozen=scenario.Positions.ToDictionary(pair=>pair.Key,pair=>pair.Value);
+                Assert.That(frozen.Count,Is.GreaterThan(0));
+                clock.Advance(TimeSpan.FromSeconds(600));
+                for(int i=0;i<8;i++)yield return null;
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockPaused));
+                Assert.That(session.Engine.RemainingSeconds,Is.EqualTo(20-played).Within(.001));
+                Assert.That(scenario.Positions.Keys,Is.EquivalentTo(frozen.Keys));
+                foreach(var target in frozen)Assert.That(scenario.Positions[target.Key],Is.EqualTo(target.Value));
+                Assert.That(session.StationParticipantTrigger(),Is.False,"Paused clicks cannot score");
+                Assert.That(session.HasOpenDesktopRecording,Is.True,"Pause keeps acquisition/recording open");
+                Assert.That(station.ParticipantRoot.Q<Label>("participantTitle").text,Is.EqualTo("Test paused"));
+                station.ApplyCommand(new JObject{["action"]="setDuration",["condition"]="WE_FT",["seconds"]=30});
+                Assert.Throws<ArgumentException>(()=>station.ApplyCommand(new JObject{["action"]="setDuration",["condition"]="WE_FT",["seconds"]=2}));
+                station.ApplyCommand(new JObject{["action"]="resume",["blockId"]=blockId});
+                input.Frame=new DesktopControlFrame(true,new Vector2(300,300),Vector3.zero,released:true);yield return null;
+                Assert.That(session.StationShots,Is.Zero,"A click held across pause/resume is canceled");
+                Assert.That(session.Engine.RemainingSeconds,Is.EqualTo(30-played).Within(.001));
+                Assert.That(scenario.Positions.Keys,Is.EquivalentTo(frozen.Keys),"Paused time cannot expire targets on resume");
+                station.ApplyCommand(new JObject{["action"]="stopTest",["blockId"]=blockId});yield return null;
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockEnded));
+                Assert.That(session.HasOpenDesktopRecording,Is.True);
+                var state=JObject.Parse(station.StateJson());
+                Assert.That((string)state["blocks"][0]["status"],Is.EqualTo("Stopped early"));
+                limit=Time.realtimeSinceStartup+15;
+                while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
+                Assert.That(File.Exists(Path.Combine(run,"test-checkpoint-"+blockId+".json")),Is.True,"Each test saves before the participant session closes");
+                Assert.That(File.Exists(Path.Combine(run,"session-summary.json")),Is.False,"Checkpoint is not a final session closure");
+                clock.Advance(TimeSpan.FromSeconds(60));yield return null;
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockEnded),"Waiting does not start the break");
+                Assert.That(session.StationCanArm,Is.False);
+                station.ApplyCommand(new JObject{["action"]="startBreak",["blockId"]=session.Engine.CurrentBlockId});
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.Break));
+                Assert.That(session.Engine.RemainingSeconds,Is.EqualTo(5).Within(.001));
+                Assert.Throws<InvalidOperationException>(()=>session.StationArm());
+                clock.Advance(TimeSpan.FromSeconds(5));yield return null;
+                Assert.That(session.TestArmed,Is.False,"Timer completion never arms a test");
+                Assert.That(session.Engine.CurrentCondition,Is.EqualTo("WE_MT"));
+                Assert.That(session.Engine.CurrentDurationSeconds,Is.EqualTo(40));
+                Assert.Throws<InvalidOperationException>(()=>station.ApplyCommand(new JObject{["action"]="stopTest",["blockId"]=blockId}));
+                session.StationAbort("Fixture cleanup after independent stop verification");yield return null;
+                limit=Time.realtimeSinceStartup+15;
+                while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
+                var events=File.ReadAllLines(Path.Combine(run,"events.ndjson")).Select(JObject.Parse).ToArray();
+                Assert.That(events.Count(e=>(string)e["eventType"]=="BlockStarted"),Is.EqualTo(1));
+                Assert.That(events.Count(e=>(string)e["eventType"]=="BlockPaused"),Is.EqualTo(1));
+                Assert.That(events.Count(e=>(string)e["eventType"]=="BlockResumed"),Is.EqualTo(1));
+                Assert.That(events.Any(e=>(string)e["eventType"]=="BlockAborted"),Is.False,"Stopping a test is not a block abort");
+                var end=events.Single(e=>(string)e["eventType"]=="BlockEnded");
+                Assert.That((string)end["payload"]["reason"],Is.EqualTo("operator_stop"));
+                Assert.That((double)end["payload"]["activeSeconds"],Is.EqualTo(played).Within(.001));
+                var pause=events.Single(e=>(string)e["eventType"]=="BlockPaused");
+                var resume=events.Single(e=>(string)e["eventType"]=="BlockResumed");
+                var samples=File.ReadAllLines(Path.Combine(run,"samples.ndjson")).Select(JObject.Parse).ToArray();
+                Assert.That(samples.Any(sample=>(long)sample["monotonicTicks"]>(long)pause["monotonicTicks"] &&
+                    (long)sample["monotonicTicks"]<=(long)resume["monotonicTicks"]),Is.True,"Raw logging continues during pause");
+                File.WriteAllText(Path.GetFullPath(Path.Combine(Application.dataPath,"../../diagnostics/station-paused-run.txt")),run);
+            }
+            finally{UnityEngine.Object.DestroyImmediate(host);}
+        }
+        [UnityTest]
         public IEnumerator ArmedParticipantStartsAllFourRecordedBlocks()
         {
             var host=new GameObject("Separate administrator station fixture");
@@ -46,10 +141,12 @@ namespace Elts.Operator.Tests
                 Assert.That(view.OperatorCamera.targetTexture,Is.Not.Null);
                 Assert.That(session.PanelRoot.resolvedStyle.display,Is.EqualTo(DisplayStyle.None));
                 Assert.That(station.ParticipantRoot.Query<Button>().ToList(),Is.Empty,"Participant view must contain no administrator buttons");
-                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="station-test",["conditionOrder"]=new JArray("WE_FT","WE_MT","NE_FT","NE_MT")});
+                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="station-test",
+                    ["participantName"]="Synthetic Test Alias",["initialNotes"]="Initial fixture observation",
+                    ["conditionOrder"]=new JArray("WE_FT","WE_MT","NE_FT","NE_MT")});
                 float limit=Time.realtimeSinceStartup+20;
                 while(session.Engine?.State!=SessionState.BlockReady && Time.realtimeSinceStartup<limit)
-                {clock.Advance(TimeSpan.FromSeconds(0.1));yield return null;}
+                { ReviewFixtureWhenReady(session,station);clock.Advance(TimeSpan.FromSeconds(0.1));yield return null; }
                 Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),session.StationMessage);
                 string run=session.StationRecordingPath;
                 for(int block=0;block<4;block++)
@@ -84,15 +181,31 @@ namespace Elts.Operator.Tests
                     Assert.That(session.StationShots,Is.EqualTo(1));Assert.That(session.StationHits,Is.EqualTo(1));
                     clock.Advance(TimeSpan.FromSeconds(300));yield return null;
                     Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockEnded));
-                    station.ApplyCommand(new JObject{["action"]="next"});
-                    clock.Advance(TimeSpan.FromSeconds(5));yield return null;
-                    station.ApplyCommand(new JObject{["action"]="next"});yield return null;
+                    limit=Time.realtimeSinceStartup+15;
+                    while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
+                    clock.Advance(TimeSpan.FromSeconds(60));yield return null;
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockEnded),"Waiting does not start the break");
+                Assert.That(session.StationCanArm,Is.False);
+                station.ApplyCommand(new JObject{["action"]="startBreak",["blockId"]=session.Engine.CurrentBlockId});
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.Break));
+                Assert.That(session.Engine.RemainingSeconds,Is.EqualTo(5).Within(.001));
+                Assert.Throws<InvalidOperationException>(()=>session.StationArm());
+                clock.Advance(TimeSpan.FromSeconds(5));yield return null;
+                Assert.That(session.TestArmed,Is.False,"Timer completion never arms a test");
+                    yield return null;
                 }
                 Assert.That(session.Engine.State,Is.EqualTo(SessionState.SessionComplete));
                 limit=Time.realtimeSinceStartup+15;
                 while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
                 Assert.That(session.IsBusy,Is.False);
                 var events=File.ReadAllLines(Path.Combine(run,"events.ndjson")).Select(JObject.Parse).ToArray();
+                var details=events.Single(e=>(string)e["eventType"]=="OperatorNote" &&
+                    ((string)e["payload"]["text"]).StartsWith("Participant details: "));
+                var intake=JObject.Parse(((string)details["payload"]["text"]).Substring("Participant details: ".Length));
+                Assert.That((string)intake["participantName"],Is.EqualTo("Synthetic Test Alias"));
+                Assert.That((string)intake["participantId"],Is.EqualTo("station-test"));
+                Assert.That((string)intake["initialNotes"],Is.EqualTo("Initial fixture observation"));
+                Assert.That((long)details["sequence"],Is.LessThan((long)events.First(e=>(string)e["eventType"]=="TestArmed")["sequence"]));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="TestArmed"),Is.EqualTo(4));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="ParticipantStartTrigger"),Is.EqualTo(4));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="ShotFired"),Is.EqualTo(4));
@@ -108,6 +221,92 @@ namespace Elts.Operator.Tests
                 File.WriteAllText(Path.GetFullPath(Path.Combine(Application.dataPath,"../../diagnostics/station-pipeline-run.txt")),run);
             }
             finally{UnityEngine.Object.DestroyImmediate(host);}
+        }
+
+        [UnityTest]
+        public IEnumerator AdministratorPreparationExceptionsCheckpointsAndArchiveAreConnected()
+        {
+            var host=new GameObject("Administrator workflow integration fixture");
+            host.AddComponent<DevelopmentView>();var session=host.AddComponent<DevelopmentSessionPanel>();
+            var clock=new ManualSharedClock(DateTimeOffset.UtcNow);
+            typeof(DevelopmentSessionPanel).GetField("clock",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(session,clock);
+            var station=host.AddComponent<DevelopmentTestStation>();station.OpenAdministratorAutomatically=false;station.Controls=new Input();
+            try
+            {
+                for(int i=0;i<5;i++)yield return null;
+                station.ApplyCommand(new JObject { ["action"]="applySetup",["conditionOrder"]=new JArray("NE_FT","WE_FT","NE_MT","WE_MT"),
+                    ["durations"]=new JObject{["NE_FT"]=2,["WE_FT"]=2,["NE_MT"]=2,["WE_MT"]=2},["practiceSeconds"]=10,["breakSeconds"]=30 });
+                Assert.That(session.StationOrder[0],Is.EqualTo("NE_FT"),"Order can change before participant intake");
+                Assert.That(session.StationParticipant,Is.Empty);
+                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="workflow-test"});
+                float limit=Time.realtimeSinceStartup+20;
+                while(session.Engine?.State!=SessionState.Calibration && Time.realtimeSinceStartup<limit)
+                {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.Calibration));
+                Assert.Throws<InvalidOperationException>(()=>station.ApplyCommand(new JObject{["action"]="startPractice"}),"Calibration acceptance is explicit");
+                station.ApplyCommand(new JObject{["action"]="generateCalibration"});
+                Assert.That((bool)JObject.Parse(station.StateJson())["tools"]["calibration"]["canAccept"],Is.True);
+                station.ApplyCommand(new JObject{["action"]="redoCalibration"});
+                ReviewFixtureWhenReady(session,station);
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.Practice));
+                station.ApplyCommand(new JObject{["action"]="restartPractice"});
+                station.ApplyCommand(new JObject{["action"]="finishPractice"});
+                string original=session.StationRecordingPath;
+                station.ApplyCommand(new JObject{["action"]="skipTest",["blockId"]=session.Engine.CurrentBlockId,["reason"]="Synthetic skip verification"});
+                yield return null;
+                limit=Time.realtimeSinceStartup+15;while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockEnded));
+                var skipped=JObject.Parse(File.ReadAllText(Path.Combine(original,"test-checkpoint-NE_FT-attempt-01.json")));
+                Assert.That((string)skipped["status"],Is.EqualTo("Skipped"));
+                Assert.That((string)skipped["scoreStatus"],Is.EqualTo("unavailable"));
+                station.ApplyCommand(new JObject{["action"]="repeatTest",["blockId"]=session.Engine.CurrentBlockId,["condition"]="NE_FT",["reason"]="Synthetic repeat verification"});
+                station.ApplyCommand(new JObject{["action"]="skipBreak",["blockId"]=session.Engine.CurrentBlockId});
+                Assert.That(session.Engine.CurrentBlockId,Is.EqualTo("NE_FT-attempt-02"));
+                yield return null;
+                station.ApplyCommand(new JObject{["action"]="arm"});
+                Assert.That(session.StationParticipantTrigger(),Is.True);
+                clock.Advance(TimeSpan.FromSeconds(2));yield return null;
+                limit=Time.realtimeSinceStartup+15;while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
+                Assert.That(File.Exists(Path.Combine(original,"test-checkpoint-NE_FT-attempt-02.json")),Is.True);
+                for(int i=0;i<3;i++)
+                {
+                    station.ApplyCommand(new JObject{["action"]="skipBreak",["blockId"]=session.Engine.CurrentBlockId});
+                    Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady));
+                    station.ApplyCommand(new JObject{["action"]="skipTest",["blockId"]=session.Engine.CurrentBlockId,["reason"]="Finish fixture without scoring"});
+                    yield return null;
+                    limit=Time.realtimeSinceStartup+15;while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
+                }
+                station.ApplyCommand(new JObject{["action"]="skipBreak",["blockId"]=session.Engine.CurrentBlockId});yield return null;
+                limit=Time.realtimeSinceStartup+15;while(!session.StationCanStartParticipant && Time.realtimeSinceStartup<limit)yield return null;
+                Assert.That(File.Exists(Path.Combine(original,"session-summary.json")),Is.True);
+                string originalEvents=File.ReadAllText(Path.Combine(original,"events.ndjson"));
+                station.ApplyCommand(new JObject{["action"]="reviewRecording",["id"]=Path.GetFileName(original)});
+                limit=Time.realtimeSinceStartup+15;
+                while((bool)JObject.Parse(station.StateJson())["tools"]["archiveBusy"] && Time.realtimeSinceStartup<limit)yield return null;
+                var review=JObject.Parse(station.StateJson())["tools"]["review"];
+                Assert.That(review["attempts"].Count(),Is.EqualTo(5));
+                Assert.That(review["notes"].Count(),Is.GreaterThan(0));
+                station.ApplyCommand(new JObject{["action"]="exportRecording",["id"]=Path.GetFileName(original)});
+                limit=Time.realtimeSinceStartup+15;
+                while((bool)JObject.Parse(station.StateJson())["tools"]["archiveBusy"] && Time.realtimeSinceStartup<limit)yield return null;
+                Assert.That(File.Exists((string)JObject.Parse(station.StateJson())["tools"]["exportPath"]),Is.True);
+                station.ApplyCommand(new JObject{["action"]="repeatTest",["blockId"]="",["condition"]="NE_FT",["reason"]="Repeat after finalization"});
+                limit=Time.realtimeSinceStartup+15;while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
+                Assert.That(session.Engine.CurrentBlockId,Is.EqualTo("NE_FT-attempt-03"));
+                Assert.That(session.StationRecordingPath,Is.Not.EqualTo(original));
+                Assert.That(File.ReadAllText(Path.Combine(original,"events.ndjson")),Is.EqualTo(originalEvents),"A finalized recording is never reopened for writes");
+                session.StationAbort("Fixture complete");yield return null;
+                limit=Time.realtimeSinceStartup+15;while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
+            }
+            finally{UnityEngine.Object.DestroyImmediate(host);}
+        }
+
+        private static void ReviewFixtureWhenReady(DevelopmentSessionPanel session,DevelopmentTestStation station)
+        {
+            if(session.IsBusy || session.Engine?.State!=SessionState.Calibration)return;
+            station.ApplyCommand(new JObject{["action"]="generateCalibration"});
+            station.ApplyCommand(new JObject{["action"]="acceptCalibration"});
+            station.ApplyCommand(new JObject{["action"]="startPractice"});
         }
     }
 }

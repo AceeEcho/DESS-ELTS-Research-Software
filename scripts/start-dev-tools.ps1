@@ -56,7 +56,7 @@ function Invoke-EltsDevelopmentStart {
     foreach ($name in @('git','python','dotnet','node','unity')) {
         if (-not $paths[$name]) { $ready = $false }
     }
-    Write-Host 'Starting ELTS synthetic development dashboard and Unity Editor.'
+    Write-Host 'Starting the ELTS dashboard and participant game.'
     if (-not $ready) {
         if (Test-EltsProjectOpen $project) { throw 'Close this project in Unity, then click START-ELTS again so setup can finish.' }
         Write-Host 'Preparing this computer. First startup can take a while; complete any Unity account/license prompts.'
@@ -86,7 +86,7 @@ function Invoke-EltsDevelopmentStart {
         if (Test-EltsProjectOpen $project) { throw 'The dashboard needs a build. Close this project in Unity, then click START-ELTS again.' }
         # Build to a new directory; never delete an older build or its recordings.
         $output = 'build/start-elts-' + [Guid]::NewGuid().ToString('N')
-        Write-Host 'Building the dashboard before opening the editor...'
+        Write-Host 'Building the dashboard and participant game...'
         Invoke-EltsSetupProcess $shell @('-NoProfile','-ExecutionPolicy','Bypass','-File',
             (Join-Path $root 'scripts/build.ps1'), '-Output', $output,
             '-PythonExecutable', $paths.python, '-UnityEditor', $paths.unity) -TimeoutSeconds 3600
@@ -96,9 +96,9 @@ function Invoke-EltsDevelopmentStart {
         $cache = @{ fingerprint = Get-EltsStartupFingerprint; output = $output }
         [IO.File]::WriteAllText($cachePath, ($cache | ConvertTo-Json), (New-Object Text.UTF8Encoding $false))
     }
-    if (-not (Test-EltsProjectOpen $project)) {
-        Start-EltsVisibleApp $paths.unity @('-projectPath', $project) $root
-    } else { Write-Host 'The Unity project is already open.' }
-    Start-EltsVisibleApp $player @('-screen-fullscreen','0','-screen-width','1440','-screen-height','960') (Split-Path -Parent $player)
-    Write-Host 'Dashboard and Unity Editor launch requested. Development mode; study startup remains unavailable.' -ForegroundColor Green
+    # Unity runs headlessly only when setup/build requires it. Open the Editor
+    # manually for source work; ordinary testing needs just the two app windows.
+    # Preserve the connected desktop at startup; fullscreen remains a user action.
+    Start-EltsVisibleApp $player @('-eltsWindowed','-screen-fullscreen','0','-screen-width','1280','-screen-height','720') (Split-Path -Parent $player)
+    Write-Host 'Dashboard and participant game launch requested.' -ForegroundColor Green
 }

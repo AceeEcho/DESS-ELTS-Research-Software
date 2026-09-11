@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from tools.build.provenance import sha
-from tools.build.verify import verify as verify_player
+from tools.build.verify import verify as verify_player, is_runtime_product
 from tools.logging.verify_run import verify_run
 from tools.validation.schema import load_json
 
@@ -66,9 +66,7 @@ def package_files(root: Path) -> dict[str, str]:
             generated_bytecode = "__pycache__" in path.parts and path.suffix == ".pyc" and name.startswith(("analysis/", "tools/"))
             if name.startswith(RUNTIME_OUTPUT):
                 relative = name[len(RUNTIME_OUTPUT):]
-                reservation = re.fullmatch(r"\.[A-Za-z0-9][A-Za-z0-9_.-]{0,79}\.reservation", relative)
-                product = re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,79}/(samples\.ndjson|events\.ndjson|targets\.ndjson|session-summary\.json|\.session-summary\.pending\.json|synthetic-calibration-[0-9a-f]{32}\.json)", relative)
-                if not (reservation or product):
+                if not is_runtime_product(relative):
                     raise ValueError("Unexpected file in runtime recording directory: " + relative)
                 continue
             if generated_bytecode:

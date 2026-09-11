@@ -123,8 +123,6 @@
 .order-position { width: 26px; color: var(--muted); font-size: 16px; }
 .row-title { font-size: 14px; }
 .row-meta { color: var(--muted); font-size: 12px; margin-top: 3px; }
-.row-controls { flex-direction: column; width: 65px; flex-shrink: 0; }
-.dashboard .move-button { font-size: 10px; min-height: 22px; padding: 3px; margin: 1px 0; background-color: transparent; }
 .dashboard .checkpoint-select { flex-grow: 1; flex-shrink: 1; background-color: transparent; border-width: 0; -unity-text-align: middle-left; }
 .preflight-row { flex-direction: row; justify-content: space-between; padding: 9px 0; border-bottom-width: 1px; border-bottom-color: var(--border); flex-shrink: 0; }
 .preflight-name { flex-grow: 1; flex-shrink: 1; margin-right: 12px; }

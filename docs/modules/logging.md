@@ -21,6 +21,22 @@ Schemas live in `schemas/logs/`. A reader must reject an unsupported schema iden
 
 `LogCloseResult.Completed` means the writer thread joined within the requested wait. `CompleteOutput` means successful final publication won. Publication can win just before the thread exits, giving `Completed=false` and `CompleteOutput=true`. Terminal publication and cancellation share a lock; an operating-system stall during the final move can extend the close wait, so this is not a hard real-time bound.
 
+## Per-test durable checkpoints
+
+The browser station calls `SessionRecordingAdapter.CheckpointAsync()` after each
+test. The writer places one FIFO marker in the sample queue and another in the
+critical queue. Once both reach the writer, every record accepted before the
+checkpoint has been written; the writer durably flushes all streams before
+acknowledging success. Later acquisition continues in the same recording. A queue,
+write, durable-flush or timeout failure cannot acknowledge a successful checkpoint.
+
+The administrator then publishes a supplementary `test-checkpoint-<attempt>.json`
+through a durable pending-file write and no-overwrite move. Its `finalized:false`
+field distinguishes this recovery/review evidence from `session-summary.json`.
+Only ordinary session closure computes final stream checksums and enables the
+existing completed-run analysis path. Checkpoints never overwrite or truncate raw
+data, and an interrupted session without a final summary still requires inspection.
+
 ## Focused checks and soak
 
 From the repository root:

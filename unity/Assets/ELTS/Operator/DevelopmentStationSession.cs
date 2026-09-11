@@ -20,7 +20,11 @@ namespace Elts.Operator
     {
         private bool stationPreparing;
         private string stationParticipant = "";
+        private string stationParticipantName = "", stationInitialNotes = "";
         private double stationStartedAt;
+        private readonly Dictionary<string,double> stationDurations = new Dictionary<string,double>(StringComparer.Ordinal) {
+            ["WE_FT"]=300,["WE_MT"]=300,["NE_FT"]=300,["NE_MT"]=300
+        };
         public bool SeparateAdministrator { get; private set; }
         public bool TestArmed { get; private set; }
         public bool StationCanArm => !IsBusy && !closing && !TestArmed && engine?.State==SessionState.BlockReady;
@@ -30,21 +34,61 @@ namespace Elts.Operator
         public string StationRunId => runId;
         public string StationMessage => engine?.Failure ?? lastMessage;
         public string StationRecordingPath => recording?.RunDirectory ?? "";
-        public int StationShots => scenario?.ShotCount ?? 0;
-        public int StationHits => scenario?.HitCount ?? 0;
+        public int StationShots => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.ShotCount??0 : 0;
+        public int StationHits => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.HitCount??0 : 0;
         public string[] StationOrder => Field("conditionOrder").value.Split(',');
         public double StationElapsed => Math.Max(0,(clock?.Now.Elapsed.TotalSeconds ?? 0)-stationStartedAt);
+        public IReadOnlyDictionary<string,double> StationDurations => stationDurations;
+        public bool StationCanPause => !IsBusy && !closing && engine?.State == SessionState.BlockRunning;
+        public bool StationCanResume => !IsBusy && !closing && engine?.State == SessionState.BlockPaused;
+        public bool StationCanStop => StationCanPause || StationCanResume;
+        public bool StationCanSetDuration(string condition) => !IsBusy && stationDurations.ContainsKey(condition) &&
+            (StationCanStartParticipant || (!closing && engine?.CanChangeDuration(condition) == true));
+
+        public void StationSetDuration(string condition, double seconds)
+        {
+            SessionEngine.ValidateDevelopmentDuration(seconds);
+            if(!StationCanSetDuration(condition))throw new InvalidOperationException("Pause the current test before editing its duration. Finished tests are locked.");
+            if(!StationCanStartParticipant && engine != null)
+            {
+                engine.SetDevelopmentDuration(condition,seconds);
+                if(engine.State == SessionState.Failed)throw new InvalidOperationException(engine.Failure);
+            }
+            stationDurations[condition] = seconds;
+            lastMessage = "Test duration saved.";
+        }
+
+        public void StationPause()
+        {
+            if(!StationCanPause)throw new InvalidOperationException("No running test to pause.");
+            engine!.PauseDevelopmentBlock();TestArmed=false;
+            if(engine.State == SessionState.Failed)throw new InvalidOperationException(engine.Failure);
+        }
+        public void StationResume()
+        {
+            if(!StationCanResume)throw new InvalidOperationException("No paused test to resume.");
+            engine!.ResumeDevelopmentBlock();
+            if(engine.State == SessionState.Failed)throw new InvalidOperationException(engine.Failure);
+        }
+        public void StationStop()
+        {
+            if(!StationCanStop)throw new InvalidOperationException("No running or paused test to stop.");
+            engine!.StopDevelopmentBlock();TestArmed=false;
+            if(engine.State == SessionState.Failed)throw new InvalidOperationException(engine.Failure);
+        }
 
         public void EnableSeparateAdministrator()
         {
             SeparateAdministrator=true;
+            stationBreakSeconds=view.Configuration.Session.BreakDurationSeconds;
+            stationPracticeSeconds=view.Configuration.Session.PracticeDurationSeconds;
             desktop!.SetOpen(false);
             root.style.display=DisplayStyle.None;
             // Keep the existing session-to-view feed alive while hiding its UI.
             view.SessionControlsVisible=true;
         }
 
-        public void StationStartParticipant(string participant, IEnumerable<string> order)
+        public void StationStartParticipant(string participant, IEnumerable<string> order, string participantName="", string initialNotes="")
         {
             if(!StationCanStartParticipant)throw new InvalidOperationException("Finish the current participant first.");
             participant=participant.Trim();
@@ -53,7 +97,12 @@ namespace Elts.Operator
             var conditions=order.ToArray();
             // Validate through the canonical session plan before opening a writer.
             _=new SessionPlan(participant,conditions);
+            if(participantName.Length>120 || initialNotes.Length>2000)
+                throw new ArgumentException("Name is limited to 120 characters and initial notes to 2000 characters.");
             stationParticipant=participant;
+            stationNotes.Clear(); stationCheckpoints.Clear(); stationCheckpointId="";
+            stationSaveStatus="Recording will start after setup.";
+            stationParticipantName=participantName.Trim();stationInitialNotes=initialNotes.Trim();
             stationStartedAt=clock?.Now.Elapsed.TotalSeconds ?? 0;
             Field("participant").value=participant+"-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss")+"-"+Guid.NewGuid().ToString("N").Substring(0,6);
             Field("conditionOrder").value=String.Join(",",conditions);
@@ -71,10 +120,14 @@ namespace Elts.Operator
                 {
                     if(engine?.State==SessionState.SessionSetup)
                     {
-                        engine.AddNote("Participant ID: "+stationParticipant+"; desktop synthetic rehearsal.");
+                        StationNote("Participant ID: "+stationParticipant+"; desktop synthetic rehearsal.");
+                        // Use the existing timestamped writer; identity never enters
+                        // filenames or browser preferences beyond the participant ID.
+                        StationNote("Participant details: "+Newtonsoft.Json.JsonConvert.SerializeObject(new {
+                            participantId=stationParticipant,participantName=stationParticipantName,initialNotes=stationInitialNotes }));
                         AdvanceWithCalibration();
-                        CaptureCalibrationFixture();AcceptCalibrationFixture();AdvanceWithCalibration();
-                        lastMessage="Preparing the synthetic test. The administrator can arm when the practice timer finishes.";
+                        stationPreparing=false;
+                        lastMessage="Review the synthetic calibration fixture, then start practice.";
                     }
                     if(engine?.State==SessionState.BlockReady)
                     { stationPreparing=false;lastMessage="Ready. Arm the test when the participant is ready."; }
@@ -87,6 +140,18 @@ namespace Elts.Operator
                     engine?.Abort("Synthetic station preparation failed: "+exception.Message);
                 }
             }
+            if(engine?.State==SessionState.BlockEnded && stationCheckpointId!=engine.CurrentBlockId)
+            {
+                // End-of-test target cleanup belongs before the durable boundary.
+                scenario?.Refresh(0,acquisition?.Snapshot?.Head.Pose);
+                stationCheckpointId=engine.CurrentBlockId!;
+                var checkpoint=CreateStationCheckpoint();
+                // Save immediately; the administrator starts the break separately.
+                stationSaveStatus="Saving "+checkpoint.condition+"…";
+                Begin(()=>SaveStationCheckpointAsync(checkpoint));
+            }
+            if(!IsBusy && engine?.State==SessionState.Break && engine.RemainingSeconds<=0)
+                engine.Advance();
             if(engine?.State!=SessionState.BlockReady)TestArmed=false;
         }
 
@@ -108,6 +173,12 @@ namespace Elts.Operator
             if(String.IsNullOrWhiteSpace(reason))throw new ArgumentException("Enter a reason for stopping this session.");
             TestArmed=false;stationPreparing=false;engine.Abort(reason.Trim());
         }
+        public void StationStartBreak()
+        {
+            if(IsBusy || engine?.State!=SessionState.BlockEnded)
+                throw new InvalidOperationException("Wait for the test to finish saving before starting its break.");
+            engine.Advance();
+        }
         public void StationNext()
         {
             if(IsBusy || engine==null || !engine.CanAdvance ||
@@ -119,6 +190,8 @@ namespace Elts.Operator
         {
             if(engine==null || closing || String.IsNullOrWhiteSpace(text))throw new ArgumentException("Enter a note for an active session.");
             engine.AddNote(text.Trim());lastMessage="Note saved.";
+            if(engine.State==SessionState.Failed)throw new InvalidOperationException(engine.Failure);
+            stationNotes.Add(new StationNoteEntry { seconds=StationElapsed,text=text.Trim() });
         }
         private void StationEvent(string type)
         {

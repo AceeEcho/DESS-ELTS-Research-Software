@@ -74,6 +74,7 @@ class PackageTests(unittest.TestCase):
         runtime = self.output / "player/data/synthetic/new-run"
         runtime.mkdir(parents=True)
         (runtime / "events.ndjson").write_text("runtime output", encoding="utf-8")
+        (runtime / "test-checkpoint-WE_FT-attempt-01.json").write_text("checkpoint fixture", encoding="utf-8")
         verify_package(self.output)
         (runtime / "unexpected.dll").write_bytes(b"code is not a recording")
         with self.assertRaises(ValueError):

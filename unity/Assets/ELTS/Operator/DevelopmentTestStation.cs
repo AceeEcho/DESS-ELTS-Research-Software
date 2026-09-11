@@ -26,8 +26,15 @@ namespace Elts.Operator
     [DefaultExecutionOrder(-100)]
     public sealed class DevelopmentTestStation : MonoBehaviour
     {
-        private const int ViewWidth=960,ViewHeight=600;
-        private const float ImageIntervalSeconds=0.2f;
+        [SerializeField, Range(320,1280)] private int previewWidth=640;
+        [SerializeField, Range(1,30)] private int previewFramesPerSecond=10;
+        [SerializeField, Range(40,95)] private int previewJpegQuality=72;
+        [SerializeField, Range(15,120)] private int participantFramesPerSecond=60;
+        private int previousFrameRate,previousVSync;
+        private bool ownsFramePacing;
+        private int previewHeight;
+        private bool capturePending;
+        private int windowWidth=1100,windowHeight=700;
         private DevelopmentSessionPanel session=null!;
         private DevelopmentView view=null!;
         private AdministratorServer? server;
@@ -47,6 +54,7 @@ namespace Elts.Operator
         {
             public string condition="",attempt="",status="Running";
             public int shots,hits;
+            public double activeSeconds;
         }
         public IDesktopControls Controls {get;set;}=new MouseKeyboardControls();
         public string AdministratorUrl=>server?.Url??"";
@@ -67,12 +75,25 @@ namespace Elts.Operator
             session=GetComponent<DevelopmentSessionPanel>();view=GetComponent<DevelopmentView>();
             if(session==null || !view.Ready){enabled=false;return;}
             Application.runInBackground=true;
+            if(!Application.isEditor)
+            {
+                // Leave GPU time for Windows wireless-display encoding. This
+                // limits presentation only; the shared recording clock is unchanged.
+                previousFrameRate=Application.targetFrameRate;
+                previousVSync=QualitySettings.vSyncCount;
+                QualitySettings.vSyncCount=0;
+                Application.targetFrameRate=Mathf.Clamp(participantFramesPerSecond,15,120);
+                ownsFramePacing=true;
+            }
             Elts.Development.DevelopmentBanner.ShowInPlayer=false;
             session.EnableSeparateAdministrator();view.ParticipantOnly=true;
             view.ParticipantCamera.targetTexture=null;
-            outsideTexture=new RenderTexture(ViewWidth,ViewHeight,24,RenderTextureFormat.ARGB32){name="Administrator outside view"};outsideTexture.Create();
+            previewHeight=Mathf.RoundToInt(previewWidth*0.625f);
+            outsideTexture=new RenderTexture(previewWidth,previewHeight,24,RenderTextureFormat.ARGB32){name="Administrator outside view"};outsideTexture.Create();
             view.OperatorCamera.targetTexture=outsideTexture;
-            capture=new Texture2D(ViewWidth,ViewHeight,TextureFormat.RGB24,false);
+            // Render the administrator camera only when producing a preview frame.
+            view.OperatorCamera.enabled=false;
+            capture=new Texture2D(previewWidth,previewHeight,TextureFormat.RGB24,false);
             // UIDocuments beneath another UIDocument must share its panel. Keep
             // this independent root on its own participant-only panel instead.
             uiHost=new GameObject("Participant interface — no administrator controls");
@@ -80,6 +101,8 @@ namespace Elts.Operator
             settings.themeStyleSheet=Resources.Load<ThemeStyleSheet>("ELTS/SessionTheme");
             var document=uiHost.AddComponent<UIDocument>();document.panelSettings=settings;
             ui=document.rootVisualElement;ui.style.unityFont=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");ui.pickingMode=PickingMode.Ignore;
+            // A resize invalidates the pixel coordinates of a held trigger.
+            ui.RegisterCallback<GeometryChangedEvent>(_=>CancelClick());
             Resources.Load<VisualTreeAsset>("ELTS/ParticipantView").CloneTree(ui);
             prompt=ui.Q("participantPrompt");title=ui.Q<Label>("participantTitle");subtitle=ui.Q<Label>("participantSubtitle");reticle=ui.Q<Label>("participantReticle");
             session.StationPublishPose(session.Desktop.Model.Head,session.Desktop.Model.Weapon);
@@ -96,12 +119,20 @@ namespace Elts.Operator
             yield return null;
             if(!Application.isEditor)
             {
-                // Prefer a secondary monitor for the participant. With one
-                // monitor, the admin offers Windowed for side-by-side rehearsal.
-                var displays=new List<DisplayInfo>();Screen.GetDisplayLayout(displays);
-                if(displays.Count>1)
-                {var participantDisplay=displays[1];yield return Screen.MoveMainWindowTo(participantDisplay,Vector2Int.zero);}
-                if(Array.IndexOf(Environment.GetCommandLineArgs(),"-eltsWindowed")<0)Screen.fullScreenMode=FullScreenMode.FullScreenWindow;
+                // Preserve Windows display placement by default, including an
+                // existing Miracast connection. Moving displays and maximizing
+                // the render surface at startup are now explicit opt-ins.
+                var arguments=Environment.GetCommandLineArgs();
+                bool windowed=Array.IndexOf(arguments,"-eltsWindowed")>=0;
+                if(!windowed && Array.IndexOf(arguments,"-eltsSecondaryDisplay")>=0)
+                {
+                    var displays=new List<DisplayInfo>();Screen.GetDisplayLayout(displays);
+                    if(displays.Count>1)
+                        yield return Screen.MoveMainWindowTo(displays[1],Vector2Int.zero);
+                }
+                if(!windowed && Array.IndexOf(arguments,"-eltsFullscreen")>=0)
+                    SetFullscreen(true);
+                else SetFullscreen(false);
             }
             bool suppress=Array.IndexOf(Environment.GetCommandLineArgs(),"-eltsNoAdminWindow")>=0 ||
                 Array.IndexOf(Environment.GetCommandLineArgs(),"-runTests")>=0 ||
@@ -122,6 +153,10 @@ namespace Elts.Operator
         private void Update()
         {
             if(server==null || ui.panel==null)return;
+            var keyboard=Keyboard.current;
+            if(keyboard!=null && (keyboard.f11Key.wasPressedThisFrame ||
+                (keyboard.enterKey.wasPressedThisFrame && (keyboard.leftAltKey.isPressed || keyboard.rightAltKey.isPressed))))
+                SetFullscreen(!Screen.fullScreen);
             for(int i=0;i<8 && server.TryTakeCommand(out var command);i++)
             {
                 if(!command.TryBegin())continue;
@@ -135,29 +170,68 @@ namespace Elts.Operator
             }
             session.StationTick();
             ReadParticipantInput();
-            view.Refresh(0);
+            // DevelopmentView.Update renders the latest pose later in this frame.
+            // Avoid rebuilding scene presentation twice per participant frame.
             UpdateParticipantPrompt();UpdateRunRows();
-            if(Time.unscaledTime>=nextState){nextState=Time.unscaledTime+0.1f;server.PublishState(StateJson());}
+            if(Time.unscaledTime>=nextState)
+            {nextState=Time.unscaledTime+1f/Mathf.Max(10,previewFramesPerSecond);server.PublishState(StateJson());}
         }
         public void ApplyCommand(JObject command)
         {
             string action=(string?)command["action"]??"";
+            if((action=="pause" || action=="resume" || action=="stopTest" || action=="skipTest" || action=="skipBreak" || action=="startBreak" || action=="repeatTest") &&
+                (string?)command["blockId"]!=(session.Engine?.CurrentBlockId??""))
+                throw new InvalidOperationException("The test changed. Review the current test before trying again.");
             switch(action)
             {
                 case "startParticipant":
-                    session.StationStartParticipant((string?)command["participant"]??"",command["conditionOrder"]?.ToObject<string[]>()??session.StationOrder);break;
+                    session.StationStartParticipant((string?)command["participant"]??"",command["conditionOrder"]?.ToObject<string[]>()??session.StationOrder,
+                        (string?)command["participantName"]??"",(string?)command["initialNotes"]??"");break;
                 case "arm": session.StationArm();CancelClick();break;
                 case "disarm": session.StationDisarm();CancelClick();break;
+                case "pause": session.StationPause();CancelClick();break;
+                case "resume": session.StationResume();CancelClick();break;
+                case "stopTest": session.StationStop();CancelClick();break;
+                case "setDuration":
+                    session.StationSetDuration((string?)command["condition"]??"",(double?)command["seconds"]??Double.NaN);break;
+                case "applySetup":
+                    session.StationApplySetup(command["conditionOrder"]?.ToObject<string[]>()??Array.Empty<string>(),
+                        command["durations"]?.ToObject<Dictionary<string,double>>()??new Dictionary<string,double>(),
+                        (double?)command["practiceSeconds"]??Double.NaN,(double?)command["breakSeconds"]??Double.NaN);break;
+                case "setPhaseDurations":
+                    session.StationSetPhaseDurations((double?)command["practiceSeconds"]??Double.NaN,(double?)command["breakSeconds"]??Double.NaN);break;
+                case "startBreak":session.StationStartBreak();CancelClick();break;
+                case "skipBreak":session.StationSkipBreak();CancelClick();break;
+                case "skipTest":session.StationSkipTest((string?)command["reason"]??"");CancelClick();break;
+                case "repeatTest":session.StationRepeat((string?)command["condition"]??"",(string?)command["reason"]??"");CancelClick();break;
+                case "generateCalibration":case "redoCalibration":case "acceptCalibration":
+                case "startPractice":case "restartPractice":case "finishPractice":
+                    session.StationPreparationAction(action);CancelClick();break;
+                case "listRecordings":case "reviewRecording":case "exportRecording":
+                    session.StationArchiveAction(action,(string?)command["id"]??"");break;
+                case "openDataFolder":session.StationOpenDataFolder();break;
                 case "next": session.StationNext();CancelClick();break;
                 case "abort": session.StationAbort((string?)command["reason"]??"");CancelClick();break;
                 case "note": session.StationNote((string?)command["text"]??"");break;
                 case "viewOrbit":
                     orbitYaw=Finite(command,"yaw",orbitYaw);orbitPitch=Mathf.Clamp(Finite(command,"pitch",orbitPitch),-10,80);orbitDistance=Mathf.Clamp(Finite(command,"distance",orbitDistance),1.5f,12);
                     view.SetOperatorOrbit(orbitYaw,orbitPitch,orbitDistance);break;
-                case "windowed": if(!Application.isEditor)Screen.SetResolution(1100,700,FullScreenMode.Windowed);break;
-                case "fullscreen": if(!Application.isEditor)Screen.fullScreenMode=FullScreenMode.FullScreenWindow;break;
+                case "windowed": SetFullscreen(false);break;
+                case "fullscreen": SetFullscreen(true);break;
+                case "previewRate": previewFramesPerSecond=Mathf.Clamp((int)Finite(command,"fps",10),1,30);break;
                 default:throw new ArgumentException("Unknown administrator action.");
             }
+        }
+        private void SetFullscreen(bool fullscreen)
+        {
+            CancelClick();
+            if(Application.isEditor)return;
+            if(fullscreen)
+            {
+                if(!Screen.fullScreen){windowWidth=Screen.width;windowHeight=Screen.height;}
+                Screen.fullScreenMode=FullScreenMode.FullScreenWindow;
+            }
+            else if(Screen.fullScreen)Screen.SetResolution(windowWidth,windowHeight,FullScreenMode.Windowed);
         }
         private static float Finite(JObject command,string key,float fallback)
         {float value=(float?)command[key]??fallback;if(!float.IsFinite(value))throw new ArgumentException("Camera values must be finite.");return value;}
@@ -172,7 +246,7 @@ namespace Elts.Operator
                 if(input.Reset)session.Desktop.Model.Reset();
                 session.Desktop.Model.Move(input.Movement,Time.unscaledDeltaTime);
                 if(inside)session.Desktop.Model.SetAim(new Vector2((input.Pointer.x-bounds.xMin)/bounds.width,1-(input.Pointer.y-bounds.yMin)/bounds.height));
-                if(input.ReturnToAdministrator && !Application.isEditor)Screen.SetResolution(1100,700,FullScreenMode.Windowed);
+                if(input.ReturnToAdministrator)SetFullscreen(false);
             }
             // The virtual tracker holds its last pose while the administrator
             // has focus. Mouse edges are canceled; synthetic tracking continues.
@@ -196,23 +270,40 @@ namespace Elts.Operator
             if(session.TestArmed){title.text="Shoot to begin";subtitle.text="Click and release when you are ready.";return;}
             switch(session.Engine?.State)
             {
+                case SessionState.BlockPaused:title.text="Test paused";subtitle.text="Please wait for the administrator to resume.";break;
                 case SessionState.SessionComplete:title.text="Test complete";subtitle.text="Thank you. Please wait for the administrator.";break;
-                case SessionState.BlockEnded:case SessionState.Break:title.text="Take a break";subtitle.text="The administrator will prepare the next test.";break;
+                case SessionState.BlockEnded:title.text="Test finished";
+                    subtitle.text="Please wait for the administrator to start your break.";break;
+                case SessionState.Break:title.text="Take a break";
+                    subtitle.text="Rest time remaining: "+FormatStationCountdown(session.Engine.RemainingSeconds);break;
+                case SessionState.Practice:title.text="Practice · move and aim";subtitle.text="Familiarize yourself with the controls. Shots are not scored. "+
+                    FormatStationCountdown(session.Engine.RemainingSeconds);break;
                 case SessionState.Aborted:case SessionState.Failed:title.text="Test stopped";subtitle.text="Please wait for the administrator.";break;
                 default:title.text="Please wait";subtitle.text="The administrator is preparing your test.";break;
             }
+        }
+        private static string FormatStationCountdown(double seconds)
+        {
+            int total=(int)Math.Max(0,Math.Ceiling(seconds));
+            return (total/60).ToString("D2")+":"+(total%60).ToString("D2");
         }
         private void UpdateRunRows()
         {
             if(knownRun!=session.StationRunId){knownRun=session.StationRunId;blocks.Clear();}
             var engine=session.Engine;if(engine==null)return;
             var row=blocks.LastOrDefault();
+            if(engine.CurrentBlockSkipped && row?.attempt!=engine.CurrentBlockId &&
+                (engine.State==SessionState.BlockEnded || engine.State==SessionState.Break))
+            { row=new RunRow {condition=engine.CurrentCondition!,attempt=engine.CurrentBlockId!,status="Skipped"};blocks.Add(row); }
             if(engine.State==SessionState.BlockRunning && row?.attempt!=engine.CurrentBlockId)
             {row=new RunRow{condition=engine.CurrentCondition!,attempt=engine.CurrentBlockId!};blocks.Add(row);}
-            if(row!=null && row.status=="Running")
+            if(row!=null && (row.status=="Running" || row.status=="Paused"))
             {
                 row.shots=session.StationShots;row.hits=session.StationHits;
-                if(engine.State==SessionState.BlockEnded || engine.State==SessionState.Break || engine.State==SessionState.SessionComplete)row.status="Completed";
+                row.activeSeconds=engine.CurrentActiveSeconds;
+                row.status=engine.State==SessionState.BlockPaused?"Paused":"Running";
+                if(engine.State==SessionState.BlockEnded || engine.State==SessionState.Break || engine.State==SessionState.SessionComplete)
+                    row.status=engine.CurrentBlockStoppedEarly?"Stopped early":"Completed";
                 if(engine.State==SessionState.Aborted || engine.State==SessionState.Failed)row.status="Stopped";
             }
         }
@@ -224,12 +315,19 @@ namespace Elts.Operator
                 phase=session.TestArmed?"Armed — waiting for participant":engine?.State.ToString()??"No participant",
                 remainingSeconds=engine?.RemainingSeconds??0,elapsedSeconds=session.StationElapsed,
                 armed=session.TestArmed,canArm=session.StationCanArm,canStartParticipant=session.StationCanStartParticipant,
+                canPause=session.StationCanPause,canResume=session.StationCanResume,canStop=session.StationCanStop,
+                canAbort=!session.IsBusy && engine!=null && engine.State!=SessionState.SessionComplete && engine.State!=SessionState.Aborted && engine.State!=SessionState.Failed,
+                activeSeconds=engine?.CurrentActiveSeconds??0,durationSeconds=engine?.CurrentDurationSeconds??0,
+                testDurations=session.StationDurations,
+                editableDurations=session.StationOrder.Where(session.StationCanSetDuration).ToArray(),
                 busy=session.IsBusy,message=session.StationMessage,recordingPath=session.StationRecordingPath,
-                condition=engine?.CurrentCondition??"",conditionOrder=session.StationOrder,blocks,
+                condition=engine?.CurrentCondition??"",blockId=engine?.CurrentBlockId??"",conditionOrder=session.StationOrder,blocks,
                 shots=session.StationShots,hits=session.StationHits,
                 tracking=new{head=Pose(view.RawHead),weapon=Pose(view.RawWeapon)},
                 camera=new{yaw=orbitYaw,pitch=orbitPitch,distance=orbitDistance},viewVersion=imageVersion,
-                synthetic=true,canNext=!session.IsBusy && (engine?.State==SessionState.BlockEnded || (engine?.State==SessionState.Break && engine.RemainingSeconds<=0))
+                fullscreen=Screen.fullScreen,previewFps=previewFramesPerSecond,
+                synthetic=true,canNext=!session.IsBusy && (engine?.State==SessionState.BlockEnded || (engine?.State==SessionState.Break && engine.RemainingSeconds<=0)),
+                tools=session.StationToolsState
             });
         }
         private static object Pose(RigidPose? pose)=>new{
@@ -237,20 +335,41 @@ namespace Elts.Operator
             rotation=pose.HasValue?new[]{pose.Value.Orientation.X,pose.Value.Orientation.Y,pose.Value.Orientation.Z,pose.Value.Orientation.W}:null};
         private IEnumerator CaptureOutsideView()
         {
-            var delay=new WaitForSecondsRealtime(ImageIntervalSeconds);
             while(server!=null)
             {
                 yield return new WaitForEndOfFrame();
+                if(capturePending){yield return null;continue;}
                 var request=new RenderPipeline.StandardRequest{destination=outsideTexture};
                 if(RenderPipeline.SupportsRenderRequest(view.OperatorCamera,request))RenderPipeline.SubmitRenderRequest(view.OperatorCamera,request);
-                var previous=RenderTexture.active;RenderTexture.active=outsideTexture;
-                capture.ReadPixels(new Rect(0,0,ViewWidth,ViewHeight),0,0);capture.Apply();RenderTexture.active=previous;
-                server?.PublishImage(capture.EncodeToJPG(82));imageVersion++;
-                yield return delay;
+                if(SystemInfo.supportsAsyncGPUReadback)
+                {
+                    capturePending=true;
+                    AsyncGPUReadback.Request(outsideTexture,0,TextureFormat.RGB24,result=> {
+                        capturePending=false;
+                        if(server==null || capture==null || result.hasError)return;
+                        capture.LoadRawTextureData(result.GetData<byte>());
+                        server.PublishImage(capture.EncodeToJPG(previewJpegQuality));imageVersion++;
+                    });
+                }
+                else
+                {
+                    var previous=RenderTexture.active;
+                    try {
+                        RenderTexture.active=outsideTexture;
+                        capture.ReadPixels(new Rect(0,0,previewWidth,previewHeight),0,0,false);
+                        server.PublishImage(capture.EncodeToJPG(previewJpegQuality));imageVersion++;
+                    } finally {RenderTexture.active=previous;}
+                }
+                yield return new WaitForSecondsRealtime(1f/previewFramesPerSecond);
             }
         }
         private void OnDestroy()
         {
+            if(ownsFramePacing)
+            {
+                Application.targetFrameRate=previousFrameRate;
+                QualitySettings.vSyncCount=previousVSync;
+            }
             StopAllCoroutines();server?.Dispose();server=null;
             UnityEngine.Cursor.visible=true;
             Elts.Development.DevelopmentBanner.ShowInPlayer=true;

@@ -113,7 +113,7 @@ namespace Elts.Operator
                     for(int z=2;z<=8;z++)Segment("Floor transverse",new Vector3(-3,-0.8f,z),new Vector3(3,-0.8f,z),StimulusLayer,stimulusMaterial);
                     for(int x=-2;x<=2;x++)Segment("Reference post",new Vector3(x,-0.8f,6),new Vector3(x,1.5f,6),StimulusLayer,stimulusMaterial);
                 }
-                replayPath=Path.GetFullPath(Path.Combine(Application.dataPath,"..",configuration.Machine.DataRoot));
+                replayPath=configuration.Machine.ResolveDataRoot(Path.Combine(Application.dataPath,".."));
                 Ready=true;Refresh(0);
             }
             catch(Exception exception){error=exception.Message;Debug.LogError("ELTS_VIEW_INIT_FAIL "+exception);}

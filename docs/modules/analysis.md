@@ -30,4 +30,11 @@ The development fixture tests cover known counts, invalid-pose exclusion, hand-c
 PYTHONPATH=analysis/src python -m unittest discover -s analysis/tests -v
 ```
 
+Flexible desktop tests explicitly record duration changes, pause/resume events,
+and early finishes. The reader accepts these only with synthetic provenance and
+returns their timing summaries with `scoreStatus: unavailable`, excluding them
+from the standard uninterrupted 300-second score. Raw samples, targets, events,
+and closure integrity checks remain available. Unmarked duration mismatches still
+fail validation.
+
 This lane is synthetic development only. It does not establish hardware calibration, physical timing, participant or safety acceptance, or any study gate.

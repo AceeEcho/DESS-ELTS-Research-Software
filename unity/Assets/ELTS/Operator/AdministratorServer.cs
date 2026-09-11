@@ -83,7 +83,7 @@ namespace Elts.Operator
         private void Handle(NetworkStream stream)
         {
             // Bound both headers and body. No chunked requests or file-system
-            // routing are accepted; the browser needs only three static assets.
+            // routing are accepted; the browser has an explicit static-asset allowlist.
             var header=new MemoryStream();int matched=0;
             while(header.Length<8192 && matched<4)
             {
@@ -118,7 +118,7 @@ namespace Elts.Operator
                 if(route=="/api/state"){Respond(stream,200,"application/json",Volatile.Read(ref state));return;}
                 if(route=="/api/view.jpg")
                 {var image=Volatile.Read(ref picture);Respond(stream,image.Length==0?204:200,"image/jpeg",image);return;}
-                string? file=route=="/"?"index.html":route=="/styles.css"?"styles.css":route=="/app.js"?"app.js":null;
+                string? file=route=="/"?"index.html":route=="/styles.css"?"styles.css":route=="/app.js"?"app.js":route=="/workflows.js"?"workflows.js":null;
                 if(file!=null && File.Exists(Path.Combine(directory,file)))
                 {Respond(stream,200,file.EndsWith("css")?"text/css":file.EndsWith("js")?"text/javascript":"text/html",File.ReadAllBytes(Path.Combine(directory,file)));return;}
                 Respond(stream,404,"text/plain",Encoding.UTF8.GetBytes("Not found"));return;

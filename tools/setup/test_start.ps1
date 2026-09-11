@@ -21,7 +21,12 @@ function Start-EltsVisibleApp {
     if ($File -eq 'Unity.exe') {
         Assert ($Arguments[1] -eq (Join-Path $fixture 'unity')) 'Unity project argument lost its space-containing path'
         $script:calls.Add('editor')
-    } else { $script:calls.Add('dashboard') }
+    } else {
+        Assert ($Arguments -contains '-eltsWindowed') 'Player must suppress automatic display switching'
+        $fullscreenIndex = [Array]::IndexOf($Arguments, '-screen-fullscreen')
+        Assert ($fullscreenIndex -ge 0 -and $Arguments[$fullscreenIndex + 1] -eq '0') 'Player must start windowed before scene initialization'
+        $script:calls.Add('dashboard')
+    }
 }
 function Invoke-EltsSetupProcess {
     param($File, $Arguments, $TimeoutSeconds)
@@ -43,10 +48,10 @@ try {
     New-Item -ItemType Directory -Force (Join-Path $fixture 'config'),(Join-Path $fixture 'diagnostics') | Out-Null
     Copy-Item (Join-Path $repo 'config/toolchain.json') (Join-Path $fixture 'config/toolchain.json')
     Invoke-EltsDevelopmentStart
-    Assert (($calls -join ',') -eq 'setup,build,editor,dashboard') 'First start ordering failed'
+    Assert (($calls -join ',') -eq 'setup,build,dashboard') 'First start must not open the Editor'
     $calls.Clear()
     Invoke-EltsDevelopmentStart
-    Assert (($calls -join ',') -eq 'verify,editor,dashboard') 'Repeat start did not reuse build/setup'
+    Assert (($calls -join ',') -eq 'verify,dashboard') 'Repeat start must reuse the build without opening the Editor'
     $calls.Clear(); $script:open = $true
     Invoke-EltsDevelopmentStart
     Assert (($calls -join ',') -eq 'verify,dashboard') 'Already-open editor duplicated'
@@ -56,7 +61,7 @@ try {
     Assert ($blocked -and $calls.Count -eq 0) 'Build attempted against open Unity project'
     $script:open = $false
     Invoke-EltsDevelopmentStart
-    Assert (($calls -join ',') -eq 'build,editor,dashboard') 'Source change did not rebuild'
+    Assert (($calls -join ',') -eq 'build,dashboard') 'Source change must rebuild without opening the Editor'
     $calls.Clear(); $script:fingerprint = 'source-three'; $script:failBuild = $true
     try { Invoke-EltsDevelopmentStart } catch { Assert ($_.Exception.Message -eq 'fixture build failed') 'Wrong build failure' }
     Assert (($calls -join ',') -eq 'build') 'Apps opened after failed build'

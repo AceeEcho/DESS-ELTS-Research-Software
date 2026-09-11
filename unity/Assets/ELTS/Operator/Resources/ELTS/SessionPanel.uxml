@@ -22,7 +22,7 @@
           <ui:VisualElement class="section-heading"><ui:Label text="Condition order" class="section-title" /><ui:Label text="4 blocks · 5 minutes each" class="small muted" /></ui:VisualElement>
           <ui:DropdownField name="orderPreset" label="Preset" /><ui:VisualElement name="conditionList" class="reorder-list" />
           <ui:TextField name="conditionOrder" label="Order codes" value="WE_MT,NE_MT,WE_FT,NE_FT" /><ui:Label name="conditionError" class="error" />
-          <ui:Label text="Drag blocks or use Move up / Move down before creating a session. Required conditions and block duration stay fixed." class="small muted" />
+          <ui:Label text="Drag blocks by their handles before creating a session. Focus a handle and use the arrow keys for keyboard reordering. Required conditions and block duration stay fixed." class="small muted" />
           <ui:TextField name="presetName" label="Preset name" />
           <ui:VisualElement class="button-row"><ui:Button name="savePreset" text="+ Save as preset" /><ui:Button name="updatePreset" text="Update preset" /><ui:Button name="removePreset" text="Remove preset" /></ui:VisualElement><ui:Label name="presetMessage" class="small muted" />
           <ui:VisualElement class="section-divider" /><ui:Label text="Preflight" class="section-title" /><ui:VisualElement name="preflightList" />

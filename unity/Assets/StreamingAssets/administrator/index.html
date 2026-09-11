@@ -11,12 +11,12 @@
     <div class="brand"><span class="brand-mark">E</span><div><strong>ELTS</strong><span>Administrator · synthetic test</span></div></div>
     <div class="participant-status"><span class="eyebrow">PARTICIPANT</span><strong id="participant">—</strong><span id="runId" class="subtle">No run</span></div>
     <div class="top-status"><span id="connectionDot" class="status-dot offline"></span><span id="connectionText">Connecting…</span><span class="divider"></span><span id="phaseText">Idle</span></div>
-    <button id="startParticipant" class="primary-btn">Start participant</button>
+    <button id="recordingsButton" class="ghost-btn">Recordings</button><button id="startParticipant" class="primary-btn">New participant</button><button id="settingsButton" class="icon-btn" title="Settings" aria-label="Settings">⚙</button>
   </header>
 
   <main class="workspace" id="workspace">
     <section class="view-pane pane">
-      <div class="pane-head"><div><span class="eyebrow">LIVE VIEW</span><h1>Outside view</h1></div><div class="view-tools"><span id="viewVersion" class="subtle">Waiting for camera</span><button id="windowed" class="icon-btn" title="Return participant window to windowed view">↗</button><button id="fullscreen" class="icon-btn" title="Show participant window fullscreen">⛶</button></div></div>
+      <div class="pane-head"><div><span class="eyebrow">LIVE VIEW</span><h1>Outside view</h1></div><div class="view-tools"><span id="viewVersion" class="subtle">Waiting for camera</span></div></div>
       <div id="viewport" class="viewport" tabindex="0" aria-label="Live outside view. Drag to orbit.">
         <img id="viewImage" alt="Live cached outside view" hidden>
         <div id="viewPlaceholder" class="view-placeholder"><span class="placeholder-glyph">◈</span><strong>Waiting for outside view</strong><span>The outside camera will appear here when the run is ready.</span></div>
@@ -30,22 +30,68 @@
 
     <aside class="control-pane pane">
       <div class="pane-head compact"><div><span class="eyebrow">OPERATOR CONTROL</span><h1>Test session</h1></div><span id="stateBadge" class="badge">IDLE</span></div>
+      <div id="setupWelcome" class="setup-welcome"><strong>Prepare your test setup first</strong><p>Use ⚙ Settings to arrange tests, set durations and load a preset. Choose New participant when you’re ready.</p></div>
+      <section id="preparationPanel" class="panel-section preparation-panel" hidden>
+        <h2>Calibration &amp; practice</h2><p id="calibrationReview" class="review-copy"></p>
+        <p class="subtle">Synthetic fixture review only. This does not calibrate physical equipment.</p>
+        <div class="secondary-actions wrap"><button id="generateCalibration" class="primary-btn">Generate fixture</button><button id="redoCalibration" class="ghost-btn">Redo</button><button id="acceptCalibration" class="primary-btn">Accept fixture</button><button id="startPractice" class="primary-btn">Start practice</button></div>
+      </section>
+      <section id="practicePanel" class="panel-section" hidden><div class="section-title"><h2>Practice · move and aim</h2><strong id="practiceTimer" class="countdown">00:00</strong></div><p class="subtle">Familiarization time; shots are not scored.</p><div class="secondary-actions"><button id="restartPractice" class="ghost-btn">Restart practice</button><button id="finishPractice" class="primary-btn">Finish practice</button></div></section>
+      <section id="breakPanel" class="break-panel" hidden><div><span class="eyebrow">BREAK</span><strong id="breakTimer" class="countdown">00:00</strong></div><p id="breakHelp">The next test will be ready when the timer ends.</p><div class="break-actions"><button id="startBreak" class="primary-btn">Start break</button><button id="skipBreak" class="ghost-btn">Skip break</button></div></section>
       <section class="task-card">
         <div class="task-card-head"><div><span class="eyebrow">CURRENT TASK</span><h2 id="condition">No condition selected</h2></div><span id="remaining" class="countdown">—</span></div>
-        <div class="run-stats"><div><span class="eyebrow">ELAPSED</span><strong id="elapsed">00:00</strong></div><div><span class="eyebrow">SHOTS</span><strong id="shots">0</strong></div><div><span class="eyebrow">HITS</span><strong id="hits">0</strong></div><div><span class="eyebrow">ACCURACY</span><strong id="accuracy">—</strong></div></div>
+        <div class="run-stats"><div><span class="eyebrow">TEST ACTIVE TIME</span><strong id="elapsed">00:00</strong></div><div><span class="eyebrow">SHOTS</span><strong id="shots">0</strong></div><div><span class="eyebrow">HITS</span><strong id="hits">0</strong></div><div><span class="eyebrow">ACCURACY</span><strong id="accuracy">—</strong></div></div>
         <div id="armStatus" class="arm-status"><span class="status-dot"></span><span>Waiting for participant</span></div>
         <button id="armButton" class="arm-btn" disabled>ARM TEST</button>
+        <div id="testControls" class="secondary-actions test-controls"><button id="pauseButton" class="primary-btn" disabled>Pause test</button><button id="resumeButton" class="primary-btn" hidden disabled>Resume test</button><button id="stopTestButton" class="ghost-btn" disabled>Stop test</button></div>
+        <p id="testTiming" class="subtle">Default test duration: 05:00</p><p id="testControlError" class="form-error" role="alert" hidden></p>
         <div class="secondary-actions"><button id="disarmButton" class="ghost-btn" disabled>Disarm</button><button id="nextButton" class="ghost-btn" disabled>Next condition</button></div>
+        <div class="secondary-actions"><button id="skipTest" class="ghost-btn" disabled>Skip this test…</button><button id="repeatTest" class="ghost-btn" disabled>Repeat a test…</button></div>
       </section>
 
       <section class="blocks-panel panel-section"><div class="section-title"><h2>Session runs</h2><span id="blockSummary" class="subtle">—</span></div><div class="blocks"><table class="runs-table"><thead><tr><th>Condition</th><th>Status</th><th>Hits</th><th>Shots</th></tr></thead><tbody id="blocks"></tbody></table></div></section>
-      <section class="notes-panel panel-section"><div class="section-title"><h2>Session notes</h2><button id="saveNote" class="link-btn">Add note</button></div><textarea id="noteText" rows="2" placeholder="Record an operator observation…"></textarea></section>
-      <section class="abort-panel"><button id="abortButton" class="danger-btn" disabled>Abort test</button><span id="recordingPath" class="subtle">Recording path unavailable</span></section>
+      <section class="panel-section"><p id="saveStatus" class="save-status" role="status">No recording yet.</p><details><summary>Readiness &amp; diagnostics</summary><div id="readinessList" class="readiness-list"></div></details></section>
+      <section class="notes-panel panel-section"><div class="section-title"><h2>Session notes</h2><button id="saveNote" class="link-btn">Add note</button></div><textarea id="noteText" maxlength="2000" rows="2" placeholder="Record an operator observation…"></textarea><ol id="noteTimeline" class="note-timeline" aria-label="Saved session notes"></ol></section>
+      <section class="abort-panel"><button id="abortButton" class="danger-btn" disabled>Abort participant session</button><span id="recordingPath" class="subtle">Recording path unavailable</span></section>
     </aside>
   </main>
 
-  <div id="startDialog" class="overlay" hidden><form id="startForm" class="modal" novalidate><button type="button" class="close-btn" id="closeDialog">×</button><span class="eyebrow">NEW SESSION</span><h2>Start participant</h2><p class="modal-sub">Create the participant pipeline, then arm each condition when the setup is ready.</p><label class="field-label">Participant ID<input id="participantInput" required autocomplete="off" placeholder="e.g. P-014"></label><div class="field-label"><span>Condition order</span><span class="subtle">Use the arrows to set the run order.</span></div><ol id="conditionOrder" class="order-list"></ol><div id="startError" class="form-error" hidden></div><div class="modal-actions"><button type="button" class="ghost-btn" id="cancelDialog">Cancel</button><button class="primary-btn" type="submit">Create participant</button></div></form></div>
-  <div id="abortDialog" class="overlay" hidden><form id="abortForm" class="modal" novalidate><button type="button" class="close-btn" id="closeAbort">×</button><span class="eyebrow">STOP SESSION</span><h2>Abort test?</h2><p class="modal-sub">The current run will be stopped and marked with the reason below.</p><label class="field-label">Reason<textarea id="abortReason" rows="3" required placeholder="What caused the abort?"></textarea></label><div id="abortError" class="form-error" hidden></div><div class="modal-actions"><button type="button" class="ghost-btn" id="cancelAbort">Keep running</button><button class="danger-btn" type="submit">Abort test</button></div></form></div>
+  <div id="startDialog" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="intakeTitle">
+    <form id="startForm" class="modal intake-modal" novalidate>
+      <button type="button" class="close-btn" id="closeDialog" aria-label="Close participant entry">×</button>
+      <span class="eyebrow">01 / PARTICIPANT &amp; RECORDING</span><h2 id="intakeTitle">Begin with the participant</h2>
+      <p class="modal-sub">Enter the initial details before preparing the test. These details are saved in the recording.</p>
+      <label class="field-label">Participant name (optional)<input id="participantName" maxlength="120" autocomplete="off" placeholder="Name or test alias"></label>
+      <label class="field-label">Participant number / ID<input id="participantInput" required maxlength="40" autocomplete="off" placeholder="e.g. P-014"></label>
+      <label class="field-label">Initial observations<textarea id="initialNotes" maxlength="2000" rows="3" placeholder="Setup notes or observations before testing"></textarea></label>
+      <p class="subtle">Synthetic development recording · condition order and display controls are in Settings.</p>
+      <div id="startError" class="form-error" role="alert" hidden></div>
+      <div class="modal-actions"><button type="button" class="ghost-btn" id="cancelDialog">Review dashboard</button><button class="primary-btn" type="submit" id="createParticipant">Create recording</button></div>
+    </form>
+  </div>
+  <div id="settingsDialog" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <section class="modal"><button type="button" class="close-btn" id="closeSettings" aria-label="Close settings">×</button>
+      <span class="eyebrow">WORKSPACE</span><h2 id="settingsTitle">Settings</h2>
+      <p class="modal-sub">Display and preview changes are available during a session.</p>
+      <h3>Test setup</h3><p class="subtle">Drag a grab handle to reorder. On a focused handle, use ↑ / ↓ for keyboard reordering. Escape cancels a drag. Setup stays editable before creating a participant.</p>
+      <ol id="conditionOrder" class="order-list" aria-label="Test order"></ol><p id="orderStatus" class="subtle" role="status"></p>
+      <h3>Saved setups</h3><label class="field-label">Preset name<input id="presetName" maxlength="60" placeholder="e.g. Morning rehearsal"></label><div class="secondary-actions wrap"><button id="savePreset" class="ghost-btn">Save setup</button><select id="presetSelect" aria-label="Saved setups"></select><button id="loadPreset" class="ghost-btn">Load</button><button id="deletePreset" class="ghost-btn">Delete</button></div>
+      <section class="timing-settings" aria-labelledby="timingSettingsTitle"><div class="timing-heading"><span class="eyebrow">SESSION TIMING</span><h3 id="timingSettingsTitle">Durations</h3></div><div class="timing-settings-grid"><section class="timing-group" aria-labelledby="testDurationsTitle"><h4 id="testDurationsTitle">Test durations</h4><p class="subtle">Seconds per shooting test (1–3600). Each change saves automatically. Pause a running test before editing it.</p><div id="durationEditors"></div></section><section class="timing-group" aria-labelledby="phaseDurationsTitle"><h4 id="phaseDurationsTitle">Practice &amp; breaks</h4><form id="phaseTimingForm"><div class="phase-fields"><label class="field-label">Practice (seconds)<input id="practiceSeconds" type="number" min="0" max="3600" step="1" required></label><label class="field-label">Every break (seconds)<input id="breakSeconds" type="number" min="0" max="3600" step="1" required></label></div><p class="subtle">One duration applies to every break. Changes to a live break keep the time already elapsed.</p><button id="applyPhaseTiming" class="ghost-btn">Save practice &amp; breaks</button></form></section></div></section>
+      <h3>Game window</h3><div class="secondary-actions"><button id="windowed" class="ghost-btn">Windowed</button><button id="fullscreen" class="ghost-btn">Fullscreen</button></div>
+      <p class="subtle">F11 or Alt+Enter toggles fullscreen in the game. Escape returns to the last window size. Drag any window edge to resize.</p>
+      <label class="field-label">Preview refresh rate<select id="previewRate"><option value="5">5 fps · lower load</option><option value="10" selected>10 fps · balanced</option><option value="20">20 fps · smoother preview</option><option value="30">30 fps · highest load</option></select></label>
+      <label class="check-label"><input id="reduceMotion" type="checkbox"> Reduce interface motion</label>
+      <h3>Outside camera</h3><label class="field-label">Zoom distance (metres)<input id="cameraDistance" type="range" min="1.5" max="12" step="0.1" value="4"></label><button id="resetCamera" class="ghost-btn">Reset camera</button>
+      <p id="settingsError" class="form-error" role="alert" hidden></p>
+    </section>
+  </div>
+  <div id="stopTestDialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="stopTestTitle" hidden>
+    <section class="modal"><h2 id="stopTestTitle">Finish this test early?</h2><p class="modal-sub">Results so far will be kept. This test will be marked “Stopped early” and cannot resume. The remaining tests stay available. Use Pause if you want to continue this test later.</p><p id="stopTestError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button id="cancelStopTest" class="ghost-btn">Keep test</button><button id="confirmStopTest" class="primary-btn">Stop this test</button></div></section>
+  </div>
+  <div id="abortDialog" class="overlay" hidden><form id="abortForm" class="modal" novalidate><button type="button" class="close-btn" id="closeAbort">×</button><span class="eyebrow">STOP SESSION</span><h2>Abort participant session?</h2><p class="modal-sub">The participant session will end with the reason below. Remaining tests will not run in this recording.</p><label class="field-label">Reason<textarea id="abortReason" rows="3" required placeholder="What caused the abort?"></textarea></label><div id="abortError" class="form-error" hidden></div><div class="modal-actions"><button type="button" class="ghost-btn" id="cancelAbort">Keep running</button><button class="danger-btn" type="submit">Abort session</button></div></form></div>
+  <div id="exceptionDialog" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="exceptionTitle"><form id="exceptionForm" class="modal"><h2 id="exceptionTitle">Skip this test?</h2><p id="exceptionHelp" class="modal-sub"></p><label id="repeatChoice" class="field-label" hidden>Test to repeat<select id="repeatCondition"></select></label><label class="field-label">Reason<textarea id="exceptionReason" required maxlength="2000" rows="3"></textarea></label><p id="exceptionError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button type="button" id="cancelException" class="ghost-btn">Cancel</button><button id="confirmException" class="primary-btn">Confirm</button></div></form></div>
+  <div id="recordingsDialog" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="recordingsTitle"><section class="modal recordings-modal"><button id="closeRecordings" class="close-btn" aria-label="Close recordings">×</button><h2 id="recordingsTitle">Recordings &amp; session review</h2><div class="secondary-actions"><button id="refreshRecordings" class="ghost-btn">Refresh list</button><button id="openDataFolder" class="ghost-btn">Open data folder</button></div><p id="archiveStatus" class="subtle" role="status"></p><div class="recording-layout"><div id="recordingList" class="recording-list" aria-label="Local recordings"></div><div><div id="recordingReview" class="recording-review"><p>Select a recording to review its attempts and notes.</p></div><div class="secondary-actions"><button id="downloadReview" class="ghost-btn" disabled>Download review CSV</button><button id="exportRecording" class="primary-btn" disabled>Export raw ZIP</button></div></div></div><p id="recordingError" class="form-error" role="alert" hidden></p></section></div>
+  <script src="workflows.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

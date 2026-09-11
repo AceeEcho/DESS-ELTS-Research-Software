@@ -8,6 +8,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Elts.Geometry;
 using Elts.Tracking;
 
@@ -217,6 +218,8 @@ public sealed class SessionLogWriter : IDisposable
     private readonly BlockingCollection<WriterItem> samples;
     private readonly BlockingCollection<WriterItem> critical;
     private readonly object faultLock = new object();
+    private readonly object enqueueLock = new object();
+    private readonly ConcurrentDictionary<CheckpointRequest, byte> checkpoints = new ConcurrentDictionary<CheckpointRequest, byte>();
     // Serializes the irrevocable final move against a caller timing out Close().
     private readonly object terminalPublicationLock = new object();
     private Thread? thread;
@@ -256,29 +259,70 @@ public sealed class SessionLogWriter : IDisposable
     public bool TryLogSample(TrackingSamplePair sample)
     {
         if (!sample.IsValid) throw new ArgumentException("A complete paired tracking observation is required.", nameof(sample));
-        if (!Accepting()) return false;
-        try
+        lock (enqueueLock)
         {
-            if (samples.TryAdd(WriterItem.FromSample(sample))) return true;
+            if (!Accepting()) return false;
+            try
+            {
+                if (samples.TryAdd(WriterItem.FromSample(sample))) return true;
+            }
+            catch (InvalidOperationException) { }
+            Interlocked.Increment(ref droppedSamples);
+            return false;
         }
-        catch (InvalidOperationException) { }
-        Interlocked.Increment(ref droppedSamples);
-        return false;
     }
     public bool TryLogEvent(SessionEvent sessionEvent)
     {
-        if (!Accepting()) return false;
-        return TryAddCritical(WriterItem.FromEvent(sessionEvent));
+        lock (enqueueLock) return Accepting() && TryAddCritical(WriterItem.FromEvent(sessionEvent));
     }
     public bool TryLogTarget(TargetSnapshot target)
     {
-        if (!Accepting()) return false;
-        return TryAddCritical(WriterItem.FromTarget(target));
+        lock (enqueueLock) return Accepting() && TryAddCritical(WriterItem.FromTarget(target));
+    }
+
+    /// <summary>
+    /// Flush both streams through a shared boundary without closing the recording.
+    /// Each FIFO receives a marker, so a fast event queue cannot acknowledge a
+    /// save while earlier tracking samples are still waiting in the other queue.
+    /// Producers hold the lock only while enqueueing; disk I/O stays on the writer.
+    /// </summary>
+    public Task<bool> CheckpointAsync()
+    {
+        var request = new CheckpointRequest();
+        lock (enqueueLock)
+        {
+            if (!Accepting()) return Task.FromResult(false);
+            checkpoints.TryAdd(request, 0);
+            try
+            {
+                if (!samples.TryAdd(WriterItem.FromCheckpoint(request)) || !critical.TryAdd(WriterItem.FromCheckpoint(request)))
+                    throw new IOException("The save checkpoint could not enter both logging queues.");
+            }
+            catch (Exception error)
+            {
+                SetFault(error);
+                request.Completion.TrySetResult(false);
+            }
+        }
+        return AwaitCheckpointAsync(request);
+    }
+
+    private async Task<bool> AwaitCheckpointAsync(CheckpointRequest request)
+    {
+        if (await Task.WhenAny(request.Completion.Task, Task.Delay(configuration.CloseTimeout)).ConfigureAwait(false) != request.Completion.Task)
+        {
+            SetFault(new TimeoutException("The test save checkpoint timed out; inspect the retained recording."));
+            request.Completion.TrySetResult(false);
+        }
+        bool saved = await request.Completion.Task.ConfigureAwait(false);
+        checkpoints.TryRemove(request, out _);
+        return saved && Health.IsHealthy;
     }
     public LogCloseResult Close(TimeSpan? timeout = null)
     {
         if (Interlocked.CompareExchange(ref started, 0, 0) == 0) throw new InvalidOperationException("Start logging before closing it.");
-        if (Interlocked.Exchange(ref closeRequested, 1) == 0) { samples.CompleteAdding(); critical.CompleteAdding(); }
+        lock (enqueueLock)
+            if (Interlocked.Exchange(ref closeRequested, 1) == 0) { samples.CompleteAdding(); critical.CompleteAdding(); }
         TimeSpan wait = timeout ?? configuration.CloseTimeout;
         if (wait <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(timeout));
         bool completed = thread != null && thread.Join(wait);
@@ -376,6 +420,7 @@ public sealed class SessionLogWriter : IDisposable
                 catch (Exception error) { SetFault(error); }
             }
             Volatile.Write(ref exited, 1);
+            foreach (var request in checkpoints.Keys) request.Completion.TrySetResult(false);
         }
     }
     private void FlushIfDue(ILogSink sink, Stopwatch stopwatch)
@@ -387,6 +432,14 @@ public sealed class SessionLogWriter : IDisposable
     {
         switch (item.Kind)
         {
+            case WriterItemKind.Checkpoint:
+                var request = item.Checkpoint!;
+                if (++request.Arrivals == 2 && !request.Completion.Task.IsCompleted)
+                {
+                    sink.Flush(true);
+                    request.Completion.TrySetResult(Health.IsHealthy);
+                }
+                break;
             case WriterItemKind.Sample: sink.Write("samples.ndjson", LogJson.Sample(item.Sample)); Interlocked.Increment(ref writtenSamples); break;
             case WriterItemKind.Event: sink.Write("events.ndjson", LogJson.Event(item.Event!)); Interlocked.Increment(ref writtenEvents); break;
             case WriterItemKind.Target: sink.Write("targets.ndjson", LogJson.Target(item.Target!)); Interlocked.Increment(ref writtenTargets); break;
@@ -425,14 +478,21 @@ public sealed class SessionLogWriter : IDisposable
     private void SetFaultLocked(Exception error) { lock (faultLock) { if (fault == null) fault = error; } }
     private bool HasFaultLocked() { lock (faultLock) return fault != null; }
 
-    private enum WriterItemKind { Sample, Event, Target }
+    private sealed class CheckpointRequest
+    {
+        public int Arrivals; // Only the writer thread changes this counter.
+        public readonly TaskCompletionSource<bool> Completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+    }
+    private enum WriterItemKind { Sample, Event, Target, Checkpoint }
     private readonly struct WriterItem
     {
-        private WriterItem(WriterItemKind kind, TrackingSamplePair sample, SessionEvent? sessionEvent, TargetSnapshot? target) { Kind = kind; Sample = sample; Event = sessionEvent; Target = target; }
+        private WriterItem(WriterItemKind kind, TrackingSamplePair sample, SessionEvent? sessionEvent, TargetSnapshot? target, CheckpointRequest? checkpoint = null) { Kind = kind; Sample = sample; Event = sessionEvent; Target = target; Checkpoint = checkpoint; }
         public WriterItemKind Kind { get; }
         public TrackingSamplePair Sample { get; }
         public SessionEvent? Event { get; }
         public TargetSnapshot? Target { get; }
+        public CheckpointRequest? Checkpoint { get; }
+        public static WriterItem FromCheckpoint(CheckpointRequest value) => new WriterItem(WriterItemKind.Checkpoint, default, null, null, value);
         public static WriterItem FromSample(TrackingSamplePair value) => new WriterItem(WriterItemKind.Sample, value, null, null);
         public static WriterItem FromEvent(SessionEvent value) => new WriterItem(WriterItemKind.Event, default, value ?? throw new ArgumentNullException(nameof(value)), null);
         public static WriterItem FromTarget(TargetSnapshot value) => new WriterItem(WriterItemKind.Target, default, null, value ?? throw new ArgumentNullException(nameof(value)));

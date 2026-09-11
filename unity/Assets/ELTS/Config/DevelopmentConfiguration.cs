@@ -262,6 +262,22 @@ namespace Elts.Config
         public int OperatorDisplayIndex { get; }
         public string DataRoot { get; }
         public string EltsEndpoint { get; }
+        /// <summary>
+        /// Keep recordings in the full project clone across Editor runs and rebuilt players.
+        /// A standalone copied player uses its own installation directory instead.
+        /// </summary>
+        public string ResolveDataRoot(string installationDirectory)
+        {
+            var installation = new DirectoryInfo(Path.GetFullPath(installationDirectory));
+            for (var candidate = installation; candidate != null; candidate = candidate.Parent)
+            {
+                // Repository markers work for ordinary clones and Git worktrees alike.
+                if (File.Exists(Path.Combine(candidate.FullName, "config", "toolchain.json")) &&
+                    File.Exists(Path.Combine(candidate.FullName, "unity", "ProjectSettings", "ProjectVersion.txt")))
+                    return Path.GetFullPath(Path.Combine(candidate.FullName, DataRoot));
+            }
+            return Path.GetFullPath(Path.Combine(installation.FullName, DataRoot));
+        }
         internal MachineConfiguration(JObject value)
         {
             ParticipantDisplayIndex = (int)value["participantDisplayIndex"];

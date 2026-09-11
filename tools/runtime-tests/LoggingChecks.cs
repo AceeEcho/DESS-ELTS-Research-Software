@@ -53,8 +53,47 @@ internal static class LoggingChecks
             RunWriteFailure(root);
             RunCriticalOverflow(root);
             RunStalledClose(root);
+            RunCheckpoints(root);
         }
         finally { DeleteRoot(root); }
+    }
+
+    private static void RunCheckpoints(string root)
+    {
+        var lease = LoggingRunDirectory.ReserveUnique(root, "test-checkpoints");
+        using var writer = new SessionLogWriter(lease, Provenance(new ManualSharedClock(DateTimeOffset.UtcNow)));
+        writer.Start();
+        for (int i = 1; i <= 120; i++) True(writer.TryLogSample(Pair(i)), "checkpoint fixture sample accepted");
+        writer.TryLogEvent(new SessionEvent(1, MonotonicTimestamp.Zero, "BlockEnded"));
+        True(writer.CheckpointAsync().GetAwaiter().GetResult(), "checkpoint acknowledged without closing");
+        True(ReadOpenLog(Path.Combine(lease.DirectoryPath, "samples.ndjson")).Split('\n',StringSplitOptions.RemoveEmptyEntries).Length == 120, "checkpoint drains all preceding samples despite critical priority");
+        True(ReadOpenLog(Path.Combine(lease.DirectoryPath, "events.ndjson")).Contains("BlockEnded"), "checkpoint includes test end event");
+        True(!File.Exists(Path.Combine(lease.DirectoryPath, "session-summary.json")), "checkpoint does not falsely finalize an open session");
+        True(writer.TryLogSample(Pair(121)), "raw acquisition continues after checkpoint");
+        True(writer.CheckpointAsync().GetAwaiter().GetResult(), "second test checkpoint succeeds");
+        True(ReadOpenLog(Path.Combine(lease.DirectoryPath, "samples.ndjson")).Split('\n',StringSplitOptions.RemoveEmptyEntries).Length == 121, "second checkpoint keeps earlier data");
+        True(writer.Close().CompleteOutput, "checkpointed recording finalizes normally");
+
+        using var failing = new SessionLogWriter(LoggingRunDirectory.ReserveUnique(root, "checkpoint-failure"),
+            Provenance(new ManualSharedClock(DateTimeOffset.UtcNow)), new LoggingConfiguration(), new DelegatingSinkFactory(() => new FailingFlushSink()));
+        failing.Start();
+        True(!failing.CheckpointAsync().GetAwaiter().GetResult(), "durable flush failure cannot report a successful save");
+        True(!failing.Health.IsHealthy && !failing.Close().CompleteOutput, "checkpoint failure leaves recording incomplete");
+    }
+
+    private static string ReadOpenLog(string path)
+    {
+        using var input = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var reader = new StreamReader(input);
+        return reader.ReadToEnd();
+    }
+
+    private sealed class FailingFlushSink : ILogSink
+    {
+        public IReadOnlyDictionary<string,string> FileChecksums => new Dictionary<string,string>();
+        public void Write(string fileName,string json) { }
+        public void Flush(bool durable) { if(durable) throw new IOException("Injected durable flush failure"); }
+        public void Dispose() { }
     }
 
     private static void RunSuccessfulSession(LoggingRunLease lease)

@@ -204,17 +204,31 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
         if candidates:
             target_pos, error, target_id=min(candidates,key=lambda x:x[1]); errors.append(error); valid.append({"sequence":row["sequence"],"monotonicTicks":tick,"targetId":target_id,"aimErrorDegrees":error})
         else: valid.append({"sequence":row["sequence"],"monotonicTicks":tick,"targetId":None,"aimErrorDegrees":None})
-    # Primary scores use explicit BlockStarted/BlockEnded markers. A fixed 300 s
-    # window is measured from each marker; no timestamp-floor inference is used.
+    # Primary scores still require the standard uninterrupted 300-second window.
+    # Flexible synthetic tests retain explicit timing summaries without silently
+    # presenting their counts as the standard dependent variable.
     markers = {}
+    development_blocks = set()
     for event in events:
         kind = event.get("eventType"); payload = event.get("payload", {})
+        if kind in ("BlockPaused", "BlockResumed") or (
+                kind in ("BlockStarted", "BlockEnded", "BlockDurationChanged") and payload.get("developmentTiming") is True):
+            block_id = payload.get("blockId")
+            if not isinstance(block_id, str) or not block_id:
+                raise IngestError(f"{kind} requires a blockId for development timing")
+            if summary.get("provenance", {}).get("synthetic") is not True:
+                raise IngestError("Flexible development timing requires synthetic provenance")
+            development_blocks.add(block_id)
         if kind in ("BlockStarted", "BlockEnded"):
             block_id = payload.get("blockId")
             if not isinstance(block_id, str) or not block_id: raise IngestError(f"{kind} event {event['sequence']} requires scalar blockId")
             item = markers.setdefault(block_id, {}); key = "start" if kind == "BlockStarted" else "end"
             if key in item: raise IngestError(f"duplicate {kind} marker for block {block_id!r}")
             item[key] = event["monotonicTicks"]
+            if kind == "BlockEnded":
+                item["activeSeconds"] = payload.get("activeSeconds")
+                item["durationSeconds"] = payload.get("durationSeconds")
+                item["reason"] = payload.get("reason", "elapsed")
     aborted_blocks = {
         event.get("payload", {}).get("blockId")
         for event in events
@@ -224,6 +238,8 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
     score_blocks = []
     for block_id, item in markers.items():
         if "start" not in item or "end" not in item: continue
+        if item["end"] < item["start"]: raise IngestError(f"block {block_id!r} ends before it starts")
+        if block_id in development_blocks: continue
         if item["end"] - item["start"] != BLOCK_TICKS: raise IngestError(f"block {block_id!r} must be exactly 300 seconds")
         if block_id in aborted_blocks: continue
         score_blocks.append((block_id, item["start"], item["end"]))
@@ -265,6 +281,15 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
     for block_id,b in blocks.items():
         vals=b.pop("aimErrorsDegrees"); b["meanAimErrorDegrees"]=statistics.fmean(vals) if vals else None; b["medianAimErrorDegrees"]=statistics.median(vals) if vals else None; total=b["validSamples"]+b["invalidSamples"]; b["validSampleFraction"]=b["validSamples"]/total if total else None; block_reports.append(b)
     block_reports.sort(key=lambda x:x["startTicks"])
+    for block_id in sorted(development_blocks):
+        item = markers.get(block_id, {})
+        if "start" not in item: continue
+        block_reports.append({"blockId":block_id, "scoreStatus":"unavailable",
+            "reason":"flexible synthetic test; excluded from the standard uninterrupted 300-second score",
+            "startTicks":item["start"], "endTicks":item.get("end"),
+            "activeSeconds":item.get("activeSeconds"), "durationSeconds":item.get("durationSeconds"),
+            "termination":item.get("reason", "incomplete")})
+    block_reports.sort(key=lambda x:x.get("startTicks", 0))
     if not block_reports: block_reports=[{"scoreStatus":"unavailable","reason":"no complete BlockStarted/BlockEnded interval in event stream"}]
     counts = summary.get("counts")
     if not isinstance(counts, dict): raise IngestError("session summary counts are required")

@@ -100,7 +100,9 @@ namespace Elts.Operator
             InitializeDashboard();
             InitializeDesktop();
             SetVisible(true);
-            RefreshLabels();
+            // The browser station reads engine state directly; its hidden workbench
+            // must not rebuild labels and list presentation on every game frame.
+            if(!SeparateAdministrator) RefreshLabels();
             Application.wantsToQuit += OnWantsToQuit;
         }
 
@@ -141,13 +143,14 @@ namespace Elts.Operator
             var config=view.Configuration;
             usingDesktopInput=root.Q<DropdownField>("inputSource").value==DesktopInputOption;
             runId=LoggingRunDirectory.ValidateRunId(Field("participant").value.Trim());
-            var plan=new SessionPlan(runId, Field("conditionOrder").value.Split(',').Select(value=>value.Trim()));
+            var plan=new SessionPlan(runId, Field("conditionOrder").value.Split(',').Select(value=>value.Trim()),
+                allowDevelopmentOnlyDurationOverride:SeparateAdministrator);
             await CloseRecordingAsync();
             try
             {
                 clock??=new SharedMonotonicClock();
                 sequence=new SessionEventSequence();
-                string dataRoot=Path.GetFullPath(Path.Combine(Application.dataPath,"..",config.Machine.DataRoot));
+                string dataRoot=config.Machine.ResolveDataRoot(Path.Combine(Application.dataPath,".."));
                 diskFreeBytes=await Task.Run(()=>new DriveInfo(Path.GetPathRoot(dataRoot)!).AvailableFreeSpace);
                 if(diskFreeBytes<MinimumDiskBytes) throw new IOException("At least 2 GB free disk space is required.");
                 // A packaged build identity maps to its complete revision in
@@ -164,8 +167,16 @@ namespace Elts.Operator
                     root.Q<DropdownField>("neLinkMode").value), applicationVersion:Application.version);
                 var sessionLink = new SessionEltsLinkAdapter(clock, sequence, recording, mockLink, linkOptions);
                 engine=new SessionEngine(clock,sequence,plan,
-                    new SessionTiming(config.Session.PracticeDurationSeconds,config.Session.BreakDurationSeconds,true),
+                    new SessionTiming(SeparateAdministrator?stationPracticeSeconds:config.Session.PracticeDurationSeconds,
+                        SeparateAdministrator?stationBreakSeconds:config.Session.BreakDurationSeconds,true),
                     recording,sessionLink);
+                if(SeparateAdministrator)
+                {
+                    foreach(var duration in stationDurations)engine.SetDevelopmentDuration(duration.Key,duration.Value);
+                    engine.SetDevelopmentPhaseDurations(stationPracticeSeconds,stationBreakSeconds);
+                    stationSaveStatus="Recording continuously · first test not finished.";
+                }
+                if(engine.State == SessionState.Failed)throw new IOException(engine.Failure);
                 scenario=new DevelopmentSessionScenario(config,clock,engine,recording,sequence);
                 RecordInputSource();
                 StartAcquisition(config);
@@ -219,7 +230,15 @@ namespace Elts.Operator
             desktop?.Detach();desktopSource=null;
             if(acquisition != null) { await acquisition.StopAsync(); acquisition=null; }
             if(recording != null && recording.IsOpen && !await recording.CloseAsync())
+            {
+                if(SeparateAdministrator)stationSaveStatus="SAVE FAILED: recording closure is incomplete; inspect retained files.";
                 throw new IOException("Recording closure failed; retained files require inspection.");
+            }
+            if(SeparateAdministrator && recording?.RunDirectory!=null && engine!=null &&
+                !stationSaveStatus.StartsWith("SAVE FAILED",StringComparison.Ordinal) &&
+                File.Exists(Path.Combine(recording.RunDirectory,"session-summary.json")) &&
+                (engine.State==SessionState.SessionComplete || engine.State==SessionState.Aborted))
+                stationSaveStatus="Recording finalized · all accepted data retained. Open Recordings to review or export.";
         }
 
         private void Update()

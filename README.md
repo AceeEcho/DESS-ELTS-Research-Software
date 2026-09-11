@@ -9,8 +9,9 @@ equipment is unavailable and this is not a study-ready release.
 1. Clone the repository. For detailed instructions, use the
    [setup and two-computer guide](docs/operator/multi-machine-setup.md).
 2. Double-click [START-ELTS.cmd](START-ELTS.cmd). First use prepares the tools,
-   builds the synthetic dashboard and opens Unity **6000.3.23f1 LTS**.
-   Complete any installation or Unity account/license prompts.
+   builds the synthetic application, and opens the dashboard and participant game.
+   Complete any installation or Unity account/license prompts. Open the `unity/`
+   project manually in Unity **6000.3.23f1 LTS** when you want to edit it.
 3. Later starts reuse the setup and unchanged build. Close Unity before a rebuild
    or Git pull. Startup errors are saved in `diagnostics/start-console.log`.
 

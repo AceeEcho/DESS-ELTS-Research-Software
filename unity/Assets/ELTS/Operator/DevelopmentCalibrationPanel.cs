@@ -151,7 +151,8 @@ namespace Elts.Operator
             // Create-new prevents redo or rerun from overwriting prior evidence.
             using (var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
             using (var writer = new StreamWriter(output, new UTF8Encoding(false))) writer.Write(calibrationJson);
-            engine.AddNote("Synthetic calibration fixture accepted: " + Path.GetFileName(path) + " sha256=" + Hash(calibrationJson) + "; measured=false; studyReady=false");
+            string note="Synthetic calibration fixture accepted: " + Path.GetFileName(path) + " sha256=" + Hash(calibrationJson) + "; measured=false; studyReady=false";
+            if(SeparateAdministrator)StationNote(note);else engine.AddNote(note);
             if (engine.State == SessionState.Failed) throw new IOException("Calibration note could not be logged; fixture retained for inspection.");
             calibration.Accept("Computed fixture checked against recorded provisional thresholds.");
             AcceptedCalibrationPath = path;

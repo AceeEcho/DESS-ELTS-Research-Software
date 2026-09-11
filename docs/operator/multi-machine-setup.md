@@ -63,7 +63,7 @@ The setup script does not calibrate the physical ELTS apparatus or prove safety 
 
 **One-click startup:** double-click `START-ELTS.cmd` in the cloned repository.
 It runs setup automatically when needed, builds the synthetic dashboard, and opens
-both the dashboard and Unity Editor with this project. On first use, allow time for
+the dashboard and participant game. The Unity Editor is opened manually. On first use, allow time for
 installation, import, tests and building; complete any Unity sign-in/license prompts.
 Repeat starts reuse the prepared tools and unchanged dashboard. If source changes
 require a rebuild while Unity is open, close that project and click the launcher

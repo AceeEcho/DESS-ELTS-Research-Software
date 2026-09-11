@@ -31,7 +31,164 @@ static class SessionChecks
         ExerciseLinkFailuresFailClosedWithoutInvalidTransition();
         ExerciseOperatorAbortAcrossOpenStates();
         ExerciseDeadlineFirstOperatorActions();
+        ExerciseFlexibleDevelopmentTiming();
+        ExercisePauseAndResumeFailures();
+        ExerciseFlexibleControlsRequireDevelopment();
+        ExercisePausedTriggerWindows();
+        ExerciseAdministratorQueueAndBreaks();
         Console.WriteLine("PASS: " + passed + " session checks");
+    }
+
+    private static void ExerciseAdministratorQueueAndBreaks()
+    {
+        var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+        var events = new List<SessionEvent>();
+        var engine = NewEngine(clock, new Sink(events), new Link());
+        BeginFirstBlock(engine, clock);
+        engine.RestartDevelopmentPractice();
+        True(engine.State == SessionState.Practice, "practice can restart before the first test");
+        engine.FinishDevelopmentPractice();
+        engine.SetDevelopmentPhaseDurations(10, 30);
+        engine.SkipDevelopmentTest("Participant needs a different condition first");
+        True(engine.CurrentBlockSkipped && engine.State == SessionState.BlockEnded, "skip is a recorded disposition, not an aborted participant");
+        True(!events.Exists(e => e.EventType == "BlockStarted"), "skip creates no zero-score block");
+        engine.Advance();
+        True(engine.RemainingSeconds == 30, "shared break duration applies immediately");
+        clock.Advance(TimeSpan.FromSeconds(7));
+        engine.SetDevelopmentPhaseDurations(10, 40);
+        True(engine.RemainingSeconds == 33, "editing break preserves elapsed rest time");
+        engine.QueueDevelopmentRepeat("WE_MT", "Retry skipped condition");
+        Throws(() => engine.QueueDevelopmentRepeat("WE_MT", "Duplicate"), "duplicate queued repeat rejected");
+        engine.SkipDevelopmentBreak();
+        True(engine.State == SessionState.BlockReady && engine.CurrentBlockId == "WE_MT-attempt-02", "repeat has a distinct attempt identity");
+        engine.StartBlock();
+        Throws(() => engine.SkipDevelopmentTest("unsafe"), "running test cannot be skipped");
+        Throws(() => engine.QueueDevelopmentRepeat("WE_MT", "unsafe"), "running queue cannot be replaced");
+        clock.Advance(TimeSpan.FromSeconds(300)); engine.Tick();
+        engine.Advance();
+        True(engine.RemainingSeconds == 40, "same duration applies to every subsequent break");
+        clock.Advance(TimeSpan.FromSeconds(40)); engine.Advance();
+        True(engine.CurrentCondition == "NE_MT" && engine.CurrentBlockId == "NE_MT-attempt-01", "repeat preserves remaining original test order");
+        engine.QueueDevelopmentRepeat("WE_MT", "Repeat again before next test");
+        True(engine.CurrentBlockId == "WE_MT-attempt-03", "repeated repeat cannot reuse an identity");
+        True(Strict(events) && HasField(events, "BlockSkipped", "reason", "Participant needs a different condition first"), "exception reason and audit ordering preserved");
+        True(events.Exists(e => e.EventType == "BreakSkipped"), "skip break is auditable");
+
+        var standard = new SessionEngine(clock, new SessionEventSequence(), new SessionPlan("standard", new[] { "WE_MT", "NE_MT", "WE_FT", "NE_FT" }),
+            new SessionTiming(10, 30), new Sink(new List<SessionEvent>()), new Link());
+        Throws(() => standard.SetDevelopmentPhaseDurations(1, 1), "standard study timing cannot be changed through administrator override");
+        Throws(() => standard.SkipDevelopmentTest("test"), "standard sessions reject skip override");
+    }
+
+    private static void ExerciseFlexibleDevelopmentTiming()
+    {
+        var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+        var events = new List<SessionEvent>(); var link = new Link();
+        var engine = NewEngine(clock, new Sink(events), link);
+        engine.SetDevelopmentDuration("WE_MT", 30);
+        engine.SetDevelopmentDuration("NE_MT", 60);
+        BeginFirstBlock(engine, clock); engine.StartBlock();
+        True(engine.RemainingSeconds == 30, "individual first-test duration applied");
+        Throws(() => engine.SetDevelopmentDuration("WE_MT", 45), "running duration cannot be edited");
+        engine.SetDevelopmentDuration("NE_MT", 50);
+        clock.Advance(TimeSpan.FromSeconds(10)); engine.PauseDevelopmentBlock();
+        True(engine.State == SessionState.BlockPaused && !link.Enabled && !engine.TargetsActive, "pause disables link and firing");
+        clock.Advance(TimeSpan.FromSeconds(1200)); engine.Tick();
+        True(engine.RemainingSeconds == 20 && engine.CurrentActiveSeconds == 10, "paused wall time does not consume test time");
+        engine.SetDevelopmentDuration("WE_MT", 45);
+        True(engine.RemainingSeconds == 35, "paused duration edit preserves active time");
+        bool rejected = false;
+        try { engine.SetDevelopmentDuration("WE_MT", 9); } catch(ArgumentException) { rejected = true; }
+        True(rejected && engine.RemainingSeconds == 35, "cannot shorten below elapsed active time");
+        engine.ResumeDevelopmentBlock();
+        True(link.Enabled && engine.TargetsActive && engine.RemainingSeconds == 35, "resume continues same block");
+        clock.Advance(TimeSpan.FromSeconds(34)); engine.Tick();
+        True(engine.State == SessionState.BlockRunning, "resumed deadline not reached early");
+        clock.Advance(TimeSpan.FromSeconds(1)); engine.Tick();
+        True(engine.State == SessionState.BlockEnded && engine.CurrentActiveSeconds == 45 && !link.Enabled, "resumed block ends at active deadline");
+        True(events.FindAll(e=>e.EventType=="BlockStarted").Count == 1 &&
+            events.FindAll(e=>e.EventType=="BlockPaused").Count == 1 && events.FindAll(e=>e.EventType=="BlockResumed").Count == 1,
+            "pause and resume do not manufacture a new block start");
+        True(Strict(events), "flexible timing retains the shared event sequence");
+        engine.Advance(); clock.Advance(TimeSpan.FromSeconds(1)); engine.Advance(); engine.StartBlock();
+        True(engine.CurrentCondition == "NE_MT" && engine.RemainingSeconds == 50, "upcoming test keeps independently edited duration");
+        clock.Advance(TimeSpan.FromSeconds(7)); engine.PauseDevelopmentBlock(); engine.StopDevelopmentBlock();
+        True(engine.State == SessionState.BlockEnded && engine.CurrentBlockStoppedEarly && engine.CurrentActiveSeconds == 7,
+            "stop finishes paused test without aborting participant");
+        Throws(()=>engine.ResumeDevelopmentBlock(), "stopped test cannot accidentally resume");
+        engine.AddNote("Participant session stays open after stop");
+        engine.Advance(); clock.Advance(TimeSpan.FromSeconds(1)); engine.Advance();
+        True(engine.CurrentCondition == "WE_FT" && engine.State == SessionState.BlockReady, "remaining tests survive early stop");
+        engine.StartBlock(); clock.Advance(TimeSpan.FromSeconds(300)); engine.PauseDevelopmentBlock();
+        True(engine.State == SessionState.BlockEnded && !engine.CurrentBlockStoppedEarly, "deadline wins over late pause");
+    }
+
+    private static void ExercisePauseAndResumeFailures()
+    {
+        var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+        var link = new Link(); var engine = NewEngine(clock,new Sink(new List<SessionEvent>()),link);
+        BeginFirstBlock(engine,clock); engine.StartBlock(); link.ThrowOnDisable = true;
+        engine.PauseDevelopmentBlock();
+        True(engine.State == SessionState.Failed && !engine.TargetsActive, "pause cannot proceed after link stop failure");
+        link = new Link(); engine = NewEngine(clock,new Sink(new List<SessionEvent>()),link);
+        BeginFirstBlock(engine,clock); engine.StartBlock(); engine.PauseDevelopmentBlock(); link.ThrowOnEnable = true;
+        engine.ResumeDevelopmentBlock();
+        True(engine.State == SessionState.Failed && !link.Enabled, "failed resume de-permits the link");
+        link = new Link(); var sink = new SwitchableSink(); engine = NewEngine(clock,sink,link);
+        BeginFirstBlock(engine,clock); engine.StartBlock(); sink.Accept = false; engine.PauseDevelopmentBlock();
+        True(engine.State == SessionState.Failed && !link.Enabled, "pause logging failure cannot leave test running");
+        link = new Link(); engine = NewEngine(clock,new Sink(new List<SessionEvent>()),link);
+        BeginFirstBlock(engine,clock); engine.StartBlock(); engine.PauseDevelopmentBlock(); engine.Abort("paused abort");
+        True(engine.State == SessionState.Aborted && !link.Enabled, "whole-session abort remains available while paused");
+    }
+
+    private static void ExerciseFlexibleControlsRequireDevelopment()
+    {
+        var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+        var plan = new SessionPlan("p1",new[]{"WE_MT","NE_MT","WE_FT","NE_FT"});
+        var engine = new SessionEngine(clock,new SessionEventSequence(),plan,new SessionTiming(1,1),new Sink(new List<SessionEvent>()),new Link());
+        BeginFirstBlock(engine,clock); engine.StartBlock();
+        Throws(()=>engine.PauseDevelopmentBlock(), "standard plan rejects pause override");
+        Throws(()=>engine.StopDevelopmentBlock(), "standard plan rejects early-stop override");
+        Throws(()=>engine.SetDevelopmentDuration("WE_MT",60), "standard plan rejects duration override");
+        foreach(double invalid in new[]{0d,-1,double.NaN,double.PositiveInfinity,3601})
+        {
+            bool rejected = false;
+            try { SessionEngine.ValidateDevelopmentDuration(invalid); } catch(ArgumentException) { rejected = true; }
+            True(rejected, "invalid duration rejected: "+invalid);
+        }
+    }
+
+    private sealed class SwitchableSink : ISessionEventSink
+    {
+        public bool Accept = true;
+        public bool TryRecord(SessionEvent item) => Accept;
+    }
+
+    private static void ExercisePausedTriggerWindows()
+    {
+        var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+        var block = new ScenarioBlockController(clock,new SessionEventSequence(),"test",1,30,true);
+        var model = new CountingShot(); var ray = new Elts.Geometry.Ray3d(Elts.Geometry.Vector3d.Zero,new Elts.Geometry.Vector3d(0,0,1));
+        block.Start(); clock.Advance(TimeSpan.FromSeconds(1)); block.Pause();
+        var pausedAt = clock.Now;
+        block.Fire(model,new ShotContext(pausedAt,ray,true),Array.Empty<TargetEntity>(),_=>true);
+        True(model.Calls == 0, "paused block does not admit a shot");
+        clock.Advance(TimeSpan.FromSeconds(20)); block.Resume();
+        block.Fire(model,new ShotContext(pausedAt,ray,true),Array.Empty<TargetEntity>(),_=>true);
+        True(model.Calls == 0, "resumed block rejects observations from the paused interval");
+        block.Fire(model,new ShotContext(clock.Now,ray,true),Array.Empty<TargetEntity>(),_=>true);
+        True(model.Calls == 1, "fresh resumed observation reaches shot model");
+        block.Stop();
+        block.Fire(model,new ShotContext(clock.Now,ray,true),Array.Empty<TargetEntity>(),_=>true);
+        True(model.Calls == 1, "stopped block rejects further shots");
+    }
+
+    private sealed class CountingShot : IShotModel
+    {
+        public int Calls;
+        public IReadOnlyList<SessionEvent> Fire(ShotContext shot,string blockId,IEnumerable<TargetEntity> targets,Func<TargetEntity,bool> visible)
+        {Calls++;return Array.Empty<SessionEvent>();}
     }
 
     private static void ExerciseNominalSessionAndAuditMetadata()

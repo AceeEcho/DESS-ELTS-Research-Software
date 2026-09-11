@@ -52,6 +52,22 @@ internal static class ConfigChecks
         if (args.Length != 1) throw new ArgumentException("Pass the staged config directory.");
         string source = Path.GetFullPath(args[0]);
         DevelopmentConfiguration config = DevelopmentConfiguration.LoadDirectory(source);
+        string pathFixture = Path.Combine(Path.GetTempPath(), "elts-data-path-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            string clone = Path.Combine(pathFixture, "project with spaces");
+            Directory.CreateDirectory(Path.Combine(clone, "config"));
+            Directory.CreateDirectory(Path.Combine(clone, "unity", "ProjectSettings"));
+            File.WriteAllText(Path.Combine(clone, "config", "toolchain.json"), "{}");
+            File.WriteAllText(Path.Combine(clone, "unity", "ProjectSettings", "ProjectVersion.txt"), "fixture");
+            string expected = Path.Combine(clone, config.Machine.DataRoot);
+            Assert(config.Machine.ResolveDataRoot(Path.Combine(clone, "unity")) == expected, "Editor saves at project root");
+            Assert(config.Machine.ResolveDataRoot(Path.Combine(clone, "build", "first player")) == expected, "Built player saves at project root");
+            Assert(config.Machine.ResolveDataRoot(Path.Combine(clone, "build", "rebuilt player")) == expected, "Rebuild preserves collection location");
+            string portable = Path.Combine(pathFixture, "portable player");
+            Assert(config.Machine.ResolveDataRoot(portable) == Path.Combine(portable, config.Machine.DataRoot), "Portable player retains a writable installation-relative location");
+        }
+        finally { if (Directory.Exists(pathFixture)) Directory.Delete(pathFixture, true); }
         Assert(config.Mode == "synthetic" && !config.StudyReady, "synthetic mode is explicit");
         Assert(config.Rig.RigId == "synthetic-rig-001", "rig identity loaded without a fallback");
         Assert(Math.Abs(config.Rig.Display.Width - 1.2) < 1e-12, "known display geometry");

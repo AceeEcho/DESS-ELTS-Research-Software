@@ -35,6 +35,11 @@ namespace Elts.Operator
         private readonly Dictionary<string,GameObject> targetObjects = new Dictionary<string,GameObject>();
         private LineRenderer bore = null!, aim = null!, viewRay = null!;
         private Material stimulusMaterial = null!, cyanMaterial = null!, amberMaterial = null!, redMaterial = null!;
+        [Header("Synthetic target surface")]
+        [SerializeField,Range(24,128)] private int targetLongitudeSegments=64;
+        [SerializeField,Range(12,64)] private int targetLatitudeSegments=32;
+        private Mesh targetMesh = null!;
+        private Material targetMaterial = null!;
         private readonly List<Material> ownedMaterials = new List<Material>();
         private readonly List<Camera> disabledCameras = new List<Camera>();
         private RecordedReplay? replay;
@@ -90,6 +95,10 @@ namespace Elts.Operator
                 predictionSeconds=configuration.Runtime.RenderHeadPredictionSeconds;
                 foreach(var camera in Camera.allCameras){disabledCameras.Add(camera);camera.enabled=false;}
                 stimulusMaterial=Material(new Color(0.65f,0.8f,0.9f));cyanMaterial=Material(Cyan);amberMaterial=Material(Amber);redMaterial=Material(Color.red);
+                var targetTemplate=Resources.Load<Material>("ELTS/DevelopmentTarget");
+                if(targetTemplate==null)throw new InvalidOperationException("The shaded target material is unavailable.");
+                targetMaterial=new Material(targetTemplate);ownedMaterials.Add(targetMaterial);
+                targetMesh=DevelopmentTargetMesh.Create(targetLongitudeSegments,targetLatitudeSegments);
                 authoredEnvironment=FindFirstObjectByType<DevelopmentEnvironment>();
                 // Saved edit previews explain the configured station before Play mode.
                 // Pose-driven markers and targets replace them while the application runs.
@@ -134,6 +143,13 @@ namespace Elts.Operator
             var shader=template!=null?template.shader:Shader.Find("Universal Render Pipeline/Unlit");
             if(shader==null)throw new InvalidOperationException("Pinned URP Unlit shader is unavailable.");
             var result=new Material(shader);result.SetColor("_BaseColor",color);ownedMaterials.Add(result);return result;
+        }
+        private GameObject TargetSphere(string name)
+        {
+            var target=Sphere(name,StimulusLayer,(float)configuration.Scenario.TargetRadiusM,targetMaterial);
+            // All targets share the mesh and material, with no per-frame allocations.
+            target.GetComponent<MeshFilter>().sharedMesh=targetMesh;
+            return target;
         }
         private GameObject Sphere(string name,int layer,float radius,Material material)
         {
@@ -263,7 +279,7 @@ namespace Elts.Operator
             }
             var remove=new List<string>();foreach(var key in targetObjects.Keys)if(!visibleTargets.ContainsKey(key))remove.Add(key);
             foreach(var key in remove){Destroy(targetObjects[key]);targetObjects.Remove(key);}
-            foreach(var target in visibleTargets){if(!targetObjects.ContainsKey(target.Key))targetObjects.Add(target.Key,Sphere(target.Key,StimulusLayer,(float)configuration.Scenario.TargetRadiusM,amberMaterial));targetObjects[target.Key].transform.position=OffAxisCamera.ToUnity(target.Value);}
+            foreach(var target in visibleTargets){if(!targetObjects.ContainsKey(target.Key))targetObjects.Add(target.Key,TargetSphere(target.Key));targetObjects[target.Key].transform.position=OffAxisCamera.ToUnity(target.Value);}
             bore.enabled=aim.enabled=rawWeapon.HasValue;
             if(rawWeapon.HasValue)
             {
@@ -348,6 +364,7 @@ namespace Elts.Operator
         private void OnDestroy()
         {
             foreach(var camera in disabledCameras)if(camera!=null)camera.enabled=true;
+            if(targetMesh!=null)Destroy(targetMesh);
             foreach(var material in ownedMaterials)if(material!=null)Destroy(material);
         }
     }

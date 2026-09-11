@@ -54,3 +54,19 @@ Deferred evidence includes measured screen geometry, physical corner rods at
 multiple viewing positions, head/weapon mounts, real tracking and base station
 diagnostics, actual output assignment, and full-load frame timing at the study
 refresh rate. Synthetic rendering does not pass those physical criteria.
+
+## Synthetic target appearance
+
+Runtime targets use `DevelopmentTarget.mat` and `DevelopmentTarget.shader` under
+`unity/Assets/ELTS/Operator/Resources/ELTS`. The shaded surface has a world-fixed
+key-light direction, ambient fill, a view-dependent highlight and object-fixed
+surface bands. The bands wrap around the sphere instead of following the camera,
+so movement around a stationary target is visible. Material properties expose the
+colors, marking width/strength and lighting values in the Unity Inspector.
+
+A shared smooth sphere mesh has unit diameter; the existing scenario target radius
+still determines its size in metres. `DevelopmentView` exposes longitude/latitude
+resolution in the Inspector (defaults 64/32). Rendering changes do not alter target
+positions, hit testing, timing or recorded coordinates. Both participant and
+administrator cameras render the same target surface. This is synthetic visual
+presentation, not a physical lighting or calibration model.

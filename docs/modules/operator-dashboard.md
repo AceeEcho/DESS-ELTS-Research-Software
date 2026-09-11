@@ -1,5 +1,7 @@
 # Administrator dashboard
 
+For a step-by-step walkthrough with screenshots, see the [simple user guide](../operator/user-guide.md).
+
 ## Two-window desktop station
 
 The `ELTSDesktop` player opens a browser administrator dashboard and a separate

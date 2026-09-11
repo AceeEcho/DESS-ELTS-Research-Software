@@ -6,6 +6,8 @@ equipment is unavailable and this is not a study-ready release.
 
 ## Start
 
+**New to the dashboard? [Open the illustrated user guide](docs/operator/user-guide.md).**
+
 1. Clone the repository. For detailed instructions, use the
    [setup and two-computer guide](docs/operator/multi-machine-setup.md).
 2. Double-click [START-ELTS.cmd](START-ELTS.cmd). First use prepares the tools,

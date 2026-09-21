@@ -145,6 +145,25 @@ def main():
                 assert db.execute('SELECT count(*) FROM participants').fetchone()[0] == expected
                 assert db.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
                 assert not db.execute('PRAGMA foreign_key_check').fetchall()
+                assert db.execute('SELECT count(*) FROM task_results').fetchone()[0] > 0
+                assert db.execute('SELECT count(*) FROM task_results WHERE shots IS NOT NULL').fetchone()[0] == 0, 'Skipped attempts are not zero-score tests'
+        command('exportWorkbook', id=profile['id'])
+        exported = data_idle()
+        workbook = output / 'participant.xlsx'
+        request = urllib.request.Request(origin + '/api/download/' + exported['downloadId'] + '?token=' + token)
+        with urllib.request.urlopen(request) as response:
+            assert response.headers['Content-Type'] == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            workbook.write_bytes(response.read())
+        import zipfile
+        import xml.etree.ElementTree as ET
+        with zipfile.ZipFile(workbook) as bundle:
+            ns = {'s': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
+            sheet = ET.fromstring(bundle.read('xl/worksheets/sheet1.xml'))
+            text = [node.text for node in sheet.findall('.//s:t', ns)]
+            assert 'SQL-SMOKE-01' in text and 'SQL-SMOKE-02' not in text
+            assert len(sheet.findall('.//s:row', ns)) == 10, 'Eight skipped tasks plus continuation plus header'
+            assert bundle.testzip() is None
+        assertions.append('Excel download has typed task sheets and includes only the selected participant; skipped metrics remain blank')
         command('exportSessionRaw', id=selected['sessions'][0]['id'])
         exported = data_idle()
         archive = output / 'raw.zip'

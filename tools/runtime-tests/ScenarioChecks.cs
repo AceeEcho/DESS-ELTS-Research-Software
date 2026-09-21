@@ -91,6 +91,13 @@ static class ScenarioChecks
         var far = ActiveTarget("far", start, 8);
         var model = new HitscanShotModel(new SessionEventSequence(), TimeSpan.FromMilliseconds(20));
         var hitEvents = model.Fire(new ShotContext(clock.Now, ForwardRay(), true), "block-1", new[] { far, near }, _ => true);
+        True(hitEvents[0].Fields.Any(f=>f.Name=="outcome" && f.Text=="Hit") && hitEvents[0].Fields.Any(f=>f.Name=="angularErrorDeg" && f.Number==0), "hit retains zero-degree shot geometry before target destruction");
+        var missTarget=ActiveTarget("offset",clock.Now,5);
+        var diagonal=new Ray3d(new Vector3d(0,0,0),new Vector3d(1,0,5));
+        var missGeometry=AimGeometry.Fields(diagonal,new[]{missTarget});
+        True(Math.Abs(missGeometry.First(f=>f.Name=="angularErrorDeg").Number.Value-Math.Atan(0.2)*180/Math.PI)<1e-8,"off-axis aim angle matches analytic geometry");
+        True(Math.Abs(missGeometry.First(f=>f.Name=="centerOffsetMm").Number.Value-5000/Math.Sqrt(26))<1e-8,"center offset is perpendicular distance in millimetres");
+        True(!AimGeometry.Fields(ForwardRay(),Array.Empty<TargetEntity>()).Any(f=>f.Name=="angularErrorDeg"),"no target leaves error unavailable");
         True(near.State == TargetState.Destroyed && far.State == TargetState.Active && hitEvents.Count == 3, "trigger-edge hitscan selects the nearest active target");
         True(TextField(hitEvents[2], "blockId") == "block-1" && TextField(hitEvents[2], "targetId") == "near", "TargetDestroyed has scalar blockId and targetId payloads");
         True(model.Fire(new ShotContext(clock.Now, ForwardRay(), true, false), "block-1", new[] { far }, _ => true).Count == 0, "non-falling trigger observations are ignored");

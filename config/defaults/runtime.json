@@ -1,1 +1,14 @@
-{"schemaVersion":1,"trackingSource":"synthetic","sampleRateHz":250,"loggedPredictionSeconds":0,"renderHeadPredictionSeconds":0,"triggerLockoutSeconds":0.02,"sampleQueueCapacity":8192,"eventQueueCapacity":1024,"logFlushSeconds":1,"diagnosticIntervalSeconds":0.25}
+{
+  "schemaVersion": 1,
+  "trackingSource": "synthetic",
+  "sampleRateHz": 250,
+  "loggedPredictionSeconds": 0,
+  "renderHeadPredictionSeconds": 0,
+  "triggerLockoutSeconds": 0.02,
+  "sampleQueueCapacity": 8192,
+  "eventQueueCapacity": 1024,
+  "logFlushSeconds": 1,
+  "diagnosticIntervalSeconds": 0.25,
+  "aimObservationIntervalSeconds": 0.05,
+  "aimMaximumGapSeconds": 0.25
+}

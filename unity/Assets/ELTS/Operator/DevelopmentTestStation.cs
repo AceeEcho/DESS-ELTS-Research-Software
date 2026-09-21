@@ -178,7 +178,7 @@ namespace Elts.Operator
             if(Time.unscaledTime>=nextState)
             {nextState=Time.unscaledTime+1f/Mathf.Max(10,previewFramesPerSecond);server.PublishState(StateJson());}
         }
-        private static bool IsDataAction(string action)=>new[]{"refreshData","viewParticipant","viewDataRows","exportDatabase","exportParticipant","exportSessionRaw","openDataFolder","listRecordings","reviewRecording","exportRecording"}.Contains(action);
+        private static bool IsDataAction(string action)=>new[]{"refreshData","viewParticipant","viewDataRows","exportDatabase","exportWorkbook","exportParticipant","exportSessionRaw","openDataFolder","listRecordings","reviewRecording","exportRecording"}.Contains(action);
         public void ApplyCommand(JObject command)
         {
             string action=(string?)command["action"]??"";
@@ -212,7 +212,7 @@ namespace Elts.Operator
                     session.StationPreparationAction(action);CancelClick();break;
                 case "listRecordings":case "reviewRecording":case "exportRecording":
                     session.StationArchiveAction(action,(string?)command["id"]??"");break;
-                case "refreshData":case "viewParticipant":case "viewDataRows":case "exportDatabase":case "exportParticipant":case "exportSessionRaw":
+                case "refreshData":case "viewParticipant":case "viewDataRows":case "exportDatabase":case "exportWorkbook":case "exportParticipant":case "exportSessionRaw":
                     session.CollectionAction(command);break;
                 case "openDataFolder":session.StationOpenDataFolder();break;
                 case "next": session.StationNext();CancelClick();break;

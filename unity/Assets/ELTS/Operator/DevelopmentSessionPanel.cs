@@ -279,6 +279,7 @@ namespace Elts.Operator
                 {
                     engine.Tick();
                     scenario?.Refresh(Time.unscaledDeltaTime,pair?.Head.Pose);
+                    scenario?.ObserveAim(pair);
                 }
                 catch(Exception exception)
                 {

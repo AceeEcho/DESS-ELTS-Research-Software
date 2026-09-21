@@ -7,6 +7,7 @@ using Elts.Geometry;
 using Elts.Logging;
 using Elts.Scenario;
 using Elts.Session;
+using Elts.Tracking;
 
 namespace Elts.Operator
 {
@@ -25,6 +26,8 @@ namespace Elts.Operator
         private readonly SessionEngine engine;
         private readonly SessionRecordingAdapter recording;
         private readonly HitscanShotModel shots;
+        private readonly ISessionEventSequence eventSequence;
+        private double nextAimAt;
         private ScenarioPopulation? population;
         private ScenarioDefinition? definition;
         private IMovementBehaviour? movement;
@@ -43,6 +46,7 @@ namespace Elts.Operator
             SessionEngine engine, SessionRecordingAdapter recording, ISessionEventSequence sequence)
         {
             this.config=config;this.clock=clock;this.engine=engine;this.recording=recording;
+            eventSequence=sequence;
             shots=new HitscanShotModel(sequence,TimeSpan.FromSeconds(config.Runtime.TriggerLockoutSeconds));
         }
 
@@ -84,6 +88,34 @@ namespace Elts.Operator
         public void Fire(RigidPose? weapon, RigidPose? head)
             => Fire(weapon,head,clock.Now);
 
+        /// <summary>Sample the current unpredicted bore at a bounded, configured
+        /// cadence. This is frame-sampled telemetry; the full raw tracker stream
+        /// remains independent. Stale/invalid observations break motion segments.</summary>
+        public void ObserveAim(TrackingSamplePair? pair)
+        {
+            if(!engine.TargetsActive || population==null)return;
+            double active=engine.CurrentActiveSeconds;
+            if(active<nextAimAt)return;
+            nextAimAt=active+config.Runtime.AimObservationIntervalSeconds;
+            var now=clock.Now;
+            bool valid=pair.HasValue && pair.Value.Head.HasValidPose && pair.Value.Weapon.HasValidPose &&
+                now.Ticks>=pair.Value.Timestamp.Ticks && (now.Ticks-pair.Value.Timestamp.Ticks)/(double)TimeSpan.TicksPerSecond<=config.Runtime.AimMaximumGapSeconds;
+            var fields=new List<LogField> {LogField.String("blockId",blockId!),LogField.Boolean("valid",valid),
+                LogField.NumberValue("activeSeconds",active),LogField.NumberValue("maximumGapSeconds",config.Runtime.AimMaximumGapSeconds),
+                LogField.NumberValue("observationIntervalSeconds",config.Runtime.AimObservationIntervalSeconds)};
+            if(valid)
+            {
+                var ray=new BoreRay(pair!.Value.Weapon.Pose!.Value,config.Rig.WeaponMuzzleOffsetM,config.Rig.WeaponZero,config.Rig.WeaponBoreLocalDirection).Ray;
+                var eye=pair.Value.Head.Pose!.Value.TransformPoint(config.Rig.HeadEyeOffsetM);
+                var visible=new List<TargetEntity>();
+                foreach(var target in population.ActiveTargets)if(IsVisible(eye,target.Position))visible.Add(target);
+                fields.AddRange(AimGeometry.Fields(ray,visible));
+                fields.Add(LogField.NumberValue("observationTicks",pair.Value.Timestamp.Ticks));
+            }
+            if(!recording.TryRecord(new SessionEvent(eventSequence.Next(),now,"AimObserved",fields)))
+                throw new InvalidOperationException("Aim observation recording failed.");
+        }
+
         public void Fire(RigidPose? weapon, RigidPose? head, MonotonicTimestamp observedAt)
         {
             if(!engine.TargetsActive || population==null) return;
@@ -111,6 +143,7 @@ namespace Elts.Operator
         {
             RemoveRemainingTargets();
             blockId=engine.CurrentBlockId;
+            nextAimAt=0;
             ShotCount=0;HitCount=0;LastShot="Aim at a target, then click and release.";
             var screen=config.Rig.Display;
             var center=screen.Origin+screen.U*(screen.Width*0.5)+screen.V*(screen.Height*0.5)

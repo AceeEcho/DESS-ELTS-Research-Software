@@ -75,6 +75,12 @@ namespace Elts.Operator
                     await Task.Run(()=>ExportRecording(directory,destination));collectionExport=destination;
                     collectionMessage="Original recording export ready. Use Download export to save a copy.";
                 }
+                else if(action=="exportWorkbook")
+                {
+                    collectionExport="";
+                    collectionExport=await Task.Run(()=>collection!.ExportWorkbook((string?)command["id"]??""));
+                    collectionMessage="Excel workbook ready: tasks, timeline, shots and metric guide.";
+                }
                 else if(action=="exportDatabase" || action=="exportParticipant")
                 {
                     collectionExport="";

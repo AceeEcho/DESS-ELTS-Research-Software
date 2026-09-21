@@ -12,6 +12,15 @@ const output = path.join(root, 'test-results');
 fs.mkdirSync(output, { recursive: true });
 const conditions = ['WE_FT', 'WE_MT', 'NE_FT', 'NE_MT'];
 const commands = [];
+const taskReview = {attempts:[{
+  condition:'WE_FT',blockId:'WE_FT-attempt-01',status:'Completed',activeSeconds:30,shots:30,hits:24,misses:6,
+  hitsPerSecond:0.8,shotsPerSecond:1,missesPerSecond:0.2,accuracyPercent:80,
+  meanShotErrorDeg:1.3,p95ShotErrorDeg:3.2,meanMissOffsetMm:24.5,aimErrorVarianceDeg2:0.42,
+  meanAimSpeedDegPerSecond:12.4,aimSpeedVariabilityDegPerSecond:8.1,aimCoveragePercent:94.7,
+  shotGeometryCount:30,aimObservations:600,validAimObservations:598,metricsVersion:'elts.task-metrics.v1',
+  seconds:Array.from({length:30},(_,i)=>({second:i,exposureSeconds:1,hitsPerSecond:i%5===0?0:1,shotsPerSecond:1,missesPerSecond:i%5===0?1:0,meanAimErrorDeg:0.5+(i%7)/10})),
+  shotDetails:Array.from({length:30},(_,i)=>({shotNumber:i+1,activeSeconds:i+0.5,outcome:i%5===0?'Miss':'Hit',angularErrorDeg:i%5===0?3.2:0.5,centerOffsetMm:i%5===0?24.5:4,edgeClearanceMm:i%5===0?14.5:0,referenceTargetId:'target-'+i}))
+},{condition:'WE_FT',blockId:'WE_FT-repeat-02',status:'Stopped early',activeSeconds:5,shots:0,hits:0,misses:0,hitsPerSecond:0,shotsPerSecond:0,missesPerSecond:0,metricsVersion:'elts.task-metrics.v1',reason:'Fictional repeated attempt',seconds:[],shotDetails:[]}],notes:[{text:'Fictional demonstration. Participant reported comfortable posture.'}]};
 let rejectFolder = false;
 let current = {
   state: 'Idle', participant: '', runId: '', blockId: '', condition: '', canStartParticipant: true,
@@ -40,14 +49,14 @@ const server = http.createServer(async (req, res) => {
     if (command.action === 'skipBreak') { current.state = 'BlockReady'; current.tools.canSkipBreak = false; }
     if (command.action === 'viewParticipant') current.data.profile = {participant:current.data.profiles[0],sessions:[{id:'session1',modifiedUtc:'2026-09-11T12:00:00Z',finalized:'1',review:JSON.stringify({attempts:[{condition:'WE_FT',blockId:'WE_FT-attempt-01',status:'Completed',hits:2,shots:3,activeSeconds:300}],notes:[{text:'<script>must remain text</script>'}]})}]};
     if (command.action === 'viewDataRows') current.data.rows=[{offset:'0',json:JSON.stringify({eventType:'OperatorNote',payload:{text:'<img src=x onerror=alert(1)>'}})}];
-    if (command.action === 'exportParticipant' || command.action === 'exportDatabase') current.downloadId='fixture-export';
+    if (command.action === 'exportParticipant' || command.action === 'exportDatabase' || command.action === 'exportWorkbook') current.downloadId=command.action==='exportWorkbook'?'fixture-workbook':'fixture-export';
     if (command.action === 'listRecordings') current.tools.recordings = [{ id: 'synthetic-browser-test', finalized: true }];
     if (command.action === 'reviewRecording') current.tools.review = { id: command.id, finalized: true,
       attempts: [{ blockId: 'WE_FT-attempt-01', condition: 'WE_FT', status: 'Completed', hits: 2, shots: 3, activeSeconds: 300, scoreStatus: 'unavailable' }],
       notes: [{ text: '<script>must remain text</script>' }], limitation: 'Synthetic browser fixture.' };
     res.setHeader('Content-Type', 'application/json'); res.end('{"ok":true}'); return;
   }
-  if(req.url.startsWith('/api/download/')){res.setHeader('Content-Disposition','attachment; filename="fixture.sqlite"');res.end('SQL fixture bytes');return;}
+  if(req.url.startsWith('/api/download/')){res.setHeader('Content-Disposition','attachment; filename="'+(req.url.includes('workbook')?'fixture.xlsx':'fixture.sqlite')+'"');res.end('fixture bytes');return;}
   const name = req.url === '/' ? 'index.html' : req.url.slice(1);
   if (!['index.html', 'app.js', 'workflows.js', 'data-viewer.js', 'styles.css'].includes(name)) { res.writeHead(404); res.end(); return; }
   res.setHeader('Content-Type', name.endsWith('.js') ? 'text/javascript' : name.endsWith('.css') ? 'text/css' : 'text/html');
@@ -168,6 +177,26 @@ const server = http.createServer(async (req, res) => {
     rejectFolder = false; await page.locator('#dataFolder').click();
     const csvDownload = page.waitForEvent('download'); await page.locator('#dataReviewCsv').click();
     assert.match((await csvDownload).suggestedFilename(), /review.csv$/);
+    current.data.profile.sessions[0].review = JSON.stringify(taskReview);
+    await page.waitForFunction(()=>document.querySelectorAll('[data-task-id]').length===2);
+    assert.match(await page.locator('#taskExplorer').innerText(), /0.8/);
+    await page.locator('[data-detail-tab="timeline"]').click();
+    assert.equal(await page.locator('#taskExplorer tbody tr').count(),25,'Timeline paginates exact second bins');
+    await page.locator('#detailNext').click();
+    assert.equal(await page.locator('#taskExplorer tbody tr').count(),5);
+    await page.locator('[data-detail-tab="shots"]').click();
+    await page.locator('#shotOutcome').selectOption('Miss');
+    assert.equal(await page.locator('#taskExplorer tbody tr').count(),6,'Shot filter isolates misses');
+    await page.locator('[data-task-id="WE_FT-repeat-02"]').click();
+    await page.locator('[data-detail-tab="overview"]').click();
+    assert.match(await page.locator('#taskExplorer').innerText(),/Fictional repeated attempt/,'Repeated attempts stay separate');
+    assert.match(await page.locator('.metric-card').first().innerText(),/0 hit/,'Measured zero is visible');
+    assert.match(await page.locator('#taskExplorer').innerText(),/—/,'Missing geometry is not zero');
+    await page.locator('[data-task-id="WE_FT-attempt-01"]').click();
+    await page.locator('#dataExportWorkbook').click();
+    await wait(()=>commands.some(c=>c.action==='exportWorkbook'));
+    const workbookDownload = page.waitForEvent('download'); await page.locator('#dataDownload').click();
+    assert.match((await workbookDownload).suggestedFilename(),/xlsx$/);
     await page.locator('#dataSearch').fill('missing');
     assert.equal(await page.locator('[data-profile-id]').count(),0,'Participant search filters profiles');
     await page.locator('#dataSearch').fill('P-001');
@@ -176,9 +205,11 @@ const server = http.createServer(async (req, res) => {
     assert.match(await page.locator('#dataError').textContent(),/read-only/,'Storage errors are visible');
     current.data.error='';
     await page.locator('#dataError').waitFor({state:'hidden'});
-    current.data.profile.sessions[0].review = JSON.stringify({attempts:[{condition:'WE_FT',blockId:'WE_FT-attempt-01',status:'Completed',hits:2,shots:3,activeSeconds:300}],notes:[{text:'Fictional demonstration. Participant reported comfortable posture.'}]});
+    current.data.profile.sessions[0].review = JSON.stringify(taskReview);
     await page.waitForFunction(()=>document.getElementById('dataProfile').textContent.includes('comfortable posture'));
     await page.screenshot({path:path.join(output,'administrator-data.png'),fullPage:true});
+    await page.locator('.task-detail-heading').evaluate(el => el.scrollIntoView({block:'start'}));
+    await page.screenshot({path:path.join(output,'administrator-task-metrics.png'),fullPage:true});
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: path.join(output, 'administrator-data-mobile.png'), fullPage: true });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'Mobile page has no horizontal overflow');

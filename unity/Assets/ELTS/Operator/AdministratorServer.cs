@@ -132,7 +132,7 @@ namespace Elts.Operator
                     {Respond(stream,404,"text/plain",Encoding.UTF8.GetBytes("Export no longer available. Create a new export."));return;}
                     using(var downloadFile=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.Read))
                     {
-                        byte[] headers=Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: "+(path.EndsWith(".zip",StringComparison.OrdinalIgnoreCase)?"application/zip":"application/vnd.sqlite3")+"\r\nContent-Disposition: attachment; filename=\""+Path.GetFileName(path)+"\"\r\nContent-Length: "+downloadFile.Length+"\r\nConnection: close\r\nCache-Control: no-store\r\nReferrer-Policy: no-referrer\r\n\r\n");
+                        byte[] headers=Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: "+(path.EndsWith(".zip",StringComparison.OrdinalIgnoreCase)?"application/zip":path.EndsWith(".xlsx",StringComparison.OrdinalIgnoreCase)?"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":"application/vnd.sqlite3")+"\r\nContent-Disposition: attachment; filename=\""+Path.GetFileName(path)+"\"\r\nContent-Length: "+downloadFile.Length+"\r\nConnection: close\r\nCache-Control: no-store\r\nReferrer-Policy: no-referrer\r\n\r\n");
                         stream.Write(headers,0,headers.Length);downloadFile.CopyTo(stream);
                     }
                     return;

@@ -20,7 +20,13 @@ be updated by a later session using that code. Each new recording and continuati
 also saves `participant.json`, so identity survives interruption during startup. Old recordings without participant
 metadata use their original folder name as their identifying code.
 
-The viewer shows descriptive counts, notes and original JSON records. An open or
+The viewer groups each session into individual task attempts, including repeats,
+stops and skips. Choose an attempt, then **Overview**, **Timeline**, **Shots** or
+**Metric guide**. Overview shows firing rates, accuracy, shot precision, aim
+stability and measurement coverage. Timeline includes quiet seconds and partial
+final seconds. Shots can be filtered by hit, miss or unknown outcome. Both tables
+page through 25 rows at a time. Original JSON remains under **Explore original
+records**, away from the normal review flow. An open or
 incomplete session is labeled accordingly. A final summary indicates a closed
 recording, not successful physical validation. Synthetic counts remain synthetic;
 scoring and study readiness are unavailable here. Integrity-verified analysis
@@ -42,6 +48,15 @@ participant's rows; other participants are never copied into that file. A whole
 export uses SQLite's backup API for a consistent snapshot, including committed
 WAL data. Neither export needs the source database's sidecar files.
 
+**Export Excel** creates a native `.xlsx` workbook for the selected participant,
+including all their indexed sessions. Its **Tasks**, **Timeline**, **Shots** and
+**Metric guide** sheets use the same calculation as the dashboard and SQL views.
+Headers are frozen, filters are enabled, identifiers retain leading zeroes, and
+measurement columns are numeric. Missing measurements are blank. Participant text
+and notes cannot become formulas. No Excel installation is needed to export.
+**Download review CSV** contains the selected session's task summary, with
+participant/session identifiers, metric names and units in the column names.
+
 Exports represent the most recent indexed data. Finish a test or choose Refresh
 before exporting its latest records. Exporting does not pause a running test.
 **Export original files** is available for finalized, inactive sessions and keeps
@@ -60,13 +75,58 @@ interface in this version.
 | `sessions` | Unique session ID, participant relationship, original directory, modification time, finalized flag, descriptive review JSON |
 | `records` | Complete original record JSON, keyed by session, stream filename and original byte offset; supplemental JSON uses offset zero |
 | `stream_progress` | Last complete imported byte offset for each NDJSON stream |
+| `task_results` (view) | One row per task attempt, participant/session identifiers, status, active duration, counts, rates, shot precision, aim metrics and coverage |
+| `task_seconds` (view) | One row per active second per task; actual exposure, counts, rates and mean aim error |
+| `task_shots` (view) | One row per accepted shot; active time, source timestamp, outcome, reference target, angle and distance |
 
 Each imported line and its progress offset commit together. Imports use bounded
 transactions, so retries retain earlier committed batches without duplicating
 rows. Foreign keys protect session/profile relationships. `PRAGMA user_version`
-is 1. The Windows runtime uses the system SQLite library with a five-second busy
+is 2. Existing collections gain the metric views on initialization; choose Refresh
+to recompute older review JSON from retained events. No raw stream is rewritten.
+The Windows runtime uses the system SQLite library with a five-second busy
 timeout and full synchronous durability. Raw record size is limited to 16 MB per
 line during indexing; the viewer returns 50 records per page.
+
+## Metric definitions and missing data
+
+Calculations are versioned as `elts.task-metrics.v1` in `TaskDataReview`. These
+are descriptive synthetic observations; they are not the primary study scoring
+path or integrity-verified analysis.
+
+| Measure | Definition |
+| --- | --- |
+| Hits/s, shots/s, misses/s | Accepted count divided by active seconds, excluding pauses. Each timeline bin divides by its own exposure, including a fractional final bin. |
+| Accuracy (%) | 100 × hit shots / accepted shots. Trigger lockout and invalid-tracking clicks are excluded from accepted shots. No shots means unavailable accuracy. |
+| Shot error (degrees) | Angle between the corrected bore ray and target-center direction at the trigger observation. P95 uses nearest rank. |
+| Shot offset / miss distance (mm) | Perpendicular distance from reference target center to the forward bore ray. Miss distance averages only misses with geometry. This is not a screen-plane impact coordinate. |
+| Edge clearance (mm) | max(0, center offset − target radius). |
+| Aim error variance (deg²) | Sample variance, using n−1, of target-center angular error across valid frame observations. Includes target switching; it is not weapon-position variance. |
+| Mean aim speed (deg/s) | Total bore angular travel divided by accepted observation-pair time. |
+| Aim speed variability (deg/s) | Duration-weighted population standard deviation of successive angular speeds. A descriptive erraticness proxy; intentional target transitions also affect it. |
+| Aim coverage (%) | Accepted observation-pair duration / active duration × 100. Shown alongside valid/total observations and shots with geometry. |
+
+Hits reference the actual hit target. Misses and aim observations reference the
+nearest angular visible forward target. This explicit policy does not determine
+participant intent. If no candidate exists, target error is unavailable; valid
+bore motion can still contribute to speed metrics.
+
+New `ShotFired` payloads retain outcome and geometry before targets are destroyed
+or replaced. `AimObserved` events use the current unpredicted paired pose and the
+visible target state on the Unity frame. The default observation interval is
+0.05 s (at most 20 Hz), with a maximum accepted motion gap of 0.25 s. Configure
+`runtime.aimObservationIntervalSeconds` and `runtime.aimMaximumGapSeconds`; these
+values are recorded with observations. Actual frame cadence may be slower than
+the configured rate. The full raw tracker stream remains at its configured
+acquisition cadence. Aim telemetry uses the existing critical event writer;
+a recording failure retains the existing stop behavior.
+
+Motion calculations do not connect across pauses, invalid poses, duplicate or
+backward observation timestamps, or excessive gaps. Missing measurements display
+as **—** in the dashboard, SQL **NULL**, and blank Excel/CSV cells. Older completed
+recordings can recover rates and hit outcomes from events, but cannot recover
+new geometry that was never captured. Unfinished legacy shots without a hit event
+remain **Unknown** until closure; skipped attempts are not zero-performance tests.
 
 ## If storage fails
 
@@ -87,14 +147,17 @@ the browser cannot request arbitrary filesystem paths.
 
 - `tools/runtime-tests/CollectionChecks.csproj`: SQLite creation, incremental
   recovery, malformed-line rollback, Unicode identity, export isolation and the
-  real authenticated download server.
+  real authenticated download server. `TaskDataChecks` also verifies known rates,
+  pause exclusion, variance, invalid observations/gaps, partial seconds, legacy
+  unavailable values, numeric SQL views and native Excel contents.
 - `tools/browser-tests/administrator.cjs`: dashboard controls, profile search,
   exports, raw viewing, persistent errors, blocked browser preference storage,
-  keyboard interactions and mobile sizing.
+  keyboard interactions, task selection, timeline pagination, shot filtering,
+  Excel downloads and mobile sizing.
 - `tools/browser-tests/data-player-smoke.py --build <verified-build-directory>`:
   copies a Windows player into an isolated temporary directory, exercises real
-  synthetic recording checkpoints and SQL/ZIP downloads, and checks raw/SQL row
-  counts using Python's independent SQLite reader.
+  synthetic recording checkpoints and SQL/ZIP/XLSX downloads, and checks raw/SQL
+  row counts using Python's independent SQLite reader.
 
 These are software checks. Another physical machine, hardware measurements and
 study acceptance are not established by a local copied-player test.

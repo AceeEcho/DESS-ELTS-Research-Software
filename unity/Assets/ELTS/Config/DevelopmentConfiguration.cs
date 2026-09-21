@@ -150,6 +150,8 @@ namespace Elts.Config
         public int EventQueueCapacity { get; }
         public double LogFlushSeconds { get; }
         public double DiagnosticIntervalSeconds { get; }
+        public double AimObservationIntervalSeconds { get; }
+        public double AimMaximumGapSeconds { get; }
         internal RuntimeConfiguration(JObject value)
         {
             // Enforce scientific boundaries even if someone edits/re-hashes schemas.
@@ -162,6 +164,12 @@ namespace Elts.Config
             EventQueueCapacity = (int)value["eventQueueCapacity"];
             LogFlushSeconds = DevelopmentConfiguration.Number(value, "logFlushSeconds");
             DiagnosticIntervalSeconds = DevelopmentConfiguration.Number(value, "diagnosticIntervalSeconds");
+            // Optional keys keep older machine configurations readable.
+            AimObservationIntervalSeconds = (double?)value["aimObservationIntervalSeconds"] ?? 0.05;
+            AimMaximumGapSeconds = (double?)value["aimMaximumGapSeconds"] ?? 0.25;
+            if(!Double.IsFinite(AimObservationIntervalSeconds) || AimObservationIntervalSeconds<0.02 || AimObservationIntervalSeconds>1 ||
+                !Double.IsFinite(AimMaximumGapSeconds) || AimMaximumGapSeconds<AimObservationIntervalSeconds || AimMaximumGapSeconds>2)
+                JsonContract.Fail("Aim observation interval must be 0.02-1 s and maximum gap must be between the interval and 2 s");
         }
     }
 

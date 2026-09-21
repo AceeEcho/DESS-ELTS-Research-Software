@@ -164,14 +164,61 @@ public sealed class HitscanShotModel : IShotModel
         if (shot == null) throw new ArgumentNullException(nameof(shot)); if (targets == null) throw new ArgumentNullException(nameof(targets)); if (isVisible == null) throw new ArgumentNullException(nameof(isVisible)); if (String.IsNullOrWhiteSpace(blockId)) throw new ArgumentException("A block identifier is required.", nameof(blockId));
         if (lastAcceptedShot.HasValue && shot.Timestamp < lastAcceptedShot.Value) throw new ArgumentException("Shot timestamps cannot move backward within one model.", nameof(shot));
         if (!shot.TrackingValid || !shot.IsTriggerFallingEdge || IsLockedOut(shot.Timestamp)) return Array.Empty<SessionEvent>();
-        lastAcceptedShot=shot.Timestamp; var all=new List<SessionEvent>{Event(shot.Timestamp,"ShotFired",blockId,null)}; TargetEntity? hit=null; double nearest=Double.PositiveInfinity;
-        foreach(var target in targets) if(target.State==TargetState.Active && isVisible(target) && Sphere(shot.BoreRay,target,out double distance) && distance<nearest) { nearest=distance; hit=target; }
+        lastAcceptedShot=shot.Timestamp;
+        var candidates=new List<TargetEntity>(); TargetEntity? hit=null; double nearest=Double.PositiveInfinity;
+        foreach(var target in targets) if(target.State==TargetState.Active && isVisible(target))
+        {
+            candidates.Add(target);
+            if(Sphere(shot.BoreRay,target,out double distance) && distance<nearest) { nearest=distance; hit=target; }
+        }
+        // Record geometry before destruction/respawn changes the target population.
+        // A miss uses the nearest angular visible target; this does not infer intent.
+        var fields=AimGeometry.Fields(shot.BoreRay,candidates,hit);
+        fields.Add(LogField.String("blockId",blockId));
+        fields.Add(LogField.String("outcome",hit==null?"Miss":"Hit"));
+        var all=new List<SessionEvent>{new SessionEvent(sequence.Next(),shot.Timestamp,"ShotFired",fields)};
         if(hit != null) { hit.Destroy(); all.Add(Event(shot.Timestamp,"TargetHit",blockId,hit.Id)); all.Add(Event(shot.Timestamp,"TargetDestroyed",blockId,hit.Id)); }
         return all;
     }
     private bool IsLockedOut(MonotonicTimestamp timestamp) => minimumShotInterval.HasValue && lastAcceptedShot.HasValue && timestamp.Ticks-lastAcceptedShot.Value.Ticks<minimumShotInterval.Value.Ticks;
     private SessionEvent Event(MonotonicTimestamp time,string type,string blockId,string? targetId) { var fields=new List<LogField>{LogField.String("blockId",blockId)}; if(targetId!=null) fields.Add(LogField.String("targetId",targetId)); return new SessionEvent(sequence.Next(),time,type,fields); }
     private static bool Sphere(Ray3d ray, TargetEntity target,out double distance) { var oc=ray.Origin-target.Position; double b=Vector3d.Dot(oc,ray.Direction); double c=Vector3d.Dot(oc,oc)-target.RadiusM*target.RadiusM; double disc=b*b-c; if(disc<0) { distance=0; return false; } distance=-b-Math.Sqrt(disc); if(distance<=0) distance=-b+Math.Sqrt(disc); return distance>0; }
+}
+
+/// <summary>Descriptive bore-to-target geometry in degrees and millimetres.</summary>
+public static class AimGeometry
+{
+    public static List<LogField> Fields(Ray3d ray,IEnumerable<TargetEntity> candidates,TargetEntity? hit=null)
+    {
+        TargetEntity? reference=hit; double best=Double.PositiveInfinity;
+        foreach(var target in candidates)
+        {
+            var offset=target.Position-ray.Origin;
+            if(target.State!=TargetState.Active || offset.Length<=GeometryTolerance.Length || Vector3d.Dot(offset,ray.Direction)<=0)continue;
+            double angle=Math.Acos(Math.Max(-1,Math.Min(1,Vector3d.Dot(offset.Normalized(),ray.Direction))));
+            if(hit==null && angle<best){best=angle;reference=target;}
+        }
+        var fields=new List<LogField> {
+            LogField.NumberValue("metricsVersion",1),
+            LogField.NumberValue("directionX",ray.Direction.X),LogField.NumberValue("directionY",ray.Direction.Y),LogField.NumberValue("directionZ",ray.Direction.Z),
+            LogField.String("referencePolicy",hit!=null?"hit_target":"nearest_angular_visible_forward_target")
+        };
+        if(reference!=null)
+        {
+            var offset=reference.Position-ray.Origin;
+            if(offset.Length>GeometryTolerance.Length)
+            {
+                double angle=Math.Acos(Math.Max(-1,Math.Min(1,Vector3d.Dot(offset.Normalized(),ray.Direction))));
+                double centerOffset=offset.Length*Math.Sin(angle);
+                fields.Add(LogField.String("referenceTargetId",reference.Id));
+                fields.Add(LogField.NumberValue("angularErrorDeg",angle*180/Math.PI));
+                fields.Add(LogField.NumberValue("centerOffsetMm",centerOffset*1000));
+                fields.Add(LogField.NumberValue("edgeClearanceMm",Math.Max(0,centerOffset-reference.RadiusM)*1000));
+                fields.Add(LogField.NumberValue("targetRadiusMm",reference.RadiusM*1000));
+            }
+        }
+        return fields;
+    }
 }
 
 public interface IScoringRule { int Score(string blockId, MonotonicTimestamp start, MonotonicTimestamp end, IEnumerable<SessionEvent> events); }

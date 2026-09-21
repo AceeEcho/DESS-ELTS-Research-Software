@@ -36,7 +36,49 @@ namespace Elts.Operator
             db.Execute("CREATE TABLE IF NOT EXISTS records (sessionId TEXT NOT NULL REFERENCES sessions(id), stream TEXT NOT NULL, offset INTEGER NOT NULL, json TEXT NOT NULL, PRIMARY KEY(sessionId,stream,offset))");
             db.Execute("CREATE TABLE IF NOT EXISTS stream_progress (sessionId TEXT NOT NULL REFERENCES sessions(id), stream TEXT NOT NULL, offset INTEGER NOT NULL, PRIMARY KEY(sessionId,stream))");
             db.Execute("CREATE INDEX IF NOT EXISTS sessions_participant ON sessions(participantId)");
-            db.Execute("PRAGMA user_version=1");
+            // Named, typed columns expose the shared derived review without
+            // requiring researchers to navigate JSON or duplicate calculations.
+            CreateMetricView(db,"task_results",TaskDataReview.SummaryColumns,"");
+            CreateMetricView(db,"task_seconds",TaskDataReview.SecondColumns,"seconds");
+            CreateMetricView(db,"task_shots",TaskDataReview.ShotColumns,"shotDetails");
+            db.Execute("PRAGMA user_version=2");
+        }
+        private static void CreateMetricView(CollectionSqlite db,string name,string[] columns,string detail)
+        {
+            string source=detail.Length==0?"a":"d";
+            string fields=String.Join(",",columns.Select(c=>"json_extract("+source+".value,'$."+c+"') AS "+c));
+            string context=detail.Length==0?"":",json_extract(a.value,'$.blockId') AS blockId,json_extract(a.value,'$.condition') AS condition";
+            db.Execute("CREATE VIEW IF NOT EXISTS "+name+" AS SELECT p.code AS participantCode,p.name AS participantName,s.id AS sessionId,s.finalized AS recordingFinalized"+context+","+fields+
+                " FROM sessions s JOIN participants p ON p.id=s.participantId,json_each(s.review,'$.attempts') a"+
+                (detail.Length==0?"":",json_each(a.value,'$."+detail+"') d"));
+        }
+        public string ExportWorkbook(string participant)
+        {
+            Guid.ParseExact(participant,"N");
+            string exports=Path.Combine(Root,"exports");Directory.CreateDirectory(exports);
+            if((File.GetAttributes(exports)&FileAttributes.ReparsePoint)!=0)throw new IOException("Export folder cannot be a link.");
+            string destination=Path.Combine(exports,"participant-"+participant+"-"+Guid.NewGuid().ToString("N")+".xlsx");
+            using(var db=Open())
+            {
+                if(db.Query("SELECT id FROM participants WHERE id=?",participant).Count!=1)throw new IOException("Choose an existing participant.");
+                db.Execute("BEGIN");
+                try
+                {
+                    var sheets=new List<CollectionWorkbook.Sheet>();
+                    string[] context={"participantCode","participantName","sessionId","recordingFinalized"};
+                    foreach(var spec in new[]{("Tasks","task_results",TaskDataReview.SummaryColumns),("Timeline","task_seconds",new[]{"blockId","condition"}.Concat(TaskDataReview.SecondColumns).ToArray()),("Shots","task_shots",new[]{"blockId","condition"}.Concat(TaskDataReview.ShotColumns).ToArray())})
+                    {
+                        var columns=context.Concat(spec.Item3).ToArray();
+                        var rows=db.Query("SELECT * FROM "+spec.Item2+" WHERE sessionId IN (SELECT id FROM sessions WHERE participantId=?)",participant);
+                        sheets.Add(new CollectionWorkbook.Sheet(spec.Item1,columns,rows.Select(r=>columns.Select(c=>r[c]).ToArray()).ToArray()));
+                    }
+                    sheets.Add(new CollectionWorkbook.Sheet("Metric guide",new[]{"Metric","Unit","Definition"},TaskDataReview.Definitions));
+                    CollectionWorkbook.Write(destination,sheets);
+                    db.Execute("COMMIT");
+                }
+                catch {db.Execute("ROLLBACK");throw;}
+            }
+            return destination;
         }
         public void Import(string directory,string code,string name,string review)
         {

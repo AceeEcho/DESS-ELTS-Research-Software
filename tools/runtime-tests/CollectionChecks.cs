@@ -16,6 +16,7 @@ internal static class CollectionChecks
         string root=Path.Combine(Path.GetTempPath(),"ELTS SQL checks "+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(root);
         try
         {
+            TaskDataChecks.Run(root);
             var collection=new ParticipantCollection(Path.Combine(root,"collection data"));collection.Initialize();
             Check(File.Exists(collection.DatabasePath),"Database created before recording");
             string first=Path.Combine(root,"first run"),second=Path.Combine(root,"second run"),third=Path.Combine(root,"other person");

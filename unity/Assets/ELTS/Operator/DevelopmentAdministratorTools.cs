@@ -320,50 +320,7 @@ namespace Elts.Operator
             File.Move(pending,destination);
         }
 
-        private static object ReadRecordingReview(string directory)
-        {
-            var notes=new List<object>();var attempts=new Dictionary<string,JObject>();
-            string summaryPath=Path.Combine(directory,"session-summary.json");
-            foreach(string path in new[]{summaryPath,Path.Combine(directory,"events.ndjson")})
-                if(File.Exists(path) && (File.GetAttributes(path)&FileAttributes.ReparsePoint)!=0)
-                    throw new IOException("Recording review cannot follow linked files.");
-            JObject? summary=File.Exists(summaryPath)?JObject.Parse(File.ReadAllText(summaryPath)):null;
-            // Read only the event stream; raw pose/target streams can be very large.
-            using(var input=new FileStream(Path.Combine(directory,"events.ndjson"),FileMode.Open,FileAccess.Read,FileShare.ReadWrite))
-            using(var reader=new StreamReader(input))
-            while(reader.ReadLine() is string line)
-            {
-                JObject item;
-                try{item=JObject.Parse(line);}
-                catch(JsonReaderException)
-                {
-                    // Only the final line of an unfinished stream may be partial.
-                    if(summary==null && reader.EndOfStream)break;
-                    throw new IOException("The event stream contains malformed JSON. Inspect the retained raw recording.");
-                }
-                string type=(string?)item["eventType"]??"";
-                var payload=item["payload"] as JObject??new JObject();
-                string block=(string?)payload["blockId"]??"";
-                if(type=="OperatorNote")notes.Add(new { ticks=(long?)item["monotonicTicks"]??0,text=(string?)payload["text"]??"" });
-                if(type=="BlockMetadata" || type=="BlockSkipped")
-                    attempts[block]=new JObject { ["blockId"]=block,["condition"]=(string?)payload["condition"],
-                        ["status"]=type=="BlockSkipped"?"Skipped":"Started",["hits"]=0,["shots"]=0,["scoreStatus"]="unavailable",
-                        ["reason"]=(string?)payload["reason"]??"" };
-                if(!attempts.TryGetValue(block,out var attempt))continue;
-                if(type=="ShotFired")attempt["shots"]=(int)attempt["shots"]!+1;
-                if(type=="TargetDestroyed")attempt["hits"]=(int)attempt["hits"]!+1;
-                if(type=="BlockEnded" || type=="BlockAborted")
-                {
-                    attempt["status"]=type=="BlockAborted"?"Aborted":(string?)payload["reason"]=="operator_stop"?"Stopped early":"Completed";
-                    attempt["activeSeconds"]=payload["activeSeconds"];
-                    attempt["reason"]=payload["reason"];
-                    attempt["developmentTiming"]=payload["developmentTiming"];
-                }
-            }
-            return new { id=Path.GetFileName(directory),summary,finalized=summary!=null,
-                attempts=attempts.Values.ToArray(),notes,
-                limitation="Descriptive review, not integrity-verified analysis. Raw exports retain original streams and checksums." };
-        }
+        private static object ReadRecordingReview(string directory) => TaskDataReview.Read(directory);
 
         public void StationOpenDataFolder()
         {

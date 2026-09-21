@@ -125,14 +125,15 @@ Click the small **Data** button at the top. It switches the dashboard to the par
 ![Data viewer showing a fictional participant profile, saved sessions, results, notes and export controls.](docs/operator/images/user-guide/13-data-viewer.png)
 
 1. Find a participant by ID or name in the left panel. Reusing the same participant ID groups their sessions under one unique profile.
-2. Choose a saved session to see its test results and notes. Expand **Explore original records** to page through events, tracking samples or target records.
+2. Choose a saved session, then a task attempt. **Overview** shows firing rates, accuracy, shot error and aim stability. **Timeline** shows rates per active second; **Shots** lets you inspect hits and misses individually. **Metric guide** explains the units and unavailable values. Expand **Explore original records** for raw JSON.
 3. Click **Refresh** to index existing recordings or pick up newly flushed data.
 
 - **Export database:** creates a standalone SQLite snapshot of the whole indexed collection.
 - **Export participant:** creates a standalone SQLite database containing only the selected participant and their sessions and records.
+- **Export Excel:** creates a filtered workbook for the selected participant with Tasks, Timeline, Shots and Metric guide sheets. SQL exports include matching `task_results`, `task_seconds` and `task_shots` views.
 - **Download export:** downloads the prepared file through your browser. Export copies also remain in the data folder's **exports** directory.
 - **Export original files:** creates a ZIP of the selected finalized session, preserving the original streams and checksums.
-- **Download review CSV:** downloads the displayed test table.
+- **Download review CSV:** downloads all task summaries for the selected session, including rates, precision, aim metrics and coverage.
 - **Open folder:** opens the actual data folder shown in the viewer. The default is **collection data** beside the README and Start button; an older or customized machine configuration may select another folder.
 
 The data folder and **collection.sqlite** are created when the administrator starts, even before the first participant. Raw data is written continuously. Each finished or skipped test saves a checkpoint and updates its SQL copy; the final recording closure updates SQL again. Exports contain the data indexed through the latest save or refresh. Wait for saving to finish before closing ELTS.

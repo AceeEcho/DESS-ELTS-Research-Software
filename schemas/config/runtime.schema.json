@@ -62,6 +62,16 @@
       "exclusiveMinimum": 0,
       "maximum": 3600,
       "minimum": 0.001
+    },
+    "aimObservationIntervalSeconds": {
+      "type": "number",
+      "minimum": 0.02,
+      "maximum": 1
+    },
+    "aimMaximumGapSeconds": {
+      "type": "number",
+      "minimum": 0.02,
+      "maximum": 2
     }
   }
 }

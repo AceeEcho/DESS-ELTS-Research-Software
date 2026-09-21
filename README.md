@@ -4,6 +4,22 @@ A Windows Unity application, offline browser simulation and analysis tools for
 the built ELTS apparatus. Current operation uses synthetic inputs; testing
 equipment is unavailable and this is not a study-ready release.
 
+## What you can do
+
+| Feature | Available controls |
+| --- | --- |
+| **Run a desktop station** | One-click Windows startup opens the browser administrator dashboard and a separate Unity participant game. |
+| **Prepare a session** | Reorder four conditions, set individual test times, set practice and break times, and save named browser presets. |
+| **Manage participants** | Create an ID-based recording with an optional name and observations; review multiple sessions under the same profile. |
+| **Control each attempt** | Review a synthetic calibration fixture, run practice, arm a participant-triggered start, pause/resume, stop early, skip or repeat with a reason, and start breaks manually. |
+| **Review results** | Select a task, inspect rates and aim metrics, scrub the graph by active second, and filter individual shots by outcome. |
+| **Save and export** | Continuous raw logging, per-test checkpoints, a local SQLite collection, and Excel, SQLite, review CSV and original-file ZIP exports. |
+| **Adjust the workspace** | Resize the dashboard panes, orbit/zoom the outside preview, and resize or toggle fullscreen for the participant window. |
+
+All results shown here are synthetic. The four condition codes are **WE_FT**,
+**WE_MT**, **NE_FT** and **NE_MT**; use the dashboard's condition labels when
+arranging the session. Configuration, geometry and device bindings remain editable.
+
 ## Illustrated user guide
 
 Use this guide to run the **development** version of the administrator dashboard.
@@ -16,11 +32,21 @@ Use this guide to run the **development** version of the administrator dashboard
 
 ### 1. Open the software
 
-1. Use your local copy of the repository on the **development** branch. Finish any active session before updating it.
+1. Clone this repository's **main** branch to a writable folder on your Windows computer. If you already have a copy, finish any active session before pulling updates.
 2. Open the project folder and double-click **START-ELTS.cmd**. This is the one button to use: it installs or reuses the required development tools, builds or reuses the verified player, then opens both the administrator dashboard and participant game. On first use, allow setup and the build to finish. Complete any Unity sign-in or license prompts.
 3. Two windows open: the **administrator dashboard** in your browser and the **participant game**. You do not need to open the Unity Editor to run a test.
 
-Need the project on a new computer? Follow the [illustrated setup guide](docs/operator/multi-machine-setup.md), choosing **development** for this version. The required Unity version is **6000.3.23f1 LTS**.
+For a new checkout with Git installed:
+
+```powershell
+git clone https://github.com/AceeEcho/DESS-ELTS-Research-Software.git
+cd DESS-ELTS-Research-Software
+.\START-ELTS.cmd
+```
+
+Need help installing the prerequisites or using another computer? Follow the
+[illustrated setup guide](docs/operator/multi-machine-setup.md), using **main**
+for the current version. The required Unity version is **6000.3.23f1 LTS**.
 
 ![Dashboard overview: Data, New participant and the Settings gear are at the top right; test controls are in the right pane.](docs/operator/images/user-guide/01-dashboard.png)
 
@@ -122,19 +148,45 @@ After each test ends:
 
 Click the small **Data** button at the top. It switches the dashboard to the participant collection. Click **Test administration** to return; switching views does not pause an active test.
 
-![Data viewer showing a fictional participant profile, saved sessions, results, notes and export controls.](docs/operator/images/user-guide/13-data-viewer.png)
+![ELTS participant data review with task metrics, firing-rate graph and export controls, using fictional demonstration data.](docs/operator/images/user-guide/13-data-viewer.png)
 
 1. Find a participant by ID or name in the left panel. Reusing the same participant ID groups their sessions under one unique profile.
 2. Choose a saved session, then a task attempt. **Overview** shows firing rates, accuracy, shot error and aim stability. **Timeline** shows rates per active second; **Shots** lets you inspect hits and misses individually. **Metric guide** explains the units and unavailable values. Expand **Explore original records** for raw JSON.
 3. Click **Refresh** to index existing recordings or pick up newly flushed data.
 
-- **Export database:** creates a standalone SQLite snapshot of the whole indexed collection.
-- **Export participant:** creates a standalone SQLite database containing only the selected participant and their sessions and records.
-- **Export Excel:** creates a filtered workbook for the selected participant with Tasks, Timeline, Shots and Metric guide sheets. SQL exports include matching `task_results`, `task_seconds` and `task_shots` views.
-- **Download export:** downloads the prepared file through your browser. Export copies also remain in the data folder's **exports** directory.
-- **Export original files:** creates a ZIP of the selected finalized session, preserving the original streams and checksums.
-- **Download review CSV:** downloads all task summaries for the selected session, including rates, precision, aim metrics and coverage.
-- **Open folder:** opens the actual data folder shown in the viewer. The default is **collection data** beside the README and Start button; an older or customized machine configuration may select another folder.
+**Inspect the timeline:** choose **Timeline**, then hover or drag across the graph.
+The highlighted interval shows hit, shot and miss counts, per-second rates and mean
+aim error. Move the **Inspect active time** slider with the mouse, touch or arrow
+keys; Home/End jumps to either end. Shift + scroll also steps through intervals.
+Active time excludes pauses. The table below the graph keeps the individual bins,
+including quiet seconds and partial final seconds.
+
+![Timeline with the graph cursor, exact interval counts and rates, and per-second table. All values are fictional guide examples.](docs/operator/images/user-guide/14-timeline.png)
+
+**Inspect shots:** choose **Shots**, then select **All**, **Hit**, **Miss** or
+**Unknown** in **Shot outcome**. Review each shot's active time, angular error,
+center offset, edge clearance and reference target. Use the paging controls to
+move through longer attempts. **Metric guide** explains the definitions and units;
+**—** means a measurement is unavailable, not zero.
+
+![Shots tab filtered to misses, showing fictional shot timing, angular error, offsets and target references.](docs/operator/images/user-guide/15-shots.png)
+
+**Choose an export:**
+
+| Button | What it saves |
+| --- | --- |
+| **Export Excel** | The selected participant's indexed sessions in an `.xlsx` workbook with Tasks, Timeline, Shots and Metric guide sheets. Excel does not need to be installed to create it. |
+| **Export participant SQL** | A standalone `.sqlite` database containing only the selected participant and their sessions and records. |
+| **Export database** | A standalone `.sqlite` snapshot of the whole indexed collection. SQL exports include `task_results`, `task_seconds` and `task_shots` views. |
+| **Export original files** | A ZIP of the selected finalized, inactive session, preserving its original streams and checksums. |
+| **Download review CSV** | Task summaries for the selected session, including rates, precision, aim metrics and coverage. |
+
+After preparing an export, click **Download export** to save it through the browser.
+Prepared export copies also remain in the data folder's **exports** directory;
+review CSV downloads directly from the browser. **Open folder** opens the actual
+data folder shown in the viewer. The default is **collection data** beside the
+README and Start button; an older or customized machine configuration may select
+another folder.
 
 The data folder and **collection.sqlite** are created when the administrator starts, even before the first participant. Raw data is written continuously. Each finished or skipped test saves a checkpoint and updates its SQL copy; the final recording closure updates SQL again. Exports contain the data indexed through the latest save or refresh. Wait for saving to finish before closing ELTS.
 
@@ -153,6 +205,15 @@ The collection is local to this machine and excluded from Git. Pushing the proje
 | Startup stops with an error | Read the startup window and use the [setup troubleshooting guide](docs/operator/multi-machine-setup.md#if-something-goes-wrong). |
 
 For detailed behavior, see the [administrator reference](docs/modules/operator-dashboard.md).
+
+## Explore the apparatus layout without installing Unity
+
+Open [elts-simulation/index.html](elts-simulation/index.html) from your local
+checkout in a browser. This separate offline visualization lets you orbit the
+scene, choose a condition, adjust participant position and display width, and use
+**Explore equipment** to locate each component. It needs no server or installation.
+It is an illustrative model; it does not run participant sessions or connect to
+hardware. See the [simulation guide](elts-simulation/README.md) for its controls.
 
 ## Developer shortcuts
 

@@ -14,6 +14,30 @@ const output = path.join(root, 'docs/operator/images/user-guide');
 fs.mkdirSync(output, { recursive: true });
 const conditions = ['WE_FT', 'WE_MT', 'NE_FT', 'NE_MT'];
 const commands = [];
+// Fictional, deterministic examples exercise the current review interface. These
+// values illustrate controls only; they are not measurements from the apparatus.
+const demoReview = { attempts: [{
+  condition: 'WE_FT', blockId: 'WE_FT-attempt-01', status: 'Completed',
+  activeSeconds: 30, shots: 30, hits: 24, misses: 6,
+  hitsPerSecond: 0.8, shotsPerSecond: 1, missesPerSecond: 0.2, accuracyPercent: 80,
+  meanShotErrorDeg: 1.04, p95ShotErrorDeg: 3.2, meanMissOffsetMm: 24.5,
+  aimErrorVarianceDeg2: 0.04, meanAimSpeedDegPerSecond: 12.4,
+  aimSpeedVariabilityDegPerSecond: 8.1, aimCoveragePercent: 94.7,
+  shotGeometryCount: 30, aimObservations: 600, validAimObservations: 598,
+  metricsVersion: 'elts.task-metrics.v1', scoreStatus: 'unavailable',
+  seconds: Array.from({ length: 30 }, (_, i) => ({
+    second: i, exposureSeconds: 1, hits: i % 5 === 0 ? 0 : 1, shots: 1,
+    misses: i % 5 === 0 ? 1 : 0, hitsPerSecond: i % 5 === 0 ? 0 : 1,
+    shotsPerSecond: 1, missesPerSecond: i % 5 === 0 ? 1 : 0,
+    meanAimErrorDeg: 0.5 + (i % 7) / 10
+  })),
+  shotDetails: Array.from({ length: 30 }, (_, i) => ({
+    shotNumber: i + 1, activeSeconds: i + 0.5, outcome: i % 5 === 0 ? 'Miss' : 'Hit',
+    angularErrorDeg: i % 5 === 0 ? 3.2 : 0.5,
+    centerOffsetMm: i % 5 === 0 ? 24.5 : 4,
+    edgeClearanceMm: i % 5 === 0 ? 14.5 : 0, referenceTargetId: 'demo-target-' + i
+  }))
+}], notes: [{ text: 'Fictional guide data only. Not apparatus measurements or study results.' }] };
 let current = {
   state: 'Idle', participant: '', runId: '', blockId: '', condition: '', canStartParticipant: true,
   conditionOrder: conditions.slice(), testDurations: Object.fromEntries(conditions.map(c => [c, 300])),
@@ -38,7 +62,10 @@ const server = http.createServer(async (req, res) => {
     if (command.action === 'setDuration') current.testDurations[command.condition] = command.seconds;
     if (command.action === 'startBreak') { current.state = 'Break'; current.remainingSeconds = 22; current.tools.canStartBreak = false; }
     if (command.action === 'skipBreak') { current.state = 'BlockReady'; current.tools.canSkipBreak = false; }
-    if (command.action === 'viewParticipant') current.data.profile={participant:current.data.profiles[0],sessions:[{id:'demo-session',modifiedUtc:'2026-09-11T12:00:00Z',finalized:'1',review:JSON.stringify({attempts:[{condition:'WE_FT',blockId:'WE_FT-attempt-01',status:'Completed',hits:2,shots:3,activeSeconds:300,scoreStatus:'unavailable'}],notes:[{text:'Fictional demonstration. Participant reported comfortable posture.'}]})}]};
+    if (command.action === 'viewParticipant') current.data.profile = {
+      participant: current.data.profiles[0],
+      sessions: [{ id: 'demo-session', modifiedUtc: '2026-09-21T12:00:00Z', finalized: '1', review: JSON.stringify(demoReview) }]
+    };
     if (command.action === 'listRecordings') current.tools.recordings = [{ id: 'DEMO-001-example', finalized: true }];
     if (command.action === 'reviewRecording') current.tools.review = { id: command.id, finalized: true,
       attempts: [{ blockId: 'WE_FT-attempt-01', condition: 'WE_FT', status: 'Completed', hits: 2, shots: 3, activeSeconds: 300, scoreStatus: 'unavailable' }],
@@ -59,7 +86,7 @@ const server = http.createServer(async (req, res) => {
   // State comes through the same HTTP interface as the desktop application.
   async function settle() { await page.waitForTimeout(500); }
   async function shot(name, selector) {
-    if(process.argv.includes("--data-only") && !["01-dashboard","13-data-viewer"].includes(name))return;
+    if (process.argv.includes('--data-only') && !['01-dashboard', '13-data-viewer', '14-timeline', '15-shots'].includes(name)) return;
     const target = selector ? page.locator(selector) : page;
     if (selector) await target.scrollIntoViewIfNeeded();
     await settle();
@@ -105,7 +132,19 @@ const server = http.createServer(async (req, res) => {
     await page.locator('#recordingsButton').click();
     await page.locator('[data-profile-id="demo-profile"]').click();
     await page.locator('#dataExportParticipant').waitFor();
-    await shot('13-data-viewer');
+    // A tall viewport keeps the scrollable collection visible during element
+    // captures, avoiding clipped panels or blank space around offscreen content.
+    await page.setViewportSize({ width: 1440, height: 2600 });
+    const profileBounds = await page.locator('#dataProfile').boundingBox();
+    await page.setViewportSize({ width: 1440, height: Math.ceil(profileBounds.y + profileBounds.height + 28) });
+    await shot('13-data-viewer', '#dataWorkspace');
+    await page.setViewportSize({ width: 1440, height: 2600 });
+    await page.locator('[data-detail-tab="timeline"]').click();
+    await page.locator('#chartTime').fill('10');
+    await shot('14-timeline', '#taskExplorer');
+    await page.locator('[data-detail-tab="shots"]').click();
+    await page.locator('#shotOutcome').selectOption('Miss');
+    await shot('15-shots', '#taskExplorer');
     assert.deepEqual(errors, []);
     console.log('PASS: requested user-guide screenshots from current dashboard assets.');
   } finally { await browser.close(); server.close(); }

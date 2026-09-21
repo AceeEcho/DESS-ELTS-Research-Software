@@ -25,15 +25,15 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Ambient: 0.22
+    - _Ambient: 0.42
     - _Diffuse: 0.8
-    - _MarkStrength: 0.65
+    - _MarkStrength: 0
     - _MarkWidth: 0.018
     - _Rim: 0.08
-    - _Shininess: 40
-    - _Specular: 0.55
+    - _Shininess: 56
+    - _Specular: 0.32
     m_Colors:
-    - _BaseColor: {r: 1, g: 0.52, b: 0.09, a: 1}
+    - _BaseColor: {r: 0.06, g: 0.68, b: 0.82, a: 1}
     - _MarkColor: {r: 0.28, g: 0.095, b: 0.025, a: 1}
     - _LightDirection: {r: -0.45, g: 0.7, b: -0.8, a: 0}
   m_BuildTextureStacks: []

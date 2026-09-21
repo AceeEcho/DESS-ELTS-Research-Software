@@ -14,6 +14,48 @@ namespace Elts.Operator.Tests
     public sealed class DevelopmentTargetRenderingTests
     {
         [UnityTest]
+        public IEnumerator TrainingRoomRendersAroundThreeSharpTargets()
+        {
+            var host=new GameObject("Training room visual fixture");
+            var view=host.AddComponent<DevelopmentView>();
+            var texture=new RenderTexture(1280,720,24,RenderTextureFormat.ARGB32);
+            texture.antiAliasing=4;texture.Create();
+            try
+            {
+                yield return null;
+                Assert.That(view.Ready,Is.True,view.Error);
+                var desktop=new DesktopInputModel(view.Configuration);
+                var screen=view.DisplayPlane;
+                var centre=screen.Origin+screen.U*(screen.Width*.5)+screen.V*(screen.Height*.5)+screen.Normal*view.Configuration.Scenario.TargetDistanceM;
+                view.ParticipantOnly=true;
+                view.SetSessionFrame(desktop.Head,desktop.Weapon,new Dictionary<string,Vector3d>{
+                    {"room-left",centre-screen.U*.4-screen.V*.12},
+                    {"room-upper",centre+screen.V*.24},
+                    {"room-right",centre+screen.U*.4-screen.V*.12}});
+                view.Refresh(0);view.enabled=false;
+                Assert.That(host.GetComponentsInChildren<MeshRenderer>().Count(r=>r.sharedMaterial.shader.name=="ELTS/Development Target"),Is.EqualTo(3),"Removed demo targets disappear before the render request");
+                var camera=view.ParticipantCamera;
+                var request=new RenderPipeline.StandardRequest{destination=texture};
+                RenderPipeline.SubmitRenderRequest(camera,request);
+                var previous=RenderTexture.active;
+                var image=new Texture2D(1280,720,TextureFormat.RGBA32,false);
+                try
+                {
+                    RenderTexture.active=texture;image.ReadPixels(new Rect(0,0,1280,720),0,0);image.Apply();
+                    var directory=Path.GetFullPath(Path.Combine(Application.dataPath,"../../test-results/target-surface"));
+                    Directory.CreateDirectory(directory);
+                    File.WriteAllBytes(Path.Combine(directory,"training-room.png"),image.EncodeToPNG());
+                    var pixels=image.GetPixels();
+                    Assert.That(pixels.Count(c=>c.grayscale>.35f),Is.GreaterThan(pixels.Length*.6),"Most of the room is well lit");
+                    Assert.That(pixels.Count(c=>c.b>c.r*1.4f && c.g>.15f),Is.GreaterThan(1000),"Cyan targets remain visible against the neutral room");
+                    Assert.That(host.transform.Find("Daylit training room (virtual metres)").GetComponentsInChildren<Collider>().All(c=>!c.enabled),Is.True,"Room geometry cannot intercept a shot");
+                }
+                finally{RenderTexture.active=previous;UnityEngine.Object.DestroyImmediate(image);}
+            }
+            finally{UnityEngine.Object.DestroyImmediate(host);texture.Release();UnityEngine.Object.DestroyImmediate(texture);}
+        }
+
+        [UnityTest]
         public IEnumerator TargetHasCurvatureAndViewpointCuesWithoutChangingItsGeometry()
         {
             // This is a rendering fixture only: it never creates participant recordings.
@@ -65,8 +107,8 @@ namespace Elts.Operator.Tests
                         File.WriteAllBytes(Path.Combine(directory,"target-"+yaw.ToString("0",System.Globalization.CultureInfo.InvariantCulture)+".png"),image.EncodeToPNG());
                     }
                     finally {RenderTexture.active=previous;UnityEngine.Object.DestroyImmediate(image);}
-                    var body=pixels.Where(c=>c.r>c.b*1.8f && c.r>.12f).Select(c=>c.grayscale).OrderBy(v=>v).ToArray();
-                    Assert.That(body.Length,Is.GreaterThan(10000),"The target renders with its amber surface, not an error shader");
+                    var body=pixels.Where(c=>c.b>c.r*1.4f && c.g>.12f).Select(c=>c.grayscale).OrderBy(v=>v).ToArray();
+                    Assert.That(body.Length,Is.GreaterThan(10000),"The target renders with its cyan surface, not an error shader");
                     Assert.That(body[body.Length*8/10]-body[body.Length*2/10],Is.GreaterThan(.08f),"Most of the sphere has a curved lighting gradient, not a flat fill");
                     if(first==null)first=pixels;
                     else Assert.That(pixels.Select((c,i)=>Mathf.Abs(c.r-first[i].r)+Mathf.Abs(c.g-first[i].g)).Average(),Is.GreaterThan(.015f),"Moving around the stationary sphere changes its surface appearance");

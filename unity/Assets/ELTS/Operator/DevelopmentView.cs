@@ -40,6 +40,11 @@ namespace Elts.Operator
         [SerializeField,Range(12,64)] private int targetLatitudeSegments=32;
         private Mesh targetMesh = null!;
         private Material targetMaterial = null!;
+        [Header("Virtual training room")]
+        [SerializeField] private TrainingRoomSettings trainingRoom = new TrainingRoomSettings();
+        private UnityEngine.Rendering.AmbientMode previousAmbientMode;
+        private Color previousAmbientLight;
+        private bool roomLightingOwned, authoredFloorWasActive;
         private readonly List<Material> ownedMaterials = new List<Material>();
         private readonly List<Camera> disabledCameras = new List<Camera>();
         private RecordedReplay? replay;
@@ -113,15 +118,18 @@ namespace Elts.Operator
                 weapon=WeaponMarker();
                 eyeMarker=Sphere("Rendering eye",OperatorLayer,0.025f,Material(Color.white));
                 bore=Line("Zero-corrected bore",OperatorLayer,amberMaterial);aim=Line("Muzzle to target",OperatorLayer,Material(Color.magenta));viewRay=Line("Eye view ray",OperatorLayer,cyanMaterial);
-                for(int i=0;i<4;i++){screenLines.Add(Line("Display edge "+i,OperatorLayer,cyanMaterial));frustumLines.Add(Line("Off-axis frustum "+i,OperatorLayer,cyanMaterial));rods.Add(Line("Synthetic corner rod "+i,StimulusLayer,cyanMaterial));}
-                if(authoredEnvironment==null || !authoredEnvironment.HasAuthoredScaffold)
+                for(int i=0;i<4;i++){screenLines.Add(Line("Display edge "+i,OperatorLayer,cyanMaterial));frustumLines.Add(Line("Off-axis frustum "+i,OperatorLayer,cyanMaterial));rods.Add(Line("Synthetic corner rod "+i,OperatorLayer,cyanMaterial));}
+                if(authoredEnvironment?.FloorReference!=null)
                 {
-                    // Test fixtures and ad-hoc scenes still receive a compact runtime
-                    // scaffold. ELTSDesktop supplies this persistently in Edit mode.
-                    for(int x=-3;x<=3;x++)Segment("Floor longitudinal",new Vector3(x,-0.8f,1.5f),new Vector3(x,-0.8f,8),StimulusLayer,stimulusMaterial);
-                    for(int z=2;z<=8;z++)Segment("Floor transverse",new Vector3(-3,-0.8f,z),new Vector3(3,-0.8f,z),StimulusLayer,stimulusMaterial);
-                    for(int x=-2;x<=2;x++)Segment("Reference post",new Vector3(x,-0.8f,6),new Vector3(x,1.5f,6),StimulusLayer,stimulusMaterial);
+                    authoredFloorWasActive=authoredEnvironment.FloorReference.gameObject.activeSelf;
+                    authoredEnvironment.FloorReference.gameObject.SetActive(false);
                 }
+                previousAmbientMode=RenderSettings.ambientMode;previousAmbientLight=RenderSettings.ambientLight;
+                roomLightingOwned=true;
+                RenderSettings.ambientMode=UnityEngine.Rendering.AmbientMode.Flat;
+                RenderSettings.ambientLight=new Color(.55f,.60f,.65f);
+                DevelopmentTrainingRoom.Create(transform,screen,trainingRoom,ownedMaterials,targetMaterial);
+                participant.backgroundColor=operatorCamera.backgroundColor=new Color(.75f,.82f,.85f);
                 replayPath=configuration.Machine.ResolveDataRoot(Path.Combine(Application.dataPath,".."));
                 Ready=true;Refresh(0);
             }
@@ -278,7 +286,13 @@ namespace Elts.Operator
                 catch(ArgumentException){status+=" | EYE OUTSIDE VALID SCREEN SIDE";}
             }
             var remove=new List<string>();foreach(var key in targetObjects.Keys)if(!visibleTargets.ContainsKey(key))remove.Add(key);
-            foreach(var key in remove){Destroy(targetObjects[key]);targetObjects.Remove(key);}
+            foreach(var key in remove)
+            {
+                // Destroy is deferred by Unity. Hide immediately so an explicit
+                // camera render cannot show an old target beside its replacement.
+                targetObjects[key].SetActive(false);
+                Destroy(targetObjects[key]);targetObjects.Remove(key);
+            }
             foreach(var target in visibleTargets){if(!targetObjects.ContainsKey(target.Key))targetObjects.Add(target.Key,TargetSphere(target.Key));targetObjects[target.Key].transform.position=OffAxisCamera.ToUnity(target.Value);}
             bore.enabled=aim.enabled=rawWeapon.HasValue;
             if(rawWeapon.HasValue)
@@ -363,6 +377,8 @@ namespace Elts.Operator
         private static Quaternion ToUnity(Quaterniond value) => new Quaternion((float)value.X,(float)value.Y,(float)value.Z,(float)value.W);
         private void OnDestroy()
         {
+            if(roomLightingOwned){RenderSettings.ambientMode=previousAmbientMode;RenderSettings.ambientLight=previousAmbientLight;}
+            if(authoredEnvironment?.FloorReference!=null)authoredEnvironment.FloorReference.gameObject.SetActive(authoredFloorWasActive);
             foreach(var camera in disabledCameras)if(camera!=null)camera.enabled=true;
             if(targetMesh!=null)Destroy(targetMesh);
             foreach(var material in ownedMaterials)if(material!=null)Destroy(material);

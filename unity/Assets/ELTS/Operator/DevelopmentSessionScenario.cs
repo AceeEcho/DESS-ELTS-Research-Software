@@ -62,7 +62,7 @@ namespace Elts.Operator
             // Missing head data cannot invent visibility or a fresh spawn.
             if(!head.HasValue) return;
             var eye=head.Value.TransformPoint(config.Rig.HeadEyeOffsetM);
-            Func<Vector3d,bool> visible=point=>IsVisible(eye,point);
+            Func<Vector3d,bool> visible=point=>IsVisible(eye,point) && HasSpawnClearance(eye,point);
             // Target lifetime and respawn delays follow active test time as well.
             // Logged snapshots below still use the unchanged acquisition clock.
             population.Reconcile(new MonotonicTimestamp(checked((long)(engine.CurrentActiveSeconds*TimeSpan.TicksPerSecond))),visible);
@@ -102,6 +102,9 @@ namespace Elts.Operator
                 HitCount++;
                 LastShot="Target destroyed";
             }
+            // Refill before the next rendered frame. Refresh records the new spawn
+            // on the same acquisition clock without moving surviving targets.
+            if(accepted) Refresh(0,head);
         }
 
         private void BeginBlock()
@@ -131,6 +134,21 @@ namespace Elts.Operator
             if(direction.Length<=0) return false;
             return config.Rig.Display.Intersect(new Ray3d(eye,direction),out var distance,out _,out var u,out var v)
                 && distance<direction.Length && config.Rig.Display.IsInside(u,v);
+        }
+        private bool HasSpawnClearance(Vector3d eye, Vector3d candidate)
+        {
+            // Compare apparent sphere radii, so a replacement cannot hide behind
+            // another target even when they occupy different world depths.
+            var direction=candidate-eye;
+            if(direction.Length<=config.Scenario.TargetRadiusM) return false;
+            foreach(var target in population!.ActiveTargets)
+            {
+                var other=target.Position-eye;
+                if(other.Length<=target.RadiusM) return false;
+                double clearance=config.Scenario.TargetRadiusM/direction.Length+target.RadiusM/other.Length;
+                if((direction.Normalized()-other.Normalized()).Length<clearance*1.2) return false;
+            }
+            return true;
         }
         private void Record(TargetEntity target, TargetLifecycle lifecycle)
         {

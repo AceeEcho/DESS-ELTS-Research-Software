@@ -4,12 +4,12 @@ Shader "ELTS/Development Target"
 {
     Properties
     {
-        _BaseColor ("Target color", Color) = (1, 0.52, 0.09, 1)
+        _BaseColor ("Target color", Color) = (0.06, 0.68, 0.82, 1)
         _MarkColor ("Surface marking color", Color) = (0.28, 0.095, 0.025, 1)
-        _MarkStrength ("Surface marking strength", Range(0,1)) = 0.65
+        _MarkStrength ("Surface marking strength", Range(0,1)) = 0
         _MarkWidth ("Surface marking width (normal units)", Range(0.005,0.08)) = 0.018
         _LightDirection ("Key light direction (world space)", Vector) = (-0.45,0.7,-0.8,0)
-        _Ambient ("Ambient fill", Range(0,1)) = 0.22
+        _Ambient ("Ambient fill", Range(0,1)) = 0.42
         _Diffuse ("Key light strength", Range(0,2)) = 0.8
         _Specular ("Highlight strength", Range(0,1)) = 0.55
         _Shininess ("Highlight focus", Range(4,128)) = 40
@@ -81,6 +81,7 @@ Shader "ELTS/Development Target"
             }
             ENDHLSL
         }
+        UsePass "Universal Render Pipeline/Lit/ShadowCaster"
     }
     Fallback Off
 }

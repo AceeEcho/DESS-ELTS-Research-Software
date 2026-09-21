@@ -2,6 +2,14 @@
 
 `ScenarioRuntime.cs` keeps synthetic target state in world coordinates (Unity-room meters), never in screen coordinates. `ScenarioDefinition` rejects default spawn volumes and non-finite numeric values. `ScenarioPopulation` owns the active target population: it preserves the configured count, expires targets, and applies the configured respawn delay before the seeded `MaintainCountSpawnRule` may create a visible replacement.
 
+The desktop development session maintains three active targets. Its default
+`config/development/scenario.json` sets `spawnIntervalSeconds` to `0`, so hitting
+or expiring a target replaces it without a waiting interval. An accepted shot
+records the destruction before recording the replacement spawn, on the shared
+acquisition clock. Surviving targets retain their identities and positions;
+pause, tracking validity and block-end controls still apply. A nonzero configured
+interval remains available for development scenarios that intentionally wait.
+
 `SessionEventSequence` is supplied explicitly to both `ScenarioBlockController` and `HitscanShotModel`; merging their output therefore preserves one strict session event sequence. `ScenarioBlockController.Fire` is the block-owned shot path and refuses trigger observations at or after the deadline. `HitscanShotModel` accepts only a valid falling-edge `ShotContext` and can receive a configured shot lockout. It intersects active, currently visible target spheres and emits scalar `blockId` plus `targetId` payload fields for each `TargetDestroyed`. `TargetsDestroyedCount` computes the primary score solely from those logged events within the monotonic half-open interval `[BlockStarted, BlockEnded)`, refusing duplicate destruction identifiers. `ScoreCompletedPrimaryBlock` additionally requires one `BlockStarted` and one `BlockEnded` exactly 300 seconds apart; an aborted or incomplete block cannot yield the primary DV.
 
 `ScenarioBlockController` uses the shared monotonic clock for its boundary events. It emits `BlockStarted` with `blockId` and the reproducibility seed, and emits `BlockEnded` with `blockId` exactly at its deadline. `Fixed` is the FT behavior; MT currently resolves to the seeded `RandomWalk` placeholder. Random-walk state is independent per target ID, so trajectory is unaffected by update order. `DevelopmentScenarioAdapter` maps the validated typed configuration's scenario ID, seed, radius, lifetime, respawn interval, distance, speed, and hold fields. Its configured development motion is currently `sine`; the adapter preserves that value and marks it unresolved rather than silently treating it as the D-04 `RandomWalk` placeholder.

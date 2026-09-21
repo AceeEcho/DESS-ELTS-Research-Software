@@ -8,7 +8,7 @@ not actual participant/operator display assignment. Study mode stays disabled.
 The participant camera uses the staged rig's screen basis and a generalized
 off-axis frustum. The projection tests include rotated screens and arbitrary eye
 positions, and check all four corners through the actual Unity camera matrices.
-The virtual floor, posts and corner rods are illustrative, in metres. The operator
+The virtual training room is illustrative, in metres. The operator
 view shows head/weapon markers, a separate eye marker, the screen, frustum rays,
 zero-corrected bore, muzzle-to-target ray, and angular error. An out-of-screen
 bore is red. Invalid tracking remains invalid, shows a warning and pauses the
@@ -59,9 +59,9 @@ refresh rate. Synthetic rendering does not pass those physical criteria.
 
 Runtime targets use `DevelopmentTarget.mat` and `DevelopmentTarget.shader` under
 `unity/Assets/ELTS/Operator/Resources/ELTS`. The shaded surface has a world-fixed
-key-light direction, ambient fill, a view-dependent highlight and object-fixed
-surface bands. The bands wrap around the sphere instead of following the camera,
-so movement around a stationary target is visible. Material properties expose the
+key-light direction, ambient fill and a view-dependent highlight. Cyan spheres
+stay sharp; perspective, curvature, shadows and room geometry supply depth cues.
+Optional object-fixed surface bands are disabled by default. Material properties expose the
 colors, marking width/strength and lighting values in the Unity Inspector.
 
 A shared smooth sphere mesh has unit diameter; the existing scenario target radius
@@ -70,3 +70,11 @@ resolution in the Inspector (defaults 64/32). Rendering changes do not alter tar
 positions, hit testing, timing or recorded coordinates. Both participant and
 administrator cameras render the same target surface. This is synthetic visual
 presentation, not a physical lighting or calibration model.
+
+`DevelopmentView` exposes `Training Room` settings in the Inspector: width, height,
+depth, floor offset, tile spacing, surface colors and daylight direction/intensity.
+The default 12 x 26 x 6 metre room has pale walls, a tiled floor, overhead beams and
+high daylight panels. A shadow-casting directional light shares its direction with
+the target material. The old edit-mode floor scaffold is hidden during runtime.
+The shell has no active colliders and does not change hit geometry or camera
+projection. The open near end lets the administrator inspect the scene by orbiting.

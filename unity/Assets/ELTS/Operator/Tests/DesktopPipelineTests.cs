@@ -79,6 +79,7 @@ namespace Elts.Operator.Tests
                     controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,released:true);yield return null;
                     Assert.That(scenario.ShotCount,Is.EqualTo(1),panel.DesktopFeedback);
                     Assert.That(scenario.HitCount,Is.EqualTo(1),panel.DesktopFeedback);
+                    Assert.That(scenario.Positions.Count,Is.EqualTo(3),"A hit immediately restores all three targets");
 
                     // A click held through focus loss cannot become a later shot.
                     controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,pressed:true);yield return null;

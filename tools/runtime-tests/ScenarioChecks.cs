@@ -54,6 +54,15 @@ static class ScenarioChecks
         True(population.Reconcile(clock.Now, _ => true).Count == 2 && population.History.Count == 3, "population restores maintain count after configured delay");
         True(fixedDefinition.BlockSeed("p-01", "WE_FT") == fixedDefinition.BlockSeed("p-01", "WE_FT"), "block seed is repeatable and nonnegative");
 
+        var continuousDefinition = new ScenarioDefinition("continuous-three", .1, volume, 3, 10, 0, "Fixed", "Hitscan", "TargetsDestroyedCount");
+        var continuous = new ScenarioPopulation(continuousDefinition, new MaintainCountSpawnRule(1729));
+        var initial = continuous.Reconcile(start, _ => true).ToArray();
+        True(initial.Length == 3, "continuous mode starts with three targets");
+        initial[0].Destroy();
+        var refilled = continuous.Reconcile(start, _ => true);
+        True(refilled.Count == 3 && refilled.Contains(initial[1]) && refilled.Contains(initial[2]) && !refilled.Contains(initial[0]), "zero delay replaces only the hit target at the same timestamp");
+        True(continuous.Reconcile(new MonotonicTimestamp(TimeSpan.FromSeconds(10).Ticks), _ => true).Count == 3, "simultaneous expiry refills all three targets without a waiting frame");
+
         var fixedMove = ScenarioMovementFactory.Create("Fixed", 9, 1, 1, .1);
         var original = first[0].Position;
         fixedMove.Step(first[0], 1, volume);

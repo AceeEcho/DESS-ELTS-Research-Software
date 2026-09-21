@@ -32,6 +32,19 @@ recording, not successful physical validation. Synthetic counts remain synthetic
 scoring and study readiness are unavailable here. Integrity-verified analysis
 still uses the retained original recording and existing analysis tools.
 
+On the Overview and Timeline graphs, hover or drag to inspect a time interval.
+The cursor highlights that interval and shows its **hit, shot and miss counts**,
+their **per-second rates**, and **mean aim error**. The time slider supports touch,
+Left/Right arrows and Home/End; horizontal scrolling or Shift + scroll steps
+through intervals. Ordinary vertical scrolling continues to scroll the page.
+The inspector uses the saved bins, including partial final seconds; it does not
+interpolate measurements or turn unavailable values into zero. Its position stays
+in place across live updates and tab changes within the same attempt.
+
+Live polling does not rebuild unchanged task controls or graphs. Parsed reviews
+and rendered markup are cached, and attempt/tab navigation stays in place when
+changing sections so held clicks and keyboard focus are preserved.
+
 ## Paths and exports
 
 The actual folder appears below the Data status message. The default is
@@ -153,7 +166,9 @@ the browser cannot request arbitrary filesystem paths.
 - `tools/browser-tests/administrator.cjs`: dashboard controls, profile search,
   exports, raw viewing, persistent errors, blocked browser preference storage,
   keyboard interactions, task selection, timeline pagination, shot filtering,
-  Excel downloads and mobile sizing.
+  Excel downloads and mobile sizing. Regression checks hold pointer presses
+  across live polls, assert unchanged task DOM/review caching, and inspect graph
+  counts, rates, missing values and partial intervals with pointer and keyboard.
 - `tools/browser-tests/data-player-smoke.py --build <verified-build-directory>`:
   copies a Windows player into an isolated temporary directory, exercises real
   synthetic recording checkpoints and SQL/ZIP/XLSX downloads, and checks raw/SQL

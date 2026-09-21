@@ -18,7 +18,7 @@ const taskReview = {attempts:[{
   meanShotErrorDeg:1.3,p95ShotErrorDeg:3.2,meanMissOffsetMm:24.5,aimErrorVarianceDeg2:0.42,
   meanAimSpeedDegPerSecond:12.4,aimSpeedVariabilityDegPerSecond:8.1,aimCoveragePercent:94.7,
   shotGeometryCount:30,aimObservations:600,validAimObservations:598,metricsVersion:'elts.task-metrics.v1',
-  seconds:Array.from({length:30},(_,i)=>({second:i,exposureSeconds:1,hitsPerSecond:i%5===0?0:1,shotsPerSecond:1,missesPerSecond:i%5===0?1:0,meanAimErrorDeg:0.5+(i%7)/10})),
+  seconds:Array.from({length:30},(_,i)=>({second:i,exposureSeconds:1,hits:i%5===0?0:1,shots:1,misses:i%5===0?1:0,hitsPerSecond:i%5===0?0:1,shotsPerSecond:1,missesPerSecond:i%5===0?1:0,meanAimErrorDeg:0.5+(i%7)/10})),
   shotDetails:Array.from({length:30},(_,i)=>({shotNumber:i+1,activeSeconds:i+0.5,outcome:i%5===0?'Miss':'Hit',angularErrorDeg:i%5===0?3.2:0.5,centerOffsetMm:i%5===0?24.5:4,edgeClearanceMm:i%5===0?14.5:0,referenceTargetId:'target-'+i}))
 },{condition:'WE_FT',blockId:'WE_FT-repeat-02',status:'Stopped early',activeSeconds:5,shots:0,hits:0,misses:0,hitsPerSecond:0,shotsPerSecond:0,missesPerSecond:0,metricsVersion:'elts.task-metrics.v1',reason:'Fictional repeated attempt',seconds:[],shotDetails:[]}],notes:[{text:'Fictional demonstration. Participant reported comfortable posture.'}]};
 let rejectFolder = false;
@@ -179,6 +179,66 @@ const server = http.createServer(async (req, res) => {
     assert.match((await csvDownload).suggestedFilename(), /review.csv$/);
     current.data.profile.sessions[0].review = JSON.stringify(taskReview);
     await page.waitForFunction(()=>document.querySelectorAll('[data-task-id]').length===2);
+    // A real press can span several live polls. Keep the actual node alive until
+    // pointer-up; a fast locator.click() alone misses this replacement regression.
+    const stableTab = await page.locator('[data-detail-tab="timeline"]').elementHandle();
+    await page.waitForTimeout(350);
+    assert.equal(await stableTab.evaluate(el => el.isConnected), true, 'Live polling must not replace unchanged task buttons');
+    const heldClick = async selector => {
+      const control = page.locator(selector);
+      await control.scrollIntoViewIfNeeded();
+      const node = await control.elementHandle(), bounds = await control.boundingBox();
+      await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+      await page.mouse.down(); await page.waitForTimeout(300);
+      assert.equal(await node.evaluate(el => el.isConnected), true, 'Pressed control survives live polls');
+      await page.mouse.up();
+    };
+    for (const tab of ['timeline','shots','guide','overview']) {
+      await heldClick(`[data-detail-tab="${tab}"]`);
+      assert.equal(await page.locator(`[data-detail-tab="${tab}"]`).getAttribute('aria-pressed'), 'true', 'Held tab press registers');
+      assert.equal(await page.locator(`[data-detail-tab="${tab}"]`).evaluate(el => el === document.activeElement), true, 'Tab focus survives selection');
+    }
+    await heldClick('[data-task-id="WE_FT-repeat-02"]');
+    assert.equal(await page.locator('[data-task-id="WE_FT-repeat-02"]').getAttribute('aria-pressed'), 'true');
+    await heldClick('[data-task-id="WE_FT-attempt-01"]');
+    // Observe both work and identity: unchanged polls must neither reparse a large
+    // saved review nor mutate the task DOM. Mutating the cursor is tested below.
+    await page.evaluate(() => {
+      window.taskMutations = 0; window.reviewParses = 0;
+      window.taskObserver = new MutationObserver(records => window.taskMutations += records.length);
+      window.taskObserver.observe(document.getElementById('taskExplorer'), {childList:true, subtree:true, attributes:true, characterData:true});
+      window.originalJsonParse = JSON.parse;
+      JSON.parse = function(value, ...args) { if (typeof value === 'string' && value.includes('"attempts"')) window.reviewParses++; return window.originalJsonParse(value, ...args); };
+    });
+    await page.waitForTimeout(450);
+    assert.deepEqual(await page.evaluate(() => {window.taskObserver.disconnect(); JSON.parse = window.originalJsonParse; return [window.taskMutations,window.reviewParses];}), [0,0], 'Unchanged polls do no task DOM work or review parsing');
+    assert.equal(await page.locator('[data-chart-count="misses"]').textContent(), '1');
+    const hoverTime = async time => {
+      await page.locator('#ratePlot').scrollIntoViewIfNeeded();
+      const box = await page.locator('#ratePlot').boundingBox();
+      await page.mouse.move(box.x + box.width * (40 + time / 30 * 720) / 800, box.y + box.height / 2);
+    };
+    await hoverTime(5.5);
+    assert.equal(await page.locator('#chartTime').inputValue(), '5');
+    assert.match(await page.locator('#chartInterval').textContent(), /5–6 active s/);
+    assert.equal(await page.locator('[data-chart-count="misses"]').textContent(), '1', 'Hover shows counts for the actual interval');
+    const plotNode = await page.locator('#ratePlot').elementHandle();
+    await page.mouse.down(); await hoverTime(6.5); await page.waitForTimeout(300); await page.mouse.up();
+    assert.equal(await plotNode.evaluate(el => el.isConnected), true, 'Dragging never rebuilds the plot');
+    assert.equal(await page.locator('#chartTime').inputValue(), '6');
+    assert.equal(await page.locator('[data-chart-count="misses"]').textContent(), '0', 'Measured zero misses remains zero');
+    await page.keyboard.down('Shift'); await page.mouse.wheel(0,100); await page.keyboard.up('Shift');
+    await page.waitForFunction(() => document.getElementById('chartTime').value === '7');
+    await page.locator('#chartTime').focus(); await page.keyboard.press('End');
+    assert.equal(await page.locator('#chartTime').inputValue(), '29');
+    await page.waitForTimeout(300);
+    assert.equal(await page.locator('#chartTime').evaluate(el => el === document.activeElement), true, 'Slider retains keyboard focus through polls');
+    await page.keyboard.press('ArrowLeft');
+    assert.equal(await page.locator('#chartTime').inputValue(), '28');
+    assert.match(await page.locator('#chartTime').getAttribute('aria-valuetext'), /28–29 active s.*misses: 0/);
+    await page.locator('[data-detail-tab="timeline"]').click();
+    assert.equal(await page.locator('#chartTime').inputValue(), '28', 'Graph inspection position survives tab changes within an attempt');
+    await page.locator('[data-detail-tab="overview"]').click();
     assert.match(await page.locator('#taskExplorer').innerText(), /0.8/);
     await page.locator('[data-detail-tab="timeline"]').click();
     assert.equal(await page.locator('#taskExplorer tbody tr').count(),25,'Timeline paginates exact second bins');
@@ -210,6 +270,31 @@ const server = http.createServer(async (req, res) => {
     await page.screenshot({path:path.join(output,'administrator-data.png'),fullPage:true});
     await page.locator('.task-detail-heading').evaluate(el => el.scrollIntoView({block:'start'}));
     await page.screenshot({path:path.join(output,'administrator-task-metrics.png'),fullPage:true});
+    await hoverTime(10.5);
+    await page.locator('.rate-chart').screenshot({path:path.join(output,'administrator-graph-inspector.png')});
+    const fractionalReview = JSON.parse(JSON.stringify(taskReview));
+    fractionalReview.attempts[0].seconds = [{second:0,exposureSeconds:.25,hits:2,shots:2,misses:null,hitsPerSecond:8,shotsPerSecond:8,missesPerSecond:null,meanAimErrorDeg:null}];
+    current.data.profile.sessions[0].review = JSON.stringify(fractionalReview);
+    await page.waitForFunction(() => document.getElementById('chartTime').max === '0');
+    assert.match(await page.locator('#chartInterval').textContent(), /0–0.25 active s/);
+    assert.equal(await page.locator('[data-chart-count="shots"]').textContent(), '2', 'Partial-bin count is not confused with its rate');
+    assert.equal(await page.locator('[data-chart-rate="shots"]').textContent(), '8 /s');
+    assert.equal(await page.locator('[data-chart-count="misses"]').textContent(), '—', 'Unavailable counts do not become zero');
+    assert.equal(await page.locator('[data-chart-dot="missesPerSecond"]').isVisible(), false);
+    const longReview = JSON.parse(JSON.stringify(taskReview));
+    Object.assign(longReview.attempts[0], {activeSeconds:3600,shots:18000,hits:14400,misses:3600,shotsPerSecond:5,hitsPerSecond:4,missesPerSecond:1,
+      seconds:Array.from({length:3600},(_,i)=>({second:i,exposureSeconds:1,hits:4,shots:5,misses:1,hitsPerSecond:4,shotsPerSecond:5,missesPerSecond:1})),
+      shotDetails:Array.from({length:18000},(_,i)=>({...taskReview.attempts[0].shotDetails[i%30],shotNumber:i+1,activeSeconds:i/5}))});
+    current.data.profile.sessions[0].review = JSON.stringify(longReview);
+    await page.waitForFunction(() => document.getElementById('chartTime').max === '3599');
+    await page.locator('#chartTime').focus(); await page.keyboard.press('End');
+    assert.match(await page.locator('#chartInterval').textContent(), /3,599–3,600 active s/);
+    await heldClick('[data-detail-tab="shots"]');
+    assert.equal(await page.locator('[data-detail-tab="shots"]').getAttribute('aria-pressed'), 'true', 'Large saved review remains navigable across polls');
+    assert.equal(await page.locator('#taskExplorer tbody tr').count(),25,'Long-session shot table stays paginated');
+    await heldClick('[data-detail-tab="overview"]');
+    current.data.profile.sessions[0].review = JSON.stringify(taskReview);
+    await page.waitForFunction(() => document.getElementById('chartTime').max === '29');
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: path.join(output, 'administrator-data-mobile.png'), fullPage: true });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'Mobile page has no horizontal overflow');
@@ -223,7 +308,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await restricted.locator('#dataWorkspace').isVisible(),true,'Blocked browser preferences cannot disable controls');
     await restricted.close();
     assert.deepEqual(errors, [], 'Dashboard has no browser errors');
-    console.log('PASS: administrator browser interactions (drag, cancel, keyboard, presets, timing, notes, participant profiles, SQL downloads, raw records, storage errors, mobile)');
+    console.log('PASS: administrator browser interactions, stable held clicks/live polling, cached large reviews, graph inspection, partial/missing values and mobile layout');
   } catch (error) {
     await page.screenshot({ path: path.join(output, 'administrator-browser-failure.png'), fullPage: true });
     console.error('Browser errors:', errors);

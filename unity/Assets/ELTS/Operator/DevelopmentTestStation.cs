@@ -26,9 +26,11 @@ namespace Elts.Operator
     [DefaultExecutionOrder(-100)]
     public sealed class DevelopmentTestStation : MonoBehaviour
     {
-        [SerializeField, Range(320,1280)] private int previewWidth=640;
+        // Capture enough detail for a large dashboard pane instead of enlarging a thumbnail.
+        // Height preserves the outside view's 16:10 aspect ratio; cadence stays independent.
+        [SerializeField, Range(320,3840)] private int previewWidth=1920;
         [SerializeField, Range(1,30)] private int previewFramesPerSecond=10;
-        [SerializeField, Range(40,95)] private int previewJpegQuality=72;
+        [SerializeField, Range(40,95)] private int previewJpegQuality=90;
         [SerializeField, Range(15,120)] private int participantFramesPerSecond=60;
         private int previousFrameRate,previousVSync;
         private bool ownsFramePacing;

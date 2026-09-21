@@ -19,6 +19,12 @@ while a participant is active. The dashboard stacks its panes on narrow windows;
 wider windows retain the draggable divider and keyboard resizing. Drag the outside
 view to orbit, scroll to zoom, or use arrow keys and +/- while the view has focus.
 
+The outside preview captures at 1920 × 1200 with JPEG quality 90 by default,
+at 10 frames per second. `DevelopmentTestStation` exposes preview width, JPEG
+quality and cadence as serialized settings; height preserves the 16:10 aspect
+ratio. Higher resolution increases capture and encoding work. Preview images
+and overlay text cannot be dragged or selected, so pointer drags control orbit.
+
 ### Prepare the test order and reuse setups
 
 Drag a test's dotted grab handle to reorder it. The lifted tile has a drop shadow,

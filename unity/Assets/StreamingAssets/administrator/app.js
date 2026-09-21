@@ -270,6 +270,8 @@
     finally { orbitPending = false; orbitLocalUntil = performance.now() + 700; }
   };
   const viewport = $('viewport');
+  // Keep browser image/text dragging from interrupting the camera's pointer capture.
+  viewport.addEventListener('dragstart', event => event.preventDefault());
   viewport.addEventListener('pointerdown', (event) => { if (event.button !== 0) return; dragging = true; lastPoint = event; viewport.setPointerCapture(event.pointerId); });
   viewport.addEventListener('pointermove', (event) => { if (!dragging) return;
     orbit.yaw += (event.clientX - lastPoint.clientX) * .35;

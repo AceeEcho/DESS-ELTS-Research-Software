@@ -170,6 +170,8 @@ input:focus,textarea:focus{border-color:var(--blue);
   background:#e4e7df;
   overflow:hidden;
   min-height:260px;
+  user-select:none;
+  -webkit-user-select:none;
   touch-action:none}
 .viewport img{position:absolute;
   inset:0;

@@ -18,19 +18,20 @@ namespace Elts.Operator
     /// </summary>
     public sealed class DevelopmentSessionScenario
     {
-        private const int MaintainTargets = 3;
         private const double SpawnHalfWidthM = 0.45, SpawnHalfHeightM = 0.25, SpawnHalfDepthM = 0.05;
-        private const double DirectionChangeSeconds = 1;
         private readonly DevelopmentConfiguration config;
+        private readonly DevelopmentGameSettings gameSettings;
         private readonly ISharedClock clock;
         private readonly SessionEngine engine;
         private readonly SessionRecordingAdapter recording;
-        private readonly HitscanShotModel shots;
+        private HumanoidShotModel? shots;
+        private ManualMagazine magazine;
         private readonly ISessionEventSequence eventSequence;
         private double nextAimAt;
         private ScenarioPopulation? population;
         private ScenarioDefinition? definition;
-        private IMovementBehaviour? movement;
+        private Vector3d layoutCenter;
+        private bool movingBlock;
         private string? blockId;
         private int seed;
         private long targetSequence;
@@ -40,14 +41,27 @@ namespace Elts.Operator
         public string LastShot { get; private set; } = "No shot";
         public int ShotCount { get; private set; }
         public int HitCount { get; private set; }
+        public int HeadHits {get;private set;}
+        public int BodyHits {get;private set;}
+        public int LimbHits {get;private set;}
+        public int CoverHits {get;private set;}
+        public int MissCount {get;private set;}
+        public int TargetKills {get;private set;}
+        public int DamageDealt {get;private set;}
+        public int DryFires {get;private set;}
+        public int Reloads {get;private set;}
+        public int AmmoRemaining => magazine.Remaining;
+        public int MagazineCapacity=>gameSettings.magazineCapacity;
         public string? RecordedBlockId => blockId;
 
         public DevelopmentSessionScenario(DevelopmentConfiguration config, ISharedClock clock,
-            SessionEngine engine, SessionRecordingAdapter recording, ISessionEventSequence sequence)
+            SessionEngine engine, SessionRecordingAdapter recording, ISessionEventSequence sequence,
+            DevelopmentGameSettings? gameSettings=null)
         {
             this.config=config;this.clock=clock;this.engine=engine;this.recording=recording;
+            this.gameSettings=(gameSettings??new DevelopmentGameSettings()).Copy();this.gameSettings.Validate();
+            magazine=new ManualMagazine(MagazineCapacity);
             eventSequence=sequence;
-            shots=new HitscanShotModel(sequence,TimeSpan.FromSeconds(config.Runtime.TriggerLockoutSeconds));
         }
 
         public void Refresh(double deltaSeconds, RigidPose? head)
@@ -62,7 +76,7 @@ namespace Elts.Operator
                 return;
             }
             if(blockId!=engine.CurrentBlockId) BeginBlock();
-            if(population==null || definition==null || movement==null) return;
+            if(population==null || definition==null) return;
             // Missing head data cannot invent visibility or a fresh spawn.
             if(!head.HasValue) return;
             var eye=head.Value.TransformPoint(config.Rig.HeadEyeOffsetM);
@@ -75,7 +89,11 @@ namespace Elts.Operator
                 bool known=recordedStates.TryGetValue(target.Id,out var previous);
                 if(target.State==TargetState.Active)
                 {
-                    movement.Step(target,Math.Max(0,deltaSeconds),definition.SpawnVolume);
+                    // The trajectory depends on active block time, never frame count.
+                    // Pause and replay therefore preserve the same scripted motion.
+                    var next=DevelopmentScenarioLayout.Position(target,layoutCenter,movingBlock,engine.CurrentActiveSeconds,gameSettings);
+                    var velocity=deltaSeconds>0?(next-target.Position)/deltaSeconds:Vector3d.Zero;
+                    target.Move(next,velocity);
                     Record(target,known?TargetLifecycle.Updated:TargetLifecycle.Spawned);
                     positions.Add(target.Id,target.Position);
                 }
@@ -118,21 +136,47 @@ namespace Elts.Operator
 
         public void Fire(RigidPose? weapon, RigidPose? head, MonotonicTimestamp observedAt)
         {
-            if(!engine.TargetsActive || population==null) return;
+            if(!engine.TargetsActive || population==null || shots==null) return;
+            if(AmmoRemaining==0)
+            {
+                DryFires++;LastShot="Magazine empty — press R to reload.";
+                if(!recording.TryRecord(new SessionEvent(eventSequence.Next(),observedAt,"WeaponDryFire",new[]{
+                    LogField.String("blockId",blockId!),LogField.NumberValue("magazineRemaining",0)})))
+                    throw new InvalidOperationException("Dry-fire recording failed.");
+                return;
+            }
             if(!weapon.HasValue || !head.HasValue) { LastShot="Ignored: tracking unavailable"; return; }
             var ray=new BoreRay(weapon.Value,config.Rig.WeaponMuzzleOffsetM,config.Rig.WeaponZero,config.Rig.WeaponBoreLocalDirection).Ray;
             var eye=head.Value.TransformPoint(config.Rig.HeadEyeOffsetM);
+            shots.MagazineBefore=AmmoRemaining;
             bool accepted=engine.Fire(shots,new ShotContext(observedAt,ray,true),population.ActiveTargets,target=>IsVisible(eye,target.Position));
-            if(accepted)ShotCount++;
-            LastShot=accepted?"Shot logged":"Shot not recorded (lockout or failure)";
+            if(accepted)
+            {
+                if(!magazine.TryConsume())throw new InvalidOperationException("Accepted shot exceeded the manual magazine.");
+                ShotCount++;
+                switch(shots.Outcome)
+                {
+                    case "Hit":
+                        HitCount++;
+                        DamageDealt+=shots.Damage;
+                        if(shots.Region=="head")HeadHits++;
+                        else if(shots.Region=="body")BodyHits++;
+                        else LimbHits++;
+                        LastShot=shots.Region+" hit · "+shots.Damage+" damage · "+shots.RemainingHealth+" health left";
+                        break;
+                    case "Cover":CoverHits++;LastShot="Cover hit";break;
+                    default:MissCount++;LastShot="Miss";break;
+                }
+            }
+            else LastShot="Shot not recorded (lockout or failure)";
             foreach(var target in population.History)
             {
                 if(target.State!=TargetState.Destroyed || (recordedStates.TryGetValue(target.Id,out var previous) && previous==TargetState.Destroyed)) continue;
                 Record(target,TargetLifecycle.Destroyed);
                 recordedStates[target.Id]=target.State;
                 positions.Remove(target.Id);
-                HitCount++;
-                LastShot="Target destroyed";
+                TargetKills++;
+                LastShot="Target down";
             }
             // Refill before the next rendered frame. Refresh records the new spawn
             // on the same acquisition clock without moving surviving targets.
@@ -144,21 +188,39 @@ namespace Elts.Operator
             RemoveRemainingTargets();
             blockId=engine.CurrentBlockId;
             nextAimAt=0;
-            ShotCount=0;HitCount=0;LastShot="Aim at a target, then click and release.";
+            ShotCount=0;HitCount=0;HeadHits=0;BodyHits=0;LimbHits=0;CoverHits=0;MissCount=0;
+            TargetKills=0;DamageDealt=0;DryFires=0;Reloads=0;magazine=new ManualMagazine(MagazineCapacity);
+            LastShot="Click and release to fire. Press R to reload.";
             var screen=config.Rig.Display;
             var center=screen.Origin+screen.U*(screen.Width*0.5)+screen.V*(screen.Height*0.5)
                 +screen.Normal*config.Scenario.TargetDistanceM;
+            layoutCenter=center;
             var bounds=new SpawnVolume(center-new Vector3d(SpawnHalfWidthM,SpawnHalfHeightM,SpawnHalfDepthM),
                 center+new Vector3d(SpawnHalfWidthM,SpawnHalfHeightM,SpawnHalfDepthM));
-            bool moving=engine.CurrentCondition!.EndsWith("_MT",StringComparison.Ordinal);
-            var adapter=DevelopmentScenarioAdapter.Create(config.Scenario,bounds,MaintainTargets,
-                moving?"RandomWalk":"Fixed","Hitscan","TargetsDestroyedCount");
+            movingBlock=engine.CurrentCondition!.EndsWith("_MT",StringComparison.Ordinal);
+            var adapter=DevelopmentScenarioAdapter.Create(config.Scenario,bounds,DevelopmentScenarioLayout.TargetCount,
+                movingBlock?"ScriptedCoverRun":"Fixed","HumanoidHitscan","TargetsDestroyedCount");
             definition=adapter.Definition;
             seed=definition.BlockSeed("synthetic",blockId!);
             population=new ScenarioPopulation(definition,new MaintainCountSpawnRule(seed));
-            movement=moving?(IMovementBehaviour)new RandomWalkMovement(seed,config.Scenario.TargetSpeedMps,
-                config.Scenario.TargetSpeedMps,DirectionChangeSeconds):new FixedMovement();
+            shots=new HumanoidShotModel(eventSequence,TimeSpan.FromSeconds(config.Runtime.TriggerLockoutSeconds),
+                DevelopmentScenarioLayout.Covers(center,gameSettings));
+            if(!recording.TryRecord(new SessionEvent(eventSequence.Next(),clock.Now,"WeaponConfigured",new[]{
+                LogField.String("blockId",blockId!),LogField.NumberValue("magazineCapacity",MagazineCapacity),
+                LogField.Boolean("automaticReload",false),LogField.String("reloadAction","desktop-controls.reload")})))
+                throw new InvalidOperationException("Weapon configuration recording failed.");
             recordedStates.Clear();
+        }
+
+        public bool Reload()
+        {
+            if(!engine.TargetsActive || population==null || AmmoRemaining==MagazineCapacity)return false;
+            int before=AmmoRemaining;
+            if(!recording.TryRecord(new SessionEvent(eventSequence.Next(),clock.Now,"WeaponReloaded",new[]{
+                LogField.String("blockId",blockId!),LogField.NumberValue("magazineBefore",before),
+                LogField.NumberValue("magazineAfter",MagazineCapacity)})))
+                throw new InvalidOperationException("Reload recording failed.");
+            magazine.Reload();Reloads++;LastShot="Reloaded · "+MagazineCapacity+" rounds";return true;
         }
 
         private bool IsVisible(Vector3d eye, Vector3d target)
@@ -195,7 +257,7 @@ namespace Elts.Operator
             // Destroyed is already a terminal recorded lifecycle. Only targets
             // still active need a Despawned row when the block exits.
             foreach(var target in population.ActiveTargets) Record(target,TargetLifecycle.Despawned);
-            population=null;definition=null;movement=null;positions.Clear();
+            population=null;definition=null;shots=null;positions.Clear();
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Elts.Operator.Tests
     public sealed class DevelopmentTargetRenderingTests
     {
         [UnityTest]
-        public IEnumerator TrainingRoomRendersAroundThreeSharpTargets()
+        public IEnumerator TrainingRoomRendersThreeClothedTargetsAndCover()
         {
             var host=new GameObject("Training room visual fixture");
             var view=host.AddComponent<DevelopmentView>();
@@ -29,11 +29,14 @@ namespace Elts.Operator.Tests
                 var centre=screen.Origin+screen.U*(screen.Width*.5)+screen.V*(screen.Height*.5)+screen.Normal*view.Configuration.Scenario.TargetDistanceM;
                 view.ParticipantOnly=true;
                 view.SetSessionFrame(desktop.Head,desktop.Weapon,new Dictionary<string,Vector3d>{
-                    {"room-left",centre-screen.U*.4-screen.V*.12},
-                    {"room-upper",centre+screen.V*.24},
-                    {"room-right",centre+screen.U*.4-screen.V*.12}});
+                    {"room-left",new Vector3d(-.9,-.15,centre.Z+view.GameSettings.staticDepthOffsetM)},
+                    {"room-middle",new Vector3d(0,-.15,centre.Z+view.GameSettings.staticDepthOffsetM)},
+                    {"room-right",new Vector3d(.9,-.15,centre.Z+view.GameSettings.staticDepthOffsetM)}});
                 view.Refresh(0);view.enabled=false;
-                Assert.That(host.GetComponentsInChildren<MeshRenderer>().Count(r=>r.sharedMaterial.shader.name=="ELTS/Development Target"),Is.EqualTo(3),"Removed demo targets disappear before the render request");
+                Assert.That(host.GetComponentsInChildren<MonoBehaviour>().Count(m=>m.GetType().Name=="DevelopmentHumanoidVisual"),Is.EqualTo(3),"Three consistent actors replace the sphere targets");
+                Assert.That(host.transform.Find("Cover · crate-stack"),Is.Not.Null);
+                Assert.That(host.transform.Find("Cover · concrete-barrier"),Is.Not.Null);
+                Assert.That(host.transform.Find("Cover · drums"),Is.Not.Null);
                 var camera=view.ParticipantCamera;
                 var request=new RenderPipeline.StandardRequest{destination=texture};
                 RenderPipeline.SubmitRenderRequest(camera,request);
@@ -46,8 +49,8 @@ namespace Elts.Operator.Tests
                     Directory.CreateDirectory(directory);
                     File.WriteAllBytes(Path.Combine(directory,"training-room.png"),image.EncodeToPNG());
                     var pixels=image.GetPixels();
-                    Assert.That(pixels.Count(c=>c.grayscale>.35f),Is.GreaterThan(pixels.Length*.6),"Most of the room is well lit");
-                    Assert.That(pixels.Count(c=>c.b>c.r*1.4f && c.g>.15f),Is.GreaterThan(1000),"Cyan targets remain visible against the neutral room");
+                    Assert.That(pixels.Count(c=>c.grayscale>.35f),Is.GreaterThan(pixels.Length*.5),"The room and targets remain legible");
+                    Assert.That(pixels.Count(c=>c.r<.35f && c.g<.4f && c.b<.45f),Is.GreaterThan(1000),"Dark clothing is visible against the lit room");
                     Assert.That(host.transform.Find("Daylit training room (virtual metres)").GetComponentsInChildren<Collider>().All(c=>!c.enabled),Is.True,"Room geometry cannot intercept a shot");
                 }
                 finally{RenderTexture.active=previous;UnityEngine.Object.DestroyImmediate(image);}
@@ -56,7 +59,7 @@ namespace Elts.Operator.Tests
         }
 
         [UnityTest]
-        public IEnumerator TargetHasCurvatureAndViewpointCuesWithoutChangingItsGeometry()
+        public IEnumerator ClothedActorHasFaceAndLimbsFromMultipleViewpoints()
         {
             // This is a rendering fixture only: it never creates participant recordings.
             var host=new GameObject("Target surface rendering fixture");
@@ -74,14 +77,14 @@ namespace Elts.Operator.Tests
                 view.Refresh(0);view.enabled=false;
                 var sphere=host.transform.Find("surface-test");
                 Assert.That(sphere,Is.Not.Null);
-                float radius=(float)view.Configuration.Scenario.TargetRadiusM;
-                Assert.That(sphere.localScale,Is.EqualTo(Vector3.one*radius*2),"Visual styling preserves the configured target diameter");
-                Assert.That(sphere.position,Is.EqualTo(new Vector3(0,0,4.5f)),"Visual styling preserves the target position");
+                Assert.That(sphere.position,Is.EqualTo(new Vector3(0,0,4.5f)));
                 Assert.That(sphere.gameObject.layer,Is.EqualTo(DevelopmentView.StimulusLayer));
-                Assert.That(sphere.GetComponent<Renderer>().sharedMaterial.shader.isSupported,Is.True);
+                Assert.That(sphere.Find("Head and face"),Is.Not.Null);
+                Assert.That(sphere.Find("Left sleeve and hand"),Is.Not.Null);
+                Assert.That(sphere.Find("Right trouser leg"),Is.Not.Null);
                 // Isolate the actual runtime target for a readable close-up; move
                 // the camera around it without rotating or moving the target.
-                sphere.gameObject.layer=31;
+                foreach(var part in sphere.GetComponentsInChildren<Transform>())part.gameObject.layer=31;
                 camera.enabled=false;camera.cullingMask=1<<31;
                 camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=new Color(.025f,.035f,.055f);
                 camera.fieldOfView=35;camera.nearClipPlane=.01f;camera.farClipPlane=10;
@@ -91,7 +94,7 @@ namespace Elts.Operator.Tests
                 Directory.CreateDirectory(directory);
                 foreach(float yaw in new[]{-35f,0f,35f})
                 {
-                    var offset=Quaternion.Euler(8,yaw,0)*new Vector3(0,0,-radius*4.4f);
+                    var offset=Quaternion.Euler(8,yaw,0)*new Vector3(0,0,-2.5f);
                     camera.transform.position=sphere.position+offset;camera.transform.LookAt(sphere.position);
                     var request=new RenderPipeline.StandardRequest{destination=texture};
                     Assert.That(RenderPipeline.SupportsRenderRequest(camera,request),Is.True);
@@ -107,9 +110,8 @@ namespace Elts.Operator.Tests
                         File.WriteAllBytes(Path.Combine(directory,"target-"+yaw.ToString("0",System.Globalization.CultureInfo.InvariantCulture)+".png"),image.EncodeToPNG());
                     }
                     finally {RenderTexture.active=previous;UnityEngine.Object.DestroyImmediate(image);}
-                    var body=pixels.Where(c=>c.b>c.r*1.4f && c.g>.12f).Select(c=>c.grayscale).OrderBy(v=>v).ToArray();
-                    Assert.That(body.Length,Is.GreaterThan(10000),"The target renders with its cyan surface, not an error shader");
-                    Assert.That(body[body.Length*8/10]-body[body.Length*2/10],Is.GreaterThan(.08f),"Most of the sphere has a curved lighting gradient, not a flat fill");
+                    var body=pixels.Where(c=>c.r>.08f && c.g>.08f && c.b>.08f).ToArray();
+                    Assert.That(body.Length,Is.GreaterThan(10000),"The clothed target is rendered");
                     if(first==null)first=pixels;
                     else Assert.That(pixels.Select((c,i)=>Mathf.Abs(c.r-first[i].r)+Mathf.Abs(c.g-first[i].g)).Average(),Is.GreaterThan(.015f),"Moving around the stationary sphere changes its surface appearance");
                 }

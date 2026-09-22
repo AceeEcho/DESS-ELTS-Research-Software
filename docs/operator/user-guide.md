@@ -80,7 +80,7 @@ Check the condition and duration in **Current task**. When the participant is re
 
 The participant window then says **Shoot to begin**. The participant clicks and releases to start the test; that starting click is not counted as a shot. Before they start, **DISARM TEST** cancels arming.
 
-During the test, the participant aims with the mouse and clicks to shoot. In the synthetic game, W/S moves forward/back, A/D moves left/right, Q/E moves down/up, and R resets the virtual pose.
+During the test, the participant aims with the mouse and clicks/releases to fire one round. The magazine holds 20 rounds and does not reload automatically; press R to reload. W/S moves forward/back, A/D moves left/right, Q/E moves down/up, and Home resets the virtual pose. The synthetic targets have three health: head/body/limb hits deal 3/2/1 damage. The dashboard shows region hits, cover hits, misses, and targets down.
 
 To resize the participant window, drag its edges. F11 or Alt+Enter toggles fullscreen; Escape returns to the previous window size. Switching windows does **not** pause the timer.
 

@@ -25,7 +25,8 @@ namespace Elts.Operator
         public bool CanDesktopFire => usingDesktopInput && desktopSource!=null && !IsBusy && !closing && engine?.State==SessionState.BlockRunning;
         public string? DesktopBlockId => engine?.CurrentBlockId;
         public string DesktopFeedback => CanDesktopFire ? (scenario?.LastShot ?? desktopMessage) : desktopMessage;
-        public string DesktopScore => "Hits "+(scenario?.HitCount??0)+"   Shots "+(scenario?.ShotCount??0);
+        public string DesktopScore => "Hits "+(scenario?.HitCount??0)+"   Shots "+(scenario?.ShotCount??0)+
+            "   Ammo "+(scenario?.AmmoRemaining??view.GameSettings.magazineCapacity)+" / "+(scenario?.MagazineCapacity??view.GameSettings.magazineCapacity);
 
         private void InitializeDesktop()
         {

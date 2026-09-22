@@ -7,7 +7,7 @@
     <ui:VisualElement class="play-status"><ui:Label name="playPhase" class="stage-title" /><ui:Label name="playTimer" class="stage-title" /><ui:Label name="playScore" class="section-title" /></ui:VisualElement>
     <ui:Image name="playImage" class="play-image" focusable="true" />
     <ui:VisualElement class="play-footer"><ui:Label name="playFeedback" class="section-title" /><ui:Label name="playGuidance" class="body-copy muted" />
-      <ui:VisualElement class="play-actions"><ui:Label text="Move mouse to aim · click and release to fire · WASD move · Q/E height · R reset viewpoint" class="small muted" /><ui:Button name="playPrimary" text="Administrator controls" class="primary" /></ui:VisualElement>
+        <ui:VisualElement class="play-actions"><ui:Label name="playControlsHint" text="Move mouse to aim · click and release to fire · R reload · WASD move · Q/E height · Home reset viewpoint" class="small muted" /><ui:Button name="playPrimary" text="Administrator controls" class="primary" /></ui:VisualElement>
     </ui:VisualElement>
     <ui:VisualElement name="playReticle" class="play-reticle"><ui:VisualElement class="reticle-horizontal" /><ui:VisualElement class="reticle-vertical" /></ui:VisualElement>
   </ui:VisualElement>

@@ -57,19 +57,15 @@ refresh rate. Synthetic rendering does not pass those physical criteria.
 
 ## Synthetic target appearance
 
-Runtime targets use `DevelopmentTarget.mat` and `DevelopmentTarget.shader` under
-`unity/Assets/ELTS/Operator/Resources/ELTS`. The shaded surface has a world-fixed
-key-light direction, ambient fill and a view-dependent highlight. Cyan spheres
-stay sharp; perspective, curvature, shadows and room geometry supply depth cues.
-Optional object-fixed surface bands are disabled by default. Material properties expose the
-colors, marking width/strength and lighting values in the Unity Inspector.
-
-A shared smooth sphere mesh has unit diameter; the existing scenario target radius
-still determines its size in metres. `DevelopmentView` exposes longitude/latitude
-resolution in the Inspector (defaults 64/32). Rendering changes do not alter target
-positions, hit testing, timing or recorded coordinates. Both participant and
-administrator cameras render the same target surface. This is synthetic visual
-presentation, not a physical lighting or calibration model.
+Runtime targets are one consistent clothed character assembled from rounded Unity
+meshes: jacket, shirt, trousers, shoes, hands, hair and face. The standing and
+crouched silhouettes use the same virtual-metre dimensions as the head, body and
+limb hit regions. Three visible cover styles are stacked crates, a concrete barrier
+and steel drums. Fixed targets stand in front of the cover; moving targets run
+behind it and repeatedly crouch and peek. Both participant and administrator
+cameras render the same objects. Cover and actors have no active Unity colliders;
+the deterministic shot model owns hit and occlusion geometry. This is synthetic
+visual presentation, not a physical lighting or calibration model.
 
 `DevelopmentView` exposes `Training Room` settings in the Inspector: width, height,
 depth, floor offset, tile spacing, surface colors and daylight direction/intensity.

@@ -44,7 +44,7 @@ namespace Elts.Operator
             public string runId="", participantId="", condition="", blockId="", status="", savedUtc="";
             public string scoreStatus="unavailable", scoreExplanation="";
             public double activeSeconds, durationSeconds;
-            public int hits, shots;
+            public int hits, shots, headHits, bodyHits, limbHits, coverHits, misses, targetKills, damageDealt, reloads, dryFires;
             public long droppedSamples;
         }
 
@@ -185,7 +185,7 @@ namespace Elts.Operator
                 if(engine.State==SessionState.Failed)throw new IOException(engine.Failure);
                 closing=false;
                 StationNote("Continuation of "+Path.GetFileName(previous)+"; reason: "+reason);
-                scenario=new DevelopmentSessionScenario(view.Configuration,clock!,engine,recording,sequence!);
+                scenario=new DevelopmentSessionScenario(view.Configuration,clock!,engine,recording,sequence!,view.GameSettings);
                 RecordInputSource();StartAcquisition(view.Configuration);
                 stationSaveStatus="Recording repeated test in a new folder; earlier data retained.";
             }
@@ -200,6 +200,11 @@ namespace Elts.Operator
             runId=runId,participantId=stationParticipant,condition=engine!.CurrentCondition!,blockId=engine.CurrentBlockId!,
             status=engine.CurrentBlockSkipped?"Skipped":engine.CurrentBlockStoppedEarly?"Stopped early":"Completed",
             hits=engine.CurrentBlockSkipped?0:StationHits,shots=engine.CurrentBlockSkipped?0:StationShots,
+            headHits=engine.CurrentBlockSkipped?0:StationHeadHits,bodyHits=engine.CurrentBlockSkipped?0:StationBodyHits,
+            limbHits=engine.CurrentBlockSkipped?0:StationLimbHits,coverHits=engine.CurrentBlockSkipped?0:StationCoverHits,
+            misses=engine.CurrentBlockSkipped?0:StationMisses,targetKills=engine.CurrentBlockSkipped?0:StationTargetKills,
+            damageDealt=engine.CurrentBlockSkipped?0:StationDamageDealt,
+            reloads=engine.CurrentBlockSkipped?0:StationReloads,dryFires=engine.CurrentBlockSkipped?0:StationDryFires,
             activeSeconds=engine.CurrentActiveSeconds,durationSeconds=engine.CurrentDurationSeconds,
             scoreExplanation=engine.CurrentBlockSkipped?"Skipped; no scored attempt.":engine.CurrentBlockModifiedTiming?
                 "Flexible or interrupted timing; excluded from the uninterrupted 300-second score.":"Synthetic counts only; use validated analysis on the finalized raw recording.",

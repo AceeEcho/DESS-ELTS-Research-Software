@@ -36,6 +36,17 @@ namespace Elts.Operator
         public string StationRecordingPath => recording?.RunDirectory ?? "";
         public int StationShots => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.ShotCount??0 : 0;
         public int StationHits => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.HitCount??0 : 0;
+        public int StationHeadHits => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.HeadHits??0 : 0;
+        public int StationBodyHits => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.BodyHits??0 : 0;
+        public int StationLimbHits => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.LimbHits??0 : 0;
+        public int StationCoverHits => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.CoverHits??0 : 0;
+        public int StationMisses => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.MissCount??0 : 0;
+        public int StationTargetKills => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.TargetKills??0 : 0;
+        public int StationDamageDealt => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.DamageDealt??0 : 0;
+        public int StationReloads => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.Reloads??0 : 0;
+        public int StationDryFires => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.DryFires??0 : 0;
+        public int StationAmmo => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.AmmoRemaining??view.GameSettings.magazineCapacity : view.GameSettings.magazineCapacity;
+        public int StationMagazineCapacity=>scenario?.MagazineCapacity??view.GameSettings.magazineCapacity;
         public string[] StationOrder => Field("conditionOrder").value.Split(',');
         public double StationElapsed => Math.Max(0,(clock?.Now.Elapsed.TotalSeconds ?? 0)-stationStartedAt);
         public IReadOnlyDictionary<string,double> StationDurations => stationDurations;
@@ -230,6 +241,17 @@ namespace Elts.Operator
             }
             if(engine.State!=SessionState.BlockRunning)return false;
             int before=StationShots;SubmitDesktopTrigger();return StationShots>before;
+        }
+
+        public bool StationReload()
+        {
+            if(IsBusy || closing || engine?.State!=SessionState.BlockRunning)return false;
+            try{return scenario?.Reload()==true;}
+            catch(Exception error)
+            {
+                engine.Abort("Weapon reload could not be recorded: "+error.Message);
+                return false;
+            }
         }
     }
 }

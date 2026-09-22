@@ -12,7 +12,7 @@ namespace Elts.Operator
     public sealed class TrainingRoomSettings
     {
         public float width = 12, height = 6, depth = 26;
-        public float floorBelowScreenCentre = 1.6f, rearOfEye = 4;
+        public float floorBelowScreenCentre = 1.0f, rearOfEye = 4;
         public float tileSize = 1.5f;
         public Color plaster = new Color(.82f, .83f, .79f);
         public Color floor = new Color(.55f, .59f, .57f);

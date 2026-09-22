@@ -70,10 +70,18 @@ namespace Elts.Operator.Tests
                     Assert.That(panel.Engine.State,Is.EqualTo(SessionState.BlockRunning));
                     var scenario=Private<DevelopmentSessionScenario>(panel,"scenario");
                     Assert.That(scenario.Positions.Count,Is.GreaterThan(0));
-                    var point=scenario.Positions.First().Value;
+                    if(panel.Engine.CurrentCondition.EndsWith("_MT"))
+                        for(int step=0;step<35;step++){clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                    float poseDeadline=Time.realtimeSinceStartup+2;
+                    while((scenario.Positions.Count==0 || Math.Abs(scenario.Positions.First().Value.X)>2) && Time.realtimeSinceStartup<poseDeadline)yield return null;
+                    Assert.That(panel.Engine.State,Is.EqualTo(SessionState.BlockRunning),panel.Engine.Failure);
+                    Assert.That(scenario.Positions.Count,Is.GreaterThan(0),"Target refresh after run-in: "+panel.DesktopFeedback);
+                    Assert.That(panel.CanDesktopFire && panel.Desktop.IsOpen,Is.True,"Desktop firing remains enabled after the scripted run-in");
+                    var point=scenario.Positions.First().Value+new Vector3d(0,.65,0);
                     var viewport=view.ParticipantCamera.WorldToViewportPoint(new Vector3((float)point.X,(float)point.Y,(float)point.Z));
                     var bounds=panel.Desktop.PlayImageBounds;
                     var pointer=new Vector2(bounds.xMin+viewport.x*bounds.width,bounds.yMax-viewport.y*bounds.height);
+                    Assert.That(bounds.Contains(pointer),Is.True,"Head aim must remain inside the fitted image");
                     controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,pressed:true);yield return null;
                     clock.Advance(TimeSpan.FromMilliseconds(30));
                     controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,released:true);yield return null;

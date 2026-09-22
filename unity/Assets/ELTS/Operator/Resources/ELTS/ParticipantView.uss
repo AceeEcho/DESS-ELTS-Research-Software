@@ -3,4 +3,5 @@
 .participant-title { font-size: 44px; color: rgb(239, 244, 252); -unity-font-style: bold; margin-bottom: 16px; -unity-text-align: middle-center; }
 .participant-subtitle { font-size: 20px; color: rgb(172, 189, 214); -unity-text-align: middle-center; }
 .participant-reticle { position: absolute; width: 18px; height: 18px; color: white; font-size: 23px; -unity-text-align: middle-center; }
+.participant-ammo { position: absolute; right: 20px; bottom: 18px; padding: 8px 12px; background-color: rgba(5, 9, 16, 0.72); color: white; font-size: 18px; -unity-font-style: bold; }
 .participant-hidden { display: none; }

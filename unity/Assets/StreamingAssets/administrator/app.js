@@ -64,6 +64,8 @@
   $('testTiming').textContent = `Test duration: ${formatTime(state.durationSeconds || 300)} · edit individual durations in Settings`;
   $('shots').textContent = state.shots ?? 0;
   $('hits').textContent = state.hits ?? 0;
+  $('ammo').textContent = `${state.ammo ?? 20} / ${state.magazineCapacity ?? 20}`;
+  for (const key of ['headHits','bodyHits','limbHits','coverHits','misses','targetKills','damageDealt','reloads','dryFires']) $(key).textContent = state[key] ?? 0;
   $('accuracy').textContent = state.shots ? `${Math.round((Number(state.hits || 0) / Number(state.shots)) * 100)}%` : '—';
   const badge = $('stateBadge');
   badge.textContent = titleCase(state.state || phase).toUpperCase();

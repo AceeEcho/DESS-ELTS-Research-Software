@@ -42,6 +42,21 @@ internal static class TaskDataChecks
         var legacy=TaskDataReview.Build(new[]{Event("BlockMetadata",0),Event("BlockStarted",0),Event("ShotFired",0.5),Event("TargetHit",0.5),Event("ShotFired",1),Event("BlockEnded",2)})["attempts"][0];
         Check((int)legacy["hits"]==1 && (int)legacy["misses"]==1,"Legacy hit matching works");
         Check(legacy["meanShotErrorDeg"].Type==JTokenType.Null && legacy["aimCoveragePercent"].Type==JTokenType.Null,"Legacy geometry remains unavailable");
+        Check(legacy["headHits"].Type==JTokenType.Null,"Old hits without a region remain unavailable rather than becoming body hits");
+        var regional=TaskDataReview.Build(new[]{
+            Event("BlockMetadata",0,new JObject{["condition"]="WE_MT"}),Event("BlockStarted",0),
+            Event("WeaponConfigured",0,new JObject{["magazineCapacity"]=20}),
+            Event("ShotFired",.1,new JObject{["outcome"]="Hit",["hitRegion"]="body",["damage"]=2,["remainingHealth"]=1,["targetId"]="target-1",["magazineBefore"]=20,["magazineAfter"]=19}),
+            Event("TargetHit",.1),Event("ShotFired",.2,new JObject{["outcome"]="Hit",["hitRegion"]="limb",["damage"]=1,["remainingHealth"]=0,["targetId"]="target-1"}),
+            Event("TargetHit",.2),Event("TargetDestroyed",.2),
+            Event("ShotFired",.3,new JObject{["outcome"]="Cover",["coverId"]="crate-stack"}),
+            Event("WeaponReloaded",.4),Event("WeaponDryFire",.5),Event("BlockEnded",1)
+        })["attempts"][0];
+        Check((int)regional["bodyHits"]==1 && (int)regional["limbHits"]==1 && (int)regional["headHits"]==0,"Region counts preserve each hit type");
+        Check((int)regional["coverHits"]==1 && (int)regional["targetKills"]==1 && (double)regional["damageDealt"]==3,"Cover, kill and total damage are separate");
+        Check((int)regional["misses"]==0 && (int)regional["reloads"]==1 && (int)regional["dryFires"]==1,"Cover is counted separately; reload and dry fire do not add scored shots");
+        Check(Math.Abs((double)regional["accuracyPercent"]-200.0/3)<1e-8,"Cover still reduces shot accuracy");
+        Check((int)regional["magazineCapacity"]==20 && (int)regional["shotDetails"][0]["magazineAfter"]==19,"Review preserves magazine capacity and shot ammunition state");
         var live=TaskDataReview.Build(new[]{Event("BlockMetadata",0),Event("BlockStarted",0),Event("ShotFired",0.5)})["attempts"][0];
         Check(live["misses"].Type==JTokenType.Null,"Incomplete legacy shot cannot be claimed as miss");
         var gapEvents=new List<JObject>{Event("BlockMetadata",0),Event("BlockStarted",0)};

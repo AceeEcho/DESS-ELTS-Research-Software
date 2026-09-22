@@ -83,6 +83,7 @@ namespace Elts.Operator
             if(active)
             {
                 if(input.Reset)Model.Reset();
+                if(input.Reload)session.StationReload();
                 Model.Move(input.Movement,deltaSeconds);
                 if(inside)Model.SetAim(new Vector2((input.Pointer.x-bounds.xMin)/bounds.width,
                     1-(input.Pointer.y-bounds.yMin)/bounds.height));
@@ -112,6 +113,11 @@ namespace Elts.Operator
             root.Q<Label>("playTimer").text=root.Q<Label>("countdown").text;
             root.Q<Label>("playFeedback").text=session.DesktopFeedback;
             root.Q<Label>("playScore").text=session.DesktopScore;
+            var hints=Controls as IDesktopControlHints;
+            string reload=hints==null?"use reload control":hints.ReloadHint+" reload";
+            string reset=hints==null?"use reset control":hints.ResetViewHint+" reset viewpoint";
+            root.Q<Label>("playControlsHint").text="Move mouse to aim · click and release to fire · "+
+                reload+" · WASD move · Q/E height · "+reset;
             root.Q<Label>("playGuidance").text=session.DesktopInputSelected
                 ? root.Q<Label>("nextActionHint").text : "Automated synthetic input is selected. Change input source in Preparation before creating the next recording.";
             image.style.visibility=view.ParticipantCamera.enabled?Visibility.Visible:Visibility.Hidden;

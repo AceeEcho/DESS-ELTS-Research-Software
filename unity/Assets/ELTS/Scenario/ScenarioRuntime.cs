@@ -50,9 +50,18 @@ public sealed class TargetEntity
     public TargetEntity(string id, Vector3d position, Vector3d velocity, double radiusM, MonotonicTimestamp spawnedAt)
     { if(String.IsNullOrWhiteSpace(id) || !position.IsFinite || !velocity.IsFinite || !ScenarioDefinition.PositiveFinite(radiusM)) throw new ArgumentException("Target requires an id, finite world state, and positive finite radius."); Id=id; Position=position; Velocity=velocity; RadiusM=radiusM; SpawnedAt=spawnedAt; State=TargetState.Spawned; }
     public string Id { get; } public Vector3d Position { get; private set; } public Vector3d Velocity { get; private set; } public double RadiusM { get; } public MonotonicTimestamp SpawnedAt { get; } public TargetState State { get; private set; }
+    /// <summary>Development humanoid health. Generic targets still use Destroy directly.</summary>
+    public int Health { get; private set; } = 3;
     public void Activate() { Require(TargetState.Spawned); State=TargetState.Active; }
     public void Move(Vector3d position, Vector3d velocity) { Require(TargetState.Active); if (!position.IsFinite || !velocity.IsFinite) throw new ArgumentException("Target world state must be finite."); Position=position; Velocity=velocity; }
     public void Destroy() { Require(TargetState.Active); State=TargetState.Destroyed; }
+    public void ApplyDamage(int amount)
+    {
+        Require(TargetState.Active);
+        if(amount<1)throw new ArgumentOutOfRangeException(nameof(amount));
+        Health=Math.Max(0,Health-amount);
+        if(Health==0)Destroy();
+    }
     public void Despawn() { if (State != TargetState.Active && State != TargetState.Destroyed) throw new InvalidOperationException("Only active or destroyed targets may despawn."); State=TargetState.Despawned; }
     private void Require(TargetState expected) { if(State != expected) throw new InvalidOperationException("Invalid target state transition."); }
 }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Elts.Config;
 using Elts.Geometry;
 using Elts.Rendering;
+using Elts.Scenario;
 using UnityEngine;
 
 namespace Elts.Operator
@@ -35,13 +36,13 @@ namespace Elts.Operator
         private readonly Dictionary<string,GameObject> targetObjects = new Dictionary<string,GameObject>();
         private LineRenderer bore = null!, aim = null!, viewRay = null!;
         private Material stimulusMaterial = null!, cyanMaterial = null!, amberMaterial = null!, redMaterial = null!;
-        [Header("Synthetic target surface")]
-        [SerializeField,Range(24,128)] private int targetLongitudeSegments=64;
-        [SerializeField,Range(12,64)] private int targetLatitudeSegments=32;
-        private Mesh targetMesh = null!;
         private Material targetMaterial = null!;
+        private DevelopmentHumanoidVisual.Palette humanoidPalette=null!;
         [Header("Virtual training room")]
         [SerializeField] private TrainingRoomSettings trainingRoom = new TrainingRoomSettings();
+        [Header("Synthetic game staging")]
+        [SerializeField] private DevelopmentGameSettings gameSettings=new DevelopmentGameSettings();
+        private DevelopmentGameSettings activeGameSettings=null!;
         private UnityEngine.Rendering.AmbientMode previousAmbientMode;
         private Color previousAmbientLight;
         private bool roomLightingOwned, authoredFloorWasActive;
@@ -71,6 +72,7 @@ namespace Elts.Operator
         public bool ReplayPlaying => transport?.IsPlaying ?? false;
         public ScreenPlane DisplayPlane => screen;
         public DevelopmentConfiguration Configuration => configuration;
+        public DevelopmentGameSettings GameSettings => activeGameSettings;
         public bool SessionControlsVisible { get; set; }
         /// <summary>
         /// Lets the dedicated participant display use the whole window. The operator
@@ -95,6 +97,8 @@ namespace Elts.Operator
             try
             {
                 configuration=DevelopmentConfiguration.LoadDirectory(Path.Combine(Application.streamingAssetsPath,"config-generated"));
+                gameSettings.Validate();
+                activeGameSettings=gameSettings.Copy();
                 if(configuration.StudyReady || configuration.Mode!="synthetic")throw new InvalidOperationException("This view requires synthetic development configuration.");
                 screen=configuration.Rig.Display;
                 predictionSeconds=configuration.Runtime.RenderHeadPredictionSeconds;
@@ -103,7 +107,7 @@ namespace Elts.Operator
                 var targetTemplate=Resources.Load<Material>("ELTS/DevelopmentTarget");
                 if(targetTemplate==null)throw new InvalidOperationException("The shaded target material is unavailable.");
                 targetMaterial=new Material(targetTemplate);ownedMaterials.Add(targetMaterial);
-                targetMesh=DevelopmentTargetMesh.Create(targetLongitudeSegments,targetLatitudeSegments);
+                humanoidPalette=DevelopmentHumanoidVisual.CreatePalette(ownedMaterials);
                 authoredEnvironment=FindFirstObjectByType<DevelopmentEnvironment>();
                 // Saved edit previews explain the configured station before Play mode.
                 // Pose-driven markers and targets replace them while the application runs.
@@ -129,6 +133,9 @@ namespace Elts.Operator
                 RenderSettings.ambientMode=UnityEngine.Rendering.AmbientMode.Flat;
                 RenderSettings.ambientLight=new Color(.55f,.60f,.65f);
                 DevelopmentTrainingRoom.Create(transform,screen,trainingRoom,ownedMaterials,targetMaterial);
+                var fieldCenter=screen.Origin+screen.U*(screen.Width*.5)+screen.V*(screen.Height*.5)
+                    +screen.Normal*configuration.Scenario.TargetDistanceM;
+                DevelopmentHumanoidVisual.CreateCovers(transform,DevelopmentScenarioLayout.Covers(fieldCenter,activeGameSettings),ownedMaterials);
                 participant.backgroundColor=operatorCamera.backgroundColor=new Color(.75f,.82f,.85f);
                 replayPath=configuration.Machine.ResolveDataRoot(Path.Combine(Application.dataPath,".."));
                 Ready=true;Refresh(0);
@@ -152,12 +159,10 @@ namespace Elts.Operator
             if(shader==null)throw new InvalidOperationException("Pinned URP Unlit shader is unavailable.");
             var result=new Material(shader);result.SetColor("_BaseColor",color);ownedMaterials.Add(result);return result;
         }
-        private GameObject TargetSphere(string name)
+        private GameObject TargetHumanoid(string name)
         {
-            var target=Sphere(name,StimulusLayer,(float)configuration.Scenario.TargetRadiusM,targetMaterial);
-            // All targets share the mesh and material, with no per-frame allocations.
-            target.GetComponent<MeshFilter>().sharedMesh=targetMesh;
-            return target;
+            var target=DevelopmentHumanoidVisual.Create(transform,humanoidPalette);
+            target.name=name;return target.gameObject;
         }
         private GameObject Sphere(string name,int layer,float radius,Material material)
         {
@@ -293,7 +298,15 @@ namespace Elts.Operator
                 targetObjects[key].SetActive(false);
                 Destroy(targetObjects[key]);targetObjects.Remove(key);
             }
-            foreach(var target in visibleTargets){if(!targetObjects.ContainsKey(target.Key))targetObjects.Add(target.Key,TargetSphere(target.Key));targetObjects[target.Key].transform.position=OffAxisCamera.ToUnity(target.Value);}
+            foreach(var target in visibleTargets)
+            {
+                bool existing=targetObjects.TryGetValue(target.Key,out var actor);
+                if(!existing){actor=TargetHumanoid(target.Key);targetObjects.Add(target.Key,actor);}
+                var next=OffAxisCamera.ToUnity(target.Value);
+                bool running=existing && Mathf.Abs(next.x-actor!.transform.position.x)>.002f;
+                actor!.transform.position=next;
+                actor.GetComponent<DevelopmentHumanoidVisual>().Pose((float)HumanoidGeometry.HeightScale(target.Value),running,Time.unscaledTime);
+            }
             bore.enabled=aim.enabled=rawWeapon.HasValue;
             if(rawWeapon.HasValue)
             {
@@ -380,7 +393,6 @@ namespace Elts.Operator
             if(roomLightingOwned){RenderSettings.ambientMode=previousAmbientMode;RenderSettings.ambientLight=previousAmbientLight;}
             if(authoredEnvironment?.FloorReference!=null)authoredEnvironment.FloorReference.gameObject.SetActive(authoredFloorWasActive);
             foreach(var camera in disabledCameras)if(camera!=null)camera.enabled=true;
-            if(targetMesh!=null)Destroy(targetMesh);
             foreach(var material in ownedMaterials)if(material!=null)Destroy(material);
         }
     }

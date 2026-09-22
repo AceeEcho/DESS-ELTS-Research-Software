@@ -12,12 +12,16 @@ namespace Elts.Operator
     internal static class TaskDataReview
     {
         public const string Version="elts.task-metrics.v1";
-        public static readonly string[] SummaryColumns={"blockId","condition","status","activeSeconds","hits","shots","misses","hitsPerSecond","shotsPerSecond","missesPerSecond","accuracyPercent","meanShotErrorDeg","p95ShotErrorDeg","meanShotOffsetMm","meanMissOffsetMm","aimErrorVarianceDeg2","meanAimErrorDeg","meanAimSpeedDegPerSecond","aimSpeedVariabilityDegPerSecond","aimPathDeg","aimObservedSeconds","aimCoveragePercent","aimObservations","validAimObservations","shotGeometryCount","reason","metricsVersion","scoreStatus"};
-        public static readonly string[] SecondColumns={"second","exposureSeconds","hits","shots","misses","hitsPerSecond","shotsPerSecond","missesPerSecond","meanAimErrorDeg"};
-        public static readonly string[] ShotColumns={"shotNumber","activeSeconds","monotonicTicks","outcome","referenceTargetId","referencePolicy","angularErrorDeg","centerOffsetMm","edgeClearanceMm","targetRadiusMm"};
+        public static readonly string[] SummaryColumns={"blockId","condition","status","activeSeconds","hits","shots","misses","headHits","bodyHits","limbHits","coverHits","targetKills","damageDealt","magazineCapacity","reloads","dryFires","hitsPerSecond","shotsPerSecond","missesPerSecond","accuracyPercent","meanShotErrorDeg","p95ShotErrorDeg","meanShotOffsetMm","meanMissOffsetMm","aimErrorVarianceDeg2","meanAimErrorDeg","meanAimSpeedDegPerSecond","aimSpeedVariabilityDegPerSecond","aimPathDeg","aimObservedSeconds","aimCoveragePercent","aimObservations","validAimObservations","shotGeometryCount","reason","metricsVersion","scoreStatus"};
+        public static readonly string[] SecondColumns={"second","exposureSeconds","hits","shots","misses","coverHits","hitsPerSecond","shotsPerSecond","missesPerSecond","meanAimErrorDeg"};
+        public static readonly string[] ShotColumns={"shotNumber","activeSeconds","monotonicTicks","outcome","magazineBefore","magazineAfter","targetId","hitRegion","damage","remainingHealth","coverId","referenceTargetId","referencePolicy","angularErrorDeg","centerOffsetMm","edgeClearanceMm","targetRadiusMm"};
         public static readonly string[][] Definitions={
             new[]{"hitsPerSecond / shotsPerSecond / missesPerSecond","1/s","Accepted count / active seconds. Pauses excluded; partial final bins use actual exposure."},
-            new[]{"hits / shots / misses","count","Hits are hit shots; misses are accepted shots without a hit. Trigger lockout and invalid tracking are not accepted shots. Old completed recordings use matching TargetHit events."},
+            new[]{"hits / shots / misses","count","Hits are region hits; misses are shots that hit neither target nor cover. Cover impacts are separate. Trigger lockout and invalid tracking are not accepted shots. Old completed recordings use matching TargetHit events."},
+            new[]{"headHits / bodyHits / limbHits","count","Confirmed hits by visible humanoid region. Older hits without a region leave these totals unavailable."},
+            new[]{"coverHits / targetKills / damageDealt","count","Cover impacts, health-zero target removals, and summed hit damage in the synthetic scenario."},
+            new[]{"reloads / dryFires","count","Manual magazine reloads and empty-magazine trigger attempts. Neither counts as a scored shot."},
+            new[]{"magazineBefore / magazineAfter / magazineCapacity","rounds","Recorded ammunition state around each accepted shot and the configured magazine size for that block."},
             new[]{"accuracyPercent","%","100 × hit shots / accepted shots; unavailable with no shots."},
             new[]{"meanShotErrorDeg / p95ShotErrorDeg","deg","Angle between corrected bore and reference target center at shot time. P95 uses nearest rank."},
             new[]{"centerOffsetMm / meanShotOffsetMm / meanMissOffsetMm","mm","Perpendicular target-center distance to the forward bore ray. Miss mean includes only misses with geometry; this is not a screen-plane impact distance."},
@@ -97,12 +101,14 @@ namespace Elts.Operator
             private JObject? previousAim;
             private double path,observedTime,speedSquaredTime;
             private int observations,validObservations,motionPairs;
+            private int targetKills,reloads,dryFires;
             public Attempt(string block,string condition)
             {Result=new JObject{["blockId"]=block,["condition"]=condition,["status"]="Started",["reason"]="",["metricsVersion"]=Version,["scoreStatus"]="unavailable"};}
             private double Active(long ticks)=>accumulated+(segmentStart.HasValue?Math.Max(0,(ticks-segmentStart.Value)/(double)TimeSpan.TicksPerSecond):0);
             public void Accept(string type,long ticks,JObject p)
             {
                 if(type=="BlockStarted"){started=true;segmentStart=ticks;}
+                if(type=="WeaponConfigured")Result["magazineCapacity"]=p["magazineCapacity"]?.DeepClone();
                 double active=Active(ticks);
                 if(started && !closed)lastActive=Math.Max(lastActive,active);
                 if(type=="BlockPaused") {accumulated=Number(p,"activeSeconds")??active;segmentStart=null;previousAim=null;Result["status"]="Paused";}
@@ -122,6 +128,9 @@ namespace Elts.Operator
                 // exact trigger timestamp; never match a different shot or attempt.
                 if(type=="TargetHit" && shots.Last is JObject last && (long?)last["monotonicTicks"]==ticks)
                 {last["outcome"]="Hit";}
+                if(type=="TargetDestroyed")targetKills++;
+                if(type=="WeaponReloaded")reloads++;
+                if(type=="WeaponDryFire")dryFires++;
                 if(type=="AimObserved" && segmentStart.HasValue && !closed)Observe(active,p);
             }
             private void Observe(double active,JObject p)
@@ -159,14 +168,23 @@ namespace Elts.Operator
                 double duration=lastActive;
                 // An unfinished legacy last shot may still be awaiting TargetHit.
                 foreach(JObject shot in shots)if(shot["outcome"]==null)shot["outcome"]=closed?"Miss":"Unknown";
-                int hits=shots.Count(s=>(string?)s["outcome"]=="Hit"),misses=shots.Count(s=>(string?)s["outcome"]=="Miss");
+                int hits=shots.Count(s=>(string?)s["outcome"]=="Hit"),misses=shots.Count(s=>(string?)s["outcome"]=="Miss"),covers=shots.Count(s=>(string?)s["outcome"]=="Cover");
+                bool outcomesKnown=hits+misses+covers==shots.Count;
+                bool regionsKnown=shots.Where(s=>(string?)s["outcome"]=="Hit").All(s=>s["hitRegion"]!=null);
+                foreach(string region in new[]{"head","body","limb"})
+                    Result[region+"Hits"]=skipped || !regionsKnown?JValue.CreateNull():JToken.FromObject(shots.Count(s=>(string?)s["hitRegion"]==region));
+                Result["coverHits"]=skipped?JValue.CreateNull():JToken.FromObject(covers);
+                Result["targetKills"]=skipped?JValue.CreateNull():JToken.FromObject(targetKills);
+                Result["damageDealt"]=skipped || !regionsKnown?JValue.CreateNull():JToken.FromObject(shots.Sum(s=>Number(s,"damage")??0));
+                Result["reloads"]=skipped?JValue.CreateNull():JToken.FromObject(reloads);
+                Result["dryFires"]=skipped?JValue.CreateNull():JToken.FromObject(dryFires);
                 Result["activeSeconds"]=started?JToken.FromObject(duration):JValue.CreateNull();
                 Result["shots"]=skipped?JValue.CreateNull():JToken.FromObject(shots.Count);
                 Result["hits"]=skipped?JValue.CreateNull():JToken.FromObject(hits);
-                Result["misses"]=skipped || hits+misses!=shots.Count?JValue.CreateNull():JToken.FromObject(misses);
+                Result["misses"]=skipped || !outcomesKnown?JValue.CreateNull():JToken.FromObject(misses);
                 Put(Result,"hitsPerSecond",Rate(hits,duration));Put(Result,"shotsPerSecond",Rate(shots.Count,duration));
-                Put(Result,"missesPerSecond",hits+misses==shots.Count?Rate(misses,duration):null);
-                Put(Result,"accuracyPercent",hits+misses==shots.Count && shots.Count>0?100.0*hits/shots.Count:(double?)null);
+                Put(Result,"missesPerSecond",outcomesKnown?Rate(misses,duration):null);
+                Put(Result,"accuracyPercent",outcomesKnown && shots.Count>0?100.0*hits/shots.Count:(double?)null);
                 var errors=shots.Select(s=>Number(s,"angularErrorDeg")).Where(n=>n.HasValue).Select(n=>n!.Value).OrderBy(n=>n).ToArray();
                 Put(Result,"meanShotErrorDeg",errors.Length>0?errors.Average():(double?)null);
                 Put(Result,"p95ShotErrorDeg",errors.Length>0?errors[(int)Math.Ceiling(errors.Length*0.95)-1]:(double?)null);
@@ -186,9 +204,9 @@ namespace Elts.Operator
                 {
                     double exposure=Math.Min(1,duration-i);
                     var inBin=shots.Where(s=>(double)s["activeSeconds"]!>=i && (double)s["activeSeconds"]!<Math.Min(i+1,duration)).ToArray();
-                    int h=inBin.Count(s=>(string?)s["outcome"]=="Hit"),m=inBin.Count(s=>(string?)s["outcome"]=="Miss");
-                    var bin=new JObject{["second"]=i,["exposureSeconds"]=exposure,["shots"]=inBin.Length,["hits"]=h,["misses"]=h+m==inBin.Length?JToken.FromObject(m):JValue.CreateNull()};
-                    Put(bin,"hitsPerSecond",Rate(h,exposure));Put(bin,"shotsPerSecond",Rate(inBin.Length,exposure));Put(bin,"missesPerSecond",h+m==inBin.Length?Rate(m,exposure):null);
+                    int h=inBin.Count(s=>(string?)s["outcome"]=="Hit"),m=inBin.Count(s=>(string?)s["outcome"]=="Miss"),c=inBin.Count(s=>(string?)s["outcome"]=="Cover");
+                    var bin=new JObject{["second"]=i,["exposureSeconds"]=exposure,["shots"]=inBin.Length,["hits"]=h,["coverHits"]=c,["misses"]=h+m+c==inBin.Length?JToken.FromObject(m):JValue.CreateNull()};
+                    Put(bin,"hitsPerSecond",Rate(h,exposure));Put(bin,"shotsPerSecond",Rate(inBin.Length,exposure));Put(bin,"missesPerSecond",h+m+c==inBin.Length?Rate(m,exposure):null);
                     Put(bin,"meanAimErrorDeg",binAim.TryGetValue(i,out var values)?values.Average:null);seconds.Add(bin);
                 }
                 Result["seconds"]=seconds;Result["shotDetails"]=shots;

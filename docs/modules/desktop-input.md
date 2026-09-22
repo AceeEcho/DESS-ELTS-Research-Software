@@ -16,8 +16,9 @@ build. Prerequisites and local tool discovery follow the repository setup guide.
 3. Continue through the ten-second practice timer. Open desktop play from Preparation
    or the practice/blocks module. Choose **Start block** in the play view when ready.
 4. Point at targets and click. A shot occurs when the left button is released after
-   a press inside the image during the same running block. The HUD shows hits and
-   shots. The standard four 300-second blocks and five-second development breaks
+   a press inside the image during the same running block. Each release fires at
+   most one round. The HUD shows hits, shots and the 20-round magazine. Press R
+   to reload manually. The standard four 300-second blocks and five-second development breaks
    still use the session controller; the desktop mode does not shorten them.
 5. Use the play view's phase action between blocks. After completion, use Recordings
    to find the run or open replay. Files remain under `data/synthetic` relative to
@@ -30,7 +31,8 @@ build. Prerequisites and local tool discovery follow the repository setup guide.
 | W / S | Move the virtual eye toward / away from the screen |
 | A / D | Move the virtual eye left / right |
 | Q / E | Move the virtual eye down / up |
-| R | Reset the virtual pose |
+| R | Reload the magazine |
+| Home | Reset the virtual pose |
 | Esc / F1 | Return to administrator controls |
 
 Leaving the view or losing focus cancels a held click. Session time continues;
@@ -49,7 +51,9 @@ bounded movement. Geometry is synthetic and unmeasured. The virtual muzzle is
 coincident with the virtual eye so a conventional mouse reticle predicts the shot;
 this is a development convenience, not a physical weapon model or study display.
 
-`MouseKeyboardControls` reads Unity Input System devices. `IDesktopControls` allows
+`MouseKeyboardControls` reads Unity Input System devices. Its reload/reset bindings
+can be changed without changing weapon or session logic; optional
+`IDesktopControlHints` supplies the current labels to the HUD. `IDesktopControls` allows
 deterministic input injection for tests. `DesktopTrackingSource` implements the
 existing `ITrackingSource` interface, publishing head/weapon pairs under a shared
 acquisition stamp. Focus loss publishes unavailable poses and stale input expires.

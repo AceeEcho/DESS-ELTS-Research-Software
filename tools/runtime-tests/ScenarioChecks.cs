@@ -108,6 +108,37 @@ static class ScenarioChecks
         Throws<ArgumentException>(() => model.Fire(new ShotContext(start, ForwardRay(), true), "block-1", new[] { far }, _ => true), "shot timestamps cannot move backward in a shared log");
         True(model.Fire(new ShotContext(clock.Now, ForwardRay(), false), "block-1", new[] { far }, _ => true).Count == 0, "invalid tracking contributes no shot events");
 
+        // The development humanoid records each region and retains partial health.
+        var person=ActiveTarget("person",clock.Now,5);
+        person.Move(new Vector3d(0,HumanoidGeometry.StandingCenterY,5),Vector3d.Zero);
+        var human=new HumanoidShotModel(new SessionEventSequence(),TimeSpan.FromMilliseconds(20),Array.Empty<HumanoidCover>());
+        human.MagazineBefore=20;
+        var bodyRay=new Ray3d(Vector3d.Zero,new Vector3d(0,.04,5));
+        var bodyEvents=human.Fire(new ShotContext(clock.Now,bodyRay,true),"human-block",new[]{person},_=>true);
+        True(bodyEvents.Count==2 && human.Region=="body" && human.Damage==2 && person.Health==1 && person.State==TargetState.Active,"body hit deals two damage without immediate destruction");
+        True(TextField(bodyEvents[0],"hitRegion")=="body" && bodyEvents[0].Fields.Any(f=>f.Name=="remainingHealth" && f.Number==1),"shot event carries region and remaining health");
+        True(bodyEvents[0].Fields.Any(f=>f.Name=="magazineAfter" && f.Number==19),"shot event carries ammunition after the accepted round");
+        clock.Advance(TimeSpan.FromMilliseconds(20));
+        var limbRay=new Ray3d(Vector3d.Zero,new Vector3d(-.32,.02,5));
+        var limbEvents=human.Fire(new ShotContext(clock.Now,limbRay,true),"human-block",new[]{person},_=>true);
+        True(limbEvents.Count==3 && human.Region=="limb" && person.Health==0 && person.State==TargetState.Destroyed,"limb hit deals one damage and destroys at zero health");
+        var headTarget=ActiveTarget("head",clock.Now,5);
+        headTarget.Move(new Vector3d(0,HumanoidGeometry.StandingCenterY,5),Vector3d.Zero);
+        clock.Advance(TimeSpan.FromMilliseconds(20));
+        var headRay=new Ray3d(Vector3d.Zero,new Vector3d(0,.5,5));
+        var headEvents=human.Fire(new ShotContext(clock.Now,headRay,true),"human-block",new[]{headTarget},_=>true);
+        True(headEvents.Count==3 && human.Region=="head" && human.Damage==3 && headTarget.Health==0,"head hit consumes all three health");
+        var covered=ActiveTarget("covered",clock.Now,5);
+        covered.Move(new Vector3d(0,HumanoidGeometry.CrouchedCenterY,5),Vector3d.Zero);
+        var cover=new HumanoidCover("crate",new Vector3d(0,-.43,4.8),new Vector3d(.33,.58,.19));
+        var coverModel=new HumanoidShotModel(new SessionEventSequence(),TimeSpan.Zero,new[]{cover});
+        var coverEvents=coverModel.Fire(new ShotContext(clock.Now,new Ray3d(Vector3d.Zero,new Vector3d(0,-.3,5)),true),"human-block",new[]{covered},_=>true);
+        True(coverModel.Outcome=="Cover" && covered.Health==3 && coverEvents.Count==1,"near cover blocks a crouched target and does not deal damage");
+        var magazine=new ManualMagazine(20);
+        for(int round=0;round<20;round++)True(magazine.TryConsume(),"each round up to capacity can be spent");
+        True(magazine.Remaining==0 && !magazine.TryConsume(),"empty magazine stays empty without automatic reload");
+        True(magazine.Reload() && magazine.Remaining==20 && !magazine.Reload(),"manual reload refills once and ignores a full magazine");
+
         var scoringClock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
         var logSequence = new SessionEventSequence();
         var block = new ScenarioBlockController(scoringClock, logSequence, "block-1", fixedDefinition.BlockSeed("p-01", "WE_FT"));

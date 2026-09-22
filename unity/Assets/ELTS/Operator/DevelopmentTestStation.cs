@@ -43,7 +43,7 @@ namespace Elts.Operator
         private GameObject uiHost=null!;
         private PanelSettings settings=null!;
         private VisualElement ui=null!,prompt=null!;
-        private Label title=null!,subtitle=null!,reticle=null!;
+        private Label title=null!,subtitle=null!,reticle=null!,ammo=null!;
         private RenderTexture outsideTexture=null!;
         private Texture2D capture=null!;
         private bool held,wasArmed;
@@ -106,7 +106,7 @@ namespace Elts.Operator
             // A resize invalidates the pixel coordinates of a held trigger.
             ui.RegisterCallback<GeometryChangedEvent>(_=>CancelClick());
             Resources.Load<VisualTreeAsset>("ELTS/ParticipantView").CloneTree(ui);
-            prompt=ui.Q("participantPrompt");title=ui.Q<Label>("participantTitle");subtitle=ui.Q<Label>("participantSubtitle");reticle=ui.Q<Label>("participantReticle");
+            prompt=ui.Q("participantPrompt");title=ui.Q<Label>("participantTitle");subtitle=ui.Q<Label>("participantSubtitle");reticle=ui.Q<Label>("participantReticle");ammo=ui.Q<Label>("participantAmmo");
             session.StationPublishPose(session.Desktop.Model.Head,session.Desktop.Model.Weapon);
             server=new AdministratorServer(Path.Combine(Application.streamingAssetsPath,"administrator"));
             // A local discovery file lets test tools locate this instance without
@@ -249,6 +249,7 @@ namespace Elts.Operator
             if(input.Focused)
             {
                 if(input.Reset)session.Desktop.Model.Reset();
+                if(input.Reload)session.StationReload();
                 session.Desktop.Model.Move(input.Movement,Time.unscaledDeltaTime);
                 if(inside)session.Desktop.Model.SetAim(new Vector2((input.Pointer.x-bounds.xMin)/bounds.width,1-(input.Pointer.y-bounds.yMin)/bounds.height));
                 if(input.ReturnToAdministrator)SetFullscreen(false);
@@ -272,6 +273,10 @@ namespace Elts.Operator
             bool running=session.Engine?.State==SessionState.BlockRunning;
             prompt.EnableInClassList("participant-hidden",running);
             reticle.EnableInClassList("participant-hidden",!running);
+            ammo.EnableInClassList("participant-hidden",!running);
+            string? reload=(Controls as IDesktopControlHints)?.ReloadHint;
+            ammo.text="AMMO  "+session.StationAmmo+" / "+session.StationMagazineCapacity+"   ·   "+
+                (reload==null?"RELOAD":reload.ToUpperInvariant()+" RELOAD");
             if(session.TestArmed){title.text="Shoot to begin";subtitle.text="Click and release when you are ready.";return;}
             switch(session.Engine?.State)
             {
@@ -328,6 +333,10 @@ namespace Elts.Operator
                 busy=session.IsBusy,message=session.StationMessage,recordingPath=session.StationRecordingPath,
                 condition=engine?.CurrentCondition??"",blockId=engine?.CurrentBlockId??"",conditionOrder=session.StationOrder,blocks,
                 shots=session.StationShots,hits=session.StationHits,
+                headHits=session.StationHeadHits,bodyHits=session.StationBodyHits,limbHits=session.StationLimbHits,
+                coverHits=session.StationCoverHits,misses=session.StationMisses,targetKills=session.StationTargetKills,
+                damageDealt=session.StationDamageDealt,reloads=session.StationReloads,dryFires=session.StationDryFires,
+                ammo=session.StationAmmo,magazineCapacity=session.StationMagazineCapacity,
                 tracking=new{head=Pose(view.RawHead),weapon=Pose(view.RawWeapon)},
                 camera=new{yaw=orbitYaw,pitch=orbitPitch,distance=orbitDistance},viewVersion=imageVersion,
                 fullscreen=Screen.fullScreen,previewFps=previewFramesPerSecond,

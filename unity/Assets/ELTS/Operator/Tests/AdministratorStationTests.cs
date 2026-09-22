@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Elts.Clock;
+using Elts.Geometry;
 using Elts.Session;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -171,10 +172,17 @@ namespace Elts.Operator.Tests
                     Assert.That(session.StationShots,Is.Zero,"The start prompt consumes its click");
                     Assert.That(station.ParticipantRoot.Q("participantPrompt").ClassListContains("participant-hidden"),Is.True);
                     var scenario=(DevelopmentSessionScenario)typeof(DevelopmentSessionPanel).GetField("scenario",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(session);
-                    var point=scenario.Positions.First().Value;
+                    if(session.Engine.CurrentCondition.EndsWith("_MT"))
+                        for(int step=0;step<35;step++){clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                    float poseDeadline=Time.realtimeSinceStartup+2;
+                    while((scenario.Positions.Count==0 || Math.Abs(scenario.Positions.First().Value.X)>2) && Time.realtimeSinceStartup<poseDeadline)yield return null;
+                    Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockRunning),session.StationMessage);
+                    Assert.That(scenario.Positions.Count,Is.GreaterThan(0),session.StationMessage);
+                    var point=scenario.Positions.First().Value+new Vector3d(0,.65,0);
                     var viewport=view.ParticipantCamera.WorldToViewportPoint(new Vector3((float)point.X,(float)point.Y,(float)point.Z));
                     var bounds=station.ParticipantRoot.worldBound;
                     var pointer=new Vector2(bounds.xMin+viewport.x*bounds.width,bounds.yMax-viewport.y*bounds.height);
+                    Assert.That(bounds.Contains(pointer),Is.True,"Head aim must remain inside the participant surface");
                     input.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,pressed:true);yield return null;
                     clock.Advance(TimeSpan.FromSeconds(0.03));
                     input.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,released:true);yield return null;

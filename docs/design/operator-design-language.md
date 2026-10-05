@@ -93,19 +93,20 @@ own identity:
 
 | Token | Value | Role |
 |---|---|---|
-| `bg` | `#16181d` | App background, the floor |
-| `panel` | `#1d2027` | Raised surfaces, tiles, cards |
-| `panel2` | `#23272f` | Hover states, inputs, the layer above panel |
-| `border` | `#2c313b` | Hairlines, separators, tile edges |
-| `text` | `#e7e9ee` | Primary text |
-| `muted` | `#8b919e` | Secondary text, labels, inactive |
-| `accent` | `#00b3ff` | Cloud9 blue — selection, focus, active, primary action |
+| `bg` | `#111111` | App background, the floor |
+| `panel` | `#1b1b1b` | Raised surfaces, tiles, cards |
+| `panel2` | `#252525` | Hover states, inputs, the layer above panel |
+| `border` | `#383838` | Hairlines, separators, tile edges |
+| `text` | `#f4f4f4` | Primary text |
+| `muted` | `#c0bdbc` | Secondary text, labels, inactive |
+| `accent` | `#E90802` | Texas Tech scarlet — selection and primary actions |
+| `accent-text` | `#FF7772` | Readable scarlet for text and focus on dark surfaces |
 
 Rules for the accent:
-- **One accent.** Blue carries selection, focus, active state, and primary
+- **One accent.** Texas Tech scarlet carries selection, focus, active state, and primary
   actions. It does not become decoration. If everything is accented, nothing is.
-- Accent at full saturation is for *state*, not for surfaces. Large blue fills
-  are wrong; blue borders, blue glows, blue text, blue underlines, blue-tinted
+- Accent at full saturation is for *state*, not for surfaces. Large scarlet fills
+  are reserved for the next action; scarlet borders, focus rings, text, underlines and scarlet-tinted
   panel backgrounds at ~8–12% are right.
 - Semantic colors (destructive red, warning amber, success green) exist but stay
   muted and desaturated enough to live in the dark palette without screaming.

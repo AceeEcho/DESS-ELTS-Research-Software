@@ -2,6 +2,13 @@
 
 For a step-by-step walkthrough with screenshots, see the [simple user guide](../operator/user-guide.md).
 
+The browser and Unity interfaces use a Texas Tech theme: charcoal surfaces,
+white text and current university scarlet (`#E90802`). Lighter scarlet supports
+readable text and keyboard focus; labeled warning, error and success states keep
+their own colors. Theme values live in the existing CSS/USS stylesheets. Interface
+feedback respects reduced-motion preferences and does not change test timing.
+See the [Texas Tech visual identity guide](https://www.ttu.edu/brand/visual-identity/).
+
 ## Two-window desktop station
 
 The `ELTSDesktop` player opens a browser administrator dashboard and a separate

@@ -6,6 +6,12 @@ An offline, low-detail 3D spatial demonstration based on the ELTS project briefi
 
 Open `index.html` in a modern browser. No installation, server, internet connection, or hardware is needed. Copy the entire directory to another computer to move the project.
 
+The simulation uses the same Texas Tech visual theme as the operator UI:
+charcoal surfaces, white text and scarlet (`#E90802`) for primary controls and
+active geometry. The lighter scarlet used for labels and focus remains readable
+on dark surfaces. These colors are presentation-only and have no experimental
+or apparatus meaning.
+
 Drag the scene to orbit, scroll to zoom, or select a keyboard-accessible camera preset. Pause the synthetic motion to inspect geometry. Change the four study conditions, participant position, display width, and illustrative aim offset. The small participant display recomputes projection from the eye through the physical screen as the head moves.
 
 Use **Explore equipment** to read each component's role and locate it with a dashed white ring. **Reset scene** restores the configured camera, study condition, sliders, visibility controls, and simulation time. Playback after reset respects the browser's reduced-motion preference.
@@ -30,7 +36,13 @@ There is no hardware connection, empirical tracking data, CSV replay, shot scori
 
 `elts-environment.html` is the editable source. The `CONFIG` object at the beginning of its script groups geometry, colors, and motion defaults. The scene uses x = sideways, y = height, z = distance in front of the screen; the physical screen is at z = 0 and virtual targets have negative z.
 
-`theme.css` controls the standalone interface, with adjustable color tokens at the top. The editable scene loads this neighboring stylesheet when opened directly. The generated `index.html` embeds the same styles and can be copied and opened on its own. Wide windows show settings beside the scene; narrower windows stack them below it.
+`theme.css` controls the standalone interface, with adjustable Texas Tech color
+tokens at the top. The editable scene loads this neighboring stylesheet when
+opened directly. The generated `index.html` embeds the same styles and can be
+copied and opened on its own. Wide windows show settings beside the scene;
+narrower windows stack them below it. Its buttons use small visual press and
+hover feedback, while `prefers-reduced-motion` starts and keeps synthetic scene
+motion paused until the viewer explicitly enables it.
 
 The code separates vector/projection helpers, drawing primitives, time-based scenario generation, participant projection, scene composition, and controls. It uses a small canvas-based perspective renderer with depth-sorted faces, so it works offline without a GPU library. Overlapping transparent geometry can show sorting artifacts at unusual viewing angles.
 

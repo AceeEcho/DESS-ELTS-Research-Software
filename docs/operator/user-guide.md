@@ -6,6 +6,11 @@ Use this guide to run the **development** version of the administrator dashboard
 
 > This version uses synthetic inputs. It is for software rehearsal, not physical equipment validation or study-ready operation. Screenshots show the current interface with fictional demonstration data; the camera feed is not connected in these examples. Click any image on GitHub to enlarge it.
 
+The current interface uses a dark Texas Tech theme. Scarlet marks primary
+actions, active selections and keyboard focus; green, amber and red retain
+their labeled success, warning and error meanings. Turn on **Reduce interface
+motion** in Settings if you prefer immediate state changes without transitions.
+
 [Open the software](#1-open-the-software) · [Set up tests](#2-arrange-tests-and-set-the-times) · [Add a participant](#3-create-the-participant-recording) · [Run tests](#5-arm-and-run-a-test) · [Breaks](#7-start-the-break-yourself) · [Find data](#8-finish-and-find-the-saved-data)
 
 ## 1. Open the software
@@ -26,7 +31,7 @@ Need the project on a new computer? Follow the [illustrated setup guide](multi-m
 | **Outside view**, left pane | Watch the camera view. Drag to orbit; use the mouse wheel to zoom. |
 | **Data**, top right | View participant profiles, saved sessions and exports. |
 
-The thin divider between the panes can be dragged to change their widths. Gray buttons become available when their action is allowed.
+The thin divider between the panes can be dragged to change their widths. Gray buttons become available when their action is allowed; scarlet buttons and borders identify the active next step.
 
 ## 2. Arrange tests and set the times
 

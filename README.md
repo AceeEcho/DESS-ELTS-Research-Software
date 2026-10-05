@@ -4,6 +4,11 @@ A Windows Unity application, offline browser simulation and analysis tools for
 the built ELTS apparatus. Current operation uses synthetic inputs; testing
 equipment is unavailable and this is not a study-ready release.
 
+The operator dashboard, participant prompts and offline simulation use a Texas
+Tech visual theme: charcoal surfaces, white text and scarlet (`#E90802`) for
+primary actions and active states. This is a presentation change only; it does
+not change session timing, data logging or hardware boundaries.
+
 ## What you can do
 
 | Feature | Available controls |

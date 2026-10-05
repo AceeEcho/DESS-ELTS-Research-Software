@@ -27,8 +27,8 @@ namespace Elts.Operator.Editor
             var preview=FindOrCreate(root,"Edit-mode pose and target previews",OperatorLayer);
             var cameras=FindOrCreate(root,"Saved development cameras",OperatorLayer);
             ClearOwnedChildren(floor);ClearOwnedChildren(display);ClearOwnedChildren(preview);ClearOwnedChildren(cameras);
-            var floorMaterial=Material("ELTS_EnvironmentFloor",new Color(0.11f,0.18f,0.25f));
-            var frameMaterial=Material("ELTS_EnvironmentFrame",new Color(0.08f,0.82f,0.95f));
+            var floorMaterial=Material("ELTS_EnvironmentFloor",new Color(0.15f,0.15f,0.15f));
+            var frameMaterial=Material("ELTS_EnvironmentFrame",new Color(233f/255f,8f/255f,2f/255f));
             var targetMaterial=Material("ELTS_EnvironmentTarget",new Color(0.98f,0.66f,0.14f));
             var rayMaterial=Material("ELTS_EnvironmentRay",new Color(0.9f,0.25f,0.22f));
             var screen=configuration.Rig.Display;

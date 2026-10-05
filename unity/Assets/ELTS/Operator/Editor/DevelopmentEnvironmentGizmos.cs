@@ -21,7 +21,7 @@ namespace Elts.Operator.Editor
                 if(child.name=="Configured target spawn volume (edit preview)")
                     Label(child.position+Vector3.up*0.55f,"VIRTUAL TARGET SPACE",new Color(1,0.7f,0.3f));
             }
-            if(head!=null)Label(head.position+Vector3.up*0.25f,"HEAD + LOOK DIRECTION",Color.cyan);
+            if(head!=null)Label(head.position+Vector3.up*0.25f,"HEAD + LOOK DIRECTION",new Color(233f/255f,8f/255f,2f/255f));
             if(weapon!=null)Label(weapon.position+Vector3.down*0.32f,"WEAPON + BORE DIRECTION",new Color(1,0.7f,0.3f));
         }
         private static void Label(Vector3 position,string text,Color color)

@@ -86,7 +86,7 @@
 <style>
   #elts-environment .elts-stage { position:relative; margin-top:12px; }
   #elts-environment [data-scene] { display:block; width:100%; height:460px; touch-action:none; cursor:grab; }
-  #elts-environment .elts-preview { position:absolute; right:12px; bottom:12px; width:170px; pointer-events:none; color:#e1ebf5; }
+  #elts-environment .elts-preview { position:absolute; right:12px; bottom:12px; width:170px; pointer-events:none; color:#f4f4f4; }
   #elts-environment [data-preview] { display:block; width:100%; aspect-ratio:16/9; margin-top:5px; }
   #elts-environment output { white-space:nowrap; font-variant-numeric:tabular-nums; }
   #elts-environment [data-metrics] { font-variant-numeric:tabular-nums; }
@@ -116,11 +116,11 @@
     demo: { swayAmplitude:0.12, swayRate:0.65, targetRate:0.7, aimOffset:2, condition:'WE-MT' },
     camera: { yaw:0.78, pitch:0.40, radius:10.4, focus:[0,1.15,-0.4] },
     colors: {
-      background:'#101b29', floor:'#1b2c3b', grid:'#34475a', wall:'#243545',
-      screen:'#122c42', frame:'#4a6175', body:'#8196aa', skin:'#b7c4ce',
-      tracker:'#75e2d7', rifle:'#f8a34b', bore:'#ffbd72', target:'#eec46a',
-      frustum:'#75b7f7', ideal:'#a0b0c5', led:'#ffeeae', text:'#e3ecf5',
-      muted:'#9eafc0', invalid:'#ff7a84'
+      background:'#171717', floor:'#252525', grid:'#555555', wall:'#333333',
+      screen:'#242424', frame:'#757575', body:'#a8a4a1', skin:'#d4cbc3',
+      tracker:'#ff7772', rifle:'#f8a34b', bore:'#ffbd72', target:'#eec46a',
+      frustum:'#eeeeee', ideal:'#aaa6a3', led:'#ffeeae', text:'#f4f4f4',
+      muted:'#c0bdbc', invalid:'#ff7a84'
     }
   };
   const root = document.getElementById('elts-environment');
@@ -134,14 +134,15 @@
   const EQUIPMENT = {
     overview: 'A participant aims a tracked mock rifle at a conventional display. The virtual scene is registered behind the screen; the inset shows the participant display. Select equipment to locate it with a ring.',
     display: 'Physical display: the screen plane separates the real room from virtual target space. Head position changes the perspective shown on the screen. Transparency here is only an inspection aid.',
-    head: 'Participant and forehead tracker: the tracked head pose supports a calibrated eye-position estimate for display projection. The blue eye marker represents position, not measured gaze.',
+    head: 'Participant and forehead tracker: the tracked head pose supports a calibrated eye-position estimate for display projection. The scarlet eye marker represents position, not measured gaze.',
     weapon: 'Mock rifle and weapon tracker: the tracked rigid body supports a calibrated bore direction. The orange line shows the bore and its screen intersection; angular error is measured against the reference target.',
     station: 'One tracking base station sits above the display. The dashed direction line is illustrative and does not represent a verified tracking coverage volume.',
     assembly: 'ELTS assembly: two outer LED turrets flank a central Brio camera. With ELTS (WE) shows symbolic light paths; No ELTS (NE) turns them off. The independent vision pipeline and light exposure are not simulated.',
     targets: 'Virtual targets occupy world space behind the display. MT shows synthetic moving targets; FT keeps targets fixed. Their dimensions and paths are demonstration choices, not approved study settings.'
   };
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const state = {
-    time:0, playing:!matchMedia('(prefers-reduced-motion: reduce)').matches,
+    time:0, playing:!reducedMotion.matches,
     condition:CONFIG.demo.condition, lateral:CONFIG.participant.lateral,
     distance:CONFIG.participant.distance, aim:CONFIG.demo.aimOffset, width:CONFIG.display.width,
     frustum:true, labels:true, sway:true, equipment:'overview', ...CONFIG.camera
@@ -197,7 +198,7 @@
   function axes(p) {
     line(p,add(p,[.18,0,0]),'#ed8291',2);
     line(p,add(p,[0,.18,0]),'#9acc91',2);
-    line(p,add(p,[0,0,.18]),'#75b7f7',2);
+    line(p,add(p,[0,0,.18]),'#eeeeee',2);
   }
   function flush() {
     queue.sort((a,b)=>b.z-a.z);
@@ -279,7 +280,7 @@
     s.targets.forEach((p,i)=> {
       const a=map(ontoScreen(s.eye,p));
       const r=CONFIG.targetRadius*s.eye[2]/(s.eye[2]-p[2])/state.width*pw;
-      pctx.fillStyle=i===1?C.target:'#87a6ba';pctx.beginPath();pctx.arc(...a,r,0,Math.PI*2);pctx.fill();
+      pctx.fillStyle=i===1?C.target:'#b5b1ad';pctx.beginPath();pctx.arc(...a,r,0,Math.PI*2);pctx.fill();
     });
   }
 
@@ -308,9 +309,9 @@
     [-.65,.65].forEach(x=> {rod([x,0,-.04],[x,sy-sh,-.04],.03,C.frame);box([x,.03,0],[.5,.06,.55],C.frame);});
     label([sw,sy+sh,0],'Physical display',15,-20);
     s.targets.forEach((target,i)=> {
-      ball(target,CONFIG.targetRadius,i===1?C.target:'#87a6ba');
+      ball(target,CONFIG.targetRadius,i===1?C.target:'#b5b1ad');
       const p=ontoScreen(s.eye,target);
-      if(Math.abs(p[0])<sw&&Math.abs(p[1]-sy)<sh)ball(add(p,[0,0,.01]),CONFIG.targetRadius*s.eye[2]/(s.eye[2]-target[2]),i===1?C.target:'#87a6ba');
+      if(Math.abs(p[0])<sw&&Math.abs(p[1]-sy)<sh)ball(add(p,[0,0,.01]),CONFIG.targetRadius*s.eye[2]/(s.eye[2]-target[2]),i===1?C.target:'#b5b1ad');
     });
     label(s.targets[1],'Reference target',0,-22,C.target);
 
@@ -411,7 +412,7 @@
     state.equipment=controls.equipment.value;describeEquipment();draw();
   });
   controls.reset.addEventListener('click',()=>{
-    Object.assign(state,{time:0,playing:!matchMedia('(prefers-reduced-motion: reduce)').matches,
+    Object.assign(state,{time:0,playing:!reducedMotion.matches,
       condition:CONFIG.demo.condition,lateral:CONFIG.participant.lateral,distance:CONFIG.participant.distance,
       aim:CONFIG.demo.aimOffset,width:CONFIG.display.width,frustum:true,labels:true,sway:true,
       equipment:'overview',...CONFIG.camera});
@@ -422,6 +423,10 @@
     });
     ['frustum','labels','sway'].forEach(key=>{controls[key].checked=state[key];});
     syncPlaying();describeEquipment();draw();announce();
+  });
+  // Pause when the system preference changes; returning to normal never auto-plays.
+  reducedMotion.addEventListener('change', event => {
+    if (event.matches) { state.playing=false; syncPlaying(); draw(); }
   });
   controls.play.addEventListener('click',()=>{state.playing=!state.playing;syncPlaying();announce();});
   controls.condition.addEventListener('change',()=>{state.condition=controls.condition.value;draw();announce();});

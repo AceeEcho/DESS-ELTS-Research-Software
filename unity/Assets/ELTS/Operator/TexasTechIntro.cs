@@ -54,7 +54,8 @@ namespace Elts.Operator
             logo = AddImage("doubleT", "TexasTechDoubleT");
             accent = new VisualElement { name = "scarletRule" };
             accent.style.position = Position.Absolute;
-            accent.style.backgroundColor = new Color(.8f, 0, 0);
+            // Current Texas Tech scarlet; the official college signature stays unmodified.
+            accent.style.backgroundColor = new Color(233f / 255f, 8f / 255f, 2f / 255f);
             artwork.Add(accent);
             caption = new Label("ELTS RESEARCH SOFTWARE") { name = "introCaption" };
             caption.style.position = Position.Absolute;

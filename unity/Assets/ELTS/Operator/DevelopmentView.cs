@@ -26,7 +26,7 @@ namespace Elts.Operator
         private float ControlsHeight => SessionControlsVisible ? SessionControlsHeight : DiagnosticControlsHeight;
         private const float RodLengthMeters = 0.6f, LineWidthMeters = 0.007f;
         private const double MaximumFrameDeltaSeconds = 0.1;
-        private static readonly Color Cyan = new Color(0.1f,0.85f,0.95f), Amber = new Color(1,0.65f,0.15f);
+        private static readonly Color Scarlet = new Color(233f/255f,8f/255f,2f/255f), Amber = new Color(1,0.65f,0.15f);
         private DevelopmentConfiguration configuration = null!;
         private ScreenPlane screen;
         private Camera participant = null!, operatorCamera = null!;
@@ -35,7 +35,7 @@ namespace Elts.Operator
         private readonly List<LineRenderer> screenLines = new List<LineRenderer>(), frustumLines = new List<LineRenderer>(), rods = new List<LineRenderer>();
         private readonly Dictionary<string,GameObject> targetObjects = new Dictionary<string,GameObject>();
         private LineRenderer bore = null!, aim = null!, viewRay = null!;
-        private Material stimulusMaterial = null!, cyanMaterial = null!, amberMaterial = null!, redMaterial = null!;
+        private Material stimulusMaterial = null!, scarletMaterial = null!, amberMaterial = null!, redMaterial = null!;
         private Material targetMaterial = null!;
         private DevelopmentHumanoidVisual.Palette humanoidPalette=null!;
         [Header("Virtual training room")]
@@ -103,7 +103,7 @@ namespace Elts.Operator
                 screen=configuration.Rig.Display;
                 predictionSeconds=configuration.Runtime.RenderHeadPredictionSeconds;
                 foreach(var camera in Camera.allCameras){disabledCameras.Add(camera);camera.enabled=false;}
-                stimulusMaterial=Material(new Color(0.65f,0.8f,0.9f));cyanMaterial=Material(Cyan);amberMaterial=Material(Amber);redMaterial=Material(Color.red);
+                stimulusMaterial=Material(new Color(0.65f,0.8f,0.9f));scarletMaterial=Material(Scarlet);amberMaterial=Material(Amber);redMaterial=Material(Color.red);
                 var targetTemplate=Resources.Load<Material>("ELTS/DevelopmentTarget");
                 if(targetTemplate==null)throw new InvalidOperationException("The shaded target material is unavailable.");
                 targetMaterial=new Material(targetTemplate);ownedMaterials.Add(targetMaterial);
@@ -121,8 +121,8 @@ namespace Elts.Operator
                 head=HeadMarker();
                 weapon=WeaponMarker();
                 eyeMarker=Sphere("Rendering eye",OperatorLayer,0.025f,Material(Color.white));
-                bore=Line("Zero-corrected bore",OperatorLayer,amberMaterial);aim=Line("Muzzle to target",OperatorLayer,Material(Color.magenta));viewRay=Line("Eye view ray",OperatorLayer,cyanMaterial);
-                for(int i=0;i<4;i++){screenLines.Add(Line("Display edge "+i,OperatorLayer,cyanMaterial));frustumLines.Add(Line("Off-axis frustum "+i,OperatorLayer,cyanMaterial));rods.Add(Line("Synthetic corner rod "+i,OperatorLayer,cyanMaterial));}
+                bore=Line("Zero-corrected bore",OperatorLayer,amberMaterial);aim=Line("Muzzle to target",OperatorLayer,Material(Color.magenta));viewRay=Line("Eye view ray",OperatorLayer,scarletMaterial);
+                for(int i=0;i<4;i++){screenLines.Add(Line("Display edge "+i,OperatorLayer,scarletMaterial));frustumLines.Add(Line("Off-axis frustum "+i,OperatorLayer,scarletMaterial));rods.Add(Line("Synthetic corner rod "+i,OperatorLayer,scarletMaterial));}
                 if(authoredEnvironment?.FloorReference!=null)
                 {
                     authoredFloorWasActive=authoredEnvironment.FloorReference.gameObject.activeSelf;
@@ -171,10 +171,10 @@ namespace Elts.Operator
         }
         private GameObject HeadMarker()
         {
-            var marker=Sphere("Participant head tracker",OperatorLayer,0.075f,cyanMaterial);
+            var marker=Sphere("Participant head tracker",OperatorLayer,0.075f,scarletMaterial);
             var nose=GameObject.CreatePrimitive(PrimitiveType.Sphere);nose.name="Forward-facing head reference";nose.layer=OperatorLayer;nose.transform.SetParent(marker.transform,false);
             nose.transform.localPosition=new Vector3(0,0,0.075f);nose.transform.localScale=new Vector3(0.055f,0.04f,0.07f);
-            Destroy(nose.GetComponent<Collider>());nose.GetComponent<Renderer>().sharedMaterial=cyanMaterial;
+            Destroy(nose.GetComponent<Collider>());nose.GetComponent<Renderer>().sharedMaterial=scarletMaterial;
             return marker;
         }
         private GameObject WeaponMarker()

@@ -64,7 +64,7 @@ namespace Elts.Operator
         public bool OpenAdministratorAutomatically {get;set;}=true;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Create()
+        public static void EnsureCreated()
         {
             if(Array.IndexOf(Environment.GetCommandLineArgs(),"-runTests")>=0)return;
             if(SceneManager.GetActiveScene().name!="ELTSDesktop")return;
@@ -139,6 +139,8 @@ namespace Elts.Operator
             bool suppress=Array.IndexOf(Environment.GetCommandLineArgs(),"-eltsNoAdminWindow")>=0 ||
                 Array.IndexOf(Environment.GetCommandLineArgs(),"-runTests")>=0 ||
                 Array.IndexOf(Environment.GetCommandLineArgs(),"-eltsSmokeTest")>=0;
+            // Let the participant see the complete intro before the browser takes focus.
+            while(TexasTechIntro.IsShowing)yield return null;
             if(OpenAdministratorAutomatically && !suppress)OpenAdministrator();
             StartCoroutine(CaptureOutsideView());
         }
@@ -242,6 +244,8 @@ namespace Elts.Operator
         {float value=(float?)command[key]??fallback;if(!float.IsFinite(value))throw new ArgumentException("Camera values must be finite.");return value;}
         private void ReadParticipantInput()
         {
+            // An intro click must never become a start trigger or a scored shot.
+            if(TexasTechIntro.IsShowing){CancelClick();return;}
             var input=Controls.Read(ui.panel);var bounds=ui.worldBound;
             bool inside=input.Focused && bounds.width>0 && bounds.height>0 && bounds.Contains(input.Pointer);
             bool armed=session.TestArmed;

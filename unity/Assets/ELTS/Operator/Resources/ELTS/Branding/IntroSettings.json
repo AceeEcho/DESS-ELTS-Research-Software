@@ -1,0 +1,8 @@
+{
+  "revealSeconds": 1.2,
+  "settleSeconds": 1.1,
+  "holdSeconds": 2.0,
+  "fadeSeconds": 0.65,
+  "gameFadeSeconds": 0.7,
+  "gameScene": "ELTSDesktop"
+}

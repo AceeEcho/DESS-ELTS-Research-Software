@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/TexasTechIntro.unity
+    guid: 32f12999d88a41647ac5703ee1970a9b
+  - enabled: 1
     path: Assets/Scenes/ELTSDesktop.unity
     guid: bad9a08cb9c863a4a9efd23e6c2cd4a7
   - enabled: 0

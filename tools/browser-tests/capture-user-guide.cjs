@@ -10,7 +10,7 @@ const { chromium } = require('playwright');
 
 const root = path.resolve(__dirname, '../..');
 const assets = path.join(root, 'unity/Assets/StreamingAssets/administrator');
-const output = path.join(root, 'docs/operator/images/user-guide');
+const output = path.join(root, 'docs/operator/images/user-guide/texas-tech');
 fs.mkdirSync(output, { recursive: true });
 const conditions = ['WE_FT', 'WE_MT', 'NE_FT', 'NE_MT'];
 const commands = [];

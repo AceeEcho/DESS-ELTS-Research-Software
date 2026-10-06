@@ -61,6 +61,50 @@ internal static class CollectionChecks
                 Check(response.Content.ReadAsByteArrayAsync().Result.SequenceEqual(File.ReadAllBytes(exported)),"Downloaded bytes match snapshot");
                 Check((int)client.GetAsync(server.Origin+"/api/download/not-registered?token="+server.Token).Result.StatusCode==404,"Arbitrary file downloads rejected");
             }
+            string runId;
+            using(var db=new CollectionSqlite(collection.DatabasePath))runId=db.Query("SELECT id FROM sessions WHERE directory=?",second)[0]["id"];
+            bool activeRejected=false;
+            try {collection.Remove(id,true,second);} catch(IOException){activeRejected=true;}
+            Check(activeRejected,"Participant deletion rejects any active run");
+            using(var db=new CollectionSqlite(collection.DatabasePath))
+                Check(db.Query("SELECT * FROM sessions").Count==3 && db.Query("SELECT * FROM removed_recordings").Count==0,"Rejected deletion rolls back all changes");
+            activeRejected=false;
+            try {collection.Remove(runId,false,second);} catch(IOException){activeRejected=true;}
+            Check(activeRejected,"Individual active run deletion rejected");
+            activeRejected=false;
+            try {collection.Remove(id,true,Path.Combine(root,"not indexed yet"),"p-01");} catch(IOException){activeRejected=true;}
+            Check(activeRejected,"Active participant protected before a new run's first import");
+            collection.Remove(runId,false);
+            collection.Import(second,"p-01","Zoë '雪'","{}");
+            using(var db=new CollectionSqlite(collection.DatabasePath))
+            {
+                Check(db.Query("SELECT * FROM sessions WHERE participantId=?",id).Count==1,"Individual removal preserves participant's other run and survives refresh");
+                Check(db.Query("SELECT * FROM records WHERE sessionId=?",runId).Count==0 && db.Query("SELECT * FROM stream_progress WHERE sessionId=?",runId).Count==0,"Individual removal clears raw rows and offsets");
+            }
+            collection.Remove(id,true);
+            // Reopening the collection must still exclude the old source files,
+            // including malformed raw data that no longer belongs to the collection.
+            collection=new ParticipantCollection(collection.Root);
+            collection.Import(first,"P-01","Zoë '雪'","{}");
+            collection.Import(second,"P-01","Zoë '雪'","{}");
+            using(var db=new CollectionSqlite(collection.DatabasePath))
+            {
+                Check(db.Query("SELECT * FROM participants").Count==1 && db.Query("SELECT * FROM sessions").Count==1,"Participant deletion persists after restart and preserves other participants");
+                Check(db.Query("SELECT * FROM records").Count==1 && db.Query("SELECT * FROM stream_progress").Count==1,"Participant deletion clears all dependent rows");
+                Check(db.Query("PRAGMA foreign_key_check").Count==0,"Deletion preserves foreign keys");
+                Check(db.Query("PRAGMA integrity_check")[0]["integrity_check"]=="ok","Deletion preserves database integrity");
+            }
+            Check(File.Exists(Path.Combine(first,"events.ndjson")) && File.Exists(exported),"Original files and prior exports retained");
+            string fresh=Path.Combine(root,"fresh run");Directory.CreateDirectory(fresh);
+            File.WriteAllText(Path.Combine(fresh,"events.ndjson"),"{}\n");
+            collection.Import(fresh,"P-01","New recording","{}");
+            using(var db=new CollectionSqlite(collection.DatabasePath))
+                Check(db.Query("SELECT * FROM participants").Count==2,"Removed participant code can be used for a new recording");
+            string lastRun;
+            using(var db=new CollectionSqlite(collection.DatabasePath))lastRun=db.Query("SELECT id FROM sessions WHERE directory=?",fresh)[0]["id"];
+            collection.Remove(lastRun,false);
+            using(var db=new CollectionSqlite(collection.DatabasePath))
+                Check(db.Query("SELECT * FROM participants").Count==1,"Removing last run removes its empty profile");
             Console.WriteLine("PASS: "+passed+" collection checks");
         }
         finally {Directory.Delete(root,true);}

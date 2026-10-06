@@ -63,6 +63,20 @@ namespace Elts.Operator
                     collectionRows=await Task.Run(()=>collection!.Records(collectionRowsSession,collectionRowsStream,collectionRowsPage));
                     collectionMessage="Saved records loaded · 50 per page.";
                 }
+                else if(action=="removeParticipant" || action=="removeRun")
+                {
+                    if((bool?)command["confirmed"]!=true)throw new ArgumentException("Confirm removal before deleting data.");
+                    string id=(string?)command["id"]??"";
+                    string activeDirectory=recording?.IsOpen==true?recording.RunDirectory:"";
+                    string activeCode=recording?.IsOpen==true?stationParticipant:"";
+                    await Task.Run(()=>collection!.Remove(id,action=="removeParticipant",activeDirectory,activeCode));
+                    collectionProfiles=await Task.Run(()=>collection!.Profiles());
+                    string selected=(string?)command["participant"]??"";
+                    collectionProfile=action=="removeRun" && selected.Length>0?await Task.Run(()=>collection!.Profile(selected)):null;
+                    collectionRows=Array.Empty<object>();collectionRowsSession="";collectionRowsStream="";collectionRowsPage=0;
+                    collectionExport="";
+                    collectionMessage="Data removed from the viewer and SQL database. Original files and existing exports are retained.";
+                }
                 else if(action=="exportSessionRaw")
                 {
                     collectionExport="";
@@ -124,6 +138,9 @@ namespace Elts.Operator
         }
         private void ImportCollectionRecording(string directory)
         {
+            // Skip before reading raw JSON too, so excluded recovery files cannot
+            // produce recurring import errors or reintroduce participant details.
+            if(collection!.IsRemoved(directory))return;
             string review=JsonConvert.SerializeObject(ReadRecordingReview(directory));
             var document=JObject.Parse(review);
             string code=Path.GetFileName(directory),name="";

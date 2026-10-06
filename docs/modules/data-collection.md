@@ -77,8 +77,26 @@ the original JSON, NDJSON and checksums in a ZIP. Review CSV is a descriptive ta
 not a replacement for the raw data or SQL export.
 
 Data is machine-local and ignored by Git. Export files must be backed up separately.
-There is no database synchronization, database import, deletion or profile merge
+There is no database synchronization, database import or profile merge
 interface in this version.
+
+## Removing collected data
+
+Select a participant and choose **Remove participant data** to remove their profile
+and all indexed runs, or select a saved session and choose **Remove selected run**
+to remove that whole recording. Confirm the removal in the browser; Cancel leaves
+everything intact. A run here is one recording session, including its task attempts.
+Removing the last run also removes the empty participant profile.
+
+Removal deletes the associated SQL records, import offsets, session results and
+derived metric rows. It commits in one transaction and refuses any selection that
+includes the currently open recording. Finish or abort that session first.
+The viewer clears removed data and invalidates its current download link.
+
+Original recording files and previously created exports remain on disk. This is
+collection removal, not erasure of every stored copy. The database remembers the
+excluded recording directories so Refresh and restart cannot import them again.
+A new recording using the same participant code can still be collected normally.
 
 ## SQL layout
 
@@ -88,6 +106,7 @@ interface in this version.
 | `sessions` | Unique session ID, participant relationship, original directory, modification time, finalized flag, descriptive review JSON |
 | `records` | Complete original record JSON, keyed by session, stream filename and original byte offset; supplemental JSON uses offset zero |
 | `stream_progress` | Last complete imported byte offset for each NDJSON stream |
+| `removed_recordings` | Excluded original directories that Refresh must not import again |
 | `task_results` (view) | One row per task attempt, participant/session identifiers, status, active duration, counts, rates, shot precision, aim metrics and coverage |
 | `task_seconds` (view) | One row per active second per task; actual exposure, counts, rates and mean aim error |
 | `task_shots` (view) | One row per accepted shot; active time, source timestamp, outcome, reference target, angle and distance |
@@ -95,7 +114,7 @@ interface in this version.
 Each imported line and its progress offset commit together. Imports use bounded
 transactions, so retries retain earlier committed batches without duplicating
 rows. Foreign keys protect session/profile relationships. `PRAGMA user_version`
-is 2. Existing collections gain the metric views on initialization; choose Refresh
+is 3. Existing collections gain the metric views and removal exclusions on initialization; choose Refresh
 to recompute older review JSON from retained events. No raw stream is rewritten.
 The Windows runtime uses the system SQLite library with a five-second busy
 timeout and full synchronous durability. Raw record size is limited to 16 MB per

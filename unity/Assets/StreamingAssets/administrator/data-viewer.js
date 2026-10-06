@@ -57,8 +57,19 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
     act('viewParticipant', {id: selected});
   });
   const loadRows = () => act('viewDataRows', {session, stream, page});
+  function removeData(participant) {
+    if (requestBusy || state?.data?.busy) return;
+    const profile = state?.data?.profile;
+    const record = profile?.sessions?.find(s => s.id === session);
+    if (!profile?.participant || (!participant && !record)) return;
+    const subject = participant ? `participant ${profile.participant.code} and all ${profile.sessions.length} saved runs` : `the selected run (${date(record.modifiedUtc)}) for participant ${profile.participant.code}`;
+    if (!window.confirm(`Remove ${subject} from the data viewer and SQL database?\n\nThis removes all associated SQL records and results. Refresh will not restore them. Original recording files and existing exports remain on disk. Active recordings cannot be removed.`)) return;
+    act(participant ? 'removeParticipant' : 'removeRun', {id: participant ? selected : session, participant:selected, confirmed:true});
+  }
   $('dataProfile').addEventListener('click', event => {
     const button = event.target.closest('button'); if (!button) return;
+    if (button.id === 'dataRemoveParticipant') removeData(true);
+    if (button.id === 'dataRemoveRun') removeData(false);
     if (button.dataset.taskId) {taskId = button.dataset.taskId; detailPage = 0; renderTasks(currentReview());}
     if (button.dataset.detailTab) {detailTab = button.dataset.detailTab; detailPage = 0; renderTasks(currentReview());}
     if (button.id === 'detailPrevious' || button.id === 'detailNext') {detailPage = Math.max(0, detailPage + (button.id === 'detailNext' ? 1 : -1)); renderTasks(currentReview());}
@@ -265,7 +276,13 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
       html('dataProfiles', profiles.map(p => `<button class="data-person ${p.id === selected ? 'selected' : ''}" data-profile-id="${esc(p.id)}" ${data.busy ? 'disabled' : ''}><strong>${esc(p.code)}</strong><span>${esc(p.name || 'Name not supplied')}</span><small>${esc(p.sessions)} sessions · ${esc(date(p.modifiedUtc))}</small></button>`).join('') || '<p class="subtle">No matching participants. Refresh to index existing recordings.</p>');
     }
     const profile = data.profile;
-    if (!profile?.participant || profile.participant.id !== selected) return;
+    if (!profile?.participant || profile.participant.id !== selected) {
+      if (selected && !(data.profiles || []).some(p => p.id === selected)) {
+        selected = ''; session = ''; taskId = ''; profileSignature = ''; rowsSignature = ''; chart = null;
+        html('dataProfile', '<h2>Select a participant</h2><p>Choose a participant to review their saved runs.</p>');
+      }
+      return;
+    }
     const sessions = profile.sessions || [];
     if (!sessions.some(s => s.id === session)) session = sessions[0]?.id || '';
     const record = sessions.find(s => s.id === session);
@@ -277,11 +294,13 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
       profileSignature = signature; rowsSignature = '';
       renderedReviewText = reviewText;
       const review = reviewOf(record);
-      html('dataProfile', `<div class="data-heading"><div><span class="eyebrow">PARTICIPANT PROFILE</span><h2>${esc(profile.participant.code)}</h2><p>${esc(profile.participant.name || 'Name not supplied')}</p></div><div class="data-actions"><button id="dataExportWorkbook" class="primary-btn">Export Excel</button><button id="dataExportParticipant" class="ghost-btn">Export participant SQL</button></div></div><label for="dataSession">Saved session</label><select id="dataSession">${sessions.map(s => `<option value="${esc(s.id)}" ${s.id === session ? 'selected' : ''}>${esc(date(s.modifiedUtc))} · ${s.finalized === '1' ? 'Finalized' : 'Open / incomplete'}</option>`).join('')}</select><div class="data-actions"><button id="dataExportRaw" class="ghost-btn" ${record?.finalized === '1' ? '' : 'disabled'}>Export original files</button><button id="dataReviewCsv" class="ghost-btn">Download review CSV</button></div><p class="subtle">Descriptive synthetic observations · pauses excluded · — means unavailable.</p><section id="taskExplorer" aria-label="Task results"></section><h3>Session notes</h3><ul class="data-notes">${(review.notes || []).map(noteText).filter(Boolean).map(text => `<li>${esc(text)}</li>`).join('') || '<li>No session notes.</li>'}</ul><details><summary>Explore original records</summary><p>SQL copy of complete saved records. Refresh after a test finishes to see its checkpoint.</p><label for="dataStream">Record stream</label><select id="dataStream">${['events.ndjson','samples.ndjson','targets.ndjson','session-summary.json'].map(s => `<option ${s === stream ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select><button id="dataLoadRows" class="ghost-btn">Load records</button><pre id="dataRawRows">Choose Load records.</pre><div class="data-actions"><button id="dataPrevious" class="ghost-btn" disabled>Previous</button><span id="dataPage">Page 1</span><button id="dataNext" class="ghost-btn" disabled>Next</button></div></details>`);
+      html('dataProfile', `<div class="data-heading"><div><span class="eyebrow">PARTICIPANT PROFILE</span><h2>${esc(profile.participant.code)}</h2><p>${esc(profile.participant.name || 'Name not supplied')}</p></div><div class="data-actions"><button id="dataExportWorkbook" class="primary-btn">Export Excel</button><button id="dataExportParticipant" class="ghost-btn">Export participant SQL</button><button id="dataRemoveParticipant" class="danger-btn">Remove participant data</button></div></div><label for="dataSession">Saved session</label><select id="dataSession">${sessions.map(s => `<option value="${esc(s.id)}" ${s.id === session ? 'selected' : ''}>${esc(date(s.modifiedUtc))} · ${s.finalized === '1' ? 'Finalized' : 'Open / incomplete'}</option>`).join('')}</select><div class="data-actions"><button id="dataExportRaw" class="ghost-btn" ${record?.finalized === '1' ? '' : 'disabled'}>Export original files</button><button id="dataReviewCsv" class="ghost-btn">Download review CSV</button><button id="dataRemoveRun" class="danger-btn">Remove selected run</button></div><p class="subtle">Descriptive synthetic observations · pauses excluded · — means unavailable.</p><section id="taskExplorer" aria-label="Task results"></section><h3>Session notes</h3><ul class="data-notes">${(review.notes || []).map(noteText).filter(Boolean).map(text => `<li>${esc(text)}</li>`).join('') || '<li>No session notes.</li>'}</ul><details><summary>Explore original records</summary><p>SQL copy of complete saved records. Refresh after a test finishes to see its checkpoint.</p><label for="dataStream">Record stream</label><select id="dataStream">${['events.ndjson','samples.ndjson','targets.ndjson','session-summary.json'].map(s => `<option ${s === stream ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select><button id="dataLoadRows" class="ghost-btn">Load records</button><pre id="dataRawRows">Choose Load records.</pre><div class="data-actions"><button id="dataPrevious" class="ghost-btn" disabled>Previous</button><span id="dataPage">Page 1</span><button id="dataNext" class="ghost-btn" disabled>Next</button></div></details>`);
     }
     renderTasks(currentReview());
     $('dataExportWorkbook').disabled = data.busy || requestBusy;
     $('dataExportParticipant').disabled = data.busy || requestBusy;
+    $('dataRemoveParticipant').disabled = data.busy || requestBusy;
+    $('dataRemoveRun').disabled = data.busy || requestBusy || !session;
     $('dataExportRaw').disabled = data.busy || requestBusy || sessions.find(s => s.id === session)?.finalized !== '1';
     $('dataLoadRows').disabled = data.busy || requestBusy;
     const matchingRows = data.rowsSession === undefined || (data.rowsSession === session && data.rowsStream === stream && data.rowsPage === page);

@@ -49,6 +49,14 @@ const server = http.createServer(async (req, res) => {
     if (command.action === 'skipBreak') { current.state = 'BlockReady'; current.tools.canSkipBreak = false; }
     if (command.action === 'viewParticipant') current.data.profile = {participant:current.data.profiles[0],sessions:[{id:'session1',modifiedUtc:'2026-09-11T12:00:00Z',finalized:'1',review:JSON.stringify({attempts:[{condition:'WE_FT',blockId:'WE_FT-attempt-01',status:'Completed',hits:2,shots:3,activeSeconds:300}],notes:[{text:'<script>must remain text</script>'}]})}]};
     if (command.action === 'viewDataRows') current.data.rows=[{offset:'0',json:JSON.stringify({eventType:'OperatorNote',payload:{text:'<img src=x onerror=alert(1)>'}})}];
+    if (command.action === 'removeRun') {
+      current.data.profile.sessions = current.data.profile.sessions.filter(s => s.id !== command.id);
+      current.data.rows = []; current.data.rowsSession = '';
+    }
+    if (command.action === 'removeParticipant') {
+      current.data.profiles = current.data.profiles.filter(p => p.id !== command.id);
+      current.data.profile = null; current.data.rows = []; current.downloadId = '';
+    }
     if (command.action === 'exportParticipant' || command.action === 'exportDatabase' || command.action === 'exportWorkbook') current.downloadId=command.action==='exportWorkbook'?'fixture-workbook':'fixture-export';
     if (command.action === 'listRecordings') current.tools.recordings = [{ id: 'synthetic-browser-test', finalized: true }];
     if (command.action === 'reviewRecording') current.tools.review = { id: command.id, finalized: true,
@@ -268,6 +276,10 @@ const server = http.createServer(async (req, res) => {
     current.data.profile.sessions[0].review = JSON.stringify(taskReview);
     await page.waitForFunction(()=>document.getElementById('dataProfile').textContent.includes('comfortable posture'));
     await page.screenshot({path:path.join(output,'administrator-data.png'),fullPage:true});
+    // Keep a static rendered snapshot for independent visual lint without a player.
+    const snapshot = (await page.content()).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '')
+      .replace(/<link[^>]*href="styles.css"[^>]*>/, `<style>${fs.readFileSync(path.join(assets,'styles.css'),'utf8')}</style>`);
+    fs.writeFileSync(path.join(output,'administrator-data-rendered.html'), snapshot);
     await page.locator('.task-detail-heading').evaluate(el => el.scrollIntoView({block:'start'}));
     await page.screenshot({path:path.join(output,'administrator-task-metrics.png'),fullPage:true});
     await hoverTime(10.5);
@@ -298,6 +310,25 @@ const server = http.createServer(async (req, res) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: path.join(output, 'administrator-data-mobile.png'), fullPage: true });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'Mobile page has no horizontal overflow');
+    // Confirmation must bind to the selected run; canceled removal sends nothing.
+    const removals = () => commands.filter(c => c.action === 'removeRun' || c.action === 'removeParticipant');
+    const beforeRemoval = removals().length;
+    page.once('dialog', async dialog => {assert.match(dialog.message(), /Original recording files/); await dialog.dismiss();});
+    await page.locator('#dataRemoveRun').click();
+    assert.equal(removals().length, beforeRemoval, 'Cancel retains data');
+    current.data.profile.sessions.push({id:'session2',modifiedUtc:'2026-09-12T12:00:00Z',finalized:'1',review:JSON.stringify(taskReview)});
+    await page.locator('#dataSession option').nth(1).waitFor({state:'attached'});
+    page.once('dialog', dialog => dialog.accept());
+    await page.locator('#dataRemoveRun').click();
+    await wait(() => commands.some(c => c.action === 'removeRun' && c.id === 'session1' && c.confirmed === true));
+    await page.waitForFunction(() => document.getElementById('dataSession').value === 'session2');
+    assert.equal(await page.locator('#dataSession option').count(), 1, 'Deleted run disappears while other runs remain');
+    page.once('dialog', dialog => dialog.accept());
+    await page.locator('#dataRemoveParticipant').click();
+    await wait(() => commands.some(c => c.action === 'removeParticipant' && c.id === 'profile1' && c.confirmed === true));
+    await page.waitForFunction(() => document.getElementById('dataProfile').textContent.includes('Select a participant'));
+    assert.equal(await page.locator('[data-profile-id]').count(), 0, 'Deleted profile disappears');
+    assert.equal(await page.locator('#dataRawRows').count(), 0, 'Deleted raw rows no longer displayed');
     await page.locator('#recordingsButton').click();
     assert.equal(await page.locator('#workspace').isVisible(),true,'Toggle returns to test administration');
     const restricted = await browser.newPage();

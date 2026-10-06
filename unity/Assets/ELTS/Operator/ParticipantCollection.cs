@@ -36,12 +36,15 @@ namespace Elts.Operator
             db.Execute("CREATE TABLE IF NOT EXISTS records (sessionId TEXT NOT NULL REFERENCES sessions(id), stream TEXT NOT NULL, offset INTEGER NOT NULL, json TEXT NOT NULL, PRIMARY KEY(sessionId,stream,offset))");
             db.Execute("CREATE TABLE IF NOT EXISTS stream_progress (sessionId TEXT NOT NULL REFERENCES sessions(id), stream TEXT NOT NULL, offset INTEGER NOT NULL, PRIMARY KEY(sessionId,stream))");
             db.Execute("CREATE INDEX IF NOT EXISTS sessions_participant ON sessions(participantId)");
+            // Remember excluded source folders so Refresh cannot resurrect deleted runs.
+            // Original recordings remain intact for logging integrity and recovery.
+            db.Execute("CREATE TABLE IF NOT EXISTS removed_recordings (directory TEXT PRIMARY KEY COLLATE NOCASE)");
             // Named, typed columns expose the shared derived review without
             // requiring researchers to navigate JSON or duplicate calculations.
             CreateMetricView(db,"task_results",TaskDataReview.SummaryColumns,"");
             CreateMetricView(db,"task_seconds",TaskDataReview.SecondColumns,"seconds");
             CreateMetricView(db,"task_shots",TaskDataReview.ShotColumns,"shotDetails");
-            db.Execute("PRAGMA user_version=2");
+            db.Execute("PRAGMA user_version=3");
         }
         private static void CreateMetricView(CollectionSqlite db,string name,string[] columns,string detail)
         {
@@ -86,6 +89,7 @@ namespace Elts.Operator
             if((File.GetAttributes(directory)&FileAttributes.ReparsePoint)!=0)throw new IOException("Recording folder cannot be a link.");
             using(var db=Open())
             {
+                if(db.Query("SELECT directory FROM removed_recordings WHERE directory=?",directory).Count>0)return;
                 db.Execute("INSERT OR IGNORE INTO participants VALUES (?,?,?,?)",Guid.NewGuid().ToString("N"),code,name,DateTime.UtcNow.ToString("O"));
                 string participant=db.Query("SELECT id FROM participants WHERE code=?",code)[0]["id"];
                 if(name.Length>0)db.Execute("UPDATE participants SET name=? WHERE id=?",name,participant);
@@ -151,6 +155,43 @@ namespace Elts.Operator
         public string SessionDirectory(string id)
         {
             using(var db=Open())return db.Query("SELECT directory FROM sessions WHERE id=?",id).FirstOrDefault()?["directory"]??throw new IOException("Select a saved session.");
+        }
+        public bool IsRemoved(string directory)
+        {
+            using(var db=Open())return db.Query("SELECT directory FROM removed_recordings WHERE directory=?",Path.GetFullPath(directory)).Count>0;
+        }
+        /// <summary>Remove a participant or one whole run from the SQL collection.
+        /// Child rows and import exclusions commit together; raw files are not rewritten.</summary>
+        public void Remove(string id,bool participant,string activeDirectory="",string activeParticipantCode="")
+        {
+            Guid.ParseExact(id,"N");
+            using(var db=Open())
+            {
+                db.Execute("BEGIN IMMEDIATE");
+                try
+                {
+                    var runs=db.Query(participant?"SELECT id,directory,participantId FROM sessions WHERE participantId=?":"SELECT id,directory,participantId FROM sessions WHERE id=?",id);
+                    if(participant?db.Query("SELECT id FROM participants WHERE id=?",id).Count==0:runs.Count==0)
+                        throw new IOException("Select existing participant data or a saved run.");
+                    // Intake may have opened a new raw recording before its first
+                    // SQL import. Protect that participant by code as well as path.
+                    if(participant && activeParticipantCode.Length>0 && db.Query("SELECT id FROM participants WHERE id=? AND code=?",id,activeParticipantCode).Count>0)
+                        throw new IOException("Finish or abort the active participant session before removing its data.");
+                    if(activeDirectory.Length>0 && runs.Any(run=>String.Equals(Path.GetFullPath(run["directory"]),Path.GetFullPath(activeDirectory),StringComparison.OrdinalIgnoreCase)))
+                        throw new IOException("Finish or abort the active participant session before removing its data.");
+                    foreach(var run in runs)
+                    {
+                        db.Execute("INSERT OR IGNORE INTO removed_recordings VALUES(?)",run["directory"]);
+                        db.Execute("DELETE FROM records WHERE sessionId=?",run["id"]);
+                        db.Execute("DELETE FROM stream_progress WHERE sessionId=?",run["id"]);
+                        db.Execute("DELETE FROM sessions WHERE id=?",run["id"]);
+                    }
+                    string owner=participant?id:runs[0]["participantId"];
+                    db.Execute("DELETE FROM participants WHERE id=? AND NOT EXISTS (SELECT 1 FROM sessions WHERE participantId=participants.id)",owner);
+                    db.Execute("COMMIT");
+                }
+                catch {db.Execute("ROLLBACK");throw;}
+            }
         }
         public object Records(string session,string stream,int page)
         {

@@ -12,7 +12,7 @@ $script:failSetup = $false
 $script:failBuild = $false
 $script:fingerprint = 'source-one'
 function Assert($Condition, $Message) { if (-not $Condition) { throw $Message } }
-function Get-EltsSetupPaths { return @{git='git';python='python';dotnet='dotnet';node='node';unity='Unity.exe'} }
+function Get-EltsSetupPaths { return @{git=$null;python='python';dotnet='dotnet';node='node';unity='Unity.exe'} }
 function Initialize-EltsLocalTools {}
 function Test-EltsProjectOpen { return $script:open }
 function Get-EltsStartupFingerprint { return $script:fingerprint }
@@ -69,7 +69,7 @@ try {
     Set-Content (Join-Path $fixture 'diagnostics/setup-report.json') '{}'
     try { Invoke-EltsDevelopmentStart } catch { Assert ($_.Exception.Message -eq 'fixture setup failed') 'Wrong setup failure' }
     Assert (($calls -join ',') -eq 'setup') 'Apps opened after failed setup'
-    Write-Host 'PASS: 7 startup scenarios, including paths with spaces and failure propagation.'
+    Write-Host 'PASS: 7 startup scenarios without Git, including paths with spaces and failure propagation.'
 } finally {
     Set-Location $originalLocation
     # The only recursive deletion is the exact temporary fixture created above.

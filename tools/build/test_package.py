@@ -4,9 +4,10 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
-from tools.build.package import ROOT, create_package, package_files, verify_package
+from tools.build.package import ROOT, create_package, evidence_binding, package_files, verify_package
 from tools.build.provenance import finalize, sha
 
 
@@ -57,6 +58,13 @@ class PackageTests(unittest.TestCase):
             text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(result.stdout)["result"], "pass")
+
+    def test_source_copy_package_requires_binary_bound_evidence(self):
+        with patch("tools.build.provenance.shutil.which", return_value=None):
+            self.create()
+            self.assertIsNone(verify_package(self.output)["recipeSourceRevision"])
+            with self.assertRaisesRegex(ValueError, "matching playerSha256"):
+                evidence_binding({"sourceRevision": "a" * 40}, self.build, {"commit": None})
 
     def test_changed_document_and_unexpected_code_fail(self):
         self.create()

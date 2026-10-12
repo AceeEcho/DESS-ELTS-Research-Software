@@ -20,7 +20,7 @@ from pathlib import Path, PurePosixPath
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-from tools.build.provenance import sha
+from tools.build.provenance import sha, source_revision
 from tools.build.verify import verify as verify_player, is_runtime_product
 from tools.logging.verify_run import verify_run
 from tools.validation.schema import load_json
@@ -94,6 +94,8 @@ def evidence_binding(report: dict, build: Path, build_info: dict) -> dict:
     revision = report.get("sourceRevision")
     if not isinstance(revision, str) or not re.fullmatch(r"[0-9a-f]{40}", revision):
         raise ValueError("Evidence needs a full sourceRevision or matching playerSha256")
+    if not build_info.get("commit") or source_revision(ROOT) is None:
+        raise ValueError("A source copy without Git history needs matching playerSha256 evidence")
     result = subprocess.run(["git", "diff", "--quiet", build_info["commit"], revision, "--", *RUNTIME_SOURCE_PATHS], cwd=ROOT)
     if result.returncode != 0:
         raise ValueError("Evidence runtime sources differ from packaged player: " + revision)
@@ -207,7 +209,7 @@ def create_package(build: Path, output: Path, evidence: list[Path], sample_run: 
         destination.mkdir(parents=True)
         for name in ("samples.ndjson", "targets.ndjson", "events.ndjson", "session-summary.json"):
             shutil.copy2(sample_run / name, destination / name)
-    revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    revision = source_revision(ROOT)
     info = {
         "schemaVersion": PACKAGE_SCHEMA, "mode": "synthetic-development", "studyReady": False,
         "createdAtUtc": datetime.now(timezone.utc).isoformat(), "recipeSourceRevision": revision,

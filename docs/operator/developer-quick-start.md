@@ -1,9 +1,10 @@
 # Developer quick start
 
 For an illustrated beginner walkthrough, use [setup on multiple computers](multi-machine-setup.md).
-On Windows x64, clone the repository and run root `SETUP-DEV.cmd` to install
+On Windows x64, clone the repository or extract the source ZIP, then run root `SETUP-DEV.cmd` to install
 missing tools, import Unity packages, and run verification. Windows installation
 prompts and Unity account/license steps remain interactive when required.
+Then run `START-ELTS.cmd` to build and open ELTS. Git is optional for this workflow.
 `OPEN-DEV-SHELL.cmd` loads this clone's detected tool paths into PowerShell.
 Use the manual steps below when tools are already installed or in custom locations.
 

@@ -1,5 +1,23 @@
 # ELTS setup on more than one Windows computer
 
+## Just install and run
+
+On a Windows x64 computer, you can use a downloaded ZIP without installing Git:
+
+1. Open [the ELTS repository](https://github.com/AceeEcho/DESS-ELTS-Research-Software), select **main**, and choose **Code > Download ZIP**.
+2. Right-click the download and choose **Extract All**. Use a writable local folder outside OneDrive, such as a folder under your user account. Open the extracted folder that contains `README.md`, `SETUP-DEV.cmd`, and `START-ELTS.cmd`.
+3. Double-click **SETUP-DEV.cmd**. Let it install missing tools, import Unity, and verify the software. Complete any Windows approval and Unity account/license prompts. If Unity licensing stops setup, activate the eligible license in Unity Hub and rerun the same setup script.
+4. After setup reports success, double-click **START-ELTS.cmd**. Allow the first build to finish. The browser administrator dashboard and participant game open. For later runs, use **START-ELTS.cmd**.
+
+A complete copied source folder works too. Git is optional for this workflow;
+without history, builds record hashes of their source files and explicitly mark
+the revision as unversioned. Setup preserves existing local settings and recordings.
+Internet access and permission to install the missing tools are needed on first use.
+The required Editor remains **Unity 6000.3.23f1 LTS**.
+
+The rest of this guide covers the optional GitHub Desktop workflow for editing
+and synchronizing source changes between computers.
+
 This guide gets a beginner from a new Windows computer to the same editable ELTS software repository on two or more machines. It covers the Unity project in `unity/`, the offline browser simulation in `elts-simulation/`, and the analysis and supporting folders in this repository.
 
 The recommended path uses GitHub Desktop. It keeps the repository in a normal local folder such as `C:\Users\YOUR-NAME\source\DESS-ELTS-Research-Software` and uses the included `SETUP-DEV.cmd` to prepare developer tools. The setup script detects what is already installed and downloads missing supported Python, the pinned .NET SDK, pinned Node.js for the browser build, and Unity Hub plus Unity `6000.3.23f1` LTS when needed. Downloads come from official sources and are checksum verified; `winget` is not required. Windows may ask for administrator approval, and Unity may ask you to sign in or accept a license. If a sign-in is required, finish it and run the setup script again.
@@ -45,7 +63,7 @@ There is no automatic sync. Before editing on a computer, pull the latest `main`
 
 ![Illustration of the GitHub Desktop clone form with the repository URL, local path, and Clone button labelled.](images/github-desktop-clone-form.svg)
 
-Do not use **Download ZIP** for an editable multi-machine workflow: a ZIP has no Git history and cannot pull or push changes as a repository. If the repository was already cloned, use **File > Add local repository** and select its folder.
+**Download ZIP** works for installing and running ELTS, but has no Git history and cannot pull or push changes. Use a clone for the editable multi-machine workflow. If the repository was already cloned, use **File > Add local repository** and select its folder.
 
 ### 3. Run the developer setup
 
@@ -120,6 +138,8 @@ Before every editing session on the second computer, close Unity and click **Fet
 **GitHub Desktop cannot sign in or clone.** Check that the browser is signed in to the correct GitHub account and that the repository URL is exactly `https://github.com/AceeEcho/DESS-ELTS-Research-Software`. Ask the repository owner to grant access if the page is unavailable. Do not paste passwords or access tokens into chat or files.
 
 **Git is missing.** GitHub Desktop normally includes the Git it needs. Restart GitHub Desktop after installation. The command-line alternative below requires Git for Windows; install it from [git-scm.com](https://git-scm.com/download/win) only if you need that workflow.
+
+**Setup says the folder is not a Git clone.** You have an older setup script. Download the updated source ZIP and extract it to a new folder, then run **SETUP-DEV.cmd** followed by **START-ELTS.cmd**. Keep the previous folder if it contains recordings or customized settings. Updated setup accepts both source ZIPs and Git clones.
 
 **Setup cannot download or verify a tool.** Check the network connection and the setup report. Do not replace a checksum-verified download with an untrusted mirror. Save the final error text for the project maintainer and rerun `SETUP-DEV.cmd` after the issue is fixed.
 

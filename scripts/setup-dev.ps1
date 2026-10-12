@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Prepare an editable Windows x64 ELTS clone. Safe to rerun after a pull or restart.
+Prepare a Windows x64 ELTS source folder (clone or extracted ZIP). Safe to rerun.
 .DESCRIPTION
 Installs missing tools from checksum-pinned official downloads, imports the Unity
 project, and runs verification. Does not push, change branches, or approve a study.
@@ -26,32 +26,30 @@ try {
     if ($env:OS -ne 'Windows_NT' -or -not [Environment]::Is64BitProcess -or $env:PROCESSOR_ARCHITECTURE -eq 'ARM64') {
         throw 'This setup supports Windows x64. Use 64-bit Windows PowerShell on an Intel/AMD Windows PC.'
     }
-    if (-not (Test-Path -LiteralPath (Join-Path $script:EltsRepositoryRoot '.git'))) {
-        throw 'This folder is not a Git clone. Clone with GitHub Desktop, then run SETUP-DEV.cmd from that clone.'
-    }
     New-Item -ItemType Directory -Force $reportDirectory | Out-Null
     Start-Transcript -Path (Join-Path $reportDirectory 'setup-console.log') -Force | Out-Null
     $transcribing = $true
-    Write-Host 'ELTS development setup: one editable repository on each computer.'
+    Write-Host 'ELTS setup: prepare this source folder to run on this computer.'
     Write-Host 'Close this project in Unity before continuing. Setup may take several minutes.'
     if ($PythonExecutable -and -not (Test-EltsPython $PythonExecutable $manifest)) { throw 'The supplied PythonExecutable is missing or outside the supported version range.' }
     if ($UnityEditor -and -not (Test-EltsEditor $UnityEditor $manifest)) { throw 'The supplied UnityEditor is missing or is not the exact pinned version.' }
     $paths = Get-EltsSetupPaths $manifest $toolRoot $PythonExecutable $UnityEditor
     $report.tools = $paths
-    if ($paths.git) {
+    # Extracted ZIPs and copied source folders have no Git history. Git is only
+    # needed for source-control work, never to install or run the local software.
+    if ($paths.git -and (Test-Path -LiteralPath (Join-Path $script:EltsRepositoryRoot '.git'))) {
         $revision = & $paths.git -C $script:EltsRepositoryRoot rev-parse HEAD
         if ($LASTEXITCODE -ne 0) { throw 'Git could not read this clone. Check its ownership/access in GitHub Desktop.' }
         $report.sourceRevision = ([string]$revision).Trim()
     }
-    foreach ($name in @('git','python','dotnet','node','unity')) {
+    foreach ($name in @('python','dotnet','node','unity')) {
         Write-Host ("{0}: {1}" -f $name, $(if ($paths[$name]) {$paths[$name]} else {'not found / wrong version'}))
     }
     if ($Check) {
-        $missing = @('git','python','dotnet','node','unity') | Where-Object { -not $paths[$_] }
+        $missing = @('python','dotnet','node','unity') | Where-Object { -not $paths[$_] }
         if ($missing) { throw ('Missing tools: ' + ($missing -join ', ') + '. Run SETUP-DEV.cmd to prepare this machine.') }
         $report.result = 'tools-detected'; $report.message = 'Tools detected only. Import, tests and license operation were not checked.'
     } else {
-        if (-not $paths.git) { throw 'Install GitHub Desktop or Git for Windows, reopen this folder, and rerun SETUP-DEV.cmd.' }
         $report.phase = 'install'
         New-Item -ItemType Directory -Force $toolRoot | Out-Null
         try { $installationLock = [IO.File]::Open((Join-Path $toolRoot 'setup.lock'), 'OpenOrCreate', 'ReadWrite', 'None') }
@@ -69,7 +67,7 @@ try {
             Invoke-EltsSetupProcess $paths.unityCli @('install', $manifest.unity.version, '--changeset', $manifest.unity.revision)
             $paths = Get-EltsSetupPaths $manifest $toolRoot $PythonExecutable $UnityEditor
         }
-        foreach ($name in @('git','python','dotnet','node','unity')) {
+        foreach ($name in @('python','dotnet','node','unity')) {
             if (-not $paths[$name]) { throw "$name is unavailable after installation. Inspect diagnostics/setup-console.log and rerun after resolving it." }
         }
         $report.tools = $paths
@@ -101,7 +99,7 @@ try {
         } else {
             Invoke-EltsSetupProcess $shell @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $PSScriptRoot 'verify.ps1')) -TimeoutSeconds 7200
             $report.verificationRun = $true
-            $report.result = 'ready'; $report.message = 'Development setup and verification passed. Ready to edit; no physical/study acceptance.'
+            $report.result = 'ready'; $report.message = 'Setup and software verification passed. Run START-ELTS.cmd to open ELTS. No physical/study acceptance.'
         }
     }
     Write-Host $report.message -ForegroundColor Green

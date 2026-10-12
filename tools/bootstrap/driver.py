@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from tools.config.stage import stage
 from tools.validation.schema import load_json, validate_file
+from tools.build.provenance import source_revision
 
 # Engineering timeouts, not study timing or exposure limits.
 PYTHON_TEST_TIMEOUT_SECONDS = 600
@@ -135,9 +136,8 @@ def run(args) -> tuple[dict, Path]:
     manifest = load_json(ROOT / "config/toolchain.json")
     validate_file(manifest, ROOT / "schemas/build/toolchain.schema.json")
     report_path = relative_output(args.report, f"diagnostics/{args.action}-report.json")
-    revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True)
     report = {"schemaVersion": 1, "action": args.action, "recordedAtUtc": datetime.now(timezone.utc).isoformat(),
-              "result": "pass", "sourceRevision": revision.stdout.strip() or "unversioned",
+              "result": "pass", "sourceRevision": "unversioned",
               "environment": {"os": platform.system(), "python": platform.python_version(), "unityVersion": None},
               "checks": [], "limitations": ["Development diagnostics only; no physical, safety or gate acceptance."]}
 
@@ -158,6 +158,7 @@ def run(args) -> tuple[dict, Path]:
             raise ValueError(f"{identifier} did not run the expected test harness: {expected_output}")
 
     try:
+        report["sourceRevision"] = source_revision(ROOT) or "unversioned"
         minimum = tuple(map(int, manifest["python"]["minimumVersion"].split(".")))
         maximum = tuple(map(int, manifest["python"]["maximumExclusiveVersion"].split(".")))
         if not minimum <= sys.version_info[:2] < maximum:

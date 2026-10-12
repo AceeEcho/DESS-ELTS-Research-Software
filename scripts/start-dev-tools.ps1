@@ -53,7 +53,7 @@ function Invoke-EltsDevelopmentStart {
             $ready = $report.result -eq 'ready' -and $report.toolchainSha256 -eq (Get-FileHash $manifestPath -Algorithm SHA256).Hash
         } catch { $ready = $false }
     }
-    foreach ($name in @('git','python','dotnet','node','unity')) {
+    foreach ($name in @('python','dotnet','node','unity')) {
         if (-not $paths[$name]) { $ready = $false }
     }
     Write-Host 'Starting the ELTS dashboard and participant game.'

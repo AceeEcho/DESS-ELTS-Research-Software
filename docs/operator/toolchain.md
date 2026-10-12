@@ -23,7 +23,10 @@ can build using the exact Editor executable and repository scripts.
 
 The [illustrated guide](multi-machine-setup.md) is the user entry point.
 `scripts/setup-dev.ps1` orchestrates detection, missing-tool installation,
-bootstrap, Unity import, and verification. It requires Windows x64 and a Git clone.
+bootstrap, Unity import, and verification. It requires Windows x64 and the complete
+source folder; an extracted ZIP, copied source folder, or Git clone is supported.
+Git is optional for setup and startup. A build without accessible Git history uses
+source-file hashes and an explicit unversioned-copy identity.
 `-Check` detects tools without installing; it does not claim import or test success.
 `-SkipVerification` still prepares/imports but reports `prepared-unverified`.
 Use `-PythonExecutable` / `-UnityEditor` for custom existing installations.

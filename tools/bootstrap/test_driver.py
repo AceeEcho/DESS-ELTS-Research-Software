@@ -2,12 +2,30 @@ from __future__ import annotations
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
+from argparse import Namespace
 from pathlib import Path
 from datetime import datetime, timezone
 from tools.bootstrap.driver import atomic_json, publish_new, relative_output, validate_unity_results
+from tools.bootstrap import driver
 from tools.validation.schema import load_json, validate_file
 
 class DriverTests(unittest.TestCase):
+    def test_stage_without_git_reports_unversioned_and_preserves_validation(self):
+        # Exercise the actual diagnostic/report path with Git absent, not just
+        # the revision helper. Configuration validation still runs normally.
+        with tempfile.TemporaryDirectory(prefix="ELTS archive diagnostics ") as tmp:
+            report_path = Path(tmp) / "report.json"
+            args = Namespace(action="stage", report=None, unity_editor=None, output=None, check=False)
+            with patch("tools.build.provenance.shutil.which", return_value=None), \
+                    patch.object(driver, "editor_path", return_value=(None, None)), \
+                    patch.object(driver, "relative_output", return_value=report_path), \
+                    patch.object(driver, "stage") as stage:
+                report, _ = driver.run(args)
+            self.assertEqual(report["result"], "pass")
+            self.assertEqual(report["sourceRevision"], "unversioned")
+            stage.assert_called_once_with(driver.ROOT, None, check=False)
+
     def test_output_paths_reject_lexical_escape_and_allow_expected_roots(self):
         self.assertEqual(relative_output("build/test spaces", "ignored").name, "test spaces")
         with self.assertRaises(ValueError): relative_output("build/../release/out", "ignored")

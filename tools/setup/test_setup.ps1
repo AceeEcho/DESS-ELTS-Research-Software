@@ -200,6 +200,33 @@ try {
     try { Initialize-EltsLocalTools -WarningAction SilentlyContinue } catch { $brokenThrew = $true }
     Assert-True (-not $brokenThrew) 'a damaged generated tool-path cache permits setup rediscovery'
     $script:EltsRepositoryRoot = $oldRoot
+
+    # Run the actual setup entry point in a source-only folder. Stub external
+    # installers/Unity, but leave its Git requirements and report decisions real.
+    $sourceCopy = Join-Path $temp 'source copy without Git'
+    New-Item -ItemType Directory -Force (Join-Path $sourceCopy 'scripts'),(Join-Path $sourceCopy 'config') | Out-Null
+    foreach ($name in @('setup-dev.ps1','setup-tools.ps1','common.ps1')) {
+        Copy-Item -LiteralPath (Join-Path $repo ('scripts/' + $name)) -Destination (Join-Path $sourceCopy 'scripts')
+    }
+    Copy-Item -LiteralPath (Join-Path $repo 'config/toolchain.json') -Destination (Join-Path $sourceCopy 'config/toolchain.json')
+    Add-Content -LiteralPath (Join-Path $sourceCopy 'scripts/setup-tools.ps1') -Value @'
+
+# Isolate the setup lock from a real setup running under the same account.
+$env:LOCALAPPDATA = Join-Path $PSScriptRoot '../fixture-account'
+function Get-EltsSetupPaths { return @{git=$null;python='fixture-python';dotnet='fixture-dotnet';node='fixture-node';unity='fixture-unity';unityCli=$null} }
+function Install-EltsMissingTools {}
+function Invoke-EltsSetupProcess {
+    param($File, $Arguments, $TimeoutSeconds)
+    $logIndex = [Array]::IndexOf($Arguments, '-logFile')
+    if ($logIndex -ge 0) { Set-Content -LiteralPath $Arguments[$logIndex + 1] -Value 'fixture import' }
+}
+'@
+    & $powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $sourceCopy 'scripts/setup-dev.ps1') -Check
+    Assert-Equal $LASTEXITCODE 0 'source-only setup check does not require a Git clone or executable'
+    & $powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $sourceCopy 'scripts/setup-dev.ps1')
+    Assert-Equal $LASTEXITCODE 0 'source-only setup completes without Git'
+    $sourceReport = Get-Content -LiteralPath (Join-Path $sourceCopy 'diagnostics/setup-report.json') -Raw | ConvertFrom-Json
+    Assert-True ($sourceReport.result -eq 'ready' -and $sourceReport.verificationRun -and $null -eq $sourceReport.sourceRevision) 'source-only setup runs verification without inventing a Git revision'
 }
 finally {
     $resolvedTemp = [IO.Path]::GetFullPath($temp)

@@ -1,29 +1,42 @@
 # ELTS Research Software
 
-A Windows Unity application, offline browser simulation and analysis tools for
-the built ELTS apparatus. Current operation uses synthetic inputs; testing
-equipment is unavailable and this is not a study-ready release.
+## Download and install
 
-The operator dashboard, participant prompts and offline simulation use a Texas
-Tech visual theme: charcoal surfaces, white text and scarlet (`#E90802`) for
-primary actions and active states. This is a presentation change only; it does
-not change session timing, data logging or hardware boundaries.
+**Windows x64 · Download → Extract → Setup → Start**
 
-## What you can do
+You do not need Git or GitHub Desktop. Setup installs the missing tools for you.
 
-| Feature | Available controls |
-| --- | --- |
-| **Run a desktop station** | One-click Windows startup opens the browser administrator dashboard and a separate Unity participant game. |
-| **Prepare a session** | Reorder four conditions, set individual test times, set practice and break times, and save named browser presets. |
-| **Manage participants** | Create an ID-based recording with an optional name and observations; review multiple sessions under the same profile. |
-| **Control each attempt** | Review a synthetic calibration fixture, run practice, arm a participant-triggered start, pause/resume, stop early, skip or repeat with a reason, and start breaks manually. |
-| **Review results** | Select a task, inspect rates and aim metrics, scrub the graph by active second, and filter individual shots by outcome. |
-| **Save and export** | Continuous raw logging, per-test checkpoints, a local SQLite collection, and Excel, SQLite, review CSV and original-file ZIP exports. |
-| **Adjust the workspace** | Resize the dashboard panes, orbit/zoom the outside preview, and resize or toggle fullscreen for the participant window. |
+### 1. Download the project
 
-All results shown here are synthetic. The four condition codes are **WE_FT**,
-**WE_MT**, **NE_FT** and **NE_MT**; use the dashboard's condition labels when
-arranging the session. Configuration, geometry and device bindings remain editable.
+At the top of [this GitHub page](https://github.com/AceeEcho/DESS-ELTS-Research-Software), leave the branch set to **main** and click the green **Code** button above the file list.
+
+![Click the green Code button outlined at the upper right of the file list.](docs/operator/images/install-guide/01-click-code.jpg)
+
+In the menu that opens, click **Download ZIP** near the bottom.
+
+![Click Download ZIP, outlined at the bottom of the open Code menu.](docs/operator/images/install-guide/02-download-zip.jpg)
+
+### 2. Extract the ZIP
+
+Open your **Downloads** folder. Right-click **DESS-ELTS-Research-Software-main.zip**, choose **Extract All…**, and click **Extract**.
+
+Open the extracted **DESS-ELTS-Research-Software-main** folder. You should see **SETUP-DEV.cmd** and **START-ELTS.cmd**. Run them from this extracted folder, not from inside the ZIP.
+
+### 3. Run setup once
+
+Double-click **SETUP-DEV.cmd** and leave its window open until setup reports success. The first setup downloads tools, imports Unity, and checks the software, so allow time for it to finish.
+
+Complete any Windows installation approval or Unity sign-in/license prompts. If setup stops for Unity licensing, finish activation in Unity Hub and run **SETUP-DEV.cmd** again. Setup uses **Unity 6000.3.23f1 LTS**.
+
+### 4. Start ELTS
+
+Double-click **START-ELTS.cmd**. The first launch builds the application, then opens the **administrator dashboard** in your browser and the **participant game** in a separate window.
+
+**Next time, just run START-ELTS.cmd.** Keep the whole extracted project folder together.
+
+If a step fails, keep the error window open and see [setup troubleshooting](docs/operator/multi-machine-setup.md#if-something-goes-wrong). For GitHub Desktop and updating between computers, see the [full setup guide](docs/operator/multi-machine-setup.md).
+
+---
 
 ## Illustrated user guide
 
@@ -37,21 +50,7 @@ Use this guide to run the **development** version of the administrator dashboard
 
 ### 1. Open the software
 
-1. Clone this repository's **main** branch to a writable folder on your Windows computer. If you already have a copy, finish any active session before pulling updates.
-2. Open the project folder and double-click **START-ELTS.cmd**. This is the one button to use: it installs or reuses the required development tools, builds or reuses the verified player, then opens both the administrator dashboard and participant game. On first use, allow setup and the build to finish. Complete any Unity sign-in or license prompts.
-3. Two windows open: the **administrator dashboard** in your browser and the **participant game**. You do not need to open the Unity Editor to run a test.
-
-For a new checkout with Git installed:
-
-```powershell
-git clone https://github.com/AceeEcho/DESS-ELTS-Research-Software.git
-cd DESS-ELTS-Research-Software
-.\START-ELTS.cmd
-```
-
-Need help installing the prerequisites or using another computer? Follow the
-[illustrated setup guide](docs/operator/multi-machine-setup.md), using **main**
-for the current version. The required Unity version is **6000.3.23f1 LTS**.
+After following [Download and install](#download-and-install), double-click **START-ELTS.cmd** whenever you want to use ELTS. Use the administrator dashboard to prepare and control the session; the participant uses the separate game window.
 
 ![Dashboard overview: Data, New participant and the Settings gear are at the top right; test controls are in the right pane.](docs/operator/images/user-guide/texas-tech/01-dashboard.png)
 

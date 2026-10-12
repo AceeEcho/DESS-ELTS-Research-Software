@@ -1,11 +1,42 @@
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
-from tools.build.provenance import finalize
+from tools.build.provenance import finalize, prepare, source_revision
 from tools.build.verify import verify
 
 
 class BuildProvenanceTests(unittest.TestCase):
+    def test_source_copy_builds_without_git_and_hashes_actual_inputs(self):
+        with tempfile.TemporaryDirectory(prefix="ELTS source copy ") as tmp:
+            root = Path(tmp)
+            for name in ("unity/Packages/manifest.json", "unity/Packages/packages-lock.json",
+                         "unity/Assets/example.cs", "config/local.json", "config/local/tools.json",
+                         "collection data/private/events.ndjson", "unity/Library/cache"):
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("fixture", encoding="utf-8")
+            output = root / "build/player"
+            output.mkdir(parents=True)
+            with patch("tools.build.provenance.subprocess.check_output", side_effect=AssertionError("Git must not run")):
+                first = prepare(root, output, {"unity": {"target": "StandaloneWindows64"}})
+                self.assertIsNone(source_revision(root))
+                self.assertEqual(first["sourceKind"], "unversioned-copy")
+                self.assertIsNone(first["commit"])
+                self.assertIsNone(first["dirty"])
+                self.assertEqual(set(first["sourceFilesSha256"]), {
+                    "unity/Packages/manifest.json", "unity/Packages/packages-lock.json", "unity/Assets/example.cs"})
+                (root / "unity/Assets/example.cs").write_text("changed input", encoding="utf-8")
+                second = prepare(root, output, {"unity": {"target": "StandaloneWindows64"}})
+                self.assertNotEqual(first["version"], second["version"])
+                # Even a copied .git folder must not make Git an installation dependency.
+                (root / ".git").mkdir()
+                with patch("tools.build.provenance.shutil.which", return_value=None):
+                    self.assertIsNone(source_revision(root))
+            (output / "ELTS-Synthetic.exe").write_bytes(b"fixture player")
+            finalize(output, second)
+            self.assertEqual(verify(output)["sourceSha256"], second["sourceSha256"])
+
     def test_recording_checkpoints_and_exports_do_not_invalidate_the_player(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

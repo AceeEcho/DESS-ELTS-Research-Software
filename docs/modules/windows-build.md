@@ -9,11 +9,16 @@ scenes, Development and StrictMode. Failed builds retain diagnostics for review.
 `build-info.json` records commit/tags, dirty state and diff hash, untracked file
 hashes, exact toolchain/package pins, schema hashes, staged configuration hashes,
 UTC build time and artifact hashes. `MANIFEST.sha256` also covers build-info.
+For extracted ZIPs or copies without accessible Git history, `sourceKind` is
+`unversioned-copy`: commit and dirty state are unknown (`null`), and the record
+includes `sourceFilesSha256` and their combined `sourceSha256`. The version is
+`dev-copy-<hash prefix>`. Generated caches and recordings are excluded from source
+hashing. Packaging evidence for these builds must match the player binary hash.
 Run `python -m tools.build.verify build/my-new-build` to verify the products.
 The checksum manifest detects changes; it is not a release signature.
 
-Every player shows a synthetic-development banner and commit version, with a
-dirty/clean suffix. Neither kind authorizes participant data collection. The
+Every player has a synthetic-development version: a commit with a dirty/clean
+suffix, or the source-copy hash above. Neither authorizes study data collection. The
 bootstrap scene is a build shell; later development steps add session behavior.
 Raw Unity logs are excluded from the checksum product list because diagnostics
 can contain account or machine details. Keep them local. Study packaging remains

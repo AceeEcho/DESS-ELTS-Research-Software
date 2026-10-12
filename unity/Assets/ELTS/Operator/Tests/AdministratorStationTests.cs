@@ -262,7 +262,7 @@ namespace Elts.Operator.Tests
                 string original=session.StationRecordingPath;
                 station.ApplyCommand(new JObject{["action"]="skipTest",["blockId"]=session.Engine.CurrentBlockId,["reason"]="Synthetic skip verification"});
                 yield return null;
-                limit=Time.realtimeSinceStartup+15;while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
+                yield return WaitForSave(session);
                 Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockEnded));
                 var skipped=JObject.Parse(File.ReadAllText(Path.Combine(original,"test-checkpoint-NE_FT-attempt-01.json")));
                 Assert.That((string)skipped["status"],Is.EqualTo("Skipped"));
@@ -274,7 +274,7 @@ namespace Elts.Operator.Tests
                 station.ApplyCommand(new JObject{["action"]="arm"});
                 Assert.That(session.StationParticipantTrigger(),Is.True);
                 clock.Advance(TimeSpan.FromSeconds(2));yield return null;
-                limit=Time.realtimeSinceStartup+15;while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
+                yield return WaitForSave(session);
                 Assert.That(File.Exists(Path.Combine(original,"test-checkpoint-NE_FT-attempt-02.json")),Is.True);
                 for(int i=0;i<3;i++)
                 {
@@ -282,7 +282,7 @@ namespace Elts.Operator.Tests
                     Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady));
                     station.ApplyCommand(new JObject{["action"]="skipTest",["blockId"]=session.Engine.CurrentBlockId,["reason"]="Finish fixture without scoring"});
                     yield return null;
-                    limit=Time.realtimeSinceStartup+15;while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
+                    yield return WaitForSave(session);
                 }
                 station.ApplyCommand(new JObject{["action"]="skipBreak",["blockId"]=session.Engine.CurrentBlockId});yield return null;
                 limit=Time.realtimeSinceStartup+15;while(!session.StationCanStartParticipant && Time.realtimeSinceStartup<limit)yield return null;
@@ -299,14 +299,24 @@ namespace Elts.Operator.Tests
                 while((bool)JObject.Parse(station.StateJson())["tools"]["archiveBusy"] && Time.realtimeSinceStartup<limit)yield return null;
                 Assert.That(File.Exists((string)JObject.Parse(station.StateJson())["tools"]["exportPath"]),Is.True);
                 station.ApplyCommand(new JObject{["action"]="repeatTest",["blockId"]="",["condition"]="NE_FT",["reason"]="Repeat after finalization"});
-                limit=Time.realtimeSinceStartup+15;while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
+                yield return WaitForSave(session);
                 Assert.That(session.Engine.CurrentBlockId,Is.EqualTo("NE_FT-attempt-03"));
                 Assert.That(session.StationRecordingPath,Is.Not.EqualTo(original));
                 Assert.That(File.ReadAllText(Path.Combine(original,"events.ndjson")),Is.EqualTo(originalEvents),"A finalized recording is never reopened for writes");
                 session.StationAbort("Fixture complete");yield return null;
-                limit=Time.realtimeSinceStartup+15;while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
+                yield return WaitForSave(session);
             }
             finally{UnityEngine.Object.DestroyImmediate(host);}
+        }
+
+        private static IEnumerator WaitForSave(DevelopmentSessionPanel session)
+        {
+            // First import and background indexing can delay a fixture's save.
+            // This is a test timeout in wall-clock seconds, not session timing.
+            const float SaveTimeoutSeconds=60;
+            float deadline=Time.realtimeSinceStartup+SaveTimeoutSeconds;
+            do { yield return null; } while(session.IsBusy && Time.realtimeSinceStartup<deadline);
+            Assert.That(session.IsBusy,Is.False,"Save did not finish before the next fixture action: "+session.StationMessage);
         }
 
         private static void ReviewFixtureWhenReady(DevelopmentSessionPanel session,DevelopmentTestStation station)

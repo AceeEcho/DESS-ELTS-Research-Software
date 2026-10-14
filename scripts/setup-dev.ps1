@@ -86,18 +86,21 @@ try {
         if (-not $shell) { $shell = Get-EltsCommandPath 'pwsh.exe' }
         if (-not $shell) { throw 'A PowerShell executable is required to run the development wrappers.' }
         $report.phase = 'bootstrap'
-        Invoke-EltsSetupProcess $shell @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $PSScriptRoot 'bootstrap-dev.ps1'))
+        Invoke-EltsSetupProcess $shell @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $PSScriptRoot 'bootstrap-dev.ps1')) `
+            -Activity 'Prepare project configuration' -ReportPaths (Join-Path $reportDirectory 'bootstrap-report.json')
         $report.phase = 'unity-import'
         Write-Host 'Importing Unity packages. If licensing fails, sign in and activate your eligible license in Unity Hub, then rerun setup.'
         $importLog = Join-Path $reportDirectory 'setup-unity-import.log'
         Invoke-EltsSetupProcess $paths.unity @('-batchmode','-nographics','-quit','-projectPath',
-            (Join-Path $script:EltsRepositoryRoot $manifest.unity.projectPath), '-logFile', $importLog)
+            (Join-Path $script:EltsRepositoryRoot $manifest.unity.projectPath), '-logFile', $importLog) `
+            -Activity 'Import project in Unity' -DiagnosticLog $importLog
         if (-not (Test-Path -LiteralPath $importLog -PathType Leaf)) { throw 'Unity did not create the import log.' }
         $report.phase = 'verify'
         if ($SkipVerification) {
             $report.result = 'prepared-unverified'; $report.message = 'Tools, configuration and import prepared; verification was explicitly skipped.'
         } else {
-            Invoke-EltsSetupProcess $shell @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $PSScriptRoot 'verify.ps1')) -TimeoutSeconds 7200
+            Invoke-EltsSetupProcess $shell @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $PSScriptRoot 'verify.ps1')) -TimeoutSeconds 7200 `
+                -Activity 'Verify software before startup' -ReportPaths @((Join-Path $reportDirectory 'doctor-report.json'), (Join-Path $reportDirectory 'test-report.json'))
             $report.verificationRun = $true
             $report.result = 'ready'; $report.message = 'Setup and software verification passed. Run START-ELTS.cmd to open ELTS. No physical/study acceptance.'
         }
@@ -105,7 +108,10 @@ try {
     Write-Host $report.message -ForegroundColor Green
 } catch {
     $report.message = $_.Exception.Message
-    Write-Host ('SETUP STOPPED: ' + $report.message) -ForegroundColor Red
+    Write-Host ("SETUP STOPPED during $($report.phase):`n" + $report.message) -ForegroundColor Red
+    Write-Host "Setup transcript: $(Join-Path $reportDirectory 'setup-console.log')"
+    Write-Host "Setup report: $reportPath"
+    Write-Host "Troubleshooting: $(Join-Path $script:EltsRepositoryRoot 'docs/operator/multi-machine-setup.md')"
 } finally {
     if ($installationLock) { $installationLock.Dispose() }
     New-Item -ItemType Directory -Force $reportDirectory | Out-Null

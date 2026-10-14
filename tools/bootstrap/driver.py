@@ -9,6 +9,7 @@ import argparse
 import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -132,6 +133,84 @@ def editor_path(manifest: dict, explicit: str | None) -> tuple[Path | None, str 
     return path.resolve(), version
 
 
+class CommandFailure(ValueError):
+    """A failed command with its current log and actionable operator message."""
+    def __init__(self, message: str, log: Path):
+        super().__init__(message)
+        self.log = log
+
+
+def command_failure_message(identifier: str, reason: str, output: str, log: Path) -> str:
+    if 'timed out' in reason:
+        advice = ('Check the log for a stalled operation or sign-in prompt. Check for remaining Unity/build processes '
+                  'and close them normally before retrying. Do not launch overlapping builds.')
+    elif 'No valid Unity Editor license' in output or ('unity' in identifier and reason == 'exit 198'):
+        advice = ('Open Unity Hub and sign in. Go to Settings > Licenses > Refresh, or Add license to activate '
+                  'your eligible license. For an organization license, ask its administrator to assign your account '
+                  'a seat. If activation fails, check network/proxy access. Close the Editor, then rerun '
+                  'SETUP-DEV.cmd followed by START-ELTS.cmd. '
+                  'Help: https://docs.unity.com/en-us/hub/manage-license')
+    elif re.search(r'another Unity instance|already open in another|multiple Unity instances', output, re.I):
+        advice = 'Save your work and close this project in Unity, then retry. Do not delete active Unity lock files.'
+    elif re.search(r'error CS\d+|compilation failed|scripts have compiler errors', output, re.I):
+        advice = ('Fix the compiler errors listed in the log, or update to a corrected repository revision, then '
+                  'rerun SETUP-DEV.cmd. If you do not maintain the code, send this log to the project maintainer.')
+    elif re.search(r'FAIL:|Assertion|test.*failed|Failed\s+\w+', output, re.I):
+        advice = ('A software verification check failed. Send the failed assertion and this log to the project '
+                  'maintainer, or update to a revision that fixes it. Keep your local configuration and recordings. '
+                  'Rerun SETUP-DEV.cmd after the fix; do not skip verification to mark setup ready.')
+    else:
+        advice = ('Review the error below and the full log. Correct the reported problem, then rerun the command. '
+                  'If the cause is unclear, send this failed step, log, and diagnostic report to the project maintainer.')
+    lines = output.splitlines()
+    # Include the first error with context, even when cleanup fills the log tail.
+    first = next((i for i, line in enumerate(lines) if re.search(r'error|exception|FAIL:|assert', line, re.I)), None)
+    excerpt = lines[-20:]
+    if first is not None and first < len(lines) - 20:
+        excerpt = lines[first:first + 8] + ['...'] + excerpt
+    excerpt_text = '\n'.join(line[:500] for line in excerpt)
+    return (f'Step: {identifier} ({reason})\nHow to resolve: {advice}\n'
+            f'Log: {log}\nLatest error output:\n{excerpt_text or "No output was captured from this command."}')
+
+
+def run_logged_command(identifier, command_line, log, timeout, expected_output=None, editor_log=None):
+    """Preserve child output on failure/timeout, including Unity's separate log."""
+    started_at = time.time()
+    reason = None
+    try:
+        result = subprocess.run(command_line, cwd=ROOT, capture_output=True, text=True,
+                                encoding="utf-8", errors="replace", timeout=timeout)
+        stdout, stderr = result.stdout, result.stderr
+        if result.returncode:
+            reason = f'exit {result.returncode}'
+        elif expected_output is not None and expected_output not in stdout:
+            reason = f'expected test harness did not run: {expected_output}'
+    except subprocess.TimeoutExpired as exc:
+        # TimeoutExpired can contain bytes even when text=True.
+        def decoded(value):
+            return value.decode('utf-8', errors='replace') if isinstance(value, bytes) else (value or '')
+        stdout, stderr = decoded(exc.stdout), decoded(exc.stderr)
+        reason = f'timed out after {timeout} seconds'
+    except OSError as exc:
+        stdout, stderr = '', str(exc)
+        reason = 'could not start the command'
+    output = (stdout + stderr).replace(str(ROOT), '<repository>')
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text(output, encoding='utf-8')
+    primary_log = log
+    if editor_log is not None:
+        # An old log may describe a different failure. Never diagnose from it.
+        if editor_log.is_file() and editor_log.stat().st_mtime >= started_at:
+            primary_log = editor_log
+            if reason:
+                output += '\n' + editor_log.read_text(encoding='utf-8', errors='replace').replace(str(ROOT), '<repository>')
+        elif reason:
+            output += '\nUnity did not write a fresh Editor log for this attempt.'
+    if reason:
+        raise CommandFailure(command_failure_message(identifier, reason, output, primary_log), primary_log)
+    return primary_log
+
+
 def run(args) -> tuple[dict, Path]:
     manifest = load_json(ROOT / "config/toolchain.json")
     validate_file(manifest, ROOT / "schemas/build/toolchain.schema.json")
@@ -145,17 +224,16 @@ def run(args) -> tuple[dict, Path]:
         report["checks"].append({"id": identifier, "result": result, "message": message, "details": details})
         print(f"{result.upper()}: {identifier}: {message}", flush=True)
 
-    def command(identifier, command_line, timeout=PYTHON_TEST_TIMEOUT_SECONDS, expected_output=None):
-        result = subprocess.run(command_line, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
+    def command(identifier, command_line, timeout=PYTHON_TEST_TIMEOUT_SECONDS, expected_output=None, editor_log=None):
         log = report_path.parent / (args.action + "-" + identifier + ".log")
-        log.parent.mkdir(parents=True, exist_ok=True)
-        log.write_bytes((result.stdout + result.stderr).replace(str(ROOT), "<repository>").encode("utf-8"))
-        check(identifier, "pass" if result.returncode == 0 else "fail", "exit " + str(result.returncode),
-              command=[str(x) for x in command_line], output=log.relative_to(ROOT).as_posix())
-        if result.returncode:
-            raise ValueError(f"{identifier} failed; inspect {log.relative_to(ROOT)}")
-        if expected_output is not None and expected_output not in result.stdout:
-            raise ValueError(f"{identifier} did not run the expected test harness: {expected_output}")
+        try:
+            primary_log = run_logged_command(identifier, command_line, log, timeout, expected_output, editor_log)
+        except CommandFailure as exc:
+            check(identifier, 'fail', str(exc), command=[str(x) for x in command_line],
+                  output=exc.log.relative_to(ROOT).as_posix())
+            raise
+        check(identifier, 'pass', 'exit 0', command=[str(x) for x in command_line],
+              output=primary_log.relative_to(ROOT).as_posix())
 
     try:
         report["sourceRevision"] = source_revision(ROOT) or "unversioned"
@@ -268,8 +346,13 @@ def run(args) -> tuple[dict, Path]:
                             log = report_path.parent / (suite + ".log")
                             command(suite, [str(editor), "-batchmode", "-projectPath", str(ROOT / "unity"),
                                     "-runTests", "-testPlatform", platform_name, "-testResults", str(result_file),
-                                    "-logFile", str(log)], UNITY_TIMEOUT_SECONDS)
-                            validate_unity_results(result_file, started_at)
+                                    "-logFile", str(log)], UNITY_TIMEOUT_SECONDS, editor_log=log)
+                            try:
+                                validate_unity_results(result_file, started_at)
+                            except ValueError as exc:
+                                raise ValueError(f'{exc}\nHow to resolve: Inspect the failed or missing test results, '
+                                                 'then fix the reported test or send these files to the maintainer. '
+                                                 f'Rerun SETUP-DEV.cmd after the fix.\nResults: {result_file}\nLog: {log}') from exc
 
         elif args.action == "build":
             if not editor or not (ROOT / "unity/Assets/Editor/EltsBuild/BuildEntry.cs").is_file():
@@ -282,7 +365,8 @@ def run(args) -> tuple[dict, Path]:
             command("unity-build", [str(editor), "-batchmode", "-quit", "-projectPath", str(ROOT / "unity"),
                     "-buildTarget", manifest["unity"]["target"], "-executeMethod", "Elts.Editor.BuildEntry.BuildWindows",
                     "-eltsBuildOutput", str(output), "-eltsEditorVersion", manifest["unity"]["version"],
-                    "-eltsBuildVersion", provenance["version"], "-logFile", str(output / "unity-build.log")], UNITY_TIMEOUT_SECONDS)
+                    "-eltsBuildVersion", provenance["version"], "-logFile", str(output / "unity-build.log")], UNITY_TIMEOUT_SECONDS,
+                    editor_log=output / "unity-build.log")
             if not (output / "ELTS-Synthetic.exe").is_file():
                 raise ValueError("Unity build exited without the expected Windows executable")
             finalize(output, provenance)

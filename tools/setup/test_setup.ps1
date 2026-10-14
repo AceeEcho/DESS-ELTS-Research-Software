@@ -170,6 +170,55 @@ try {
     try { Invoke-EltsSetupProcess -File $powershell -Arguments @('-NoProfile','-Command','exit 3010') -SuccessCodes @(0,3010) }
     catch { $restartThrew = $_.Exception.Message -match 'requires a Windows restart' }
     Assert-True $restartThrew 'installer reboot exit code is reported as requiring restart'
+    # Exercise the actual process wrapper and nested reports without running
+    # Unity or changing a license. Child fixtures publish diagnostics themselves.
+    $diagnosticLog = Join-Path $temp 'Unity failure.log'
+    $reportFile = Join-Path $temp 'child report.json'
+    $childFixture = Join-Path $temp 'fail-with-diagnostics.ps1'
+    [IO.File]::WriteAllText($childFixture, @'
+param($Log, $Report)
+Set-Content -LiteralPath $Log -Value 'No valid Unity Editor license found. Please activate your license.'
+@{result='failed';message='Fixture nested error: configuration rejected. How to resolve: Correct config/local.json.'} | ConvertTo-Json | Set-Content -LiteralPath $Report
+exit 198
+'@)
+    $message = ''
+    try {
+        Invoke-EltsSetupProcess $powershell @('-NoProfile','-ExecutionPolicy','Bypass','-File',$childFixture,$diagnosticLog,$reportFile) `
+            -Activity 'Import project in Unity' -DiagnosticLog $diagnosticLog
+    } catch { $message = $_.Exception.Message }
+    Assert-True ($message -match 'code 198' -and $message -match 'Settings > Licenses' -and $message.Contains($diagnosticLog)) 'Unity license failure contains cause, activation steps and real log path'
+    $message = ''
+    try {
+        Invoke-EltsSetupProcess $powershell @('-NoProfile','-ExecutionPolicy','Bypass','-File',$childFixture,$diagnosticLog,$reportFile) `
+            -Activity 'Prepare this computer' -ReportPaths $reportFile -RetryCommand 'START-ELTS.cmd'
+    } catch { $message = $_.Exception.Message }
+    Assert-True ($message -match 'Fixture nested error' -and $message -match 'Correct config/local.json' -and $message.Contains($reportFile)) 'launcher preserves child cause and recovery instead of generic PowerShell exit'
+    (Get-Item -LiteralPath $diagnosticLog).LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-1)
+    (Get-Item -LiteralPath $reportFile).LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-1)
+    $message = ''
+    try {
+        Invoke-EltsSetupProcess $powershell @('-NoProfile','-Command','exit 17') `
+            -Activity 'Build app' -DiagnosticLog $diagnosticLog -ReportPaths $reportFile
+    } catch { $message = $_.Exception.Message }
+    Assert-True ($message -match 'code 17' -and $message -match 'did not produce a fresh' -and $message -notmatch 'Settings > Licenses|Fixture nested error') 'old reports and logs cannot misdiagnose current failure'
+    [IO.File]::WriteAllText($childFixture, @'
+param($Report)
+@{result='fail';checks=@(@{id='runtime-config';result='fail';message='exit 17'},@{id='failure';result='fail';message='FAIL: path assertion. How to resolve: Update to the corrected revision. Log: fixture-config.log'})} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $Report
+exit 1
+'@)
+    $message = ''
+    try {
+        Invoke-EltsSetupProcess $powershell @('-NoProfile','-ExecutionPolicy','Bypass','-File',$childFixture,$reportFile) `
+            -Activity 'Verify software before startup' -ReportPaths $reportFile
+    } catch { $message = $_.Exception.Message }
+    Assert-True ($message -match 'FAIL: path assertion' -and $message -match 'Update to the corrected revision' -and $message -match 'fixture-config.log') 'verification reports preserve the failed assertion, recovery and log through PowerShell'
+    [IO.File]::WriteAllText($childFixture, 'param($Report); Set-Content -LiteralPath $Report -Value "{broken"; exit 19')
+    $message = ''
+    try {
+        Invoke-EltsSetupProcess $powershell @('-NoProfile','-ExecutionPolicy','Bypass','-File',$childFixture,$reportFile) `
+            -ReportPaths $reportFile
+    } catch { $message = $_.Exception.Message }
+    Assert-True ($message -match 'code 19' -and $message -match 'Could not read diagnostic report') 'malformed reports do not hide the original process failure'
     Set-Item Function:Invoke-EltsSetupProcess $mockProcessScript
 
     # Probe the actual supplied interpreter when available, including both

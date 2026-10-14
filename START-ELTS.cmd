@@ -6,7 +6,9 @@ set "PSModulePath=%SystemRoot%\System32\WindowsPowerShell\v1.0\Modules;%PSModule
 set "ELTS_START_EXIT=%ERRORLEVEL%"
 if not "%ELTS_START_EXIT%"=="0" (
   echo.
-  echo ELTS could not finish starting. Read the message above and diagnostics\start-console.log.
+  echo ELTS could not finish starting. Read the failed step and How to resolve instructions above.
+  echo Startup log: "%~dp0diagnostics\start-console.log"
+  echo Troubleshooting: "%~dp0docs\operator\multi-machine-setup.md"
   pause
 )
 exit /b %ELTS_START_EXIT%

@@ -37,21 +37,81 @@ function ConvertTo-EltsProcessArgument {
     '"' + ([regex]::Replace([regex]::Replace($Value, '(\\*)"', '$1$1\"'), '(\\+)$', '$1$1')) + '"'
 }
 
+function Get-EltsProcessFailure {
+    param([string]$Reason, [string]$Activity, [string]$DiagnosticLog, [string[]]$ReportPaths,
+          [DateTime]$StartedAt, [string]$RetryCommand)
+    $lines = @("Step: $Activity", $Reason)
+    # Only use reports written by this invocation. An earlier license failure
+    # must not be presented as the cause of a new verification failure.
+    foreach ($path in $ReportPaths) {
+        try {
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf) -or
+                    (Get-Item -LiteralPath $path).LastWriteTimeUtc -lt $StartedAt) { continue }
+            $report = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+            if ($report.result -notin @('fail','failed')) { continue }
+            if ($report.PSObject.Properties['message']) { $lines += $report.message }
+            elseif ($report.PSObject.Properties['checks']) {
+                $failure = @($report.checks | Where-Object { $_.result -eq 'fail' } | Select-Object -Last 1)
+                if ($failure.Count) { $lines += $failure[0].message }
+            }
+            $lines += "Report: $path"
+        } catch { $lines += "Could not read diagnostic report: $path" }
+    }
+    $excerpt = ''
+    if ($DiagnosticLog) {
+        try {
+            if ((Test-Path -LiteralPath $DiagnosticLog -PathType Leaf) -and
+                    (Get-Item -LiteralPath $DiagnosticLog).LastWriteTimeUtc -ge $StartedAt) {
+                $excerpt = (Get-Content -LiteralPath $DiagnosticLog -Tail 30) -join "`n"
+                if ($excerpt.Length -gt 6000) { $excerpt = $excerpt.Substring($excerpt.Length - 6000) }
+                $lines += "Latest log output:`n$excerpt"
+            } else { $lines += 'This attempt did not produce a fresh diagnostic log.' }
+        } catch { $lines += 'The diagnostic log could not be read.' }
+        $lines += "Log: $DiagnosticLog"
+    }
+    if ($Reason -match 'How to resolve:') {
+        # Keep explicit launch/timeout recovery; incidental log text must not
+        # override instructions to inspect a process that may still be running.
+    } elseif ($excerpt -match 'No valid Unity Editor license|Access token is unavailable|com\.unity\.editor\.headless.*not found' -or
+            ($Activity -match 'Unity' -and $Reason -match 'code 198\b')) {
+        $lines += @('How to resolve: Unity could not activate an Editor license.',
+            '1. Open Unity Hub and sign in with the account that owns your license.',
+            '2. Open Settings > Licenses and Refresh. If needed, use Add license to activate your eligible license. For an organization license, ask its administrator to assign your account a seat.',
+            '3. If sign-in or activation fails, check your internet connection and any proxy/firewall restrictions with your administrator.',
+            "4. Close the Unity Editor, then run $RetryCommand.",
+            'Unity license help: https://docs.unity.com/en-us/hub/manage-license')
+    } elseif ($excerpt -match 'another Unity instance|already open in another|multiple Unity instances') {
+        $lines += "How to resolve: Save your work and close this project in Unity, then run $RetryCommand. Do not delete Unity lock files while the Editor is running."
+    } elseif (($lines -join "`n") -notmatch 'How to resolve:') {
+        $lines += "How to resolve: Review the error and log above. After correcting it, run $RetryCommand. If the cause is unclear, send the failed step and these diagnostic files to the project maintainer."
+    }
+    return $lines -join "`n"
+}
+
 function Invoke-EltsSetupProcess {
     param([string]$File, [string[]]$Arguments = @(), [int]$TimeoutSeconds = 3600,
-          [int[]]$SuccessCodes = @(0))
+          [int[]]$SuccessCodes = @(0), [string]$Activity = 'Run prerequisite tool',
+          [string]$DiagnosticLog, [string[]]$ReportPaths = @(), [string]$RetryCommand = 'SETUP-DEV.cmd')
+    $startedAt = [DateTime]::UtcNow
+    $context = @{ Activity=$Activity; DiagnosticLog=$DiagnosticLog; ReportPaths=$ReportPaths;
+        StartedAt=$startedAt; RetryCommand=$RetryCommand }
     $argumentLine = ($Arguments | ForEach-Object { ConvertTo-EltsProcessArgument $_ }) -join ' '
-    $process = Start-Process -FilePath $File -ArgumentList $argumentLine -NoNewWindow -PassThru
+    try { $process = Start-Process -FilePath $File -ArgumentList $argumentLine -NoNewWindow -PassThru }
+    catch {
+        throw (Get-EltsProcessFailure @context -Reason ("Could not start $File. " + $_.Exception.Message +
+            "`nHow to resolve: Check that this executable exists and your Windows account is allowed to run it. Run SETUP-DEV.cmd to detect missing tools; ask your administrator if Windows blocks execution."))
+    }
     # Windows PowerShell can lose the native exit code after a short-lived
     # process exits unless its handle is retained before WaitForExit.
     $null = $process.Handle
     if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
         # Do not kill an installer mid-write. The operator can inspect it safely.
-        throw "Timed out waiting for $File. Check the running process before rerunning setup."
+        throw (Get-EltsProcessFailure @context -Reason ("Timed out after $TimeoutSeconds seconds waiting for $File (process $($process.Id))." +
+            "`nHow to resolve: The process was left running. Check its window and log for an installer or sign-in prompt. Let it finish or close it normally before retrying; do not start a second setup/build."))
     }
     $process.WaitForExit()
     if ($process.ExitCode -notin $SuccessCodes) {
-        throw "$File exited with code $($process.ExitCode). Resolve the displayed error and rerun SETUP-DEV.cmd."
+        throw (Get-EltsProcessFailure @context -Reason "$File exited with code $($process.ExitCode).")
     }
     if ($process.ExitCode -eq 3010) { throw 'Installation requires a Windows restart. Restart, then run SETUP-DEV.cmd again.' }
 }
@@ -168,9 +228,13 @@ function Get-EltsVerifiedDownload {
     # Publish only a complete, verified download. An interrupted transfer is not reused.
     $partial = $Destination + '.partial'
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    Invoke-WebRequest -Uri $Url -OutFile $partial -UseBasicParsing
+    try { Invoke-WebRequest -Uri $Url -OutFile $partial -UseBasicParsing }
+    catch {
+        throw ("Could not download $Url. " + $_.Exception.Message +
+            "`nHow to resolve: Check your internet connection, available disk space, and access to the official download host. Ask your administrator about proxy/firewall restrictions if needed, then run SETUP-DEV.cmd again. The incomplete download will not be used.")
+    }
     if ((Get-FileHash -LiteralPath $partial -Algorithm $Algorithm).Hash -ne $Hash) {
-        throw "Download checksum mismatch: $Url. The installer was not executed."
+        throw "Download checksum mismatch: $Url. The installer was not executed.`nHow to resolve: Run SETUP-DEV.cmd to download and verify it again. If the mismatch repeats, send this URL and diagnostics/setup-console.log to the maintainer to check the download and pinned checksum. Do not disable checksum verification."
     }
     Move-Item -LiteralPath $partial -Destination $Destination -Force
     return $Destination

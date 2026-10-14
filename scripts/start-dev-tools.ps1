@@ -60,7 +60,8 @@ function Invoke-EltsDevelopmentStart {
     if (-not $ready) {
         if (Test-EltsProjectOpen $project) { throw 'Close this project in Unity, then click START-ELTS again so setup can finish.' }
         Write-Host 'Preparing this computer. First startup can take a while; complete any Unity account/license prompts.'
-        Invoke-EltsSetupProcess $shell @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $root 'scripts/setup-dev.ps1')) -TimeoutSeconds 14400
+        Invoke-EltsSetupProcess $shell @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $root 'scripts/setup-dev.ps1')) -TimeoutSeconds 14400 `
+            -Activity 'Prepare this computer' -ReportPaths $reportPath -RetryCommand 'START-ELTS.cmd'
         Initialize-EltsLocalTools
         $paths = Get-EltsSetupPaths $manifest (Join-Path $env:LOCALAPPDATA 'ELTS/Tools') $env:ELTS_PYTHON $env:ELTS_UNITY_EDITOR
     }
@@ -80,7 +81,10 @@ function Invoke-EltsDevelopmentStart {
                     $player = $candidate
                 }
             }
-        } catch { $player = $null }
+        } catch {
+            Write-Warning ("The saved build could not be verified; ELTS will build a fresh copy. " + $_.Exception.Message)
+            $player = $null
+        }
     }
     if (-not $player) {
         if (Test-EltsProjectOpen $project) { throw 'The dashboard needs a build. Close this project in Unity, then click START-ELTS again.' }
@@ -89,7 +93,8 @@ function Invoke-EltsDevelopmentStart {
         Write-Host 'Building the dashboard and participant game...'
         Invoke-EltsSetupProcess $shell @('-NoProfile','-ExecutionPolicy','Bypass','-File',
             (Join-Path $root 'scripts/build.ps1'), '-Output', $output,
-            '-PythonExecutable', $paths.python, '-UnityEditor', $paths.unity) -TimeoutSeconds 3600
+            '-PythonExecutable', $paths.python, '-UnityEditor', $paths.unity) -TimeoutSeconds 3600 `
+            -Activity 'Build dashboard and participant game' -ReportPaths (Join-Path $root 'diagnostics/build-report.json') -RetryCommand 'START-ELTS.cmd'
         $player = Join-Path $root ($output + '/ELTS-Synthetic.exe')
         if (-not (Test-Path -LiteralPath $player -PathType Leaf)) { throw 'Build finished without a dashboard executable.' }
         # Staging during the build can change generated Assets, so hash afterwards.

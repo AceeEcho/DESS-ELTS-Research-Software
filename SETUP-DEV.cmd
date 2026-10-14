@@ -6,6 +6,11 @@ set "PSModulePath=%SystemRoot%\System32\WindowsPowerShell\v1.0\Modules;%PSModule
 "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\setup-dev.ps1" %*
 set "ELTS_SETUP_EXIT=%ERRORLEVEL%"
 echo.
-if not "%ELTS_SETUP_EXIT%"=="0" echo Setup needs attention. Read the message above and docs\operator\multi-machine-setup.md.
+if not "%ELTS_SETUP_EXIT%"=="0" (
+  echo Setup needs attention. Read the failed step and How to resolve instructions above.
+  echo Setup log: "%~dp0diagnostics\setup-console.log"
+  echo Setup report: "%~dp0diagnostics\setup-report.json"
+  echo Troubleshooting: "%~dp0docs\operator\multi-machine-setup.md"
+)
 pause
 exit /b %ELTS_SETUP_EXIT%

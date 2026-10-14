@@ -60,12 +60,22 @@ internal static class ConfigChecks
             Directory.CreateDirectory(Path.Combine(clone, "unity", "ProjectSettings"));
             File.WriteAllText(Path.Combine(clone, "config", "toolchain.json"), "{}");
             File.WriteAllText(Path.Combine(clone, "unity", "ProjectSettings", "ProjectVersion.txt"), "fixture");
-            string expected = Path.Combine(clone, config.Machine.DataRoot);
-            Assert(config.Machine.ResolveDataRoot(Path.Combine(clone, "unity")) == expected, "Editor saves at project root");
-            Assert(config.Machine.ResolveDataRoot(Path.Combine(clone, "build", "first player")) == expected, "Built player saves at project root");
-            Assert(config.Machine.ResolveDataRoot(Path.Combine(clone, "build", "rebuilt player")) == expected, "Rebuild preserves collection location");
-            string portable = Path.Combine(pathFixture, "portable player");
-            Assert(config.Machine.ResolveDataRoot(portable) == Path.Combine(portable, config.Machine.DataRoot), "Portable player retains a writable installation-relative location");
+            // Cover both old machine settings and the current default, even
+            // when the machine running setup uses only one of them. Normalize
+            // expected separators just as the resolver does on Windows.
+            foreach (string dataRoot in new[] { config.Machine.DataRoot, "data/synthetic", "collection data" }.Distinct())
+            {
+                var machine = new MachineConfiguration(new JObject {
+                    ["participantDisplayIndex"] = 0, ["operatorDisplayIndex"] = 1,
+                    ["dataRoot"] = dataRoot, ["eltsEndpoint"] = "mock://elts"
+                });
+                string expected = Path.GetFullPath(Path.Combine(clone, dataRoot));
+                Assert(machine.ResolveDataRoot(Path.Combine(clone, "unity")) == expected, "Editor saves at project root: " + dataRoot);
+                Assert(machine.ResolveDataRoot(Path.Combine(clone, "build", "first player")) == expected, "Built player saves at project root: " + dataRoot);
+                Assert(machine.ResolveDataRoot(Path.Combine(clone, "build", "rebuilt player")) == expected, "Rebuild preserves collection location: " + dataRoot);
+                string portable = Path.Combine(pathFixture, "portable player");
+                Assert(machine.ResolveDataRoot(portable) == Path.GetFullPath(Path.Combine(portable, dataRoot)), "Portable player retains a writable installation-relative location: " + dataRoot);
+            }
         }
         finally { if (Directory.Exists(pathFixture)) Directory.Delete(pathFixture, true); }
         Assert(config.Mode == "synthetic" && !config.StudyReady, "synthetic mode is explicit");

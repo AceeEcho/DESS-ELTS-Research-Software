@@ -29,13 +29,15 @@ function Start-EltsVisibleApp {
     }
 }
 function Invoke-EltsSetupProcess {
-    param($File, $Arguments, $TimeoutSeconds)
+    param($File, $Arguments, $TimeoutSeconds, $Activity, $ReportPaths, $RetryCommand)
     if (($Arguments -join ' ') -match 'setup-dev.ps1') {
+        Assert ($ReportPaths -eq (Join-Path $fixture 'diagnostics/setup-report.json') -and $RetryCommand -eq 'START-ELTS.cmd') 'Startup must preserve setup diagnostics and its retry command'
         $script:calls.Add('setup')
         if ($script:failSetup) { throw 'fixture setup failed' }
         @{result='ready';toolchainSha256=(Get-FileHash (Join-Path $fixture 'config/toolchain.json')).Hash} |
             ConvertTo-Json | Set-Content (Join-Path $fixture 'diagnostics/setup-report.json')
     } elseif (($Arguments -join ' ') -match 'build.ps1') {
+        Assert ($ReportPaths -eq (Join-Path $fixture 'diagnostics/build-report.json') -and $Activity -match 'Build') 'Startup must preserve build diagnostics and failed step'
         $script:calls.Add('build')
         if ($script:failBuild) { throw 'fixture build failed' }
         $output = $Arguments[[Array]::IndexOf($Arguments, '-Output') + 1]

@@ -135,6 +135,31 @@ Before every editing session on the second computer, close Unity and click **Fet
 
 ## If something goes wrong
 
+**Start with the last error window.** Setup and startup now show the failed step,
+the underlying tool error, **How to resolve** instructions, and the full paths to
+the relevant logs/reports. A PowerShell exit code is a wrapper failure; read the
+underlying Unity or verification error below it. Logs are from the current attempt;
+if no fresh log was produced, the message says so instead of showing an old error.
+
+| Error shown | What to do |
+| --- | --- |
+| Unity exit **198** / **No valid Unity Editor license found** | Open **Unity Hub**, sign in, then open **Settings > Licenses > Refresh**. Use **Add license** if needed. Activate the license appropriate for your account; an organization license may require its administrator to assign a seat. If activation fails, check network/proxy access. Close the Editor and rerun **SETUP-DEV.cmd**, then **START-ELTS.cmd**. See [Unity's license guide](https://docs.unity.com/en-us/hub/manage-license). |
+| **runtime-config** / **Editor saves at project root** | Older revisions incorrectly compared Windows path separators when a machine used `data/synthetic`. Update to the corrected source and rerun **SETUP-DEV.cmd**. Keep `config/local.json` and your recordings; changing or deleting the data folder is unnecessary. |
+| **error CS…** / compiler errors | The Unity log names the source file and compiler error. Update to a corrected revision or send that log to the maintainer. Rerun setup after the code is fixed. |
+| Another Unity instance / startup lock | Save your work and close this project in the Editor, or let the existing setup/startup window finish. Retry after it ends. Do not delete lock files while their processes are running. |
+| A verification assertion failed | Keep the error, failed-check log, and `diagnostics/test-report.json`. Send them to the maintainer or update to the revision that fixes the check, then rerun setup. Do not bypass verification or delete recordings to clear an assertion. |
+| Timed out | Read the log for progress or a prompt. The PowerShell launcher leaves a timed-out process running to avoid interrupting installers. Check for remaining setup/Unity processes and let them finish or close them normally before retrying. |
+
+**Where to find details:** `diagnostics/start-console.log` records startup;
+`diagnostics/setup-console.log` and `setup-report.json` record setup;
+`diagnostics/setup-unity-import.log` records Unity import/licensing;
+`diagnostics/test-report.json` identifies each verification log. A build failure
+points to the actual `build/start-elts-…/unity-build.log`, rather than an empty
+console capture. Direct builds use the output directory you selected. Copy the
+error and named files before retrying if you need to preserve them: subsequent
+runs replace diagnostic reports. Share only the relevant diagnostic files with
+the maintainer, not participant recordings or license files.
+
 **GitHub Desktop cannot sign in or clone.** Check that the browser is signed in to the correct GitHub account and that the repository URL is exactly `https://github.com/AceeEcho/DESS-ELTS-Research-Software`. Ask the repository owner to grant access if the page is unavailable. Do not paste passwords or access tokens into chat or files.
 
 **Git is missing.** GitHub Desktop normally includes the Git it needs. Restart GitHub Desktop after installation. The command-line alternative below requires Git for Windows; install it from [git-scm.com](https://git-scm.com/download/win) only if you need that workflow.

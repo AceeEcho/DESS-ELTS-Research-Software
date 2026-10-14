@@ -1,5 +1,21 @@
 {
   "name": "Elts.Operator",
-  "references": ["Elts.Config", "Elts.Geometry", "Elts.Rendering", "Elts.Session", "Elts.Clock", "Elts.Tracking", "Elts.Logging", "Elts.Scenario", "Elts.Calibration", "Elts.EltsLink", "Elts.Development", "Unity.Newtonsoft.Json", "Unity.InputSystem"],
+  "references": [
+    "Elts.Config",
+    "Elts.Geometry",
+    "Elts.Rendering",
+    "Elts.Session",
+    "Elts.Clock",
+    "Elts.Tracking",
+    "Elts.Logging",
+    "Elts.Scenario",
+    "Elts.Calibration",
+    "Elts.EltsLink",
+    "Elts.Development",
+    "Unity.Newtonsoft.Json",
+    "Unity.InputSystem",
+    "Unity.RenderPipelines.Core.Runtime",
+    "Unity.RenderPipelines.Universal.Runtime"
+  ],
   "autoReferenced": true
 }

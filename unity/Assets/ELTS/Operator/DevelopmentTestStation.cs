@@ -49,7 +49,7 @@ namespace Elts.Operator
         private bool held,wasArmed;
         private string? heldBlock;
         private long imageVersion;
-        private float orbitYaw=145,orbitPitch=20,orbitDistance=4,nextState;
+        private float orbitYaw=0,orbitPitch=5,orbitDistance=20,nextState;
         private readonly List<RunRow> blocks=new List<RunRow>();
         private string knownRun="";
         private sealed class RunRow
@@ -221,7 +221,7 @@ namespace Elts.Operator
                 case "abort": session.StationAbort((string?)command["reason"]??"");CancelClick();break;
                 case "note": session.StationNote((string?)command["text"]??"");break;
                 case "viewOrbit":
-                    orbitYaw=Finite(command,"yaw",orbitYaw);orbitPitch=Mathf.Clamp(Finite(command,"pitch",orbitPitch),-10,80);orbitDistance=Mathf.Clamp(Finite(command,"distance",orbitDistance),1.5f,12);
+                    orbitYaw=Finite(command,"yaw",orbitYaw);orbitPitch=Mathf.Clamp(Finite(command,"pitch",orbitPitch),-10,80);orbitDistance=Mathf.Clamp(Finite(command,"distance",orbitDistance),1.5f,20);
                     view.SetOperatorOrbit(orbitYaw,orbitPitch,orbitDistance);break;
                 case "windowed": SetFullscreen(false);break;
                 case "fullscreen": SetFullscreen(true);break;

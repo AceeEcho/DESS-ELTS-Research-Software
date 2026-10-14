@@ -19,7 +19,7 @@
   let state = null, order = conditions.slice(), pollBusy = false, viewVersion = null;
   let workflows, dataViewer;
   let refreshIdle = Promise.resolve();
-  let orbit = { yaw: 0, pitch: 0, distance: 1 }, dragging = false, lastPoint = null;
+  let orbit = { yaw: 0, pitch: 5, distance: 20 }, dragging = false, lastPoint = null;
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const command = async (action, payload = {}) => {
     const response = await fetch('/api/command', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Elts-Token': token }, body: JSON.stringify({ action, runId: state?.runId || '', blockId: state?.blockId || '', ...payload }) });
@@ -104,7 +104,7 @@
   $('headTracking').textContent = tracking.head?.valid ? 'Valid signal' : 'No signal';
   $('weaponTracking').textContent = tracking.weapon?.valid ? 'Valid signal' : 'No signal';
   if (!dragging && !orbitPending && !orbitDirty && performance.now() > orbitLocalUntil) { const camera = state?.camera || orbit;
-  orbit = { yaw: Number(camera.yaw || 0), pitch: Math.max(-10, Math.min(80, Number(camera.pitch || 0))), distance: Math.max(1.5, Math.min(12, Number(camera.distance || 4))) }; }
+  orbit = { yaw: Number(camera.yaw || 0), pitch: Math.max(-10, Math.min(80, Number(camera.pitch || 0))), distance: Math.max(1.5, Math.min(20, Number(camera.distance || 20))) }; }
     $('cameraInfo').textContent = `${Math.round(orbit.yaw)}° · ${Math.round(orbit.pitch)}° · ${orbit.distance.toFixed(1)} m`;
   }
   function renderImage() {
@@ -285,7 +285,7 @@
   viewport.addEventListener('pointercancel', endOrbit);
   viewport.addEventListener('lostpointercapture', endOrbit);
   viewport.addEventListener('wheel', (event) => { event.preventDefault();
-    orbit.distance = Math.max(1.5, Math.min(12, orbit.distance + event.deltaY * .01));
+    orbit.distance = Math.max(1.5, Math.min(20, orbit.distance + event.deltaY * .01));
     sendOrbit(); renderTracking();
   }, { passive: false });
   viewport.addEventListener('keydown', event => {
@@ -296,11 +296,11 @@
     if (event.key === 'ArrowUp') orbit.pitch = Math.max(-10, orbit.pitch - 5);
     if (event.key === 'ArrowDown') orbit.pitch = Math.min(80, orbit.pitch + 5);
     if (event.key === '+') orbit.distance = Math.max(1.5, orbit.distance - .2);
-    if (event.key === '-') orbit.distance = Math.min(12, orbit.distance + .2);
+    if (event.key === '-') orbit.distance = Math.min(20, orbit.distance + .2);
     sendOrbit(); renderTracking();
   });
   $('cameraDistance').addEventListener('input', () => { orbit.distance = Number($('cameraDistance').value); sendOrbit(); });
-  $('resetCamera').addEventListener('click', () => { orbit = { yaw:145, pitch:20, distance:4 }; $('cameraDistance').value = 4; sendOrbit(); });
+  $('resetCamera').addEventListener('click', () => { orbit = { yaw:0, pitch:5, distance:20 }; $('cameraDistance').value = 20; sendOrbit(); });
   $('splitHandle').addEventListener('pointerdown', (event) => { const workspace = $('workspace');
   const move = (e) => { const ratio = Math.max(.3, Math.min(.65, (workspace.getBoundingClientRect().right - e.clientX) / workspace.clientWidth));
   document.documentElement.style.setProperty('--pane', `${ratio * 100}%`);

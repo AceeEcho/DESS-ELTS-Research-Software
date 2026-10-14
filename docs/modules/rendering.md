@@ -30,6 +30,22 @@ states that the geometry uses the currently staged synthetic configuration.
 Replay is a bounded development viewer, not primary analysis; see
 `replay-reader.md` and `analysis.md` for their separate contracts.
 
+## Window and floor perspective
+
+The development rig assumes the display's lower edge is **4 feet (1.2192 m)**
+above the floor. `screenBottomHeightAboveFloorM` in the rig configuration is the
+single source for this assumption. `RigConfiguration.VirtualFloorY` derives the
+horizontal floor from the configured screen-bottom midpoint; existing tracked
+poses and screen corners are not shifted or rescaled.
+
+The participant camera still uses the physical screen rectangle and eye position
+to form an off-axis window. It does not widen a game-camera field of view to make
+targets look smaller. A ray through the lower screen edge continues to the same
+virtual floor plane, and moving the eye changes parallax around that window.
+The room, bot feet, crouch interpretation, shot regions and cover bases all use
+the same floor height. This is a synthetic room assumption, not a measured
+registration of the physical room.
+
 From the repository root:
 
 ```powershell
@@ -57,20 +73,51 @@ refresh rate. Synthetic rendering does not pass those physical criteria.
 
 ## Synthetic target appearance
 
-Runtime targets are one consistent clothed character assembled from rounded Unity
-meshes: jacket, shirt, trousers, shoes, hands, hair and face. The standing and
-crouched silhouettes use the same virtual-metre dimensions as the head, body and
-limb hit regions. Three visible cover styles are stacked crates, a concrete barrier
-and steel drums. Fixed targets stand in front of the cover; moving targets run
-behind it and repeatedly crouch and peek. Both participant and administrator
-cameras render the same objects. Cover and actors have no active Unity colliders;
-the deterministic shot model owns hit and occlusion geometry. This is synthetic
-visual presentation, not a physical lighting or calibration model.
+Runtime targets use the sourced Quaternius CC0 skinned mannequin with an ivory
+shell and charcoal joints. Standing height is fitted to the synthetic anatomy.
+Idle, walk, jog, crouched idle and crouched walk clips blend on its skeleton;
+crouching bends joints rather than scaling the character. Foot-height correction
+keeps the supporting foot at the fitted floor height, and the visual child turns
+toward travel. Distance drives stride phase and speed drives gait weights.
+Reading desks and low bookcases provide cover between open aisle positions.
+Both participant and administrator cameras render the same objects. Cover and
+actors have no active Unity colliders; the deterministic shot model owns hit and
+occlusion geometry. This is synthetic visual presentation, not a physical lighting
+or calibration model.
 
-`DevelopmentView` exposes `Training Room` settings in the Inspector: width, height,
-depth, floor offset, tile spacing, surface colors and daylight direction/intensity.
-The default 12 x 26 x 6 metre room has pale walls, a tiled floor, overhead beams and
-high daylight panels. A shadow-casting directional light shares its direction with
-the target material. The old edit-mode floor scaffold is hidden during runtime.
-The shell has no active colliders and does not change hit geometry or camera
-projection. The open near end lets the administrator inspect the scene by orbiting.
+`DevelopmentView` exposes `Mannequin Animation` settings for gait speeds in
+metres/second, blend duration and turn speed. Session active time drives animation:
+pauses retain the exact pose and resumes continue from it. Replay seeks reset
+the presentation blend; skeletal poses are illustrative and are not recorded
+tracking data. The scenario root stays at the supplied position. The existing
+analytic head/body/limb volumes remain authoritative, so the animated mesh is
+not a pixel-exact hit mask. Root motion, autonomous animation playback and visual
+colliders are disabled.
+
+`DevelopmentView` exposes `Training Room` settings in the Inspector: dimensions,
+surface colors, ambient fill, ceiling bounce and daylight direction/intensity.
+The enclosed 30 x 52 x 4.8 metre library uses scanned oak, woven carpet and plaster,
+three circulation aisles, perimeter study tables/chairs, a quiet-study alcove,
+framed glazing, detailed collections and suspended lights below acoustic rafts.
+Poly Haven CC0 asset sources and hashes are in `licenses/PolyHaven-Library/README.md`
+and included with the player. The room is still procedural virtual scenery.
+
+URP renders soft directional shadows, ambient occlusion, a soft ceiling fill and
+neutral tonemapping with restrained bloom/color adjustment (`Resources/ELTS/LibraryColor`).
+The shell receives lighting but does not cast shadows: this is a daylight/bounce
+approximation, not baked or physically measured illumination. Existing scene lights
+are temporarily disabled and restored when the development view is destroyed.
+The old floor scaffold is hidden during runtime. All four walls and the ceiling
+are closed; decorative windows are luminous surfaces. Camera projection is unchanged.
+The serialized `LibrarySurface` and `LibraryEmission` resource materials retain
+normal-map and emissive shader variants in player builds. Rebuild those templates
+with **ELTS > Development > Rebuild library material templates** if their source
+shader changes.
+
+Reading desks have separate tabletop, support and modesty-panel hit volumes so
+the visible gap underneath remains open to shots. Bookcases retain closed backing.
+
+Thirty dummies use 50 positions among open aisles, low bookcases and reading desks.
+Furniture in the target field is rendered from the same bounds used by the shot
+model; perimeter decorations remain presentation only. See [scenario behavior](scenario.md)
+for fixed replacement and the versioned moving-route sequence.

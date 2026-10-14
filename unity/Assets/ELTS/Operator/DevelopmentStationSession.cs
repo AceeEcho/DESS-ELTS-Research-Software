@@ -236,7 +236,7 @@ namespace Elts.Operator
                 engine.StartBlock();
                 if(engine.State!=SessionState.BlockRunning)return false;
                 scenario!.Refresh(0,pair.Head.Pose);
-                view.SetSessionFrame(pair.Head.Pose,pair.Weapon.Pose,scenario.Positions);
+                view.SetSessionFrame(pair.Head.Pose,pair.Weapon.Pose,scenario.Positions,engine.CurrentActiveSeconds);
                 lastMessage="Test running.";return true;
             }
             if(engine.State!=SessionState.BlockRunning)return false;

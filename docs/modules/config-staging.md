@@ -23,6 +23,12 @@ explicitly `synthetic_only`, and all geometry is marked
 is limited to the local schema; it cannot override study, rig, safety, or
 calibration fields.
 
+The synthetic rig explicitly sets `screenBottomHeightAboveFloorM` to `1.2192`
+(four feet). Runtime derives the virtual floor from the display-bottom midpoint
+minus this clearance. The field is optional for older configurations, which use
+the same development default; values outside 0.1–3 m are rejected. This records
+an assumed room layout without changing the screen calibration or raw poses.
+
 ```text
 python tools/config/stage.py --write
 python tools/config/stage.py --check

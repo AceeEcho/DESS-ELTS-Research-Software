@@ -13,7 +13,7 @@ namespace Elts.Operator.Editor
     {
         private const string RootName = "ELTS synthetic environment (unmeasured)";
         private const int StimulusLayer = DevelopmentView.StimulusLayer, OperatorLayer = DevelopmentView.OperatorLayer;
-        private const float GridStepMetres = 0.5f, FloorMarginMetres = 1.25f, FloorDropMetres = 0.8f;
+        private const float GridStepMetres = 1f, FloorMarginMetres = 3f;
 
         public static DevelopmentEnvironment CreateOrUpdate(Transform host)
         {
@@ -32,8 +32,8 @@ namespace Elts.Operator.Editor
             var targetMaterial=Material("ELTS_EnvironmentTarget",new Color(0.98f,0.66f,0.14f));
             var rayMaterial=Material("ELTS_EnvironmentRay",new Color(0.9f,0.25f,0.22f));
             var screen=configuration.Rig.Display;
-            CreateConfiguredFloor(floor,screen,configuration.Scenario.TargetDistanceM,floorMaterial,frameMaterial);
-            CreateConfiguredDisplay(display,screen,frameMaterial);
+            CreateConfiguredFloor(floor,screen,configuration.Scenario.TargetDistanceM,configuration.Rig.VirtualFloorY,floorMaterial,frameMaterial);
+            CreateConfiguredDisplay(display,screen,configuration.Rig.VirtualFloorY,frameMaterial);
             CreateEditPreviews(preview,screen,configuration,desktopInput,frameMaterial,targetMaterial,rayMaterial);
             var participant=CreateCamera(cameras,"Participant display camera (configured at Play)",ToUnity(desktopInput.Head.Position),ToUnity(desktopInput.Head.Orientation));
             var outside=CreateCamera(cameras,"Operator outside view (configured at Play)",new Vector3(-3.2f,2.4f,-3.4f),Quaternion.Euler(18,42,0));
@@ -41,20 +41,33 @@ namespace Elts.Operator.Editor
             return environment;
         }
 
-        private static void CreateConfiguredFloor(Transform parent,ScreenPlane screen,double targetDistanceMetres,Material floorMaterial,Material gridMaterial)
+        private static void CreateConfiguredFloor(Transform parent,ScreenPlane screen,double targetDistanceMetres,double floorY,Material floorMaterial,Material gridMaterial)
         {
-            var centre=ScreenCentre(screen);var normalStart=-DesktopInputModel.InitialEyeDistanceMetres-FloorMarginMetres;var normalEnd=targetDistanceMetres+FloorMarginMetres;
-            var width=screen.Width+FloorMarginMetres*2;var depth=normalEnd-normalStart;var floorCentre=centre+screen.Normal*((normalStart+normalEnd)*0.5)-screen.V*(screen.Height*0.5+FloorDropMetres);var rotation=BasisRotation(screen);
-            CreateCube(parent,"Floor slab (synthetic)",ToUnity(floorCentre),rotation,new Vector3((float)width,0.04f,(float)depth),floorMaterial,StimulusLayer);
+            var centre=ScreenCentre(screen);
+            var forward=Vector3.ProjectOnPlane(ToUnity(screen.Normal),Vector3.up).normalized;
+            if(forward.sqrMagnitude<.001f)forward=Vector3.forward;
+            var right=Vector3.Cross(Vector3.up,forward);
+            var rotation=Quaternion.LookRotation(forward,Vector3.up);
+            var origin=new Vector3((float)centre.X,(float)floorY,(float)centre.Z);
+            var normalStart=-DesktopInputModel.InitialEyeDistanceMetres-FloorMarginMetres;
+            var normalEnd=targetDistanceMetres+FloorMarginMetres;
+            var width=screen.Width+FloorMarginMetres*2;var depth=normalEnd-normalStart;
+            var middle=origin+forward*(float)((normalStart+normalEnd)*.5);
+            CreateCube(parent,"Floor slab (synthetic)",middle-Vector3.up*.02f,rotation,new Vector3((float)width,.04f,(float)depth),floorMaterial,StimulusLayer);
             for(double u=-FloorMarginMetres;u<=screen.Width+FloorMarginMetres+0.001;u+=GridStepMetres)
-                CreateCube(parent,"Grid U "+u.ToString("F1")+" m",ToUnity(screen.Origin+screen.U*u+screen.Normal*((normalStart+normalEnd)*0.5)-screen.V*(FloorDropMetres-0.025)),rotation,new Vector3(0.012f,0.012f,(float)depth),gridMaterial,StimulusLayer);
+                CreateCube(parent,"Grid U "+u.ToString("F1")+" m",middle+right*(float)(u-screen.Width*.5)+Vector3.up*.003f,rotation,new Vector3(.012f,.006f,(float)depth),gridMaterial,StimulusLayer);
             for(double n=normalStart;n<=normalEnd+0.001;n+=GridStepMetres)
-                CreateCube(parent,"Grid normal "+n.ToString("F1")+" m",ToUnity(centre+screen.Normal*n-screen.V*(screen.Height*0.5+FloorDropMetres-0.025)),rotation,new Vector3((float)width,0.012f,0.012f),gridMaterial,StimulusLayer);
+                CreateCube(parent,"Grid normal "+n.ToString("F1")+" m",origin+forward*(float)n+Vector3.up*.003f,rotation,new Vector3((float)width,.006f,.012f),gridMaterial,StimulusLayer);
         }
-        private static void CreateConfiguredDisplay(Transform parent,ScreenPlane screen,Material material)
+        private static void CreateConfiguredDisplay(Transform parent,ScreenPlane screen,double floorY,Material material)
         {
             CreateFrame(parent,"Physical screen position",ToUnity(ScreenCentre(screen)),BasisRotation(screen),new Vector2((float)screen.Width,(float)screen.Height),material,OperatorLayer);
-            foreach(var u in new[]{0.08,screen.Width-0.08})CreateCube(parent,"Display support (reference)",ToUnity(screen.Origin+screen.U*u-screen.V*0.45),BasisRotation(screen),new Vector3(0.045f,0.9f,0.045f),material,OperatorLayer);
+            foreach(var u in new[]{.08,screen.Width-.08})
+            {
+                var top=screen.Origin+screen.U*u;
+                float height=(float)(top.Y-floorY);
+                CreateCube(parent,"Display support (reference)",ToUnity(top)-Vector3.up*(height*.5f),Quaternion.identity,new Vector3(.045f,height,.045f),material,OperatorLayer);
+            }
         }
         private static void CreateEditPreviews(Transform parent,ScreenPlane screen,DevelopmentConfiguration configuration,DesktopInputModel desktop,Material headMaterial,Material targetMaterial,Material rayMaterial)
         {

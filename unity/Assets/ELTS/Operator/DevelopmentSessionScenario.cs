@@ -12,8 +12,8 @@ using Elts.Tracking;
 namespace Elts.Operator
 {
     /// <summary>
-    /// Synthetic scenario presentation and canonical target recording. Spawn
-    /// dimensions and random-walk timing below are development choices, not
+    /// Synthetic scenario presentation and canonical target recording. Library
+    /// dimensions and indexed route timing are development choices, not
     /// approved D-04 tuning. All positions and velocities use room metres.
     /// </summary>
     public sealed class DevelopmentSessionScenario
@@ -28,7 +28,7 @@ namespace Elts.Operator
         private ManualMagazine magazine;
         private readonly ISessionEventSequence eventSequence;
         private double nextAimAt;
-        private ScenarioPopulation? population;
+        private LibraryTargetPopulation? population;
         private ScenarioDefinition? definition;
         private Vector3d layoutCenter;
         private bool movingBlock;
@@ -37,6 +37,7 @@ namespace Elts.Operator
         private long targetSequence;
         private readonly Dictionary<string,TargetState> recordedStates = new Dictionary<string,TargetState>();
         private readonly Dictionary<string,Vector3d> positions = new Dictionary<string,Vector3d>();
+        private readonly HashSet<string> recordedEntries = new HashSet<string>();
         public IReadOnlyDictionary<string,Vector3d> Positions => positions;
         public string LastShot { get; private set; } = "No shot";
         public int ShotCount { get; private set; }
@@ -59,7 +60,8 @@ namespace Elts.Operator
             DevelopmentGameSettings? gameSettings=null)
         {
             this.config=config;this.clock=clock;this.engine=engine;this.recording=recording;
-            this.gameSettings=(gameSettings??new DevelopmentGameSettings()).Copy();this.gameSettings.Validate();
+            this.gameSettings=(gameSettings??new DevelopmentGameSettings()).Copy();
+            this.gameSettings.ApplyPopulation(config.Scenario);this.gameSettings.Validate();
             magazine=new ManualMagazine(MagazineCapacity);
             eventSequence=sequence;
         }
@@ -69,6 +71,7 @@ namespace Elts.Operator
             // Preserve target identity, position, movement state and score across a
             // pause. Acquisition continues, but no target updates or shots occur.
             if(engine.State == SessionState.BlockPaused)return;
+            var positionsBeforeRefresh=new Dictionary<string,Vector3d>(positions);
             positions.Clear();
             if(!engine.TargetsActive)
             {
@@ -79,21 +82,25 @@ namespace Elts.Operator
             if(population==null || definition==null) return;
             // Missing head data cannot invent visibility or a fresh spawn.
             if(!head.HasValue) return;
-            var eye=head.Value.TransformPoint(config.Rig.HeadEyeOffsetM);
-            Func<Vector3d,bool> visible=point=>IsVisible(eye,point) && HasSpawnClearance(eye,point);
-            // Target lifetime and respawn delays follow active test time as well.
-            // Logged snapshots below still use the unchanged acquisition clock.
-            population.Reconcile(new MonotonicTimestamp(checked((long)(engine.CurrentActiveSeconds*TimeSpan.TicksPerSecond))),visible);
+            var previousPositions=positionsBeforeRefresh;
+            population.Reconcile(engine.CurrentActiveSeconds,layoutCenter,config.Rig.VirtualFloorY);
             foreach(var target in population.History)
             {
                 bool known=recordedStates.TryGetValue(target.Id,out var previous);
                 if(target.State==TargetState.Active)
                 {
-                    // The trajectory depends on active block time, never frame count.
-                    // Pause and replay therefore preserve the same scripted motion.
-                    var next=DevelopmentScenarioLayout.Position(target,layoutCenter,movingBlock,engine.CurrentActiveSeconds,gameSettings);
-                    var velocity=deltaSeconds>0?(next-target.Position)/deltaSeconds:Vector3d.Zero;
+                    var next=target.Position;
+                    var velocity=known && deltaSeconds>0 && previousPositions.TryGetValue(target.Id,out var previousPosition)
+                        ?(next-previousPosition)/deltaSeconds:Vector3d.Zero;
                     target.Move(next,velocity);
+                    if(!known) RecordRoute(target);
+                    if(movingBlock && population.StartedAt(target).HasValue && recordedEntries.Add(target.Id))
+                    {
+                        if(!recording.TryRecord(new SessionEvent(eventSequence.Next(),clock.Now,"DevelopmentRouteEntered",new[]{
+                            LogField.String("blockId",blockId!),LogField.String("targetId",target.Id),
+                            LogField.NumberValue("routeStartActiveSeconds",population.StartedAt(target)!.Value)})))
+                            throw new InvalidOperationException("Route entry recording failed.");
+                    }
                     Record(target,known?TargetLifecycle.Updated:TargetLifecycle.Spawned);
                     positions.Add(target.Id,target.Position);
                 }
@@ -191,25 +198,69 @@ namespace Elts.Operator
             ShotCount=0;HitCount=0;HeadHits=0;BodyHits=0;LimbHits=0;CoverHits=0;MissCount=0;
             TargetKills=0;DamageDealt=0;DryFires=0;Reloads=0;magazine=new ManualMagazine(MagazineCapacity);
             LastShot="Click and release to fire. Press R to reload.";
-            var screen=config.Rig.Display;
-            var center=screen.Origin+screen.U*(screen.Width*0.5)+screen.V*(screen.Height*0.5)
-                +screen.Normal*config.Scenario.TargetDistanceM;
+            var center=DevelopmentScenarioLayout.Center(config);
             layoutCenter=center;
             var bounds=new SpawnVolume(center-new Vector3d(SpawnHalfWidthM,SpawnHalfHeightM,SpawnHalfDepthM),
                 center+new Vector3d(SpawnHalfWidthM,SpawnHalfHeightM,SpawnHalfDepthM));
             movingBlock=engine.CurrentCondition!.EndsWith("_MT",StringComparison.Ordinal);
-            var adapter=DevelopmentScenarioAdapter.Create(config.Scenario,bounds,DevelopmentScenarioLayout.TargetCount,
-                movingBlock?"ScriptedCoverRun":"Fixed","HumanoidHitscan","TargetsDestroyedCount");
+            var adapter=DevelopmentScenarioAdapter.Create(config.Scenario,bounds,gameSettings.activeTargetCount,
+                movingBlock?"LibraryRouteSequence":"FixedLibrary","HumanoidHitscan","TargetsDestroyedCount");
             definition=adapter.Definition;
             seed=definition.BlockSeed("synthetic",blockId!);
-            population=new ScenarioPopulation(definition,new MaintainCountSpawnRule(seed));
+            population=new LibraryTargetPopulation(gameSettings,movingBlock,config.Scenario.TargetRadiusM);
+            var covers=DevelopmentScenarioLayout.Covers(center,gameSettings,config.Rig.VirtualFloorY);
             shots=new HumanoidShotModel(eventSequence,TimeSpan.FromSeconds(config.Runtime.TriggerLockoutSeconds),
-                DevelopmentScenarioLayout.Covers(center,gameSettings));
+                covers,config.Rig.VirtualFloorY);
+            var layoutFields=new List<LogField> {
+                LogField.String("blockId",blockId!),LogField.String("layoutVersion",DevelopmentScenarioLayout.Version),
+                LogField.NumberValue("screenBottomHeightAboveFloorM",config.Rig.ScreenBottomHeightAboveFloorM),
+                LogField.NumberValue("floorY",config.Rig.VirtualFloorY),
+                LogField.NumberValue("targetDistanceM",config.Scenario.TargetDistanceM),
+                LogField.NumberValue("activeTargetCount",gameSettings.activeTargetCount),
+                LogField.NumberValue("spawnPositionCount",gameSettings.spawnPositionCount),
+                LogField.NumberValue("pathSequenceLength",gameSettings.pathSequenceLength),
+                LogField.Boolean("expireTargets",false),LogField.NumberValue("replacementDelaySeconds",0),
+                LogField.NumberValue("libraryFirstRowOffsetM",gameSettings.libraryFirstRowOffsetM),
+                LogField.NumberValue("libraryRowSpacingM",gameSettings.libraryRowSpacingM),
+                LogField.NumberValue("libraryColumnSpacingM",gameSettings.libraryColumnSpacingM),
+                LogField.NumberValue("libraryEntryXM",gameSettings.libraryEntryXM),
+                LogField.NumberValue("libraryPatrolDistanceM",gameSettings.libraryPatrolDistanceM),
+                LogField.NumberValue("libraryPatrolDepthM",gameSettings.libraryPatrolDepthM),
+                LogField.NumberValue("crouchSeconds",gameSettings.crouchSeconds),
+                LogField.NumberValue("runInSeconds",gameSettings.runInSeconds),
+                LogField.NumberValue("peekCycleSeconds",gameSettings.peekCycleSeconds)
+            };
+            foreach(var cover in covers)
+            {
+                layoutFields.Add(LogField.NumberValue(cover.Id+".x",cover.Center.X));
+                layoutFields.Add(LogField.NumberValue(cover.Id+".y",cover.Center.Y));
+                layoutFields.Add(LogField.NumberValue(cover.Id+".z",cover.Center.Z));
+                layoutFields.Add(LogField.NumberValue(cover.Id+".widthM",cover.HalfSize.X*2));
+                layoutFields.Add(LogField.NumberValue(cover.Id+".heightM",cover.HalfSize.Y*2));
+                layoutFields.Add(LogField.NumberValue(cover.Id+".depthM",cover.HalfSize.Z*2));
+            }
+            if(!recording.TryRecord(new SessionEvent(eventSequence.Next(),clock.Now,"DevelopmentLayoutConfigured",layoutFields)))
+                throw new InvalidOperationException("Scene layout recording failed.");
             if(!recording.TryRecord(new SessionEvent(eventSequence.Next(),clock.Now,"WeaponConfigured",new[]{
                 LogField.String("blockId",blockId!),LogField.NumberValue("magazineCapacity",MagazineCapacity),
                 LogField.Boolean("automaticReload",false),LogField.String("reloadAction","desktop-controls.reload")})))
                 throw new InvalidOperationException("Weapon configuration recording failed.");
             recordedStates.Clear();
+        }
+
+        private void RecordRoute(TargetEntity target)
+        {
+            int ordinal=DevelopmentScenarioLayout.Ordinal(target);
+            var route=DevelopmentScenarioLayout.Route(ordinal,gameSettings);
+            if(!recording.TryRecord(new SessionEvent(eventSequence.Next(),clock.Now,"DevelopmentTargetAssigned",new[]{
+                LogField.String("blockId",blockId!),LogField.String("targetId",target.Id),
+                LogField.NumberValue("spawnOrdinal",ordinal+1),
+                LogField.NumberValue("positionIndex",population!.Slot(target)),
+                LogField.NumberValue("routeIndex",ordinal%gameSettings.pathSequenceLength),
+                LogField.String("behaviour",movingBlock?route.Name:"Fixed"),
+                LogField.NumberValue("entrySeconds",movingBlock?route.EntrySeconds:0),
+                LogField.NumberValue("cycleSeconds",movingBlock?route.CycleSeconds:0)})))
+                throw new InvalidOperationException("Target route assignment recording failed.");
         }
 
         public bool Reload()
@@ -230,21 +281,6 @@ namespace Elts.Operator
             return config.Rig.Display.Intersect(new Ray3d(eye,direction),out var distance,out _,out var u,out var v)
                 && distance<direction.Length && config.Rig.Display.IsInside(u,v);
         }
-        private bool HasSpawnClearance(Vector3d eye, Vector3d candidate)
-        {
-            // Compare apparent sphere radii, so a replacement cannot hide behind
-            // another target even when they occupy different world depths.
-            var direction=candidate-eye;
-            if(direction.Length<=config.Scenario.TargetRadiusM) return false;
-            foreach(var target in population!.ActiveTargets)
-            {
-                var other=target.Position-eye;
-                if(other.Length<=target.RadiusM) return false;
-                double clearance=config.Scenario.TargetRadiusM/direction.Length+target.RadiusM/other.Length;
-                if((direction.Normalized()-other.Normalized()).Length<clearance*1.2) return false;
-            }
-            return true;
-        }
         private void Record(TargetEntity target, TargetLifecycle lifecycle)
         {
             if(!recording.TryLogTarget(new TargetSnapshot(++targetSequence,clock.Now,target.Id,blockId!,lifecycle,
@@ -257,7 +293,7 @@ namespace Elts.Operator
             // Destroyed is already a terminal recorded lifecycle. Only targets
             // still active need a Despawned row when the block exits.
             foreach(var target in population.ActiveTargets) Record(target,TargetLifecycle.Despawned);
-            population=null;definition=null;shots=null;positions.Clear();
+            population=null;definition=null;shots=null;positions.Clear();recordedEntries.Clear();
         }
     }
 }

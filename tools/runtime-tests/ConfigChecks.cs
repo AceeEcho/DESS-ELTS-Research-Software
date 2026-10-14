@@ -81,6 +81,8 @@ internal static class ConfigChecks
         Assert(config.Mode == "synthetic" && !config.StudyReady, "synthetic mode is explicit");
         Assert(config.Rig.RigId == "synthetic-rig-001", "rig identity loaded without a fallback");
         Assert(Math.Abs(config.Rig.Display.Width - 1.2) < 1e-12, "known display geometry");
+        Assert(Math.Abs(config.Rig.ScreenBottomHeightAboveFloorM - 1.2192) < 1e-12, "four-foot screen-bottom assumption is configured");
+        Assert(Math.Abs(config.Rig.VirtualFloorY - (config.Rig.Display.Origin.Y - 1.2192)) < 1e-12, "virtual floor derives from the display instead of a separate scene offset");
         Assert(config.Runtime.SampleRateHz == 250, "configured sample frequency");
         Assert(config.Session.BlockDurationSeconds == 300 && config.Session.ConditionOrder.Count == 4, "fixed-duration development session");
         Assert(config.SourceRawSha256.Count == 6, "raw source provenance retained");
@@ -104,6 +106,8 @@ internal static class ConfigChecks
                 v => v["mode"] = "study",
                 v => v["studyReady"] = true,
                 v => v["rig"]["coordinateFrame"] = "openvr_native",
+                v => v["rig"]["screenBottomHeightAboveFloorM"] = 0,
+                v => v["rig"]["screenBottomHeightAboveFloorM"] = 3.1,
                 v => v["rig"]["display"]["upperLeftM"] = v["rig"]["display"]["lowerLeftM"].DeepClone(),
                 v => v["rig"]["calibration"]["rigId"] = "other-rig",
                 v => v["rig"]["trackerSerials"]["weapon"] = v["rig"]["trackerSerials"]["head"],

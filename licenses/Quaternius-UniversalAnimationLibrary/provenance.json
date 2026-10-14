@@ -1,0 +1,15 @@
+{
+  "author": "Quaternius",
+  "pack": "Universal Animation Library [Standard]",
+  "release": "March 2025",
+  "retrieved": "2026-10-05",
+  "source": "https://quaternius.com/packs/universalanimationlibrary.html",
+  "download": "https://quaternius.itch.io/universal-animation-library",
+  "itchUploadId": "17958403",
+  "license": "CC0-1.0",
+  "archiveSha256": "cc73fc4e495b82958207316596317a3f40b9fa38065bde1027937452da537724",
+  "files": {
+    "unity/Assets/ELTS/Operator/Resources/ELTS/Mannequin/UAL1_Standard.fbx": "21b32d912da3cb93426d974fb945e86f5b2e86970acd2ce89905e0fbf9f1dcc2"
+  },
+  "modifications": "FBX unchanged. Unity imports idle/jog clips, applies ivory shell/dark joints materials, and fits the model to existing synthetic target height. Hit regions and logging are unchanged."
+}

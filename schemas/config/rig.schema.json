@@ -49,6 +49,11 @@
         }
       }
     },
+    "screenBottomHeightAboveFloorM": {
+      "type": "number",
+      "minimum": 0.1,
+      "maximum": 3
+    },
     "headEyeOffsetM": {
       "$ref": "#/$defs/vec3"
     },

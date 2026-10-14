@@ -42,21 +42,32 @@ namespace Elts.Operator
         [SerializeField] private TrainingRoomSettings trainingRoom = new TrainingRoomSettings();
         [Header("Synthetic game staging")]
         [SerializeField] private DevelopmentGameSettings gameSettings=new DevelopmentGameSettings();
+        [Header("Mannequin animation")]
+        [SerializeField] private DevelopmentMotionSettings motionSettings=new DevelopmentMotionSettings();
         private DevelopmentGameSettings activeGameSettings=null!;
         private UnityEngine.Rendering.AmbientMode previousAmbientMode;
         private Color previousAmbientLight;
         private bool roomLightingOwned, authoredFloorWasActive;
         private readonly List<Material> ownedMaterials = new List<Material>();
+        private readonly List<Light> disabledLights = new List<Light>();
         private readonly List<Camera> disabledCameras = new List<Camera>();
         private RecordedReplay? replay;
         private ReplayTransport? transport;
         private Task<RecordedReplay>? loading;
         private bool sessionAttached;
+        private double sessionActiveSeconds;
         private RigidPose? sessionHead, sessionWeapon;
         private readonly Dictionary<string,Vector3d> sessionTargets = new Dictionary<string,Vector3d>();
         private string replayPath = "", status = "", error = "";
         private bool simulateHeadDropout, simulateWeaponDropout, animate = true;
         private double demoTime, predictionSeconds, layoutOffsetX, layoutDepthOffset;
+        private readonly TargetEntity[] demoActors = CreateDemoActors();
+        private static TargetEntity[] CreateDemoActors()
+        {
+            var result=new TargetEntity[DevelopmentScenarioLayout.TargetCount];
+            for(int i=0;i<result.Length;i++)result[i]=new TargetEntity("demo-"+(i+1),Vector3d.Zero,Vector3d.Zero,.1,Elts.Clock.MonotonicTimestamp.Zero);
+            return result;
+        }
         private float orbitYaw = 145, orbitPitch = 20, orbitDistance = 4;
         private Vector3 orbitFocus = new Vector3(0,0,1.7f);
         private Vector2 controlScroll;
@@ -97,6 +108,7 @@ namespace Elts.Operator
             try
             {
                 configuration=DevelopmentConfiguration.LoadDirectory(Path.Combine(Application.streamingAssetsPath,"config-generated"));
+                gameSettings.ApplyPopulation(configuration.Scenario);
                 gameSettings.Validate();
                 activeGameSettings=gameSettings.Copy();
                 if(configuration.StudyReady || configuration.Mode!="synthetic")throw new InvalidOperationException("This view requires synthetic development configuration.");
@@ -128,14 +140,21 @@ namespace Elts.Operator
                     authoredFloorWasActive=authoredEnvironment.FloorReference.gameObject.activeSelf;
                     authoredEnvironment.FloorReference.gameObject.SetActive(false);
                 }
+                // Own the synthetic lighting while this view is alive. An authored scene's
+                // default sun must not add a second, unshadowed wash over the library.
+                foreach(var existingLight in UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
+                    if(existingLight.enabled){disabledLights.Add(existingLight);existingLight.enabled=false;}
                 previousAmbientMode=RenderSettings.ambientMode;previousAmbientLight=RenderSettings.ambientLight;
                 roomLightingOwned=true;
                 RenderSettings.ambientMode=UnityEngine.Rendering.AmbientMode.Flat;
-                RenderSettings.ambientLight=new Color(.55f,.60f,.65f);
-                DevelopmentTrainingRoom.Create(transform,screen,trainingRoom,ownedMaterials,targetMaterial);
-                var fieldCenter=screen.Origin+screen.U*(screen.Width*.5)+screen.V*(screen.Height*.5)
-                    +screen.Normal*configuration.Scenario.TargetDistanceM;
-                DevelopmentHumanoidVisual.CreateCovers(transform,DevelopmentScenarioLayout.Covers(fieldCenter,activeGameSettings),ownedMaterials);
+                RenderSettings.ambientLight=trainingRoom.ambient;
+                DevelopmentTrainingRoom.Create(transform,screen,configuration.Rig.VirtualFloorY,trainingRoom,ownedMaterials,targetMaterial,activeGameSettings,configuration.Scenario.TargetDistanceM);
+                var fieldCenter=DevelopmentScenarioLayout.Center(configuration);
+                DevelopmentHumanoidVisual.CreateCovers(transform,DevelopmentScenarioLayout.Covers(fieldCenter,activeGameSettings,configuration.Rig.VirtualFloorY),ownedMaterials);
+                var gradingHost=new GameObject("Library color grading");gradingHost.transform.SetParent(transform,false);
+                var grading=gradingHost.AddComponent<UnityEngine.Rendering.Volume>();grading.isGlobal=true;
+                grading.sharedProfile=Resources.Load<UnityEngine.Rendering.VolumeProfile>("ELTS/LibraryColor");
+                ResetOperatorView();
                 participant.backgroundColor=operatorCamera.backgroundColor=new Color(.75f,.82f,.85f);
                 replayPath=configuration.Machine.ResolveDataRoot(Path.Combine(Application.dataPath,".."));
                 Ready=true;Refresh(0);
@@ -150,6 +169,11 @@ namespace Elts.Operator
         private static void ConfigureCamera(Camera camera,int mask,Color background)
         {
             camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=background;camera.cullingMask=mask;camera.depth=10;
+            camera.allowHDR=true;
+            var urp=camera.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>()
+                ??camera.gameObject.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            urp.renderPostProcessing=true;urp.volumeLayerMask=1;
+            urp.antialiasing=UnityEngine.Rendering.Universal.AntialiasingMode.FastApproximateAntialiasing;
             camera.nearClipPlane=0.03f;camera.farClipPlane=(float)FarDistanceMeters;camera.enabled=true;
         }
         private Material Material(Color color)
@@ -161,7 +185,7 @@ namespace Elts.Operator
         }
         private GameObject TargetHumanoid(string name)
         {
-            var target=DevelopmentHumanoidVisual.Create(transform,humanoidPalette);
+            var target=DevelopmentHumanoidVisual.Create(transform,humanoidPalette,motionSettings,configuration.Rig.VirtualFloorY);
             target.name=name;return target.gameObject;
         }
         private GameObject Sphere(string name,int layer,float radius,Material material)
@@ -231,9 +255,10 @@ namespace Elts.Operator
         public void Scrub(double seconds){if(transport==null)throw new InvalidOperationException("Load a recording first.");transport.Scrub(seconds);}
         public void UseDemo(){replay=null;transport=null;animate=true;error="";}
         /// <summary>Display immutable raw acquisition snapshots; session targets are supplied only while a block runs.</summary>
-        public void SetSessionFrame(RigidPose? headPose, RigidPose? weaponPose, IReadOnlyDictionary<string,Vector3d> targets)
+        public void SetSessionFrame(RigidPose? headPose, RigidPose? weaponPose, IReadOnlyDictionary<string,Vector3d> targets, double activeSeconds=0)
         {
             sessionAttached=true; sessionHead=headPose; sessionWeapon=weaponPose;
+            sessionActiveSeconds=activeSeconds;
             sessionTargets.Clear();
             foreach(var item in targets) sessionTargets.Add(item.Key,item.Value);
         }
@@ -262,7 +287,9 @@ namespace Elts.Operator
                 rawHead=simulateHeadDropout?(RigidPose?)null:new RigidPose(new Vector3d(Math.Sin(demoTime*0.7)*0.25,Math.Sin(demoTime*0.4)*0.1,0),Quaterniond.Identity);
                 rawWeapon=simulateWeaponDropout?(RigidPose?)null:new RigidPose(new Vector3d(0.15,-0.18,0.1),Quaterniond.Identity);
                 if(animate)headVelocity=new Vector3d(Math.Cos(demoTime*0.7)*0.175,Math.Cos(demoTime*0.4)*0.04,0);
-                visibleTargets.Add("demo-target",new Vector3d(Math.Sin(demoTime*0.5)*0.4,0.1,configuration.Scenario.TargetDistanceM));
+                foreach(var actor in demoActors)
+                    visibleTargets.Add(actor.Id,DevelopmentScenarioLayout.Position(actor,DevelopmentScenarioLayout.Center(configuration),true,
+                        demoTime+activeGameSettings.runInSeconds+activeGameSettings.peekCycleSeconds*.4,activeGameSettings,configuration.Rig.VirtualFloorY));
                 status="SYNTHETIC DEMO | Head "+(rawHead.HasValue?"valid":"UNAVAILABLE")+" | Weapon "+(rawWeapon.HasValue?"valid":"UNAVAILABLE");
             }
             // Replay stays raw; no velocity is invented by interpolating adjacent observations.
@@ -303,9 +330,8 @@ namespace Elts.Operator
                 bool existing=targetObjects.TryGetValue(target.Key,out var actor);
                 if(!existing){actor=TargetHumanoid(target.Key);targetObjects.Add(target.Key,actor);}
                 var next=OffAxisCamera.ToUnity(target.Value);
-                bool running=existing && Mathf.Abs(next.x-actor!.transform.position.x)>.002f;
-                actor!.transform.position=next;
-                actor.GetComponent<DevelopmentHumanoidVisual>().Pose((float)HumanoidGeometry.HeightScale(target.Value),running,Time.unscaledTime);
+                double animationTime=sessionAttached?sessionActiveSeconds:replay!=null?transport!.PositionSeconds:demoTime;
+                actor!.GetComponent<DevelopmentHumanoidVisual>().Pose(next,animationTime);
             }
             bore.enabled=aim.enabled=rawWeapon.HasValue;
             if(rawWeapon.HasValue)
@@ -386,12 +412,21 @@ namespace Elts.Operator
             if(float.IsNaN(yaw)||float.IsInfinity(yaw)||float.IsNaN(pitch)||float.IsInfinity(pitch)||float.IsNaN(distance)||float.IsInfinity(distance))throw new ArgumentOutOfRangeException(nameof(yaw));
             orbitYaw=yaw;orbitPitch=Mathf.Clamp(pitch,-80,80);orbitDistance=Mathf.Clamp(distance,0.5f,20);
         }
-        public void ResetOperatorView(){orbitYaw=145;orbitPitch=20;orbitDistance=4;orbitFocus=new Vector3(0,0,1.7f);}
+        public void ResetOperatorView()
+        {
+            // Start inside the enclosure, looking along the reading aisles.
+            // The former reverse angle looked into the new near wall.
+            orbitYaw=0;orbitPitch=5;orbitDistance=20;
+            var centre=DevelopmentScenarioLayout.Center(configuration);
+            orbitFocus=new Vector3((float)centre.X,(float)configuration.Rig.VirtualFloorY+1,
+                (float)centre.Z+activeGameSettings.libraryFirstRowOffsetM+activeGameSettings.libraryRowSpacingM*2);
+        }
         private static Quaternion ToUnity(Quaterniond value) => new Quaternion((float)value.X,(float)value.Y,(float)value.Z,(float)value.W);
         private void OnDestroy()
         {
             if(roomLightingOwned){RenderSettings.ambientMode=previousAmbientMode;RenderSettings.ambientLight=previousAmbientLight;}
             if(authoredEnvironment?.FloorReference!=null)authoredEnvironment.FloorReference.gameObject.SetActive(authoredFloorWasActive);
+            foreach(var light in disabledLights)if(light!=null)light.enabled=true;
             foreach(var camera in disabledCameras)if(camera!=null)camera.enabled=true;
             foreach(var material in ownedMaterials)if(material!=null)Destroy(material);
         }

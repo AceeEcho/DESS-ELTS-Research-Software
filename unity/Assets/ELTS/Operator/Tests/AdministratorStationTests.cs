@@ -173,9 +173,9 @@ namespace Elts.Operator.Tests
                     Assert.That(station.ParticipantRoot.Q("participantPrompt").ClassListContains("participant-hidden"),Is.True);
                     var scenario=(DevelopmentSessionScenario)typeof(DevelopmentSessionPanel).GetField("scenario",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(session);
                     if(session.Engine.CurrentCondition.EndsWith("_MT"))
-                        for(int step=0;step<35;step++){clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                        for(int step=0;step<80;step++){clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
                     float poseDeadline=Time.realtimeSinceStartup+2;
-                    while((scenario.Positions.Count==0 || Math.Abs(scenario.Positions.First().Value.X)>2) && Time.realtimeSinceStartup<poseDeadline)yield return null;
+                    while(scenario.Positions.Count==0 && Time.realtimeSinceStartup<poseDeadline)yield return null;
                     Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockRunning),session.StationMessage);
                     Assert.That(scenario.Positions.Count,Is.GreaterThan(0),session.StationMessage);
                     var point=scenario.Positions.First().Value+new Vector3d(0,.65,0);

@@ -26,17 +26,22 @@ namespace Elts.Scenario
     public static class HumanoidGeometry
     {
         public const double StandingCenterY=-0.15, CrouchedCenterY=-0.45;
+        // Keep the original frame as the default for standalone/older fixtures.
+        // Runtime callers supply the floor derived from the configured display.
+        public const double DefaultFloorY=-1;
+        public static double StandingCenterAt(double floorY)=>floorY+(StandingCenterY-DefaultFloorY);
+        public static double CrouchedCenterAt(double floorY)=>floorY+(CrouchedCenterY-DefaultFloorY);
         public const double CrouchScale=0.65;
-        public static bool IsCrouched(Vector3d position)=>position.Y<(StandingCenterY+CrouchedCenterY)*0.5;
-        public static double HeightScale(Vector3d position)
+        public static bool IsCrouched(Vector3d position,double floorY=DefaultFloorY)=>position.Y<(StandingCenterAt(floorY)+CrouchedCenterAt(floorY))*0.5;
+        public static double HeightScale(Vector3d position,double floorY=DefaultFloorY)
         {
-            double crouch=(StandingCenterY-position.Y)/(StandingCenterY-CrouchedCenterY);
+            double crouch=(StandingCenterAt(floorY)-position.Y)/(StandingCenterY-CrouchedCenterY);
             return 1-(Math.Max(0,Math.Min(1,crouch))*(1-CrouchScale));
         }
 
-        public static IReadOnlyList<BodyPart> Parts(Vector3d center)
+        public static IReadOnlyList<BodyPart> Parts(Vector3d center,double floorY=DefaultFloorY)
         {
-            double height=HeightScale(center);
+            double height=HeightScale(center,floorY);
             BodyPart Part(string region,Vector3d offset,Vector3d radii)
                 =>new BodyPart(region,center+new Vector3d(offset.X,offset.Y*height,offset.Z),
                     new Vector3d(radii.X,radii.Y*height,radii.Z));
@@ -77,6 +82,7 @@ namespace Elts.Scenario
         private readonly ISessionEventSequence sequence;
         private readonly TimeSpan minimumInterval;
         private readonly IReadOnlyList<HumanoidCover> covers;
+        private readonly double floorY;
         private MonotonicTimestamp? previous;
         public bool Accepted {get;private set;}
         public string Outcome {get;private set;}="";
@@ -86,8 +92,8 @@ namespace Elts.Scenario
         public string TargetId {get;private set;}="";
         /// <summary>Set by the development weapon immediately before dispatch.</summary>
         public int MagazineBefore {get;set;}
-        public HumanoidShotModel(ISessionEventSequence sequence,TimeSpan minimumInterval,IReadOnlyList<HumanoidCover> covers)
-        {this.sequence=sequence;this.minimumInterval=minimumInterval;this.covers=covers;}
+        public HumanoidShotModel(ISessionEventSequence sequence,TimeSpan minimumInterval,IReadOnlyList<HumanoidCover> covers,double floorY=HumanoidGeometry.DefaultFloorY)
+        {this.sequence=sequence;this.minimumInterval=minimumInterval;this.covers=covers;this.floorY=floorY;}
 
         public IReadOnlyList<SessionEvent> Fire(ShotContext shot,string blockId,IEnumerable<TargetEntity> targets,Func<TargetEntity,bool> isVisible)
         {
@@ -103,7 +109,7 @@ namespace Elts.Scenario
             {
                 if(target.State!=TargetState.Active || !isVisible(target))continue;
                 visible.Add(target);
-                foreach(var part in HumanoidGeometry.Parts(target.Position))
+                foreach(var part in HumanoidGeometry.Parts(target.Position,floorY))
                     if(RayEllipsoid(shot.BoreRay,part.Center,part.Radii,out double distance) && distance<nearest)
                     {nearest=distance;hit=target;region=part.Region;}
             }

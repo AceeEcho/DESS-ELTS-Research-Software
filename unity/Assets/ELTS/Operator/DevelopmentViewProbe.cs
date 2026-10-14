@@ -27,6 +27,14 @@ namespace Elts.Operator
             {
                 var view=FindFirstObjectByType<DevelopmentView>();
                 if(view==null||!view.Ready){Debug.LogError("ELTS_VIEW_PROBE_FAIL view not ready");Application.Quit(2);return;}
+                // This opt-in probe owns its input for the rest of the process.
+                // The normal station otherwise keeps feeding a valid desktop pose,
+                // overriding the simulated dropout and hiding the demo targets.
+                var station=FindFirstObjectByType<DevelopmentTestStation>();
+                if(station!=null)station.enabled=false;
+                var session=FindFirstObjectByType<DevelopmentSessionPanel>();
+                if(session!=null)session.enabled=false;
+                view.DetachSession();
                 view.SetAnimation(false);view.SetPrediction(0.02);view.SetLayoutOffsets(0.1,0.05);view.SetDropout(true,false);view.Refresh(0);
                 if(view.ParticipantCamera.enabled){Debug.LogError("ELTS_VIEW_PROBE_FAIL dropout camera remained active");Application.Quit(2);return;}
                 view.SetDropout(false,false);view.SetLayoutOffsets(0,0);view.Refresh(0);

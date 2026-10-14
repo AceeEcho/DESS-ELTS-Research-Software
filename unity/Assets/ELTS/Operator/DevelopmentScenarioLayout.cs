@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using Elts.Config;
 using Elts.Geometry;
 using Elts.Scenario;
 
@@ -13,63 +14,137 @@ namespace Elts.Operator
     {
         public const int DefaultMagazineCapacity=20;
         public int magazineCapacity=DefaultMagazineCapacity;
-        public float laneSpacingM=.9f, staticDepthOffsetM=1.1f, movingDepthOffsetM=1.95f, coverDepthOffsetM=1.6f;
-        public float runInStartXM=2.9f, runInSeconds=2.2f, entryStaggerSeconds=.65f;
-        public float peekCycleSeconds=3.2f, peekDistanceM=.53f;
+        public int activeTargetCount=30, spawnPositionCount=50, pathSequenceLength=100000;
+        public float libraryFirstRowOffsetM=16, libraryRowSpacingM=4, libraryColumnSpacingM=1.5f;
+        public float libraryEntryXM=14, libraryPatrolDistanceM=.45f, libraryPatrolDepthM=2.3f;
+        public float runInSeconds=4.6f, peekCycleSeconds=4.8f, crouchSeconds=.65f;
+        public void ApplyPopulation(ScenarioConfiguration scenario)
+        {
+            activeTargetCount=scenario.ActiveTargetCount;
+            spawnPositionCount=scenario.SpawnPositionCount;
+            pathSequenceLength=scenario.PathSequenceLength;
+        }
         public DevelopmentGameSettings Copy()=> (DevelopmentGameSettings)MemberwiseClone();
         public void Validate()
         {
-            if(magazineCapacity<1 || magazineCapacity>100 ||
-                !Finite(laneSpacingM,.65f,1.25f) || !Finite(staticDepthOffsetM,.9f,1.4f) ||
-                !Finite(movingDepthOffsetM,1.8f,2.4f) || !Finite(coverDepthOffsetM,1.4f,1.9f) ||
-                coverDepthOffsetM<=staticDepthOffsetM+.3f || movingDepthOffsetM<=coverDepthOffsetM+.25f ||
-                !Finite(runInStartXM,2.9f,4) || !Finite(runInSeconds,.5f,8) ||
-                !Finite(entryStaggerSeconds,0,1.5f) ||
-                !Finite(peekCycleSeconds,1.5f,8) || !Finite(peekDistanceM,.4f,.8f))
+            if(activeTargetCount<1 || activeTargetCount>30 || (spawnPositionCount<31 || spawnPositionCount>50) || activeTargetCount>=spawnPositionCount ||
+                pathSequenceLength<100000 || pathSequenceLength>1000000 ||
+                !Finite(libraryFirstRowOffsetM,14,18) || !Finite(libraryRowSpacingM,3.5f,4.5f) ||
+                !Finite(libraryColumnSpacingM,1.4f,1.6f) || !Finite(libraryEntryXM,14,16) ||
+                !Finite(libraryPatrolDistanceM,.2f,.5f) || !Finite(libraryPatrolDepthM,1.5f,2.3f) || magazineCapacity<1 || magazineCapacity>100 ||
+                !Finite(runInSeconds,3.5f,8) || !Finite(peekCycleSeconds,3.5f,8) || !Finite(crouchSeconds,.4f,1.2f))
                 throw new ArgumentException("Development game settings are outside their safe synthetic ranges.");
         }
         private static bool Finite(float value,float min,float max)=>!float.IsNaN(value) && !float.IsInfinity(value) && value>=min && value<=max;
     }
 
-    /// <summary>Repeatable development-stage layout in virtual room metres.
-    /// Static actors stand in front of cover; moving actors run behind it.</summary>
+    /// <summary>Library geometry and versioned, indexed choreography in virtual metres.</summary>
     internal static class DevelopmentScenarioLayout
     {
-        public const int TargetCount=3;
-        public static IReadOnlyList<HumanoidCover> Covers(Vector3d center,DevelopmentGameSettings settings)
-            =>new[]{
-                new HumanoidCover("crate-stack",new Vector3d(center.X-settings.laneSpacingM,-.43,center.Z+settings.coverDepthOffsetM),new Vector3d(.30,.58,.19)),
-                new HumanoidCover("concrete-barrier",new Vector3d(center.X,-.43,center.Z+settings.coverDepthOffsetM),new Vector3d(.33,.58,.19)),
-                new HumanoidCover("drums",new Vector3d(center.X+settings.laneSpacingM,-.43,center.Z+settings.coverDepthOffsetM),new Vector3d(.29,.58,.19))};
-        public static Vector3d Position(TargetEntity target,Vector3d center,bool moving,double activeSeconds,DevelopmentGameSettings settings)
+        public const int TargetCount=30;
+        public const string Version="library-routes-v1";
+        public static Vector3d Center(DevelopmentConfiguration config)
         {
-            int number=1;
-            string id=target.Id;
-            int.TryParse(id.Substring(id.LastIndexOf('-')+1),out number);
-            int lane=Math.Abs(number-1)%TargetCount;
-            double x=center.X+(lane-1)*settings.laneSpacingM;
-            if(!moving)return new Vector3d(x,HumanoidGeometry.StandingCenterY,center.Z+settings.staticDepthOffsetM);
-            double age=Math.Max(0,activeSeconds-target.SpawnedAt.Ticks/(double)TimeSpan.TicksPerSecond-lane*settings.entryStaggerSeconds);
-            if(age<settings.runInSeconds)
+            var screen=config.Rig.Display;
+            return screen.Origin+screen.U*(screen.Width*.5)+screen.V*(screen.Height*.5)
+                +screen.Normal*config.Scenario.TargetDistanceM;
+        }
+        public static int Ordinal(TargetEntity target)
+            =>int.Parse(target.Id.Substring(target.Id.LastIndexOf('-')+1))-1;
+        public readonly struct LibraryRoute
+        {
+            public readonly int Slot, Behaviour;
+            public readonly double EntrySeconds, CycleSeconds;
+            public LibraryRoute(int slot,int behaviour,double entrySeconds,double cycleSeconds)
+            { Slot=slot;Behaviour=behaviour;EntrySeconds=entrySeconds;CycleSeconds=cycleSeconds; }
+            public string Name => Behaviour==0?"Stand":Behaviour==1?"HidePeek":Behaviour==2?"Patrol":"CrouchPatrol";
+        }
+        // Indexed list, never runtime randomness. Each group visits all 50 stations
+        // once. Store the recipe rather than megabytes of duplicated waypoints.
+        public static LibraryRoute Route(int ordinal,DevelopmentGameSettings settings)
+        {
+            int index=ordinal%settings.pathSequenceLength;
+            uint variant=unchecked((uint)index*747796405u+2891336453u);
+            variant=unchecked(((variant>>((int)(variant>>28)+4))^variant)*277803737u);
+            variant=(variant>>22)^variant;
+            int stride=settings.spawnPositionCount==34?19:17; // Coprime to every supported position count.
+            int slot=(index*stride+index/settings.spawnPositionCount*7)%settings.spawnPositionCount;
+            return new LibraryRoute(slot,(int)(variant%4),settings.runInSeconds+(variant%5)*.3,
+                settings.peekCycleSeconds+(variant%7)*.4);
+        }
+        public static Vector3d Station(Vector3d center,int slot,DevelopmentGameSettings settings,double floorY)
+        {
+            int row=slot/10,column=slot%10;
+            double pitch=settings.libraryColumnSpacingM+row*.10;
+            return new Vector3d(center.X+(column-4.5)*pitch+(row%2)*.3,
+                HumanoidGeometry.StandingCenterAt(floorY),center.Z+settings.libraryFirstRowOffsetM+row*settings.libraryRowSpacingM);
+        }
+        public static IReadOnlyList<HumanoidCover> Covers(Vector3d center,DevelopmentGameSettings settings,double floorY=HumanoidGeometry.DefaultFloorY)
+        {
+            var covers=new List<HumanoidCover>();
+            for(int slot=0;slot<settings.spawnPositionCount;slot++)
             {
-                // Every new actor enters from outside the participant frustum.
-                double start=center.X+(lane==2?settings.runInStartXM:-settings.runInStartXM);
-                double progress=age/settings.runInSeconds;
-                double bend=Math.Max(0,Math.Min(1,(age-(settings.runInSeconds-.4))/.4));
-                return new Vector3d(start+(x-start)*progress,
-                    HumanoidGeometry.StandingCenterY+(HumanoidGeometry.CrouchedCenterY-HumanoidGeometry.StandingCenterY)*bend,
-                    center.Z+settings.movingDepthOffsetM);
+                var p=Station(center,slot,settings,floorY);
+                int kind=slot%5;
+                if(kind==0 || kind==4)continue;
+                double x=p.X+(kind==3?.45:0),z=p.Z-.85;
+                if(kind==1)
+                {
+                    // The open space below a desk must also be open to authoritative hitscan.
+                    covers.Add(new HumanoidCover("reading-desk-"+slot,new Vector3d(x,floorY+.755,z),new Vector3d(.62,.025,.34)));
+                    foreach(int side in new[]{-1,1})
+                        covers.Add(new HumanoidCover("desk-leg-"+slot+"-"+side,new Vector3d(x+side*.55,floorY+.365,z),new Vector3d(.035,.365,.28)));
+                    covers.Add(new HumanoidCover("desk-panel-"+slot,new Vector3d(x,floorY+.52,z+.27),new Vector3d(.52,.21,.025)));
+                }
+                else
+                {
+                    double height=kind==2?1.12:1.0;
+                    covers.Add(new HumanoidCover("low-bookcase-"+slot,new Vector3d(x,floorY+height*.5,z),new Vector3d(.52,height*.5,.27)));
+                }
             }
-            double phase=(age-settings.runInSeconds)%settings.peekCycleSeconds;
-            double normalized=phase/settings.peekCycleSeconds;
-            double peek=normalized<.17?0:normalized<.31?(normalized-.17)/.14:normalized<.52?1:normalized<.66?1-(normalized-.52)/.14:0;
-            // Smooth starts/stops make the movement readable while remaining a
-            // pure function of active time and lane.
-            peek=peek*peek*(3-2*peek);
-            double side=lane==2?-1:1;
-            return new Vector3d(x+side*settings.peekDistanceM*peek,
-                HumanoidGeometry.CrouchedCenterY+(HumanoidGeometry.StandingCenterY-HumanoidGeometry.CrouchedCenterY)*peek,
-                center.Z+settings.movingDepthOffsetM);
+            return covers;
+        }
+        public static Vector3d Position(TargetEntity target,Vector3d center,bool moving,double activeSeconds,DevelopmentGameSettings settings,
+            double floorY=HumanoidGeometry.DefaultFloorY,int slot=-1)
+        {
+            int ordinal=Ordinal(target);
+            if(slot<0)slot=moving?Route(ordinal,settings).Slot:ordinal%settings.spawnPositionCount;
+            double age=Math.Max(0,activeSeconds-target.SpawnedAt.Ticks/(double)TimeSpan.TicksPerSecond);
+            return Sample(center,slot,moving,ordinal,age,settings,floorY);
+        }
+        public static Vector3d Sample(Vector3d center,int slot,bool moving,int ordinal,double age,DevelopmentGameSettings settings,double floorY)
+        {
+            var home=Station(center,slot,settings,floorY);
+            if(!moving)return home;
+            var route=Route(ordinal,settings);
+            double side=slot%10<5?-1:1;
+            if(age<route.EntrySeconds)
+            {
+                var entry=new Vector3d(center.X+side*settings.libraryEntryXM,home.Y,home.Z);
+                return entry+(home-entry)*Ease(age/route.EntrySeconds);
+            }
+            if(route.Behaviour==0)return home;
+            double phase=((age-route.EntrySeconds)%route.CycleSeconds)/route.CycleSeconds;
+            double crouched=HumanoidGeometry.CrouchedCenterAt(floorY);
+            if(route.Behaviour==1)
+            {
+                double peek=phase<.2?0:phase<.4?Ease((phase-.2)/.2):phase<.6?1:phase<.8?1-Ease((phase-.6)/.2):0;
+                double settle=Ease((age-route.EntrySeconds)/settings.crouchSeconds);
+                return new Vector3d(home.X+side*.38*peek,home.Y+(crouched-home.Y)*(1-peek)*settle,home.Z);
+            }
+            // A closed eased rectangle stays in the aisle behind the furniture.
+            double leg=phase*4;
+            var corners=new[]{Vector3d.Zero,new Vector3d(side*settings.libraryPatrolDistanceM,0,0),
+                new Vector3d(side*settings.libraryPatrolDistanceM,0,settings.libraryPatrolDepthM),new Vector3d(0,0,settings.libraryPatrolDepthM)};
+            int segment=(int)leg;
+            var offset=corners[segment]+(corners[(segment+1)%4]-corners[segment])*Ease(leg-segment);
+            double y=route.Behaviour==3?(crouched-home.Y)*Ease((age-route.EntrySeconds)/settings.crouchSeconds):0;
+            return home+offset+new Vector3d(0,y,0);
+        }
+        private static double Ease(double value)
+        {
+            double t=Math.Max(0,Math.Min(1,value));
+            return t*t*t*(t*(t*6-15)+10);
         }
     }
 }

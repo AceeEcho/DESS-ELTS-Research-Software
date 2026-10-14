@@ -178,6 +178,9 @@ namespace Elts.Config
         public string RigId { get; }
         public string GeometryStatus => "synthetic_unmeasured";
         public ScreenPlane Display { get; }
+        /// <summary>Assumed screen-bottom clearance, not a measured rig calibration.</summary>
+        public double ScreenBottomHeightAboveFloorM { get; }
+        public double VirtualFloorY => (Display.Origin + Display.U * (Display.Width * .5)).Y - ScreenBottomHeightAboveFloorM;
         public Vector3d HeadEyeOffsetM { get; }
         public Vector3d WeaponMuzzleOffsetM { get; }
         public Vector3d WeaponBoreLocalDirection { get; }
@@ -196,6 +199,11 @@ namespace Elts.Config
             Vector3d horizontal = DevelopmentConfiguration.Vector(display["lowerRightM"]) - origin;
             Vector3d vertical = DevelopmentConfiguration.Vector(display["upperLeftM"]) - origin;
             Display = new ScreenPlane(origin, horizontal, vertical, horizontal.Length, vertical.Length);
+            // Four feet is the shared development-room assumption. Older configs
+            // remain readable; new staged configs record the value explicitly.
+            ScreenBottomHeightAboveFloorM = (double?)value["screenBottomHeightAboveFloorM"] ?? 1.2192;
+            if (!Double.IsFinite(ScreenBottomHeightAboveFloorM) || ScreenBottomHeightAboveFloorM < .1 || ScreenBottomHeightAboveFloorM > 3)
+                JsonContract.Fail("screen bottom height must be between 0.1 and 3 metres");
             HeadEyeOffsetM = DevelopmentConfiguration.Vector(value["headEyeOffsetM"]);
             WeaponMuzzleOffsetM = DevelopmentConfiguration.Vector(value["weaponMuzzleOffsetM"]);
             WeaponBoreLocalDirection = DevelopmentConfiguration.Vector(value["weaponBoreLocalDirection"]);
@@ -224,6 +232,9 @@ namespace Elts.Config
         public double SpawnHeightM { get; }
         public double FtHoldSeconds { get; }
         public string MtMotion { get; }
+        public int ActiveTargetCount { get; }
+        public int SpawnPositionCount { get; }
+        public int PathSequenceLength { get; }
         internal ScenarioConfiguration(JObject value)
         {
             if ((bool?)value["provisionalDevelopmentValues"] != true) JsonContract.Fail("scenario values must be explicitly provisional");
@@ -237,6 +248,10 @@ namespace Elts.Config
             SpawnHeightM = DevelopmentConfiguration.Number(value, "spawnHeightM");
             FtHoldSeconds = DevelopmentConfiguration.Number(value, "ftHoldSeconds");
             MtMotion = (string)value["mtMotion"];
+            // Optional in older recorded configurations; current shared defaults are explicit.
+            ActiveTargetCount = (int?)value["activeTargetCount"] ?? 30;
+            SpawnPositionCount = (int?)value["spawnPositionCount"] ?? 50;
+            PathSequenceLength = (int?)value["pathSequenceLength"] ?? 100000;
         }
     }
 

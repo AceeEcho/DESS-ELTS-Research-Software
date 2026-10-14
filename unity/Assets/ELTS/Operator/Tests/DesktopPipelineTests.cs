@@ -71,13 +71,14 @@ namespace Elts.Operator.Tests
                     var scenario=Private<DevelopmentSessionScenario>(panel,"scenario");
                     Assert.That(scenario.Positions.Count,Is.GreaterThan(0));
                     if(panel.Engine.CurrentCondition.EndsWith("_MT"))
-                        for(int step=0;step<35;step++){clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                        for(int step=0;step<(int)Math.Ceiling((view.GameSettings.runInSeconds+view.GameSettings.peekCycleSeconds*.4)*10);step++)
+                        {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
                     float poseDeadline=Time.realtimeSinceStartup+2;
-                    while((scenario.Positions.Count==0 || Math.Abs(scenario.Positions.First().Value.X)>2) && Time.realtimeSinceStartup<poseDeadline)yield return null;
+                    while(scenario.Positions.Count==0 && Time.realtimeSinceStartup<poseDeadline)yield return null;
                     Assert.That(panel.Engine.State,Is.EqualTo(SessionState.BlockRunning),panel.Engine.Failure);
                     Assert.That(scenario.Positions.Count,Is.GreaterThan(0),"Target refresh after run-in: "+panel.DesktopFeedback);
                     Assert.That(panel.CanDesktopFire && panel.Desktop.IsOpen,Is.True,"Desktop firing remains enabled after the scripted run-in");
-                    var point=scenario.Positions.First().Value+new Vector3d(0,.65,0);
+                    var point=Elts.Scenario.HumanoidGeometry.Parts(scenario.Positions.First().Value,view.Configuration.Rig.VirtualFloorY).First(p=>p.Region=="head").Center;
                     var viewport=view.ParticipantCamera.WorldToViewportPoint(new Vector3((float)point.X,(float)point.Y,(float)point.Z));
                     var bounds=panel.Desktop.PlayImageBounds;
                     var pointer=new Vector2(bounds.xMin+viewport.x*bounds.width,bounds.yMax-viewport.y*bounds.height);
@@ -87,7 +88,7 @@ namespace Elts.Operator.Tests
                     controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,released:true);yield return null;
                     Assert.That(scenario.ShotCount,Is.EqualTo(1),panel.DesktopFeedback);
                     Assert.That(scenario.HitCount,Is.EqualTo(1),panel.DesktopFeedback);
-                    Assert.That(scenario.Positions.Count,Is.EqualTo(3),"A hit immediately restores all three targets");
+                    Assert.That(scenario.Positions.Count,Is.EqualTo(30),"A hit immediately restores all thirty targets");
 
                     // A click held through focus loss cannot become a later shot.
                     controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,pressed:true);yield return null;

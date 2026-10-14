@@ -134,6 +134,14 @@ static class ScenarioChecks
         var coverModel=new HumanoidShotModel(new SessionEventSequence(),TimeSpan.Zero,new[]{cover});
         var coverEvents=coverModel.Fire(new ShotContext(clock.Now,new Ray3d(Vector3d.Zero,new Vector3d(0,-.3,5)),true),"human-block",new[]{covered},_=>true);
         True(coverModel.Outcome=="Cover" && covered.Health==3 && coverEvents.Count==1,"near cover blocks a crouched target and does not deal damage");
+        const double windowFloor=-1.5567;
+        var windowTarget=ActiveTarget("window-floor",clock.Now,12);
+        windowTarget.Move(new Vector3d(0,HumanoidGeometry.StandingCenterAt(windowFloor),12),Vector3d.Zero);
+        var windowHead=HumanoidGeometry.Parts(windowTarget.Position,windowFloor).First(p=>p.Region=="head");
+        var windowShot=new HumanoidShotModel(new SessionEventSequence(),TimeSpan.Zero,Array.Empty<HumanoidCover>(),windowFloor);
+        windowShot.Fire(new ShotContext(clock.Now,new Ray3d(Vector3d.Zero,windowHead.Center),true),"window-block",new[]{windowTarget},_=>true);
+        True(windowShot.Region=="head" && windowTarget.State==TargetState.Destroyed,"shared floor height preserves standing head-hit geometry at the new distance");
+        True(Math.Abs(windowHead.Radii.Y-.17)<1e-12,"lower room origin does not accidentally classify a standing bot as crouched");
         var magazine=new ManualMagazine(20);
         for(int round=0;round<20;round++)True(magazine.TryConsume(),"each round up to capacity can be spent");
         True(magazine.Remaining==0 && !magazine.TryConsume(),"empty magazine stays empty without automatic reload");

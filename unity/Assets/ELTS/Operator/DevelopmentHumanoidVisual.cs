@@ -7,100 +7,223 @@ using UnityEngine;
 
 namespace Elts.Operator
 {
-    /// <summary>A consistent clothed actor assembled from rounded meshes. This is
-    /// presentation only; HumanoidGeometry owns the authoritative hit regions.</summary>
+    /// <summary>Presentation tuning in virtual metres and seconds; not apparatus measurements.</summary>
+    [Serializable]
+    public sealed class DevelopmentMotionSettings
+    {
+        [Min(.1f)] public float walkSpeedMps = 1.15f;
+        [Min(.1f)] public float jogSpeedMps = 2.6f;
+        [Min(.1f)] public float crouchSpeedMps = .65f;
+        [Min(.01f)] public float blendSeconds = .16f;
+        [Min(1f)] public float turnDegreesPerSecond = 420f;
+    }
+
+    /// <summary>Sourced CC0 training mannequin. Presentation only: scenario geometry
+    /// remains authoritative for hit regions, movement and recorded target positions.</summary>
     internal sealed class DevelopmentHumanoidVisual : MonoBehaviour
     {
-        private Transform leftArm=null!,rightArm=null!,leftLeg=null!,rightLeg=null!;
+        private const string ModelResource = "ELTS/Mannequin/UAL1_Standard";
+        private GameObject model = null!;
+        private Animation animationPlayer = null!;
+        private AnimationState idle = null!, walk = null!, jog = null!, crouchIdle = null!, crouchWalk = null!;
+        private Transform leftFoot = null!, rightFoot = null!;
+        private DevelopmentMotionSettings settings = null!;
+        private double floorY;
+        private Vector3 fittedPosition, fittedScale;
+        private float standingFootY, speed, yaw, gaitPhase, idleSeconds;
+        private double previousTime;
+        private Vector3 previousPosition;
+        private bool hasFrame;
+
         internal sealed class Palette
         {
-            public Material Jacket=null!,Shirt=null!,Pants=null!,Skin=null!,Hair=null!,Shoes=null!,Detail=null!;
+            public Material Shell = null!, Joints = null!;
         }
-        public static Palette CreatePalette(List<Material> owned)=>new Palette {
-            Jacket=Material(owned,new Color(.24f,.31f,.37f)),Shirt=Material(owned,new Color(.70f,.73f,.68f)),
-            Pants=Material(owned,new Color(.19f,.23f,.27f)),Skin=Material(owned,new Color(.61f,.42f,.31f)),
-            Hair=Material(owned,new Color(.12f,.10f,.09f)),Shoes=Material(owned,new Color(.10f,.11f,.12f)),
-            Detail=Material(owned,new Color(.08f,.10f,.12f))};
-        public static DevelopmentHumanoidVisual Create(Transform parent,Palette palette)
+
+        public static Palette CreatePalette(List<Material> owned) => new Palette {
+            Shell = Material(owned, new Color(.78f, .80f, .77f)),
+            Joints = Material(owned, new Color(.12f, .15f, .17f))
+        };
+
+        public static DevelopmentHumanoidVisual Create(Transform parent, Palette palette, DevelopmentMotionSettings settings,double floorY)
         {
-            var root=new GameObject("Clothed synthetic actor");root.layer=DevelopmentView.StimulusLayer;
-            root.transform.SetParent(parent,false);
-            var actor=root.AddComponent<DevelopmentHumanoidVisual>();
-            var jacket=palette.Jacket;var shirt=palette.Shirt;var pants=palette.Pants;
-            var skin=palette.Skin;var hair=palette.Hair;var shoes=palette.Shoes;var detail=palette.Detail;
-            Part(root.transform,"Jacket torso",PrimitiveType.Capsule,new Vector3(0,.19f,0),new Vector3(.42f,.34f,.25f),jacket);
-            Part(root.transform,"Shirt front",PrimitiveType.Cube,new Vector3(0,.20f,-.13f),new Vector3(.10f,.31f,.025f),shirt);
-            Part(root.transform,"Jacket left front",PrimitiveType.Cube,new Vector3(-.11f,.20f,-.145f),new Vector3(.11f,.32f,.025f),jacket);
-            Part(root.transform,"Jacket right front",PrimitiveType.Cube,new Vector3(.11f,.20f,-.145f),new Vector3(.11f,.32f,.025f),jacket);
-            Part(root.transform,"Belt",PrimitiveType.Cube,new Vector3(0,-.25f,-.13f),new Vector3(.36f,.055f,.025f),detail);
-            for(int button=0;button<3;button++)
-                Part(root.transform,"Jacket button",PrimitiveType.Sphere,new Vector3(.045f,.29f-button*.11f,-.165f),new Vector3(.018f,.018f,.014f),detail);
-            Part(root.transform,"Shirt collar",PrimitiveType.Cylinder,new Vector3(0,.47f,-.04f),new Vector3(.15f,.025f,.14f),shirt);
-            Part(root.transform,"Trousers waist",PrimitiveType.Capsule,new Vector3(0,-.17f,0),new Vector3(.38f,.20f,.25f),pants);
-            Part(root.transform,"Neck",PrimitiveType.Cylinder,new Vector3(0,.48f,0),new Vector3(.12f,.07f,.12f),skin);
-            Part(root.transform,"Head and face",PrimitiveType.Sphere,new Vector3(0,.65f,0),new Vector3(.22f,.27f,.21f),skin);
-            Part(root.transform,"Short hair",PrimitiveType.Sphere,new Vector3(0,.76f,.015f),new Vector3(.23f,.12f,.22f),hair);
-            Part(root.transform,"Nose",PrimitiveType.Sphere,new Vector3(0,.64f,-.105f),new Vector3(.045f,.055f,.065f),skin);
-            Part(root.transform,"Mouth",PrimitiveType.Cube,new Vector3(0,.56f,-.105f),new Vector3(.07f,.012f,.012f),detail);
-            foreach(float side in new[]{-1f,1f})
+            var prefab = Resources.Load<GameObject>(ModelResource);
+            if (prefab == null) throw new InvalidOperationException("CC0 mannequin model is missing.");
+            var root = new GameObject("Synthetic training mannequin");
+            root.transform.SetParent(parent, false);
+            root.layer = DevelopmentView.StimulusLayer;
+            var actor = root.AddComponent<DevelopmentHumanoidVisual>();
+            actor.settings = settings;
+            actor.floorY = floorY;
+            actor.model = Instantiate(prefab, root.transform, false);
+            actor.model.name = "Quaternius mannequin";
+            foreach (var part in actor.model.GetComponentsInChildren<Transform>(true))
+                part.gameObject.layer = DevelopmentView.StimulusLayer;
+            // Clips are sampled explicitly so they cannot move the scenario root or
+            // continue playing when the station freezes a target.
+            foreach (var animation in actor.model.GetComponentsInChildren<Animation>())
+                animation.enabled = false;
+            foreach (var animator in actor.model.GetComponentsInChildren<Animator>())
+                animator.enabled = false;
+            foreach (var collider in actor.model.GetComponentsInChildren<Collider>())
+            { collider.enabled = false; Destroy(collider); }
+            foreach (var renderer in actor.model.GetComponentsInChildren<Renderer>())
             {
-                Part(root.transform,"Ear",PrimitiveType.Sphere,new Vector3(side*.115f,.64f,0),new Vector3(.04f,.065f,.05f),skin);
-                Part(root.transform,"Eye",PrimitiveType.Sphere,new Vector3(side*.045f,.68f,-.102f),new Vector3(.024f,.018f,.012f),detail);
-                Part(root.transform,"Brow",PrimitiveType.Cube,new Vector3(side*.045f,.714f,-.103f),new Vector3(.065f,.015f,.014f),hair);
-                var arm=new GameObject(side<0?"Left sleeve and hand":"Right sleeve and hand");
-                arm.layer=DevelopmentView.StimulusLayer;arm.transform.SetParent(root.transform,false);
-                arm.transform.localPosition=new Vector3(side*.30f,.38f,0);
-                Part(arm.transform,"Upper sleeve",PrimitiveType.Capsule,new Vector3(0,-.11f,0),new Vector3(.14f,.20f,.16f),jacket);
-                Part(arm.transform,"Lower sleeve",PrimitiveType.Capsule,new Vector3(0,-.32f,0),new Vector3(.12f,.16f,.14f),jacket);
-                Part(arm.transform,"Hand",PrimitiveType.Sphere,new Vector3(0,-.49f,-.015f),new Vector3(.11f,.13f,.10f),skin);
-                if(side<0)actor.leftArm=arm.transform;else actor.rightArm=arm.transform;
-                var leg=new GameObject(side<0?"Left trouser leg":"Right trouser leg");
-                leg.layer=DevelopmentView.StimulusLayer;leg.transform.SetParent(root.transform,false);
-                leg.transform.localPosition=new Vector3(side*.11f,-.31f,0);
-                Part(leg.transform,"Trouser",PrimitiveType.Capsule,new Vector3(0,-.25f,0),new Vector3(.17f,.27f,.19f),pants);
-                Part(leg.transform,"Shoe",PrimitiveType.Cube,new Vector3(0,-.51f,-.055f),new Vector3(.18f,.12f,.31f),shoes);
-                if(side<0)actor.leftLeg=leg.transform;else actor.rightLeg=leg.transform;
+                var materials = renderer.sharedMaterials;
+                for (int i = 0; i < materials.Length; i++)
+                    materials[i] = materials[i] != null && materials[i].name.Contains("Joints")
+                        ? palette.Joints : palette.Shell;
+                renderer.sharedMaterials = materials;
             }
+            actor.animationPlayer = actor.model.GetComponent<Animation>() ?? actor.model.AddComponent<Animation>();
+            actor.animationPlayer.enabled = false;
+            actor.animationPlayer.playAutomatically = false;
+            actor.animationPlayer.cullingType = AnimationCullingType.AlwaysAnimate;
+            // Instantiation can start the FBX's default clip before we disable the
+            // component. Remove that hidden contribution from our explicit blend.
+            actor.animationPlayer.Stop();
+            foreach (AnimationState state in actor.animationPlayer) state.enabled = false;
+            foreach (var clip in Resources.LoadAll<AnimationClip>(ModelResource))
+                if (!clip.name.StartsWith("__preview__")) actor.animationPlayer.AddClip(clip, ClipName(clip));
+            actor.idle = actor.Clip("Idle_Loop");
+            actor.walk = actor.Clip("Walk_Loop");
+            actor.jog = actor.Clip("Jog_Fwd_Loop");
+            actor.crouchIdle = actor.Clip("Crouch_Idle_Loop");
+            actor.crouchWalk = actor.Clip("Crouch_Fwd_Loop");
+            actor.idle.weight = 1;
+            actor.animationPlayer.Sample();
+            actor.FitStandingModel();
+            actor.model.transform.localPosition = actor.fittedPosition;
+            actor.model.transform.localScale = actor.fittedScale;
+            foreach (var bone in actor.model.GetComponentsInChildren<Transform>())
+            {
+                if (bone.name == "foot_l") actor.leftFoot = bone;
+                if (bone.name == "foot_r") actor.rightFoot = bone;
+            }
+            if (actor.leftFoot == null || actor.rightFoot == null)
+                throw new InvalidOperationException("Mannequin foot bones are missing.");
+            actor.standingFootY = actor.LowestFootY();
             return actor;
         }
-        public void Pose(float heightScale,bool running,float time)
+
+        private AnimationState Clip(string name)
         {
-            transform.localScale=new Vector3(1,heightScale,1);
-            float swing=running?Mathf.Sin(time*11f)*25f:0;
-            leftArm.localRotation=Quaternion.Euler(-swing,0,0);rightArm.localRotation=Quaternion.Euler(swing,0,0);
-            leftLeg.localRotation=Quaternion.Euler(swing,0,0);rightLeg.localRotation=Quaternion.Euler(-swing,0,0);
+            var state = animationPlayer[name];
+            if (state == null) throw new InvalidOperationException("Mannequin clip missing: " + name);
+            state.enabled = true;
+            state.weight = 0;
+            state.speed = 0; // Only active session time advances the manually sampled blend.
+            state.wrapMode = WrapMode.Loop;
+            return state;
         }
+
+        private static string ClipName(AnimationClip clip) => clip.name.Substring(clip.name.LastIndexOf('|') + 1);
+
+        private void FitStandingModel()
+        {
+            // Fit in virtual metres to the existing anatomy, rather than changing
+            // hit scoring to match the source asset's export units.
+            var bounds = new Bounds();
+            bool first = true;
+            foreach (var renderer in model.GetComponentsInChildren<SkinnedMeshRenderer>())
+            {
+                var mesh = new Mesh();
+                renderer.BakeMesh(mesh);
+                foreach (var vertex in mesh.vertices)
+                {
+                    var point = transform.InverseTransformPoint(renderer.transform.TransformPoint(vertex));
+                    if (first) { bounds = new Bounds(point, Vector3.zero); first = false; }
+                    else bounds.Encapsulate(point);
+                }
+                Destroy(mesh);
+            }
+            if (first || bounds.size.y <= 0) throw new InvalidOperationException("Mannequin mesh has no height.");
+            float bottom = float.PositiveInfinity, top = float.NegativeInfinity;
+            foreach (var part in HumanoidGeometry.Parts(new Vector3d(0, HumanoidGeometry.StandingCenterY, 0)))
+            {
+                float localY = (float)(part.Center.Y - HumanoidGeometry.StandingCenterY);
+                bottom = Mathf.Min(bottom, localY - (float)part.Radii.Y);
+                top = Mathf.Max(top, localY + (float)part.Radii.Y);
+            }
+            float scale = (top - bottom) / bounds.size.y;
+            fittedScale = model.transform.localScale * scale;
+            fittedPosition = new Vector3(-bounds.center.x * scale, bottom - bounds.min.y * scale, -bounds.center.z * scale);
+        }
+
+        /// <summary>Follow the authoritative position without root motion. Repeated
+        /// timestamps preserve the exact pose, including during session pauses.</summary>
+        public void Pose(Vector3 position, double activeSeconds)
+        {
+            double elapsed = hasFrame ? activeSeconds - previousTime : 0;
+            if (hasFrame && elapsed == 0 && position == previousPosition) return;
+            Vector3 travel = position - previousPosition;
+            travel.y = 0;
+            // A seek/new attempt is a new visual sample, never a sprint between observations.
+            bool discontinuity = !hasFrame || elapsed < 0 || elapsed > .25 || travel.magnitude > 1;
+            float dt = discontinuity ? 0 : (float)elapsed;
+            if (discontinuity) { speed = 0; yaw = 0; gaitPhase = 0; idleSeconds = 0; }
+            float measuredSpeed = dt > 0 ? travel.magnitude / dt : 0;
+            float blend = dt > 0 ? 1 - Mathf.Exp(-dt / Mathf.Max(.01f, settings.blendSeconds)) : 1;
+            speed = Mathf.Lerp(speed, measuredSpeed, blend);
+            float standingCenterY = (float)HumanoidGeometry.StandingCenterAt(floorY);
+            float crouch = Mathf.Clamp01((standingCenterY - position.y) /
+                (float)(HumanoidGeometry.StandingCenterY - HumanoidGeometry.CrouchedCenterY));
+            float locomotion = Mathf.SmoothStep(0, 1, speed / Mathf.Max(.1f, settings.walkSpeedMps * .55f));
+            float run = Mathf.InverseLerp(settings.walkSpeedMps, Mathf.Max(settings.walkSpeedMps + .1f, settings.jogSpeedMps), speed);
+            // Share the left/right foot phase across gaits; actual distance sets cadence.
+            float stride = Mathf.Lerp(settings.walkSpeedMps * walk.length, settings.jogSpeedMps * jog.length, run);
+            stride = Mathf.Lerp(stride, settings.crouchSpeedMps * crouchWalk.length, crouch);
+            if (dt > 0) gaitPhase = Mathf.Repeat(gaitPhase + travel.magnitude / Mathf.Max(.1f, stride), 1);
+            idleSeconds += dt;
+            float targetYaw = measuredSpeed > .04f ? Mathf.Atan2(-travel.x, -travel.z) * Mathf.Rad2Deg : 0;
+            yaw = Mathf.MoveTowardsAngle(yaw, targetYaw, settings.turnDegreesPerSecond * dt);
+            SetState(idle, (1 - crouch) * (1 - locomotion), idleSeconds / idle.length);
+            SetState(walk, (1 - crouch) * locomotion * (1 - run), gaitPhase);
+            SetState(jog, (1 - crouch) * locomotion * run, gaitPhase);
+            SetState(crouchIdle, crouch * (1 - locomotion), idleSeconds / crouchIdle.length);
+            SetState(crouchWalk, crouch * locomotion, gaitPhase);
+            animationPlayer.Sample();
+            transform.position = position;
+            transform.localScale = Vector3.one;
+            // Only the visual child turns. Logged target coordinates and hit geometry stay authoritative.
+            model.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+            model.transform.localPosition = fittedPosition;
+            model.transform.localScale = fittedScale;
+            // Bend at the hips/knees instead of compressing the mesh. Compensate for
+            // the scenario centre lowering so the supporting foot stays on the floor.
+            float correction = standingFootY + standingCenterY - position.y - LowestFootY();
+            model.transform.localPosition += Vector3.up * correction;
+            previousTime = activeSeconds;
+            previousPosition = position;
+            hasFrame = true;
+        }
+
+        private float LowestFootY() => Mathf.Min(transform.InverseTransformPoint(leftFoot.position).y,
+            transform.InverseTransformPoint(rightFoot.position).y);
+
+        private static void SetState(AnimationState state, float weight, float phase)
+        { state.weight = weight; state.normalizedTime = Mathf.Repeat(phase, 1); }
 
         public static void CreateCovers(Transform parent,IReadOnlyList<HumanoidCover> covers,List<Material> owned)
         {
-            var wood=Material(owned,new Color(.42f,.30f,.19f));
-            var concrete=Material(owned,new Color(.45f,.48f,.47f));
-            var metal=Material(owned,new Color(.21f,.28f,.30f));
-            var trim=Material(owned,new Color(.14f,.17f,.18f));
+            var furniture=new LibraryInterior(owned);
             foreach(var cover in covers)
             {
                 var host=new GameObject("Cover · "+cover.Id);host.layer=DevelopmentView.StimulusLayer;
                 host.transform.SetParent(parent,false);
                 host.transform.position=new Vector3((float)cover.Center.X,(float)cover.Center.Y,(float)cover.Center.Z);
-                Vector3 full=new Vector3((float)cover.HalfSize.X*2,(float)cover.HalfSize.Y*2,(float)cover.HalfSize.Z*2);
-                if(cover.Id=="crate-stack")
+                var full=new Vector3((float)cover.HalfSize.X*2,(float)cover.HalfSize.Y*2,(float)cover.HalfSize.Z*2);
+                if(cover.Id.StartsWith("low-bookcase"))
                 {
-                    Part(host.transform,"Stacked timber crates",PrimitiveType.Cube,Vector3.zero,full,wood);
-                    for(int i=-1;i<=1;i++)Part(host.transform,"Crate seam",PrimitiveType.Cube,new Vector3(0,i*.32f,-full.z*.51f),new Vector3(full.x,.018f,.015f),trim);
-                }
-                else if(cover.Id=="concrete-barrier")
-                {
-                    Part(host.transform,"Concrete road barrier",PrimitiveType.Cube,Vector3.zero,full,concrete);
-                    Part(host.transform,"Barrier dark footing",PrimitiveType.Cube,new Vector3(0,-full.y*.42f,0),new Vector3(full.x*1.12f,.13f,full.z*1.15f),trim);
+                    // Closed backing preserves the authoritative cover silhouette; shelf interiors
+                    // and individually bound books add depth on the participant-facing side.
+                    int slot=int.Parse(cover.Id.Substring(cover.Id.LastIndexOf('-')+1));
+                    var baseRoot=LibraryInterior.Group(host.transform,"Bookcase construction",new Vector3(0,-full.y/2,0));
+                    furniture.Bookcase(baseRoot,full.x,full.y,full.z,slot);
                 }
                 else
-                {
-                    for(int i=-1;i<=1;i+=2)
-                    {
-                        Part(host.transform,"Steel drum",PrimitiveType.Cylinder,new Vector3(i*.13f,0,0),new Vector3(.26f,full.y*.5f,.26f),metal);
-                        Part(host.transform,"Drum cap",PrimitiveType.Cylinder,new Vector3(i*.13f,full.y*.5f,0),new Vector3(.27f,.025f,.27f),trim);
-                    }
-                }
+                    LibraryInterior.Box(host.transform,"Desk construction",Vector3.zero,full,
+                        cover.Id.StartsWith("desk-leg")?furniture.Metal:furniture.Oak);
             }
         }
 

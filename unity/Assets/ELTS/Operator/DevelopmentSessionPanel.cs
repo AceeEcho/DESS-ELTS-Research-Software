@@ -286,7 +286,7 @@ namespace Elts.Operator
                     lastMessage=exception.Message;
                     engine.Abort("Scenario or logging failure: "+exception.Message);
                 }
-                if(view.SessionControlsVisible)view.SetSessionFrame(pair?.Head.Pose,pair?.Weapon.Pose,scenario?.Positions??visibleTargets);
+                if(view.SessionControlsVisible)view.SetSessionFrame(pair?.Head.Pose,pair?.Weapon.Pose,scenario?.Positions??visibleTargets,engine.CurrentActiveSeconds);
                 if(!closing && (engine.State==SessionState.SessionComplete || engine.State==SessionState.Aborted || engine.State==SessionState.Failed))
                 { setupPending=false; closing=true; Begin(CloseRecordingAsync); }
             }

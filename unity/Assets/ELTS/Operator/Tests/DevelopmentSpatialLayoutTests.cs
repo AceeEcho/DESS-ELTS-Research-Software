@@ -120,10 +120,22 @@ namespace Elts.Operator.Tests
                     float x=view.ParticipantCamera.WorldToViewportPoint(Unity(entry)).x;
                     Assert.That(x<0 || x>1,Is.True,"Entry must start offscreen");
                 }
-                foreach(double time in new[]{0.0,2,6,12,18})
+                var captureFrames=new HashSet<int>{0,120,360,720,1080};
+                // Advance at rendering cadence so gait/turning samples reflect travel.
+                // Multi-second seeks intentionally reset the visual to an idle pose.
+                for(int frame=0;frame<=1080;frame++)
                 {
+                    double time=frame/60.0;
                     for(int i=0;i<30;i++)positions[actors[i].Id]=Position(actors[i],center,true,time,view,-1);
+                    if(time==0)
+                        foreach(var position in positions.Values)
+                        {
+                            var projected=view.ParticipantCamera.WorldToViewportPoint(Unity(position));
+                            Assert.That(projected.x,Is.InRange(0f,1f),"Opening moving targets must already be on screen");
+                            Assert.That(projected.y,Is.InRange(0f,1f));
+                        }
                     view.SetSessionFrame(desktop.Head,desktop.Weapon,positions,time);view.Refresh(0);
+                    if(!captureFrames.Contains(frame))continue;
                     yield return null;
                     Capture(view.ParticipantCamera,texture,"moving-"+time+"s.png");
                 }

@@ -25,19 +25,26 @@ desks, low bookcases and offset cabinets provide open, partly covered and
 between-furniture views. The shot model uses the same solid furniture bounds
 that are rendered; shelf details are visual only.
 
-Moving targets consume `library-routes-v1` in **spawn order**. The first 30
+Moving targets consume `library-routes-v2` in **spawn order**. The first 30
 assignments are routes 0–29; each kill assigns the next route. Every block,
 including each participant's repeat of a condition, restarts at route 0.
 `DevelopmentScenarioLayout.Route` is an indexable list of 100,000 entries
 (default), represented by a fixed integer recipe rather than a large duplicated
 waypoint file. It does not use participant IDs, timestamps or runtime randomness.
 The list wraps only after its configured length. The test suite exports the full
-list to `test-results/library/library-routes-v1.csv` for inspection; that export
+list to `test-results/library/library-routes-v2.csv` for inspection; that export
 uses the default synthetic center and floor, while runtime positions use current
 configuration. Route entries include the absolute station, behavior, entry duration
-and cycle duration. Behavior variants are standing, crouch/peek, patrol and crouched
-patrol. Each moving target enters horizontally from outside the default participant
-frustum, then follows its assigned route using active time and eased transitions.
+and cycle duration. The opening population is already inside the room at staggered,
+deterministic route ages. Later replacements enter horizontally from outside the
+default participant frustum. All four behaviors (burst/return, hesitate/reverse,
+duck/run and low dash) continue moving; none settles into indefinite standing.
+Hurried diagonal bursts alternate with short pauses and reversals, with up to
+1.4 metres of lateral excursion on either side of a station by default. Reach and
+direction vary by route and cycle, without runtime randomness. Routes stay within
+the station field and the open aisle behind the furniture. Eased starts/stops and
+closed cycle boundaries avoid position jumps. These are illustrative panic-like
+movements, not a validated model of human behavior in an emergency.
 
 Routes are never relocated or skipped to accommodate a different kill order. If
 a destination is still occupied, that target waits at its offscreen entry until
@@ -48,7 +55,8 @@ route prefix **by spawn number and route age**, while entry times and concurrent
 visible actors depend on which targets they kill. Kill order is not prescribed.
 
 `DevelopmentGameSettings` on `DevelopmentView` holds the provisional magazine
-size, library spacing, entry timing, patrol distance and peek timing. A validated
+size, library spacing, entry timing, lateral/depth excursion and burst-cycle timing
+(the existing `peekCycleSeconds` field). A validated
 copy is taken for each view/session; population settings are read from the shared
 configuration. Library geometry uses `Rig.VirtualFloorY`, with no change to
 physical display assumptions. The enclosure includes four walls and a ceiling;
@@ -56,9 +64,11 @@ perimeter bookcases stay outside the target routes.
 
 Each block records `DevelopmentLayoutConfigured` with the version, counts,
 geometry and timing values. Each spawn records `DevelopmentTargetAssigned` with
-its spawn ordinal, position index, route index and behavior. Moving targets record
+its spawn ordinal, position index, route index, behavior, `initiallyPresent` flag
+and `initialRouteAgeSeconds` offset. Moving targets record
 `DevelopmentRouteEntered` when their destination is reserved and their entry
-starts. Actual target positions continue to be logged on the acquisition clock.
+starts (immediately for the opening population, whose offset skips the entry).
+Actual target positions continue to be logged on the acquisition clock.
 Pause freezes choreography without stopping acquisition. Character animation
 follows those positions and cannot move target roots or change scoring.
 

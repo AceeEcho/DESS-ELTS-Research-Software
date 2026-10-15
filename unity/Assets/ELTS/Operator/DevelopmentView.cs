@@ -289,7 +289,7 @@ namespace Elts.Operator
                 if(animate)headVelocity=new Vector3d(Math.Cos(demoTime*0.7)*0.175,Math.Cos(demoTime*0.4)*0.04,0);
                 foreach(var actor in demoActors)
                     visibleTargets.Add(actor.Id,DevelopmentScenarioLayout.Position(actor,DevelopmentScenarioLayout.Center(configuration),true,
-                        demoTime+activeGameSettings.runInSeconds+activeGameSettings.peekCycleSeconds*.4,activeGameSettings,configuration.Rig.VirtualFloorY));
+                        demoTime,activeGameSettings,configuration.Rig.VirtualFloorY));
                 status="SYNTHETIC DEMO | Head "+(rawHead.HasValue?"valid":"UNAVAILABLE")+" | Weapon "+(rawWeapon.HasValue?"valid":"UNAVAILABLE");
             }
             // Replay stays raw; no velocity is invented by interpolating adjacent observations.

@@ -77,6 +77,7 @@ namespace Elts.Operator
                 if(moving && !starts.ContainsKey(target.Id) && !occupied.Contains(slot))
                 { occupied.Add(slot);starts.Add(target.Id,activeSeconds); }
                 double age=starts.TryGetValue(target.Id,out double start)?Math.Max(0,activeSeconds-start):0;
+                if(moving)age+=DevelopmentScenarioLayout.InitialRouteAge(ordinal,settings);
                 var next=DevelopmentScenarioLayout.Sample(center,slot,moving,ordinal,age,settings,floorY);
                 // Velocity is supplied by the session using its active-time delta.
                 target.Move(next,Vector3d.Zero);

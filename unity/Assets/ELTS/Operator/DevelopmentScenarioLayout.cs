@@ -16,8 +16,9 @@ namespace Elts.Operator
         public int magazineCapacity=DefaultMagazineCapacity;
         public int activeTargetCount=30, spawnPositionCount=50, pathSequenceLength=100000;
         public float libraryFirstRowOffsetM=16, libraryRowSpacingM=4, libraryColumnSpacingM=1.5f;
-        public float libraryEntryXM=14, libraryPatrolDistanceM=.45f, libraryPatrolDepthM=2.3f;
-        public float runInSeconds=4.6f, peekCycleSeconds=4.8f, crouchSeconds=.65f;
+        // Lateral distance is the maximum excursion on either side of a station.
+        public float libraryEntryXM=14, libraryPatrolDistanceM=1.4f, libraryPatrolDepthM=2.0f;
+        public float runInSeconds=4.6f, peekCycleSeconds=6.2f, crouchSeconds=.45f;
         public void ApplyPopulation(ScenarioConfiguration scenario)
         {
             activeTargetCount=scenario.ActiveTargetCount;
@@ -31,7 +32,7 @@ namespace Elts.Operator
                 pathSequenceLength<100000 || pathSequenceLength>1000000 ||
                 !Finite(libraryFirstRowOffsetM,14,18) || !Finite(libraryRowSpacingM,3.5f,4.5f) ||
                 !Finite(libraryColumnSpacingM,1.4f,1.6f) || !Finite(libraryEntryXM,14,16) ||
-                !Finite(libraryPatrolDistanceM,.2f,.5f) || !Finite(libraryPatrolDepthM,1.5f,2.3f) || magazineCapacity<1 || magazineCapacity>100 ||
+                !Finite(libraryPatrolDistanceM,.8f,2.0f) || !Finite(libraryPatrolDepthM,1.5f,2.3f) || magazineCapacity<1 || magazineCapacity>100 ||
                 !Finite(runInSeconds,3.5f,8) || !Finite(peekCycleSeconds,3.5f,8) || !Finite(crouchSeconds,.4f,1.2f))
                 throw new ArgumentException("Development game settings are outside their safe synthetic ranges.");
         }
@@ -42,7 +43,7 @@ namespace Elts.Operator
     internal static class DevelopmentScenarioLayout
     {
         public const int TargetCount=30;
-        public const string Version="library-routes-v1";
+        public const string Version="library-routes-v2";
         public static Vector3d Center(DevelopmentConfiguration config)
         {
             var screen=config.Rig.Display;
@@ -57,7 +58,7 @@ namespace Elts.Operator
             public readonly double EntrySeconds, CycleSeconds;
             public LibraryRoute(int slot,int behaviour,double entrySeconds,double cycleSeconds)
             { Slot=slot;Behaviour=behaviour;EntrySeconds=entrySeconds;CycleSeconds=cycleSeconds; }
-            public string Name => Behaviour==0?"Stand":Behaviour==1?"HidePeek":Behaviour==2?"Patrol":"CrouchPatrol";
+            public string Name => Behaviour==0?"BurstReturn":Behaviour==1?"HesitateReverse":Behaviour==2?"DuckAndRun":"LowDash";
         }
         // Indexed list, never runtime randomness. Each group visits all 50 stations
         // once. Store the recipe rather than megabytes of duplicated waypoints.
@@ -70,7 +71,15 @@ namespace Elts.Operator
             int stride=settings.spawnPositionCount==34?19:17; // Coprime to every supported position count.
             int slot=(index*stride+index/settings.spawnPositionCount*7)%settings.spawnPositionCount;
             return new LibraryRoute(slot,(int)(variant%4),settings.runInSeconds+(variant%5)*.3,
-                settings.peekCycleSeconds+(variant%7)*.4);
+                settings.peekCycleSeconds+(variant%7)*.25);
+        }
+        // The opening population is already in the room, at staggered route ages.
+        // Replacements still enter from outside. This offset is also recorded for replay.
+        public static double InitialRouteAge(int ordinal,DevelopmentGameSettings settings)
+        {
+            if(ordinal>=settings.activeTargetCount)return 0;
+            var route=Route(ordinal,settings);
+            return route.EntrySeconds+route.CycleSeconds*((ordinal*37+11)%101)/101.0;
         }
         public static Vector3d Station(Vector3d center,int slot,DevelopmentGameSettings settings,double floorY)
         {
@@ -110,7 +119,7 @@ namespace Elts.Operator
             int ordinal=Ordinal(target);
             if(slot<0)slot=moving?Route(ordinal,settings).Slot:ordinal%settings.spawnPositionCount;
             double age=Math.Max(0,activeSeconds-target.SpawnedAt.Ticks/(double)TimeSpan.TicksPerSecond);
-            return Sample(center,slot,moving,ordinal,age,settings,floorY);
+            return Sample(center,slot,moving,ordinal,age+(moving?InitialRouteAge(ordinal,settings):0),settings,floorY);
         }
         public static Vector3d Sample(Vector3d center,int slot,bool moving,int ordinal,double age,DevelopmentGameSettings settings,double floorY)
         {
@@ -123,23 +132,42 @@ namespace Elts.Operator
                 var entry=new Vector3d(center.X+side*settings.libraryEntryXM,home.Y,home.Z);
                 return entry+(home-entry)*Ease(age/route.EntrySeconds);
             }
-            if(route.Behaviour==0)return home;
-            double phase=((age-route.EntrySeconds)%route.CycleSeconds)/route.CycleSeconds;
-            double crouched=HumanoidGeometry.CrouchedCenterAt(floorY);
-            if(route.Behaviour==1)
-            {
-                double peek=phase<.2?0:phase<.4?Ease((phase-.2)/.2):phase<.6?1:phase<.8?1-Ease((phase-.6)/.2):0;
-                double settle=Ease((age-route.EntrySeconds)/settings.crouchSeconds);
-                return new Vector3d(home.X+side*.38*peek,home.Y+(crouched-home.Y)*(1-peek)*settle,home.Z);
-            }
-            // A closed eased rectangle stays in the aisle behind the furniture.
-            double leg=phase*4;
-            var corners=new[]{Vector3d.Zero,new Vector3d(side*settings.libraryPatrolDistanceM,0,0),
-                new Vector3d(side*settings.libraryPatrolDistanceM,0,settings.libraryPatrolDepthM),new Vector3d(0,0,settings.libraryPatrolDepthM)};
-            int segment=(int)leg;
-            var offset=corners[segment]+(corners[(segment+1)%4]-corners[segment])*Ease(leg-segment);
-            double y=route.Behaviour==3?(crouched-home.Y)*Ease((age-route.EntrySeconds)/settings.crouchSeconds):0;
-            return home+offset+new Vector3d(0,y,0);
+            double elapsed=age-route.EntrySeconds;
+            int cycle=(int)(elapsed/route.CycleSeconds);
+            double phase=(elapsed%route.CycleSeconds)/route.CycleSeconds;
+            // Change the reach and direction each cycle without frame-dependent random
+            // choices. Every cycle starts/ends at home at rest, so there are no teleports.
+            uint variation=unchecked((uint)(ordinal%settings.pathSequenceLength)*747796405u+(uint)cycle*2891336453u);
+            variation^=variation>>16;
+            double direction=(variation&1)==0?-1:1;
+            double reach=settings.libraryPatrolDistanceM*(.8+(variation%21)*.01);
+            // Keep hurried lateral/diagonal bursts in the open aisle, clear of the
+            // next row's furniture even with the smallest configured row spacing.
+            double depth=Math.Min(settings.libraryPatrolDepthM,settings.libraryRowSpacingM-1.5);
+            int rowStart=slot/10*10;
+            double left=Station(center,rowStart,settings,floorY).X;
+            double right=Station(center,Math.Min(rowStart+9,settings.spawnPositionCount-1),settings,floorY).X;
+            Vector3d Point(double x,double z)=>new Vector3d(Math.Max(left,Math.Min(right,home.X+x)),home.Y,home.Z+z);
+            var a=Point(direction*reach,depth*.25);
+            var b=Point(-direction*reach,depth*(route.Behaviour==1?.55:.8));
+            var c=Point(direction*reach*.55,depth);
+            // Short freezes between bursts read as hesitation; no variant stays idle
+            // indefinitely. The brief pauses differ by route, as do the crouch windows.
+            double pauseEnd=route.Behaviour==1?.28:.23;
+            Vector3d position;
+            if(phase<.18)position=home+(a-home)*Ease(phase/.18);
+            else if(phase<pauseEnd)position=a;
+            else if(phase<.46)position=a+(b-a)*Ease((phase-pauseEnd)/(.46-pauseEnd));
+            else if(phase<.51)position=b;
+            else if(phase<.73)position=b+(c-b)*Ease((phase-.51)/.22);
+            else if(phase<.79)position=c;
+            else position=c+(home-c)*Ease((phase-.79)/.21);
+            double duckStart=route.Behaviour==3?.18:.46;
+            double duckEnd=route.Behaviour==3?.79:.60;
+            duckEnd=Math.Min(duckEnd,1-settings.crouchSeconds/route.CycleSeconds);
+            double duck=route.Behaviour<2?0:Ease((phase-duckStart)*route.CycleSeconds/settings.crouchSeconds)
+                *(1-Ease((phase-duckEnd)*route.CycleSeconds/settings.crouchSeconds));
+            return position+new Vector3d(0,(HumanoidGeometry.CrouchedCenterAt(floorY)-home.Y)*duck,0);
         }
         private static double Ease(double value)
         {

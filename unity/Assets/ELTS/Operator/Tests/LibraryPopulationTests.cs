@@ -14,6 +14,50 @@ namespace Elts.Operator.Tests
         private const double Floor=-1.5567;
 
         [Test]
+        public void OpeningTargetsAreAlreadyInRoomAndAllKeepMakingSubstantialBursts()
+        {
+            var settings=new DevelopmentGameSettings();
+            settings.Validate();
+            var population=new LibraryTargetPopulation(settings,true,.1);
+            population.Reconcile(0,Center,Floor);
+            var opening=population.ActiveTargets.Select(t=>t.Position).ToArray();
+            Assert.That(opening.All(p=>Math.Abs(p.X-Center.X)<10),Is.True,"The opening scene must not wait for offscreen entries");
+            Assert.That(opening.Distinct().Count(),Is.EqualTo(30));
+            int immediatelyMoving=0;
+            foreach(var target in population.ActiveTargets)
+            {
+                int ordinal=DevelopmentScenarioLayout.Ordinal(target);
+                var route=DevelopmentScenarioLayout.Route(ordinal,settings);
+                double offset=DevelopmentScenarioLayout.InitialRouteAge(ordinal,settings);
+                var points=Enumerable.Range(0,601).Select(i=>DevelopmentScenarioLayout.Sample(Center,route.Slot,true,
+                    ordinal,offset+i/30.0,settings,Floor)).ToArray();
+                Assert.That(points.Max(p=>p.X)-points.Min(p=>p.X),Is.GreaterThan(1.0),"Every route must travel visibly sideways");
+                double travel=0,peakSpeed=0;
+                for(int i=1;i<points.Length;i++)
+                {
+                    double distance=(points[i]-points[i-1]).Length;
+                    travel+=distance;peakSpeed=Math.Max(peakSpeed,distance*30);
+                }
+                Assert.That(travel,Is.GreaterThan(12),"No permanently standing moving-condition targets");
+                Assert.That(peakSpeed,Is.LessThan(8),"No teleport-sized movement between samples");
+                if((points[3]-points[0]).Length>.01)immediatelyMoving++;
+                // Cycle variation must join at exactly the same position and at rest.
+                for(int cycle=1;cycle<=4;cycle++)
+                {
+                    double boundary=route.EntrySeconds+cycle*route.CycleSeconds;
+                    var before=DevelopmentScenarioLayout.Sample(Center,route.Slot,true,ordinal,boundary-.0001,settings,Floor);
+                    var after=DevelopmentScenarioLayout.Sample(Center,route.Slot,true,ordinal,boundary+.0001,settings,Floor);
+                    Assert.That((after-before).Length,Is.LessThan(.00001));
+                }
+            }
+            Assert.That(immediatelyMoving,Is.GreaterThanOrEqualTo(20),"Opening movement must already be underway and staggered");
+            population.ActiveTargets[0].Destroy();population.Reconcile(.1,Center,Floor);
+            var replacement=population.ActiveTargets.Last();
+            Assert.That(DevelopmentScenarioLayout.InitialRouteAge(DevelopmentScenarioLayout.Ordinal(replacement),settings),Is.Zero);
+            Assert.That(Math.Abs(replacement.Position.X-Center.X),Is.EqualTo(settings.libraryEntryXM),"Later arrivals retain entry routes");
+        }
+
+        [Test]
         public void FixedTargetsStayUntilKilledAndNeverReplaceInTheJustVacatedPosition()
         {
             var settings=new DevelopmentGameSettings();
@@ -144,7 +188,7 @@ namespace Elts.Operator.Tests
             }
             string folder=Path.GetFullPath(Path.Combine(Application.dataPath,"../../test-results/library"));
             Directory.CreateDirectory(folder);
-            using(var writer=new StreamWriter(Path.Combine(folder,"library-routes-v1.csv")))
+            using(var writer=new StreamWriter(Path.Combine(folder,DevelopmentScenarioLayout.Version+".csv")))
             {
                 writer.WriteLine("route_index,position_index,behaviour,entry_seconds,cycle_seconds,x_m,z_m");
                 for(int i=0;i<settings.pathSequenceLength;i++)

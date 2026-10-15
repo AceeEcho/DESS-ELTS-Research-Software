@@ -258,6 +258,8 @@ namespace Elts.Operator
                 LogField.NumberValue("positionIndex",population!.Slot(target)),
                 LogField.NumberValue("routeIndex",ordinal%gameSettings.pathSequenceLength),
                 LogField.String("behaviour",movingBlock?route.Name:"Fixed"),
+                LogField.Boolean("initiallyPresent",ordinal<gameSettings.activeTargetCount),
+                LogField.NumberValue("initialRouteAgeSeconds",movingBlock?DevelopmentScenarioLayout.InitialRouteAge(ordinal,gameSettings):0),
                 LogField.NumberValue("entrySeconds",movingBlock?route.EntrySeconds:0),
                 LogField.NumberValue("cycleSeconds",movingBlock?route.CycleSeconds:0)})))
                 throw new InvalidOperationException("Target route assignment recording failed.");

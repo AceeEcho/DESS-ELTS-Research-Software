@@ -37,6 +37,7 @@ function Start-EltsVisibleApp {
 }
 
 function Invoke-EltsDevelopmentStart {
+    Set-EltsStartupStatus 'Checking this computer' 'Checking the installed tools and saved setup report.'
     $root = $script:EltsRepositoryRoot
     Set-Location -LiteralPath $root
     $manifestPath = Join-Path $root 'config/toolchain.json'
@@ -60,11 +61,13 @@ function Invoke-EltsDevelopmentStart {
     if (-not $ready) {
         if (Test-EltsProjectOpen $project) { throw 'Close this project in Unity, then click START-ELTS again so setup can finish.' }
         Write-Host 'Preparing this computer. First startup can take a while; complete any Unity account/license prompts.'
+        Set-EltsStartupStatus 'Preparing this computer' 'Installing or checking required tools. First setup can take a while. Complete any installer or Unity sign-in/license prompts; see the console for details.'
         Invoke-EltsSetupProcess $shell @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $root 'scripts/setup-dev.ps1')) -TimeoutSeconds 14400 `
             -Activity 'Prepare this computer' -ReportPaths $reportPath -RetryCommand 'START-ELTS.cmd'
         Initialize-EltsLocalTools
         $paths = Get-EltsSetupPaths $manifest (Join-Path $env:LOCALAPPDATA 'ELTS/Tools') $env:ELTS_PYTHON $env:ELTS_UNITY_EDITOR
     }
+    Set-EltsStartupStatus 'Checking application files' 'Comparing source and configuration files with the saved build.'
     $fingerprint = Get-EltsStartupFingerprint
     $cachePath = Join-Path $root 'diagnostics/start-build.json'
     $player = $null
@@ -76,6 +79,7 @@ function Invoke-EltsDevelopmentStart {
                 $candidate = Join-Path $root ($cache.output + '/ELTS-Synthetic.exe')
                 if (Test-Path -LiteralPath $candidate -PathType Leaf) {
                     # An executable alone is insufficient: verify DLLs and data too.
+                    Set-EltsStartupStatus 'Verifying the saved app' 'Checking the participant game and its required data files before opening it.'
                     Invoke-EltsSetupProcess $paths.python @('-X','utf8','-m',
                         'tools.build.verify', (Split-Path -Parent $candidate))
                     $player = $candidate
@@ -91,6 +95,7 @@ function Invoke-EltsDevelopmentStart {
         # Build to a new directory; never delete an older build or its recordings.
         $output = 'build/start-elts-' + [Guid]::NewGuid().ToString('N')
         Write-Host 'Building the dashboard and participant game...'
+        Set-EltsStartupStatus 'Building ELTS' 'Unity is building the dashboard and participant game. This can take several minutes. The console shows build output; leave startup running.'
         Invoke-EltsSetupProcess $shell @('-NoProfile','-ExecutionPolicy','Bypass','-File',
             (Join-Path $root 'scripts/build.ps1'), '-Output', $output,
             '-PythonExecutable', $paths.python, '-UnityEditor', $paths.unity) -TimeoutSeconds 3600 `
@@ -98,12 +103,14 @@ function Invoke-EltsDevelopmentStart {
         $player = Join-Path $root ($output + '/ELTS-Synthetic.exe')
         if (-not (Test-Path -LiteralPath $player -PathType Leaf)) { throw 'Build finished without a dashboard executable.' }
         # Staging during the build can change generated Assets, so hash afterwards.
+        Set-EltsStartupStatus 'Saving build information' 'Recording the source fingerprint so later launches can reuse this build.'
         $cache = @{ fingerprint = Get-EltsStartupFingerprint; output = $output }
         [IO.File]::WriteAllText($cachePath, ($cache | ConvertTo-Json), (New-Object Text.UTF8Encoding $false))
     }
     # Unity runs headlessly only when setup/build requires it. Open the Editor
     # manually for source work; ordinary testing needs just the two app windows.
     # Preserve the connected desktop at startup; fullscreen remains a user action.
+    Set-EltsStartupStatus 'Opening ELTS' 'Starting the participant game. Its administrator dashboard will open in your browser.'
     Start-EltsVisibleApp $player @('-eltsWindowed','-screen-fullscreen','0','-screen-width','1280','-screen-height','720') (Split-Path -Parent $player)
     Write-Host 'Dashboard and participant game launch requested.' -ForegroundColor Green
 }

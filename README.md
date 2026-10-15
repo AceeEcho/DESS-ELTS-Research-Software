@@ -32,6 +32,8 @@ Complete any Windows installation approval or Unity sign-in/license prompts. If 
 
 Double-click **START-ELTS.cmd**. The first launch builds the application, then opens the **administrator dashboard** in your browser and the **participant game** in a separate window.
 
+A startup window shows the current step, an animated activity bar, and elapsed time while ELTS checks, builds, and opens. The bar indicates that startup is waiting on work, not a measured percentage or a guarantee that a tool is responding. First builds can take several minutes; check the console for detailed output or installer/sign-in prompts. You can hide the progress window without cancelling startup. It closes automatically after launch is requested; errors stay visible with an **Open startup log** button.
+
 **Next time, just run START-ELTS.cmd.** Keep the whole extracted project folder together.
 
 If a step fails, keep the error window open and see [setup troubleshooting](docs/operator/multi-machine-setup.md#if-something-goes-wrong). For GitHub Desktop and updating between computers, see the [full setup guide](docs/operator/multi-machine-setup.md).

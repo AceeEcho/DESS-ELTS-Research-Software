@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 . (Join-Path $repo 'scripts/setup-tools.ps1')
 . (Join-Path $repo 'scripts/start-dev-tools.ps1')
+. (Join-Path $repo 'scripts/start-progress.ps1')
 $originalLocation = Get-Location
 $fixture = Join-Path ([IO.Path]::GetTempPath()) ('ELTS startup tests ' + [Guid]::NewGuid().ToString('N'))
 $script:EltsRepositoryRoot = $fixture
@@ -11,6 +12,11 @@ $script:open = $false
 $script:failSetup = $false
 $script:failBuild = $false
 $script:fingerprint = 'source-one'
+$script:statuses = New-Object 'System.Collections.Generic.List[string]'
+function Set-EltsStartupStatus {
+    param($Title, $Detail, $Result)
+    $script:statuses.Add($Title)
+}
 function Assert($Condition, $Message) { if (-not $Condition) { throw $Message } }
 function Get-EltsSetupPaths { return @{git=$null;python='python';dotnet='dotnet';node='node';unity='Unity.exe'} }
 function Initialize-EltsLocalTools {}
@@ -51,9 +57,12 @@ try {
     Copy-Item (Join-Path $repo 'config/toolchain.json') (Join-Path $fixture 'config/toolchain.json')
     Invoke-EltsDevelopmentStart
     Assert (($calls -join ',') -eq 'setup,build,dashboard') 'First start must not open the Editor'
+    Assert (($statuses -join ',') -eq 'Checking this computer,Preparing this computer,Checking application files,Building ELTS,Saving build information,Opening ELTS') 'First launch must report setup/build stages in order'
+    $statuses.Clear()
     $calls.Clear()
     Invoke-EltsDevelopmentStart
     Assert (($calls -join ',') -eq 'verify,dashboard') 'Repeat start must reuse the build without opening the Editor'
+    Assert (($statuses -join ',') -eq 'Checking this computer,Checking application files,Verifying the saved app,Opening ELTS') 'Cached launch must not claim to install or build'
     $calls.Clear(); $script:open = $true
     Invoke-EltsDevelopmentStart
     Assert (($calls -join ',') -eq 'verify,dashboard') 'Already-open editor duplicated'
@@ -64,13 +73,15 @@ try {
     $script:open = $false
     Invoke-EltsDevelopmentStart
     Assert (($calls -join ',') -eq 'build,dashboard') 'Source change must rebuild without opening the Editor'
-    $calls.Clear(); $script:fingerprint = 'source-three'; $script:failBuild = $true
+    $calls.Clear(); $statuses.Clear(); $script:fingerprint = 'source-three'; $script:failBuild = $true
     try { Invoke-EltsDevelopmentStart } catch { Assert ($_.Exception.Message -eq 'fixture build failed') 'Wrong build failure' }
     Assert (($calls -join ',') -eq 'build') 'Apps opened after failed build'
-    $calls.Clear(); $script:failSetup = $true
+    Assert ($statuses[$statuses.Count - 1] -eq 'Building ELTS') 'Build failure must not report a later startup stage'
+    $calls.Clear(); $statuses.Clear(); $script:failSetup = $true
     Set-Content (Join-Path $fixture 'diagnostics/setup-report.json') '{}'
     try { Invoke-EltsDevelopmentStart } catch { Assert ($_.Exception.Message -eq 'fixture setup failed') 'Wrong setup failure' }
     Assert (($calls -join ',') -eq 'setup') 'Apps opened after failed setup'
+    Assert ($statuses[$statuses.Count - 1] -eq 'Preparing this computer') 'Setup failure must not report a later startup stage'
     Write-Host 'PASS: 7 startup scenarios without Git, including paths with spaces and failure propagation.'
 } finally {
     Set-Location $originalLocation

@@ -19,15 +19,30 @@ namespace Elts.Operator
         // Lateral distance is the maximum excursion on either side of a station.
         public float libraryEntryXM=14, libraryPatrolDistanceM=1.4f, libraryPatrolDepthM=2.0f;
         public float runInSeconds=4.6f, peekCycleSeconds=6.2f, crouchSeconds=.45f;
+        // Fixed-condition offsets are in virtual metres; yaw is relative to facing the participant.
+        public float fixedLateralJitterM=.12f, fixedDepthJitterM=.3f, fixedSidePeekOffsetM=.10f;
+        public float fixedPeekCrouch=.65f;
+        public float[] fixedYawDegrees={0,30,-45,90,-90,135,-150,180};
         public void ApplyPopulation(ScenarioConfiguration scenario)
         {
             activeTargetCount=scenario.ActiveTargetCount;
             spawnPositionCount=scenario.SpawnPositionCount;
             pathSequenceLength=scenario.PathSequenceLength;
         }
-        public DevelopmentGameSettings Copy()=> (DevelopmentGameSettings)MemberwiseClone();
+        public DevelopmentGameSettings Copy()
+        {
+            var copy=(DevelopmentGameSettings)MemberwiseClone();
+            copy.fixedYawDegrees=fixedYawDegrees==null?Array.Empty<float>():(float[])fixedYawDegrees.Clone();
+            return copy;
+        }
         public void Validate()
         {
+            if(!Finite(fixedLateralJitterM,0,.18f) || !Finite(fixedDepthJitterM,0,.35f) ||
+                !Finite(fixedSidePeekOffsetM,.05f,.18f) || !Finite(fixedPeekCrouch,.35f,.75f) ||
+                fixedYawDegrees==null || fixedYawDegrees.Length==0)
+                throw new ArgumentException("Fixed target pose settings are outside their synthetic ranges.");
+            foreach(float angle in fixedYawDegrees)
+                if(!Finite(angle,-180,180))throw new ArgumentException("Fixed target yaw must be finite and within -180 to 180 degrees.");
             if(activeTargetCount<1 || activeTargetCount>30 || (spawnPositionCount<31 || spawnPositionCount>50) || activeTargetCount>=spawnPositionCount ||
                 pathSequenceLength<100000 || pathSequenceLength>1000000 ||
                 !Finite(libraryFirstRowOffsetM,14,18) || !Finite(libraryRowSpacingM,3.5f,4.5f) ||
@@ -39,11 +54,40 @@ namespace Elts.Operator
         private static bool Finite(float value,float min,float max)=>!float.IsNaN(value) && !float.IsInfinity(value) && value>=min && value<=max;
     }
 
+    /// <summary>One immutable fixed-target pose. The scenario owns offsets and crouch height;
+    /// yaw and the sampled stride are presentation, using the existing approximate hit anatomy.</summary>
+    public readonly struct DevelopmentFixedPose
+    {
+        public readonly string Name;
+        public readonly float Crouch, YawDegrees, Phase;
+        public readonly bool MidStride;
+        public readonly double OffsetX, OffsetZ;
+        public DevelopmentFixedPose(string name,float crouch,float yawDegrees,float phase,bool midStride,double offsetX,double offsetZ)
+        { Name=name;Crouch=crouch;YawDegrees=yawDegrees;Phase=phase;MidStride=midStride;OffsetX=offsetX;OffsetZ=offsetZ; }
+    }
+
     /// <summary>Library geometry and versioned, indexed choreography in virtual metres.</summary>
     internal static class DevelopmentScenarioLayout
     {
         public const int TargetCount=30;
         public const string Version="library-routes-v2";
+        public const string FixedPoseVersion="library-fixed-poses-v1";
+        public static DevelopmentFixedPose FixedPose(int slot,int ordinal,DevelopmentGameSettings settings)
+        {
+            // Match poses to furniture: crouch behind desks, peek above/around bookcases,
+            // and hold a standing or mid-step pose in open spaces. No per-frame randomness.
+            int kind=slot%5;
+            float crouch=kind==1 || kind==3?1:kind==2?settings.fixedPeekCrouch:0;
+            bool stride=kind==4 || (kind==0 && ordinal%2==1);
+            string name=kind==1?"Crouched":kind==2?"PeekOver":kind==3?"PeekSide":stride?"FrozenStride":"Standing";
+            double lateral=((ordinal*7+slot)%5-2)*settings.fixedLateralJitterM/2;
+            // Kind 3's case is offset to the right; expose just the mannequin's left side.
+            if(kind==3)lateral=-settings.fixedSidePeekOffsetM;
+            double depth=((ordinal*3+slot)%5-2)*settings.fixedDepthJitterM/2;
+            float yaw=settings.fixedYawDegrees[(ordinal*5+slot/10)%settings.fixedYawDegrees.Length];
+            float phase=(ordinal%2==0?.15f:.65f);
+            return new DevelopmentFixedPose(name,crouch,yaw,phase,stride,lateral,depth);
+        }
         public static Vector3d Center(DevelopmentConfiguration config)
         {
             var screen=config.Rig.Display;
@@ -124,7 +168,12 @@ namespace Elts.Operator
         public static Vector3d Sample(Vector3d center,int slot,bool moving,int ordinal,double age,DevelopmentGameSettings settings,double floorY)
         {
             var home=Station(center,slot,settings,floorY);
-            if(!moving)return home;
+            if(!moving)
+            {
+                var pose=FixedPose(slot,ordinal,settings);
+                return home+new Vector3d(pose.OffsetX,
+                    (HumanoidGeometry.CrouchedCenterAt(floorY)-home.Y)*pose.Crouch,pose.OffsetZ);
+            }
             var route=Route(ordinal,settings);
             double side=slot%10<5?-1:1;
             if(age<route.EntrySeconds)

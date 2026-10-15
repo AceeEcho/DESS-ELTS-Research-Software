@@ -39,6 +39,8 @@ namespace Elts.Operator
         private readonly Dictionary<string,Vector3d> positions = new Dictionary<string,Vector3d>();
         private readonly HashSet<string> recordedEntries = new HashSet<string>();
         public IReadOnlyDictionary<string,Vector3d> Positions => positions;
+        private readonly Dictionary<string,DevelopmentFixedPose> fixedPoses = new Dictionary<string,DevelopmentFixedPose>();
+        public IReadOnlyDictionary<string,DevelopmentFixedPose> FixedPoses => fixedPoses;
         public string LastShot { get; private set; } = "No shot";
         public int ShotCount { get; private set; }
         public int HitCount { get; private set; }
@@ -73,6 +75,7 @@ namespace Elts.Operator
             if(engine.State == SessionState.BlockPaused)return;
             var positionsBeforeRefresh=new Dictionary<string,Vector3d>(positions);
             positions.Clear();
+            fixedPoses.Clear();
             if(!engine.TargetsActive)
             {
                 RemoveRemainingTargets();
@@ -103,6 +106,8 @@ namespace Elts.Operator
                     }
                     Record(target,known?TargetLifecycle.Updated:TargetLifecycle.Spawned);
                     positions.Add(target.Id,target.Position);
+                    if(!movingBlock)fixedPoses.Add(target.Id,DevelopmentScenarioLayout.FixedPose(
+                        population.Slot(target),DevelopmentScenarioLayout.Ordinal(target),gameSettings));
                 }
                 else if(!known || previous==TargetState.Active)
                     Record(target,target.State==TargetState.Destroyed?TargetLifecycle.Destroyed:TargetLifecycle.Despawned);
@@ -252,7 +257,7 @@ namespace Elts.Operator
         {
             int ordinal=DevelopmentScenarioLayout.Ordinal(target);
             var route=DevelopmentScenarioLayout.Route(ordinal,gameSettings);
-            if(!recording.TryRecord(new SessionEvent(eventSequence.Next(),clock.Now,"DevelopmentTargetAssigned",new[]{
+            var fields=new List<LogField>{
                 LogField.String("blockId",blockId!),LogField.String("targetId",target.Id),
                 LogField.NumberValue("spawnOrdinal",ordinal+1),
                 LogField.NumberValue("positionIndex",population!.Slot(target)),
@@ -261,7 +266,20 @@ namespace Elts.Operator
                 LogField.Boolean("initiallyPresent",ordinal<gameSettings.activeTargetCount),
                 LogField.NumberValue("initialRouteAgeSeconds",movingBlock?DevelopmentScenarioLayout.InitialRouteAge(ordinal,gameSettings):0),
                 LogField.NumberValue("entrySeconds",movingBlock?route.EntrySeconds:0),
-                LogField.NumberValue("cycleSeconds",movingBlock?route.CycleSeconds:0)})))
+                LogField.NumberValue("cycleSeconds",movingBlock?route.CycleSeconds:0)};
+            if(!movingBlock)
+            {
+                var pose=DevelopmentScenarioLayout.FixedPose(population.Slot(target),ordinal,gameSettings);
+                fields.Add(LogField.String("fixedPoseVersion",DevelopmentScenarioLayout.FixedPoseVersion));
+                fields.Add(LogField.String("fixedPose",pose.Name));
+                fields.Add(LogField.NumberValue("crouchFraction",pose.Crouch));
+                fields.Add(LogField.NumberValue("visualYawDegrees",pose.YawDegrees));
+                fields.Add(LogField.NumberValue("visualAnimationPhase",pose.Phase));
+                fields.Add(LogField.Boolean("visualMidStride",pose.MidStride));
+                fields.Add(LogField.NumberValue("offsetXM",pose.OffsetX));
+                fields.Add(LogField.NumberValue("offsetZM",pose.OffsetZ));
+            }
+            if(!recording.TryRecord(new SessionEvent(eventSequence.Next(),clock.Now,"DevelopmentTargetAssigned",fields)))
                 throw new InvalidOperationException("Target route assignment recording failed.");
         }
 
@@ -295,7 +313,7 @@ namespace Elts.Operator
             // Destroyed is already a terminal recorded lifecycle. Only targets
             // still active need a Despawned row when the block exits.
             foreach(var target in population.ActiveTargets) Record(target,TargetLifecycle.Despawned);
-            population=null;definition=null;shots=null;positions.Clear();recordedEntries.Clear();
+            population=null;definition=null;shots=null;positions.Clear();fixedPoses.Clear();recordedEntries.Clear();
         }
     }
 }

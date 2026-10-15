@@ -115,6 +115,12 @@ namespace Elts.Operator.Tests
                 Assert.That(panel.IsBusy,Is.False);
                 var events=File.ReadAllLines(Path.Combine(run,"events.ndjson")).Select(JObject.Parse).ToArray();
                 var samples=File.ReadAllLines(Path.Combine(run,"samples.ndjson")).Select(JObject.Parse).ToArray();
+                var fixedAssignments=events.Where(e=>(string)e["eventType"]=="DevelopmentTargetAssigned" &&
+                    (string)e["payload"]["behaviour"]=="Fixed").Select(e=>e["payload"]).ToArray();
+                Assert.That(fixedAssignments.Length,Is.GreaterThanOrEqualTo(60),"Both fixed conditions record their pose assignments");
+                Assert.That(fixedAssignments.All(p=>(string)p["fixedPoseVersion"]==DevelopmentScenarioLayout.FixedPoseVersion),Is.True);
+                Assert.That(fixedAssignments.Select(p=>(string)p["fixedPose"]).Distinct().Count(),Is.EqualTo(5));
+                Assert.That(fixedAssignments.Select(p=>(double)p["visualYawDegrees"]).Distinct().Count(),Is.GreaterThanOrEqualTo(8));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="ShotFired"),Is.EqualTo(4));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="TargetDestroyed"),Is.EqualTo(4));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="BlockStarted"),Is.EqualTo(4));

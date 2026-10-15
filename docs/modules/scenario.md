@@ -16,7 +16,7 @@ on the shared acquisition clock. Pause and tracking-validity controls still appl
 The library population is owned by `LibraryTargetPopulation`; generic population
 fixtures retain their existing lifetime/respawn behavior.
 
-Fixed targets stand still at one of 50 numbered floor positions across five
+Fixed targets hold an assigned pose at one of 50 numbered floor stations across five
 reading-room aisles. Thirty positions are occupied at once. The replacement
 allocator walks the position list and skips occupied positions and positions
 vacated during that update, so a kill never puts the replacement straight back
@@ -24,6 +24,17 @@ in the same spot. Surviving targets keep their positions. Open aisles, reading
 desks, low bookcases and offset cabinets provide open, partly covered and
 between-furniture views. The shot model uses the same solid furniture bounds
 that are rendered; shelf details are visual only.
+
+`library-fixed-poses-v1` assigns standing, crouched, over-cover peek, side peek,
+and frozen mid-stride poses according to station furniture and spawn ordinal.
+Small lateral/depth offsets break up the grid; eight facing angles include side-on
+and turned-away dummies. Every fixed skeleton holds its sampled pose as session
+time advances. Crouch height and offsets affect authoritative positions; yaw and
+stride remain presentation using the existing approximate synthetic hit anatomy,
+not mesh-accurate hitboxes. `DevelopmentGameSettings` exposes offset limits,
+peek crouch fraction and the yaw list. Per-target assignment events record the
+pose version, name, crouch, yaw, clip phase, stride flag and offsets. The current
+position-only replay viewer does not reconstruct these visual pose fields.
 
 Moving targets consume `library-routes-v2` in **spawn order**. The first 30
 assignments are routes 0–29; each kill assigns the next route. Every block,

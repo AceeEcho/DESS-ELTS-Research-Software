@@ -182,20 +182,39 @@ namespace Elts.Operator
             SetState(jog, (1 - crouch) * locomotion * run, gaitPhase);
             SetState(crouchIdle, crouch * (1 - locomotion), idleSeconds / crouchIdle.length);
             SetState(crouchWalk, crouch * locomotion, gaitPhase);
+            ApplySample(position, yaw);
+            previousTime = activeSeconds;
+            previousPosition = position;
+            hasFrame = true;
+        }
+
+        /// <summary>A fixed target holds an exact clip sample, even while session time advances.</summary>
+        public void PoseFixed(Vector3 position, DevelopmentFixedPose pose)
+        {
+            float stride = pose.MidStride ? 1 : 0;
+            SetState(idle, (1 - pose.Crouch) * (1 - stride), pose.Phase);
+            SetState(walk, (1 - pose.Crouch) * stride, pose.Phase);
+            SetState(jog, 0, 0);
+            SetState(crouchIdle, pose.Crouch * (1 - stride), pose.Phase);
+            SetState(crouchWalk, pose.Crouch * stride, pose.Phase);
+            ApplySample(position, pose.YawDegrees);
+            // If this actor is reused by a moving block, start its motion history afresh.
+            hasFrame = false;
+        }
+
+        private void ApplySample(Vector3 position, float facingDegrees)
+        {
             animationPlayer.Sample();
             transform.position = position;
             transform.localScale = Vector3.one;
             // Only the visual child turns. Logged target coordinates and hit geometry stay authoritative.
-            model.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+            model.transform.localRotation = Quaternion.Euler(0, facingDegrees, 0);
             model.transform.localPosition = fittedPosition;
             model.transform.localScale = fittedScale;
             // Bend at the hips/knees instead of compressing the mesh. Compensate for
             // the scenario centre lowering so the supporting foot stays on the floor.
-            float correction = standingFootY + standingCenterY - position.y - LowestFootY();
+            float correction = standingFootY + (float)HumanoidGeometry.StandingCenterAt(floorY) - position.y - LowestFootY();
             model.transform.localPosition += Vector3.up * correction;
-            previousTime = activeSeconds;
-            previousPosition = position;
-            hasFrame = true;
         }
 
         private float LowestFootY() => Mathf.Min(transform.InverseTransformPoint(leftFoot.position).y,

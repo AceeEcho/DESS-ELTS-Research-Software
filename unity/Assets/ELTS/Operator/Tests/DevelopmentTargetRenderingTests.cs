@@ -16,6 +16,88 @@ namespace Elts.Operator.Tests
     public sealed class DevelopmentTargetRenderingTests
     {
         [UnityTest]
+        public IEnumerator FixedTargetsHoldVariedGroundedPosesAndFacingDirections()
+        {
+            var host=new GameObject("Fixed pose fixture");
+            var view=host.AddComponent<DevelopmentView>();
+            var cameraHost=new GameObject("Fixed pose inspection camera");
+            var camera=cameraHost.AddComponent<Camera>();
+            var texture=new RenderTexture(900,600,24,RenderTextureFormat.ARGB32);
+            texture.Create();
+            try
+            {
+                yield return null;
+                Assert.That(view.Ready,Is.True,view.Error);view.enabled=false;
+                var settings=view.GameSettings;
+                double floor=view.Configuration.Rig.VirtualFloorY;
+                var center=DevelopmentScenarioLayout.Center(view.Configuration);
+                var positions=new Dictionary<string,Vector3d>();
+                var poses=new Dictionary<string,DevelopmentFixedPose>();
+                for(int i=0;i<30;i++)
+                {
+                    string id="fixed-"+(i+1);
+                    positions.Add(id,DevelopmentScenarioLayout.Sample(center,i,false,i,0,settings,floor));
+                    poses.Add(id,DevelopmentScenarioLayout.FixedPose(i,i,settings));
+                }
+                view.SetSessionFrame(null,null,positions,0,poses);view.Refresh(0);
+                var bones=positions.Keys.SelectMany(id=>host.transform.Find(id).GetComponentsInChildren<SkinnedMeshRenderer>())
+                    .SelectMany(r=>r.bones).Distinct().ToArray();
+                var rotations=bones.Select(b=>b.localRotation).ToArray();
+                var bonePositions=bones.Select(b=>b.position).ToArray();
+                float? footHeight=null;
+                foreach(string id in positions.Keys)
+                {
+                    var actor=host.transform.Find(id);
+                    float lowest=actor.GetComponentsInChildren<Transform>().Where(b=>b.name=="foot_l" || b.name=="foot_r").Min(b=>b.position.y);
+                    if(!footHeight.HasValue)footHeight=lowest;
+                    Assert.That(lowest,Is.EqualTo(footHeight.Value).Within(.002f));
+                    Assert.That(actor.localScale,Is.EqualTo(Vector3.one));
+                    Assert.That(Quaternion.Angle(actor.Find("Quaternius mannequin").localRotation,
+                        Quaternion.Euler(0,poses[id].YawDegrees,0)),Is.LessThan(.01));
+                }
+                foreach(double time in new[]{.016,1.0,120.0,120.0,300.0})
+                {
+                    view.SetSessionFrame(null,null,positions,time,poses);view.Refresh(0);
+                    for(int i=0;i<bones.Length;i++)
+                    {
+                        Assert.That(Quaternion.Angle(bones[i].localRotation,rotations[i]),Is.LessThan(.01));
+                        Assert.That(Vector3.Distance(bones[i].position,bonePositions[i]),Is.LessThan(.0001));
+                    }
+                }
+                camera.enabled=false;camera.cullingMask=1<<DevelopmentView.StimulusLayer;
+                camera.fieldOfView=40;camera.nearClipPlane=.01f;camera.farClipPlane=100;
+                camera.aspect=1.5f;
+                string directory=Path.GetFullPath(Path.Combine(Application.dataPath,"../../test-results/fixed-target-poses"));
+                Directory.CreateDirectory(directory);
+                // Close-ups retain the real furniture so partial exposure can be inspected.
+                for(int i=0;i<5;i++)
+                {
+                    var target=positions["fixed-"+(i+1)];
+                    var focus=new Vector3((float)target.X,(float)(floor+.85),(float)target.Z);
+                    camera.transform.position=focus+new Vector3(0,.2f,-3.2f);camera.transform.LookAt(focus);
+                    RenderPipeline.SubmitRenderRequest(camera,new RenderPipeline.StandardRequest{destination=texture});
+                    var previous=RenderTexture.active;
+                    var image=new Texture2D(900,600,TextureFormat.RGBA32,false);
+                    try
+                    {
+                        RenderTexture.active=texture;image.ReadPixels(new Rect(0,0,900,600),0,0);image.Apply();
+                        File.WriteAllBytes(Path.Combine(directory,poses["fixed-"+(i+1)].Name+".png"),image.EncodeToPNG());
+                    }
+                    finally{RenderTexture.active=previous;UnityEngine.Object.DestroyImmediate(image);}
+                }
+                // Omitting fixed metadata must restore the moving/idle presentation path.
+                view.SetSessionFrame(null,null,positions,301);view.Refresh(0);
+                for(int i=1;i<=30;i++){view.SetSessionFrame(null,null,positions,301+i/60.0);view.Refresh(0);}
+                Assert.That(bones.Select((b,i)=>Quaternion.Angle(b.localRotation,rotations[i])).Sum(),Is.GreaterThan(10));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(cameraHost);UnityEngine.Object.DestroyImmediate(host);
+                texture.Release();UnityEngine.Object.DestroyImmediate(texture);
+            }
+        }
+
+        [UnityTest]
         public IEnumerator MotionUsesActiveTimeBendsKneesAndKeepsFeetGrounded()
         {
             var host = new GameObject("Animation regression fixture");

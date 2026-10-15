@@ -14,6 +14,39 @@ namespace Elts.Operator.Tests
         private const double Floor=-1.5567;
 
         [Test]
+        public void FixedPosesAreVariedRepeatableAndClearOfFurniture()
+        {
+            var settings=new DevelopmentGameSettings();
+            var poses=Enumerable.Range(0,30).Select(i=>DevelopmentScenarioLayout.FixedPose(i,i,settings)).ToArray();
+            Assert.That(poses.Select(p=>p.Name).Distinct().Count(),Is.EqualTo(5));
+            Assert.That(poses.Select(p=>p.YawDegrees).Distinct().Count(),Is.GreaterThanOrEqualTo(8));
+            Assert.That(poses.Any(p=>Math.Abs(p.YawDegrees)==90),Is.True);
+            Assert.That(poses.Any(p=>Math.Abs(p.YawDegrees)==180),Is.True);
+            var covers=DevelopmentScenarioLayout.Covers(Center,settings,Floor);
+            for(int ordinal=0;ordinal<150;ordinal++)
+            for(int slot=0;slot<settings.spawnPositionCount;slot++)
+            {
+                var first=DevelopmentScenarioLayout.Sample(Center,slot,false,ordinal,0,settings,Floor);
+                Assert.That(DevelopmentScenarioLayout.Sample(Center,slot,false,ordinal,600,settings,Floor),Is.EqualTo(first));
+                var pose=DevelopmentScenarioLayout.FixedPose(slot,ordinal,settings);
+                Assert.That(DevelopmentScenarioLayout.FixedPose(slot,ordinal,settings),Is.EqualTo(pose));
+                Assert.That(first.Y,Is.InRange(Elts.Scenario.HumanoidGeometry.CrouchedCenterAt(Floor),Elts.Scenario.HumanoidGeometry.StandingCenterAt(Floor)));
+                foreach(var cover in covers)
+                    Assert.That(Math.Abs(first.X-cover.Center.X)<cover.HalfSize.X+.38 &&
+                        Math.Abs(first.Z-cover.Center.Z)<cover.HalfSize.Z+.2,Is.False,"Fixed pose intersects furniture");
+                if(pose.Name=="PeekOver")
+                {
+                    var head=Elts.Scenario.HumanoidGeometry.Parts(first,Floor).First(p=>p.Region=="head");
+                    Assert.That(head.Center.Y+head.Radii.Y,Is.GreaterThan(Floor+1.12),"Peeking must expose a hittable part of the head");
+                }
+            }
+            var copy=settings.Copy();copy.fixedYawDegrees[0]=123;
+            Assert.That(settings.fixedYawDegrees[0],Is.Zero,"A view's copied settings must not mutate the session recipe");
+            settings.fixedYawDegrees[0]=float.NaN;
+            Assert.Throws<ArgumentException>(()=>settings.Validate());
+        }
+
+        [Test]
         public void OpeningTargetsAreAlreadyInRoomAndAllKeepMakingSubstantialBursts()
         {
             var settings=new DevelopmentGameSettings();

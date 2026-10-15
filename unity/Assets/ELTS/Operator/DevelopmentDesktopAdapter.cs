@@ -68,7 +68,7 @@ namespace Elts.Operator
                 { engine!.Abort("Desktop trigger provenance could not be recorded.");return; }
                 scenario!.Fire(pair.Weapon.Pose,pair.Head.Pose,pair.Timestamp);
                 desktopMessage=scenario.LastShot;
-                view.SetSessionFrame(pair.Head.Pose,pair.Weapon.Pose,scenario.Positions,engine!.CurrentActiveSeconds);
+                view.SetSessionFrame(pair.Head.Pose,pair.Weapon.Pose,scenario.Positions,engine!.CurrentActiveSeconds,scenario.FixedPoses);
             }
             catch(Exception exception)
             {

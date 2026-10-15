@@ -58,6 +58,7 @@ namespace Elts.Operator
         private double sessionActiveSeconds;
         private RigidPose? sessionHead, sessionWeapon;
         private readonly Dictionary<string,Vector3d> sessionTargets = new Dictionary<string,Vector3d>();
+        private readonly Dictionary<string,DevelopmentFixedPose> sessionFixedPoses = new Dictionary<string,DevelopmentFixedPose>();
         private string replayPath = "", status = "", error = "";
         private bool simulateHeadDropout, simulateWeaponDropout, animate = true;
         private double demoTime, predictionSeconds, layoutOffsetX, layoutDepthOffset;
@@ -255,14 +256,17 @@ namespace Elts.Operator
         public void Scrub(double seconds){if(transport==null)throw new InvalidOperationException("Load a recording first.");transport.Scrub(seconds);}
         public void UseDemo(){replay=null;transport=null;animate=true;error="";}
         /// <summary>Display immutable raw acquisition snapshots; session targets are supplied only while a block runs.</summary>
-        public void SetSessionFrame(RigidPose? headPose, RigidPose? weaponPose, IReadOnlyDictionary<string,Vector3d> targets, double activeSeconds=0)
+        public void SetSessionFrame(RigidPose? headPose, RigidPose? weaponPose, IReadOnlyDictionary<string,Vector3d> targets, double activeSeconds=0,
+            IReadOnlyDictionary<string,DevelopmentFixedPose>? fixedPoses=null)
         {
             sessionAttached=true; sessionHead=headPose; sessionWeapon=weaponPose;
             sessionActiveSeconds=activeSeconds;
             sessionTargets.Clear();
             foreach(var item in targets) sessionTargets.Add(item.Key,item.Value);
+            sessionFixedPoses.Clear();
+            if(fixedPoses!=null)foreach(var item in fixedPoses)sessionFixedPoses.Add(item.Key,item.Value);
         }
-        public void DetachSession(){sessionAttached=false;sessionTargets.Clear();}
+        public void DetachSession(){sessionAttached=false;sessionTargets.Clear();sessionFixedPoses.Clear();}
         public void Refresh(double deltaSeconds)
         {
             if(!Ready)return;
@@ -331,7 +335,9 @@ namespace Elts.Operator
                 if(!existing){actor=TargetHumanoid(target.Key);targetObjects.Add(target.Key,actor);}
                 var next=OffAxisCamera.ToUnity(target.Value);
                 double animationTime=sessionAttached?sessionActiveSeconds:replay!=null?transport!.PositionSeconds:demoTime;
-                actor!.GetComponent<DevelopmentHumanoidVisual>().Pose(next,animationTime);
+                var visual=actor!.GetComponent<DevelopmentHumanoidVisual>();
+                if(sessionAttached && sessionFixedPoses.TryGetValue(target.Key,out var fixedPose))visual.PoseFixed(next,fixedPose);
+                else visual.Pose(next,animationTime);
             }
             bore.enabled=aim.enabled=rawWeapon.HasValue;
             if(rawWeapon.HasValue)

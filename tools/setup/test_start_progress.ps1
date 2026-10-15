@@ -58,7 +58,7 @@ try {
     Start-Sleep -Seconds 2
     Assert ($null -ne (Find-Control $window 'Building ELTS')) 'UI did not update while caller was blocked'
     Save-WindowScreenshot $window 'startup-building.png'
-    Set-EltsStartupStatus 'ELTS launch requested' 'Setup and build checks passed. Windows has been asked to open the participant game and its administrator dashboard.' -Result success
+    Set-EltsStartupStatus 'ELTS initialized' 'The participant view and administrator server are ready. The dashboard opens in your browser after the intro.' -Result success
     Wait-For { $script:EltsStartupWindow.State.Closed } 'Success did not close automatically'
     Assert (-not $script:EltsStartupWindow.State.Error) 'UI thread failed'
     Close-EltsStartupWindow

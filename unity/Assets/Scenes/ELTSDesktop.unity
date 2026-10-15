@@ -2917,11 +2917,24 @@ MonoBehaviour:
     libraryRowSpacingM: 4
     libraryColumnSpacingM: 1.5
     libraryEntryXM: 14
-    libraryPatrolDistanceM: 0.45
+    libraryPatrolDistanceM: 1.4
     libraryPatrolDepthM: 2.3
     runInSeconds: 4.6
     peekCycleSeconds: 4.8
     crouchSeconds: 0.65
+    fixedLateralJitterM: 0.12
+    fixedDepthJitterM: 0.3
+    fixedSidePeekOffsetM: 0.1
+    fixedPeekCrouch: 0.65
+    fixedYawDegrees:
+    - 0
+    - 30
+    - -45
+    - 90
+    - -90
+    - 135
+    - -150
+    - 180
   motionSettings:
     walkSpeedMps: 1.15
     jogSpeedMps: 2.6

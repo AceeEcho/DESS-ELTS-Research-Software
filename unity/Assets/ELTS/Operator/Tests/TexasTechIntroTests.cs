@@ -66,6 +66,21 @@ namespace Elts.Operator.Tests
                 Assert.That(TexasTechIntro.IsShowing, Is.False, "Intro must release the participant input gate.");
                 Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo("ELTSDesktop"));
                 Assert.That(UnityEngine.Object.FindFirstObjectByType<TexasTechIntro>(), Is.Null);
+                // Loading the saved scene exercises its serialized Inspector values.
+                // New-component fixtures alone cannot catch stale scene settings.
+                var view = UnityEngine.Object.FindFirstObjectByType<DevelopmentView>();
+                Assert.That(view, Is.Not.Null);
+                Assert.That(view.Ready, Is.True, view.Error);
+                var session = view.GetComponent<DevelopmentSessionPanel>();
+                Assert.That(session, Is.Not.Null);
+                Assert.That(session.enabled, Is.True);
+                // Production creates this after the intro; -runTests suppresses that hook.
+                var station = view.gameObject.AddComponent<DevelopmentTestStation>();
+                station.OpenAdministratorAutomatically = false;
+                yield return null;
+                Assert.That(station.enabled, Is.True);
+                Assert.That(station.AdministratorUrl, Does.StartWith("http://127.0.0.1:"));
+                UnityEngine.Object.Destroy(station);
             }
             finally { Time.timeScale = previousTimeScale; }
         }

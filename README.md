@@ -32,7 +32,7 @@ Complete any Windows installation approval or Unity sign-in/license prompts. If 
 
 Double-click **START-ELTS.cmd**. The first launch builds the application, then opens the **administrator dashboard** in your browser and the **participant game** in a separate window.
 
-A startup window shows the current step, an animated activity bar, and elapsed time while ELTS checks, builds, and opens. The bar indicates that startup is waiting on work, not a measured percentage or a guarantee that a tool is responding. First builds can take several minutes; check the console for detailed output or installer/sign-in prompts. You can hide the progress window without cancelling startup. It closes automatically after launch is requested; errors stay visible with an **Open startup log** button.
+A startup window shows the current step, an animated activity bar, and elapsed time while ELTS checks, builds, and opens. The bar indicates that startup is waiting on work, not a measured percentage or a guarantee that a tool is responding. First builds can take several minutes; check the console for detailed output or installer/sign-in prompts. You can hide the progress window without cancelling startup. It closes automatically after the participant view and administrator server initialize; errors stay visible with an **Open startup log** button. Each launch also saves a separate `diagnostics/player-start-*.log` with Unity's initialization details.
 
 **Next time, just run START-ELTS.cmd.** Keep the whole extracted project folder together.
 

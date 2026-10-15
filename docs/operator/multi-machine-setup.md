@@ -145,12 +145,14 @@ if no fresh log was produced, the message says so instead of showing an old erro
 | --- | --- |
 | Unity exit **198** / **No valid Unity Editor license found** | Open **Unity Hub**, sign in, then open **Settings > Licenses > Refresh**. Use **Add license** if needed. Activate the license appropriate for your account; an organization license may require its administrator to assign a seat. If activation fails, check network/proxy access. Close the Editor and rerun **SETUP-DEV.cmd**, then **START-ELTS.cmd**. See [Unity's license guide](https://docs.unity.com/en-us/hub/manage-license). |
 | **runtime-config** / **Editor saves at project root** | Older revisions incorrectly compared Windows path separators when a machine used `data/synthetic`. Update to the corrected source and rerun **SETUP-DEV.cmd**. Keep `config/local.json` and your recordings; changing or deleting the data folder is unnecessary. |
+| **Development view unavailable: Development game settings are outside their safe synthetic ranges** | An older saved scene contains a patrol distance that the newer code rejects. Close the failed game, update the project, and run **START-ELTS.cmd** to rebuild with the corrected scene. Keep your configuration and recordings. This is a scene-settings error, not a Unity license failure. |
 | **error CS…** / compiler errors | The Unity log names the source file and compiler error. Update to a corrected revision or send that log to the maintainer. Rerun setup after the code is fixed. |
 | Another Unity instance / startup lock | Save your work and close this project in the Editor, or let the existing setup/startup window finish. Retry after it ends. Do not delete lock files while their processes are running. |
 | A verification assertion failed | Keep the error, failed-check log, and `diagnostics/test-report.json`. Send them to the maintainer or update to the revision that fixes the check, then rerun setup. Do not bypass verification or delete recordings to clear an assertion. |
 | Timed out | Read the log for progress or a prompt. The PowerShell launcher leaves a timed-out process running to avoid interrupting installers. Check for remaining setup/Unity processes and let them finish or close them normally before retrying. |
 
 **Where to find details:** `diagnostics/start-console.log` records startup;
+each `diagnostics/player-start-*.log` records one participant launch, including scene initialization failures;
 `diagnostics/setup-console.log` and `setup-report.json` record setup;
 `diagnostics/setup-unity-import.log` records Unity import/licensing;
 `diagnostics/test-report.json` identifies each verification log. A build failure

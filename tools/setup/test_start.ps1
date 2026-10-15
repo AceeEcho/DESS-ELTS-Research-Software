@@ -31,8 +31,17 @@ function Start-EltsVisibleApp {
         Assert ($Arguments -contains '-eltsWindowed') 'Player must suppress automatic display switching'
         $fullscreenIndex = [Array]::IndexOf($Arguments, '-screen-fullscreen')
         Assert ($fullscreenIndex -ge 0 -and $Arguments[$fullscreenIndex + 1] -eq '0') 'Player must start windowed before scene initialization'
+        $logIndex = [Array]::IndexOf($Arguments, '-logFile')
+        Assert ($logIndex -ge 0 -and $Arguments[$logIndex + 1] -like '*diagnostics*player-start-*.log') 'Each player needs an explicit startup log'
         $script:calls.Add('dashboard')
+        $process = New-Object PSObject
+        $process | Add-Member ScriptMethod Dispose {}
+        return $process
     }
+}
+function Wait-EltsPlayerReady {
+    param($Process, $LogPath)
+    Assert ($null -ne $Process -and $LogPath -like '*player-start-*.log') 'Wait must follow the launched process and its own log'
 }
 function Invoke-EltsSetupProcess {
     param($File, $Arguments, $TimeoutSeconds, $Activity, $ReportPaths, $RetryCommand)
@@ -57,12 +66,12 @@ try {
     Copy-Item (Join-Path $repo 'config/toolchain.json') (Join-Path $fixture 'config/toolchain.json')
     Invoke-EltsDevelopmentStart
     Assert (($calls -join ',') -eq 'setup,build,dashboard') 'First start must not open the Editor'
-    Assert (($statuses -join ',') -eq 'Checking this computer,Preparing this computer,Checking application files,Building ELTS,Saving build information,Opening ELTS') 'First launch must report setup/build stages in order'
+    Assert (($statuses -join ',') -eq 'Checking this computer,Preparing this computer,Checking application files,Building ELTS,Saving build information,Opening ELTS,Initializing the participant view') 'First launch must report setup/build stages in order'
     $statuses.Clear()
     $calls.Clear()
     Invoke-EltsDevelopmentStart
     Assert (($calls -join ',') -eq 'verify,dashboard') 'Repeat start must reuse the build without opening the Editor'
-    Assert (($statuses -join ',') -eq 'Checking this computer,Checking application files,Verifying the saved app,Opening ELTS') 'Cached launch must not claim to install or build'
+    Assert (($statuses -join ',') -eq 'Checking this computer,Checking application files,Verifying the saved app,Opening ELTS,Initializing the participant view') 'Cached launch must not claim to install or build'
     $calls.Clear(); $script:open = $true
     Invoke-EltsDevelopmentStart
     Assert (($calls -join ',') -eq 'verify,dashboard') 'Already-open editor duplicated'

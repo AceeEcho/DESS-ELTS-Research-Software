@@ -23,7 +23,7 @@ try {
     try { Start-EltsStartupWindow -LogPath (Join-Path $diagnostics 'start-console.log') }
     catch { Write-Warning ('Startup window unavailable: ' + $_.Exception.Message) }
     Invoke-EltsDevelopmentStart
-    Set-EltsStartupStatus 'ELTS launch requested' 'Setup and build checks passed. Windows has been asked to open the participant game and its administrator dashboard.' -Result success
+    Set-EltsStartupStatus 'ELTS initialized' 'The participant view and administrator server are ready. The dashboard opens in your browser after the intro.' -Result success
 } catch {
     Set-EltsStartupStatus 'ELTS could not start' $_.Exception.Message -Result failure
     Write-Host ('START STOPPED: ' + $_.Exception.Message) -ForegroundColor Red

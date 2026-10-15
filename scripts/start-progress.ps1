@@ -101,7 +101,7 @@ function Start-EltsStartupWindow {
                     $bar.Style = 'Continuous'
                     $bar.Value = if ($status.Result -eq 'success') { 100 } else { 0 }
                     $closeButton.Text = 'Close'
-                    $hint.Text = if ($status.Result -eq 'success') { 'The participant window is opening.' } else { 'Read the details above or open the startup log.' }
+                    $hint.Text = if ($status.Result -eq 'success') { 'Startup checks completed.' } else { 'Read the details above or open the startup log.' }
                     if ($status.Result -eq 'success' -and $state.FinishedAt -and
                         ([DateTime]::UtcNow - $state.FinishedAt).TotalSeconds -ge $state.SuccessCloseSeconds) {
                         $form.Close()

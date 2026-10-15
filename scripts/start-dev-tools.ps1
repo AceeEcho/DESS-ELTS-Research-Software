@@ -33,7 +33,35 @@ function Start-EltsVisibleApp {
     param([string]$File, [string[]]$Arguments, [string]$Directory)
     $line = ($Arguments | ForEach-Object { ConvertTo-EltsProcessArgument $_ }) -join ' '
     # These are the interactive windows the user explicitly requested.
-    Start-Process -FilePath $File -ArgumentList $line -WorkingDirectory $Directory | Out-Null
+    $process = Start-Process -FilePath $File -ArgumentList $line -WorkingDirectory $Directory -PassThru
+    # Retain the handle so even an immediate crash keeps its exit code available.
+    $null = $process.Handle
+    return $process
+}
+
+function Wait-EltsPlayerReady {
+    param($Process, [string]$LogPath, [int]$TimeoutSeconds = 120)
+    # The caller supplies a unique log for this process. Never accept an older
+    # player's readiness marker or confuse a running Unity window with a ready app.
+    $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+    do {
+        $Process.Refresh()
+        if ($Process.HasExited) {
+            throw "The participant game closed before its dashboard was ready (exit code $($Process.ExitCode)). Player log: $LogPath"
+        }
+        $log = ''
+        if (Test-Path -LiteralPath $LogPath) {
+            $log = (Get-Content -LiteralPath $LogPath -Tail 100 -ErrorAction SilentlyContinue) -join "`n"
+        }
+        if ($log -match '(?m)^ELTS_VIEW_INIT_FAIL ([^\r\n]+)') {
+            throw ("The participant view could not initialize: " + $Matches[1] +
+                "`nPlayer log: $LogPath`nClose the failed participant window. Update the project to the corrected version and run START-ELTS.cmd again.")
+        }
+        if ($log -match '(?m)^ELTS_ADMINISTRATOR_READY http://127\.0\.0\.1:\d+/#') { return }
+        # This also notices a child that exits during the wait without busy polling.
+        $null = $Process.WaitForExit(250)
+    } while ([DateTime]::UtcNow -lt $deadline)
+    throw "The participant game did not initialize its dashboard within $TimeoutSeconds seconds. Player log: $LogPath. Check the participant window and this log. The process was left running; close it normally before retrying."
 }
 
 function Invoke-EltsDevelopmentStart {
@@ -111,6 +139,13 @@ function Invoke-EltsDevelopmentStart {
     # manually for source work; ordinary testing needs just the two app windows.
     # Preserve the connected desktop at startup; fullscreen remains a user action.
     Set-EltsStartupStatus 'Opening ELTS' 'Starting the participant game. Its administrator dashboard will open in your browser.'
-    Start-EltsVisibleApp $player @('-eltsWindowed','-screen-fullscreen','0','-screen-width','1280','-screen-height','720') (Split-Path -Parent $player)
-    Write-Host 'Dashboard and participant game launch requested.' -ForegroundColor Green
+    # Keep each attempt's Unity diagnostics, including failed scene initialization.
+    $playerLog = Join-Path $root ('diagnostics/player-start-' + [Guid]::NewGuid().ToString('N') + '.log')
+    Write-Host "Player log: $playerLog"
+    $process = Start-EltsVisibleApp $player @('-eltsWindowed','-screen-fullscreen','0','-screen-width','1280','-screen-height','720','-logFile',$playerLog) (Split-Path -Parent $player)
+    try {
+        Set-EltsStartupStatus 'Initializing the participant view' 'Waiting for the game scene and administrator server. An initialization error will appear here; first launches may take longer.'
+        Wait-EltsPlayerReady -Process $process -LogPath $playerLog
+    } finally { $process.Dispose() }
+    Write-Host 'Participant view and administrator server initialized.' -ForegroundColor Green
 }

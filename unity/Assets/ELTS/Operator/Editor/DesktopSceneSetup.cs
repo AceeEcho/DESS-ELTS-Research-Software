@@ -12,6 +12,26 @@ namespace Elts.Operator.Editor
     {
         public const string ScenePath = "Assets/Scenes/ELTSDesktop.unity";
 
+        [MenuItem("ELTS/Reset saved library pose offsets")]
+        public static void ResetLibraryPoseOffsets()
+        {
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            var view = UnityEngine.Object.FindFirstObjectByType<DevelopmentView>();
+            if (view == null) throw new System.InvalidOperationException("Desktop scene has no DevelopmentView.");
+            var defaults = new DevelopmentGameSettings();
+            var serialized = new SerializedObject(view);
+            var settings = serialized.FindProperty("gameSettings");
+            // Older scenes retain the larger v2 offsets even after C# defaults change.
+            // Update only the three offsets whose clearance limits changed in v3.
+            settings.FindPropertyRelative("fixedLateralJitterM").floatValue = defaults.fixedLateralJitterM;
+            settings.FindPropertyRelative("fixedDepthJitterM").floatValue = defaults.fixedDepthJitterM;
+            settings.FindPropertyRelative("fixedSidePeekOffsetM").floatValue = defaults.fixedSidePeekOffsetM;
+            serialized.ApplyModifiedProperties();
+            ((DevelopmentGameSettings)settings.boxedValue).Validate();
+            if (!EditorSceneManager.SaveScene(scene)) throw new IOException("Could not save library pose offsets.");
+            Debug.Log("ELTS_LIBRARY_POSE_SETTINGS_SAVED");
+        }
+
         [MenuItem("ELTS/Create or update desktop environment")]
         public static void CreateOrUpdate()
         {

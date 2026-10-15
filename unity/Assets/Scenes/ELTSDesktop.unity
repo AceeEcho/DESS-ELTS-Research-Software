@@ -2896,10 +2896,6 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Elts.Operator::Elts.Operator.DevelopmentView
   trainingRoom:
-    width: 30
-    height: 4.8
-    depth: 52
-    rearOfEye: 3
     plaster: {r: 0.81, g: 0.79, b: 0.73, a: 1}
     floor: {r: 0.63, g: 0.66, b: 0.63, a: 1}
     ambient: {r: 0.4, g: 0.42, b: 0.44, a: 1}
@@ -2913,18 +2909,13 @@ MonoBehaviour:
     activeTargetCount: 30
     spawnPositionCount: 50
     pathSequenceLength: 100000
-    libraryFirstRowOffsetM: 16
-    libraryRowSpacingM: 4
-    libraryColumnSpacingM: 1.5
-    libraryEntryXM: 14
-    libraryPatrolDistanceM: 1.4
-    libraryPatrolDepthM: 2.3
-    runInSeconds: 4.6
-    peekCycleSeconds: 4.8
+    libraryLayoutScale: 1
+    libraryMoveSpeedMps: 3.2
+    libraryPauseSeconds: 0.18
     crouchSeconds: 0.65
-    fixedLateralJitterM: 0.12
-    fixedDepthJitterM: 0.3
-    fixedSidePeekOffsetM: 0.1
+    fixedLateralJitterM: 0.03
+    fixedDepthJitterM: 0.05
+    fixedSidePeekOffsetM: 0.03
     fixedPeekCrouch: 0.65
     fixedYawDegrees:
     - 0

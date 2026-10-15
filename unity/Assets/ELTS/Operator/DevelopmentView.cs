@@ -34,7 +34,10 @@ namespace Elts.Operator
         private DevelopmentEnvironment? authoredEnvironment;
         private readonly List<LineRenderer> screenLines = new List<LineRenderer>(), frustumLines = new List<LineRenderer>(), rods = new List<LineRenderer>();
         private readonly Dictionary<string,GameObject> targetObjects = new Dictionary<string,GameObject>();
-        private LineRenderer bore = null!, aim = null!, viewRay = null!;
+        private LineRenderer bore = null!, aim = null!, aimVertical = null!, viewRay = null!;
+        private OperatorScreenPreview screenPreview=null!;
+        private GameObject body=null!;
+        public const float DefaultOrbitYaw=-32, DefaultOrbitPitch=16, DefaultOrbitDistance=4.8f;
         private Material stimulusMaterial = null!, scarletMaterial = null!, amberMaterial = null!, redMaterial = null!;
         private Material targetMaterial = null!;
         private DevelopmentHumanoidVisual.Palette humanoidPalette=null!;
@@ -128,14 +131,16 @@ namespace Elts.Operator
                 participant=authoredEnvironment!=null&&authoredEnvironment.HasAuthoredCameras
                     ? authoredEnvironment.ParticipantCamera! : MakeCamera("Participant preview",1<<StimulusLayer,new Color(0.035f,0.05f,0.09f));
                 operatorCamera=authoredEnvironment!=null&&authoredEnvironment.HasAuthoredCameras
-                    ? authoredEnvironment.OperatorCamera! : MakeCamera("Operator diagnostics",(1<<StimulusLayer)|(1<<OperatorLayer),new Color(0.07f,0.075f,0.1f));
+                    ? authoredEnvironment.OperatorCamera! : MakeCamera("Operator diagnostics",1<<OperatorLayer,new Color(0.07f,0.075f,0.1f));
                 ConfigureCamera(participant,1<<StimulusLayer,new Color(0.035f,0.05f,0.09f));
-                ConfigureCamera(operatorCamera,(1<<StimulusLayer)|(1<<OperatorLayer),new Color(0.07f,0.075f,0.1f));
+                ConfigureCamera(operatorCamera,1<<OperatorLayer,new Color(0.07f,0.075f,0.1f));
                 head=HeadMarker();
                 weapon=WeaponMarker();
                 eyeMarker=Sphere("Rendering eye",OperatorLayer,0.025f,Material(Color.white));
-                bore=Line("Zero-corrected bore",OperatorLayer,amberMaterial);aim=Line("Muzzle to target",OperatorLayer,Material(Color.magenta));viewRay=Line("Eye view ray",OperatorLayer,scarletMaterial);
-                for(int i=0;i<4;i++){screenLines.Add(Line("Display edge "+i,OperatorLayer,scarletMaterial));frustumLines.Add(Line("Off-axis frustum "+i,OperatorLayer,scarletMaterial));rods.Add(Line("Synthetic corner rod "+i,OperatorLayer,scarletMaterial));}
+                bore=Line("Zero-corrected bore",OperatorLayer,amberMaterial);aim=Line("Screen aim horizontal",OperatorLayer,amberMaterial);aimVertical=Line("Screen aim vertical",OperatorLayer,amberMaterial);viewRay=Line("Eye view ray",OperatorLayer,scarletMaterial);
+                var screenEdgeMaterial=Material(new Color(.45f,.55f,.59f));
+                var frustumMaterial=Material(new Color(.13f,.20f,.24f));
+                for(int i=0;i<4;i++){screenLines.Add(Line("Display edge "+i,OperatorLayer,screenEdgeMaterial));frustumLines.Add(Line("Off-axis frustum "+i,OperatorLayer,frustumMaterial));rods.Add(Line("Synthetic corner rod "+i,OperatorLayer,frustumMaterial));rods[i].enabled=false;}
                 if(authoredEnvironment?.FloorReference!=null)
                 {
                     authoredFloorWasActive=authoredEnvironment.FloorReference.gameObject.activeSelf;
@@ -150,13 +155,16 @@ namespace Elts.Operator
                 RenderSettings.ambientMode=UnityEngine.Rendering.AmbientMode.Flat;
                 RenderSettings.ambientLight=trainingRoom.ambient;
                 DevelopmentTrainingRoom.Create(transform,screen,configuration.Rig.VirtualFloorY,trainingRoom,ownedMaterials,targetMaterial,activeGameSettings,configuration.Scenario.TargetDistanceM);
-                var fieldCenter=DevelopmentScenarioLayout.Center(configuration);
-                DevelopmentHumanoidVisual.CreateCovers(transform,DevelopmentScenarioLayout.Covers(fieldCenter,activeGameSettings,configuration.Rig.VirtualFloorY),ownedMaterials);
+                screenPreview=new OperatorScreenPreview(transform,Material(Color.white));
+                body=MarkerPart(transform,"Participant silhouette · inferred from head",PrimitiveType.Capsule,Vector3.zero,Vector3.one,Material(new Color(.27f,.34f,.38f)));
+                MarkerPart(transform,"Physical station floor",PrimitiveType.Cube,new Vector3(0,(float)configuration.Rig.VirtualFloorY-.04f,.6f),new Vector3(3.4f,.08f,3.4f),Material(new Color(.12f,.15f,.18f)));
                 var gradingHost=new GameObject("Library color grading");gradingHost.transform.SetParent(transform,false);
                 var grading=gradingHost.AddComponent<UnityEngine.Rendering.Volume>();grading.isGlobal=true;
                 grading.sharedProfile=Resources.Load<UnityEngine.Rendering.VolumeProfile>("ELTS/LibraryColor");
                 ResetOperatorView();
-                participant.backgroundColor=operatorCamera.backgroundColor=new Color(.75f,.82f,.85f);
+                participant.backgroundColor=new Color(.75f,.82f,.85f);
+                operatorCamera.backgroundColor=new Color(.055f,.07f,.09f);operatorCamera.fieldOfView=45;
+                StartCoroutine(UpdateScreenFeed());
                 replayPath=configuration.Machine.ResolveDataRoot(Path.Combine(Application.dataPath,".."));
                 Ready=true;Refresh(0);
             }
@@ -339,15 +347,29 @@ namespace Elts.Operator
                 if(sessionAttached && sessionFixedPoses.TryGetValue(target.Key,out var fixedPose))visual.PoseFixed(next,fixedPose);
                 else visual.Pose(next,animationTime);
             }
-            bore.enabled=aim.enabled=rawWeapon.HasValue;
+            screenPreview.Update(screen,participant.enabled);
+            body.SetActive(rawHead.HasValue);
+            if(rawHead.HasValue)
+            {
+                float floor=(float)configuration.Rig.VirtualFloorY;
+                float height=Mathf.Max(.3f,(float)rawHead.Value.Position.Y-floor-.16f);
+                body.transform.position=new Vector3((float)rawHead.Value.Position.X,floor+height/2,(float)rawHead.Value.Position.Z-.06f);
+                body.transform.localScale=new Vector3(.38f,height/2,.28f);
+            }
+            bore.enabled=rawWeapon.HasValue;aim.enabled=aimVertical.enabled=false;
             if(rawWeapon.HasValue)
             {
                 var ray=new BoreRay(rawWeapon.Value,configuration.Rig.WeaponMuzzleOffsetM,configuration.Rig.WeaponZero,configuration.Rig.WeaponBoreLocalDirection).Ray;
                 bool intersection=screen.Intersect(ray,out var distance,out var point,out var u,out var v);bool onScreen=intersection&&screen.IsInside(u,v);
                 bore.sharedMaterial=onScreen?amberMaterial:redMaterial;SetLine(bore,OffAxisCamera.ToUnity(ray.Origin),OffAxisCamera.ToUnity(ray.At(intersection?distance:3)));
                 status+=onScreen?" | Bore on screen":" | BORE OUTSIDE DISPLAY";
-                aim.enabled=false;
-                foreach(var target in visibleTargets){aim.enabled=true;SetLine(aim,OffAxisCamera.ToUnity(ray.Origin),OffAxisCamera.ToUnity(target.Value));status+=" | Aim error "+GeometryMath.AngularErrorDegrees(ray.Direction,target.Value-ray.Origin).ToString("F2")+" deg";break;}
+                aim.enabled=aimVertical.enabled=onScreen;
+                if(onScreen)
+                {
+                    var mark=point-screen.Normal*.008;
+                    SetLine(aim,OffAxisCamera.ToUnity(mark-screen.U*.025),OffAxisCamera.ToUnity(mark+screen.U*.025));
+                    SetLine(aimVertical,OffAxisCamera.ToUnity(mark-screen.V*.025),OffAxisCamera.ToUnity(mark+screen.V*.025));
+                }
             }
             LayoutCameras();operatorCamera.transform.SetPositionAndRotation(orbitFocus+Quaternion.Euler(orbitPitch,orbitYaw,0)*new Vector3(0,0,-orbitDistance),Quaternion.Euler(orbitPitch,orbitYaw,0));
         }
@@ -420,16 +442,21 @@ namespace Elts.Operator
         }
         public void ResetOperatorView()
         {
-            // Start inside the enclosure, looking along the reading aisles.
-            // The former reverse angle looked into the new near wall.
-            orbitYaw=0;orbitPitch=5;orbitDistance=20;
-            var centre=DevelopmentScenarioLayout.Center(configuration);
-            orbitFocus=new Vector3((float)centre.X,(float)configuration.Rig.VirtualFloorY+1,
-                (float)centre.Z+activeGameSettings.libraryFirstRowOffsetM+activeGameSettings.libraryRowSpacingM*2);
+            orbitYaw=DefaultOrbitYaw;orbitPitch=DefaultOrbitPitch;orbitDistance=DefaultOrbitDistance;
+            var displayCenter=screen.Origin+screen.U*(screen.Width*.5)+screen.V*(screen.Height*.5);
+            var headPosition=rawHead?.Position ?? Vector3d.Zero;
+            orbitFocus=OffAxisCamera.ToUnity((displayCenter+headPosition)*.5)+Vector3.down*.55f;
         }
+        public void RefreshOperatorScreen()=>screenPreview?.Capture(participant);
+        private System.Collections.IEnumerator UpdateScreenFeed()
+        {
+            while(true){yield return new WaitForEndOfFrame();if(Ready)RefreshOperatorScreen();yield return new WaitForSecondsRealtime(.1f);}
+        }
+
         private static Quaternion ToUnity(Quaterniond value) => new Quaternion((float)value.X,(float)value.Y,(float)value.Z,(float)value.W);
         private void OnDestroy()
         {
+            screenPreview?.Dispose();
             if(roomLightingOwned){RenderSettings.ambientMode=previousAmbientMode;RenderSettings.ambientLight=previousAmbientLight;}
             if(authoredEnvironment?.FloorReference!=null)authoredEnvironment.FloorReference.gameObject.SetActive(authoredFloorWasActive);
             foreach(var light in disabledLights)if(light!=null)light.enabled=true;

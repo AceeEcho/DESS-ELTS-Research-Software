@@ -71,7 +71,7 @@ namespace Elts.Operator.Tests
                     var scenario=Private<DevelopmentSessionScenario>(panel,"scenario");
                     Assert.That(scenario.Positions.Count,Is.GreaterThan(0));
                     if(panel.Engine.CurrentCondition.EndsWith("_MT"))
-                        for(int step=0;step<(int)Math.Ceiling((view.GameSettings.runInSeconds+view.GameSettings.peekCycleSeconds*.4)*10);step++)
+                        for(int step=0;step<20;step++)
                         {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
                     float poseDeadline=Time.realtimeSinceStartup+2;
                     while(scenario.Positions.Count==0 && Time.realtimeSinceStartup<poseDeadline)yield return null;

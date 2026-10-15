@@ -32,8 +32,8 @@ namespace Elts.Operator.Tests
                 Assert.That(DevelopmentScenarioLayout.FixedPose(slot,ordinal,settings),Is.EqualTo(pose));
                 Assert.That(first.Y,Is.InRange(Elts.Scenario.HumanoidGeometry.CrouchedCenterAt(Floor),Elts.Scenario.HumanoidGeometry.StandingCenterAt(Floor)));
                 foreach(var cover in covers)
-                    Assert.That(Math.Abs(first.X-cover.Center.X)<cover.HalfSize.X+.38 &&
-                        Math.Abs(first.Z-cover.Center.Z)<cover.HalfSize.Z+.2,Is.False,"Fixed pose intersects furniture");
+                    Assert.That(cover.Center.Y-cover.HalfSize.Y<Floor+1.8 && Math.Abs(first.X-cover.Center.X)<cover.HalfSize.X+.38 &&
+                        Math.Abs(first.Z-cover.Center.Z)<cover.HalfSize.Z+.2,Is.False,"Fixed pose intersects "+cover.Id+" at slot "+slot);
                 if(pose.Name=="PeekOver")
                 {
                     var head=Elts.Scenario.HumanoidGeometry.Parts(first,Floor).First(p=>p.Region=="head");
@@ -64,7 +64,7 @@ namespace Elts.Operator.Tests
                 double offset=DevelopmentScenarioLayout.InitialRouteAge(ordinal,settings);
                 var points=Enumerable.Range(0,601).Select(i=>DevelopmentScenarioLayout.Sample(Center,route.Slot,true,
                     ordinal,offset+i/30.0,settings,Floor)).ToArray();
-                Assert.That(points.Max(p=>p.X)-points.Min(p=>p.X),Is.GreaterThan(1.0),"Every route must travel visibly sideways");
+                Assert.That(Math.Max(points.Max(p=>p.X)-points.Min(p=>p.X),points.Max(p=>p.Z)-points.Min(p=>p.Z)),Is.GreaterThan(1.0),"Every route must travel along its aisle");
                 double travel=0,peakSpeed=0;
                 for(int i=1;i<points.Length;i++)
                 {
@@ -87,7 +87,7 @@ namespace Elts.Operator.Tests
             population.ActiveTargets[0].Destroy();population.Reconcile(.1,Center,Floor);
             var replacement=population.ActiveTargets.Last();
             Assert.That(DevelopmentScenarioLayout.InitialRouteAge(DevelopmentScenarioLayout.Ordinal(replacement),settings),Is.Zero);
-            Assert.That(Math.Abs(replacement.Position.X-Center.X),Is.EqualTo(settings.libraryEntryXM),"Later arrivals retain entry routes");
+            Assert.That(Math.Abs(replacement.Position.X-Center.X),Is.EqualTo(12*settings.libraryLayoutScale),"Later arrivals retain entry routes");
         }
 
         [Test]
@@ -171,7 +171,7 @@ namespace Elts.Operator.Tests
                 var waiter=population.ActiveTargets.FirstOrDefault(t=>t!=survivor && population.Slot(t)==population.Slot(survivor));
                 if(waiter==null)continue;
                 Assert.That(population.StartedAt(waiter),Is.Null);
-                Assert.That(Math.Abs(waiter.Position.X-Center.X),Is.EqualTo(settings.libraryEntryXM));
+                Assert.That(Math.Abs(waiter.Position.X-Center.X),Is.EqualTo(12*settings.libraryLayoutScale));
                 int slot=population.Slot(waiter);
                 survivor.Destroy();population.Reconcile(i+1.5,Center,Floor);
                 Assert.That(population.StartedAt(waiter),Is.EqualTo(i+1.5));
@@ -187,10 +187,10 @@ namespace Elts.Operator.Tests
         public void DeskOpeningAllowsLowShotsButItsSurfaceAndPanelBlockThem()
         {
             var settings=new DevelopmentGameSettings();
-            var station=DevelopmentScenarioLayout.Station(Center,1,settings,Floor);
+            var station=Center+new Vector3d(3.8,0,6.5);
             var desk=DevelopmentScenarioLayout.Covers(Center,settings,Floor)
-                .Where(c=>c.Id=="reading-desk-1" || c.Id=="desk-panel-1" || c.Id.StartsWith("desk-leg-1-")).ToArray();
-            foreach(var sample in new[]{(.15,"Miss"),(.5,"Cover"),(.755,"Cover"),(1.0,"Miss")})
+                .Where(c=>c.Id.StartsWith("reading-table-1-") && !c.Id.Contains("chair")).ToArray();
+            foreach(var sample in new[]{(.15,"Miss"),(.5,"Miss"),(.755,"Cover"),(1.0,"Miss")})
             {
                 var model=new Elts.Scenario.HumanoidShotModel(new Elts.Scenario.SessionEventSequence(),TimeSpan.Zero,desk,Floor);
                 var ray=new Ray3d(new Vector3d(station.X,Floor+sample.Item1,station.Z-2),new Vector3d(0,0,1));
@@ -207,16 +207,17 @@ namespace Elts.Operator.Tests
             var covers=DevelopmentScenarioLayout.Covers(Center,settings,Floor);
             var stations=Enumerable.Range(0,50).Select(i=>DevelopmentScenarioLayout.Station(Center,i,settings,Floor)).ToArray();
             Assert.That(stations.Distinct().Count(),Is.EqualTo(50));
-            Assert.That(covers.Count,Is.EqualTo(60));
+            Assert.That(covers.Count,Is.GreaterThan(100));
             for(int ordinal=0;ordinal<250;ordinal++)
             {
                 var route=DevelopmentScenarioLayout.Route(ordinal,settings);
-                for(double age=0;age<25;age+=.1)
+                for(double age=0;age<route.EntrySeconds+route.CycleSeconds*2;age+=.12)
                 {
                     var point=DevelopmentScenarioLayout.Sample(Center,route.Slot,true,ordinal,age,settings,Floor);
                     foreach(var cover in covers)
-                        Assert.That(Math.Abs(point.X-cover.Center.X)<cover.HalfSize.X+.38 &&
-                            Math.Abs(point.Z-cover.Center.Z)<cover.HalfSize.Z+.2,Is.False,"Route crosses furniture");
+                        if(cover.Center.Y-cover.HalfSize.Y<Floor+1.8 && Math.Abs(point.X-cover.Center.X)<cover.HalfSize.X+.38 &&
+                            Math.Abs(point.Z-cover.Center.Z)<cover.HalfSize.Z+.2)
+                            Assert.Fail("Route "+ordinal+" slot "+route.Slot+" age "+age+" crosses "+cover.Id);
                 }
             }
             string folder=Path.GetFullPath(Path.Combine(Application.dataPath,"../../test-results/library"));

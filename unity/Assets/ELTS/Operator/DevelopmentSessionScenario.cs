@@ -225,15 +225,11 @@ namespace Elts.Operator
                 LogField.NumberValue("spawnPositionCount",gameSettings.spawnPositionCount),
                 LogField.NumberValue("pathSequenceLength",gameSettings.pathSequenceLength),
                 LogField.Boolean("expireTargets",false),LogField.NumberValue("replacementDelaySeconds",0),
-                LogField.NumberValue("libraryFirstRowOffsetM",gameSettings.libraryFirstRowOffsetM),
-                LogField.NumberValue("libraryRowSpacingM",gameSettings.libraryRowSpacingM),
-                LogField.NumberValue("libraryColumnSpacingM",gameSettings.libraryColumnSpacingM),
-                LogField.NumberValue("libraryEntryXM",gameSettings.libraryEntryXM),
-                LogField.NumberValue("libraryPatrolDistanceM",gameSettings.libraryPatrolDistanceM),
-                LogField.NumberValue("libraryPatrolDepthM",gameSettings.libraryPatrolDepthM),
-                LogField.NumberValue("crouchSeconds",gameSettings.crouchSeconds),
-                LogField.NumberValue("runInSeconds",gameSettings.runInSeconds),
-                LogField.NumberValue("peekCycleSeconds",gameSettings.peekCycleSeconds)
+                LogField.String("floorPlanVersion",LibraryFloorPlan.Version),
+                LogField.NumberValue("libraryLayoutScale",gameSettings.libraryLayoutScale),
+                LogField.NumberValue("libraryMoveSpeedMps",gameSettings.libraryMoveSpeedMps),
+                LogField.NumberValue("libraryPauseSeconds",gameSettings.libraryPauseSeconds),
+                LogField.NumberValue("crouchSeconds",gameSettings.crouchSeconds)
             };
             foreach(var cover in covers)
             {
@@ -261,6 +257,7 @@ namespace Elts.Operator
                 LogField.String("blockId",blockId!),LogField.String("targetId",target.Id),
                 LogField.NumberValue("spawnOrdinal",ordinal+1),
                 LogField.NumberValue("positionIndex",population!.Slot(target)),
+                LogField.String("libraryZone",LibraryFloorPlan.Zone(population.Slot(target))),
                 LogField.NumberValue("routeIndex",ordinal%gameSettings.pathSequenceLength),
                 LogField.String("behaviour",movingBlock?route.Name:"Fixed"),
                 LogField.Boolean("initiallyPresent",ordinal<gameSettings.activeTargetCount),

@@ -1,5 +1,4 @@
 #nullable enable
-using System;
 using System.Collections.Generic;
 using Elts.Geometry;
 using UnityEngine;
@@ -7,141 +6,125 @@ using UnityEngine.Rendering;
 
 namespace Elts.Operator
 {
-    /// <summary>Presentation settings in virtual metres; never apparatus measurements.</summary>
-    [Serializable]
+    /// <summary>Presentation lighting only; floor-plan dimensions live in LibraryFloorPlan.</summary>
+    [System.Serializable]
     public sealed class TrainingRoomSettings
     {
-        public float width = 30, height = 4.8f, depth = 52;
-        public float rearOfEye = 3;
-        public Color plaster = new Color(.81f, .79f, .73f);
-        public Color floor = new Color(.63f, .66f, .63f);
-        public Color ambient = new Color(.40f,.42f,.44f);
-        public Color bounceColor = new Color(.90f,.93f,1);
-        [Range(0,1)] public float bounceIntensity=.55f;
-        public Color daylight = new Color(1f, .96f, .89f);
-        public Vector3 directionToLight = new Vector3(-.6f, 1f, -.35f);
-        [Range(.5f, 3)] public float lightIntensity = 1.3f;
+        public Color plaster=new Color(.81f,.80f,.75f), floor=new Color(.48f,.50f,.48f);
+        public Color ambient=new Color(.33f,.35f,.37f), bounceColor=new Color(.90f,.93f,1);
+        [Range(0,1)] public float bounceIntensity=.38f;
+        public Color daylight=new Color(1,.96f,.88f);
+        public Vector3 directionToLight=new Vector3(.75f,1,-.4f);
+        [Range(.5f,3)] public float lightIntensity=1.45f;
     }
 
-    /// <summary>
-    /// A spacious, lit presentation shell around the configured target area.
-    /// It has no colliders or connection to tracking, hitscan or physical geometry.
-    /// All generated objects and materials belong to the view and die with it.
-    /// </summary>
+    /// <summary>One coherent library: a service desk by the entrance, double-sided
+    /// collections, shared reading tables by windows and clear cross aisles. Large
+    /// furniture is rendered from the same plan used for routes and shot occlusion.</summary>
     internal static class DevelopmentTrainingRoom
     {
-        public static void Create(Transform parent, ScreenPlane screen, double floorY, TrainingRoomSettings settings,
-            List<Material> ownedMaterials, Material targetMaterial, DevelopmentGameSettings game, double targetDistanceM)
+        public static void Create(Transform parent,ScreenPlane screen,double floorY,TrainingRoomSettings settings,
+            List<Material> ownedMaterials,Material targetMaterial,DevelopmentGameSettings game,double targetDistanceM)
         {
-            var root = new GameObject("Library interior (virtual metres)");
-            root.transform.SetParent(parent, false);
-            var centre = screen.Origin + screen.U * (screen.Width * .5) + screen.V * (screen.Height * .5);
-            root.transform.position = new Vector3((float)centre.X, (float)floorY, (float)centre.Z);
-            // The floor is horizontal in the room frame, even for a tilted display.
-            var forward = Vector3.ProjectOnPlane(ToUnity(screen.Normal), Vector3.up);
-            root.transform.rotation = Quaternion.LookRotation(forward.sqrMagnitude > .001f ? forward : Vector3.forward, Vector3.up);
-
+            var center=screen.Origin+screen.U*(screen.Width*.5)+screen.V*(screen.Height*.5)+screen.Normal*targetDistanceM;
+            var root=LibraryInterior.Group(parent,"Library interior (virtual metres)",new Vector3((float)center.X,(float)floorY,(float)center.Z));
+            root.localScale=new Vector3(game.libraryLayoutScale,1,game.libraryLayoutScale);
             var furniture=new LibraryInterior(ownedMaterials);
-            var wall=furniture.Surface(settings.plaster,.1f,"white_plaster_02",new Vector2(8,2));
-            var floor=furniture.Surface(settings.floor,.05f,"poly_wool_herringbone",new Vector2(40,65));
-            var ceiling=furniture.Surface(new Color(.77f,.76f,.71f));
-            var accent=furniture.Surface(new Color(.24f,.31f,.29f));
-            var sky=furniture.Surface(new Color(.66f,.77f,.81f));
-            sky.EnableKeyword("_EMISSION");sky.SetColor("_EmissionColor",new Color(.38f,.47f,.52f));
-            var diffuser=furniture.Surface(new Color(.92f,.87f,.74f));
-            diffuser.EnableKeyword("_EMISSION");diffuser.SetColor("_EmissionColor",new Color(2.1f,1.85f,1.45f));
-            float width=Mathf.Max(30,settings.width),depth=Mathf.Max(52,settings.depth);
-            float height=Mathf.Max(4.2f,settings.height);
-            float front=-settings.rearOfEye,back=front+depth,mid=(front+back)*.5f;
+            var wall=furniture.Surface(settings.plaster,.12f,"white_plaster_02",new Vector2(8,2));
+            var carpet=furniture.Surface(settings.floor,.05f,"poly_wool_herringbone",new Vector2(20,32));
+            var readingCarpet=furniture.Surface(new Color(.38f,.43f,.42f),.04f,"dirty_carpet",new Vector2(7,18));
+            var ceiling=furniture.Surface(new Color(.84f,.84f,.80f),.04f);
+            var glass=furniture.Surface(new Color(.58f,.69f,.72f),.5f);
+            glass.EnableKeyword("_EMISSION");glass.SetColor("_EmissionColor",new Color(.20f,.25f,.27f));
+            var lightSurface=furniture.Surface(new Color(.96f,.92f,.81f));
+            lightSurface.EnableKeyword("_EMISSION");lightSurface.SetColor("_EmissionColor",new Color(1.4f,1.3f,1.1f));
+            const float front=-10.5f,back=28,height=3.8f,width=22;
             void Box(string name,Vector3 at,Vector3 size,Material material,bool shadows=true)
-                =>LibraryInterior.Box(root.transform,name,at,size,material,shadows);
+                =>LibraryInterior.Box(root,name,at,size,material,shadows);
 
-            Box("Stone floor",new Vector3(0,-.1f,mid),new Vector3(width,.2f,depth),floor);
-            var walkway=furniture.Surface(new Color(.72f,.68f,.60f),.22f,"oak_veneer_03",new Vector2(2,26));
-            foreach(float x in new[]{-9.8f,0,9.8f})
-                Box("Oak circulation aisle",new Vector3(x,.004f,mid),new Vector3(x==0?1.0f:1.4f,.008f,depth),walkway);
-            // The shell receives light but does not block the broad daylight approximation.
-            // Furniture and actors still cast real-time shadows onto the floor and one another.
-            Box("Far wall",new Vector3(0,height/2,back),new Vector3(width,height,.2f),wall,false);
+            Box("Library carpet",new Vector3(0,-.1f,(front+back)/2),new Vector3(width,.2f,back-front),carpet);
+            Box("Window reading area carpet",new Vector3(6.2f,.003f,14.1f),new Vector3(7.9f,.006f,21),readingCarpet,false);
             Box("Near wall",new Vector3(0,height/2,front),new Vector3(width,height,.2f),wall,false);
-            Box("Ceiling",new Vector3(0,height+.1f,mid),new Vector3(width,.2f,depth),ceiling,false);
-            foreach(float side in new[]{-1f,1f})
-            {
-                Box("Side wall",new Vector3(side*width/2,height/2,mid),new Vector3(.2f,height,depth),wall,false);
-                Box("Oak skirting",new Vector3(side*(width/2-.13f),.08f,mid),new Vector3(.06f,.16f,depth),furniture.DarkOak);
-                for(float z=front+3;z<back-2;z+=5)
-                {
-                    float x=side*(width/2-.12f);
-                    Box("Tall window",new Vector3(x,2.35f,z),new Vector3(.04f,2.7f,3.7f),sky,false);
-                    foreach(float edge in new[]{-1.9f,0,1.9f})
-                        Box("Window mullion",new Vector3(x-side*.05f,2.35f,z+edge),new Vector3(.08f,2.85f,.055f),furniture.Metal);
-                    foreach(float y in new[]{.97f,2.45f,3.73f})
-                        Box("Window transom",new Vector3(x-side*.05f,y,z),new Vector3(.08f,.055f,3.85f),furniture.Metal);
-                    Box("Oak window sill",new Vector3(x-side*.15f,.94f,z),new Vector3(.4f,.065f,4),furniture.Oak);
-                    Box("Wall pilaster",new Vector3(x-side*.08f,height/2,z+2.45f),new Vector3(.25f,height,.32f),wall,false);
-                }
-            }
-            // A restrained wall composition: collections, a quiet study alcove and upper glazing.
-            Box("Study alcove wall",new Vector3(0,1.55f,back-.14f),new Vector3(6.2f,3.1f,.06f),accent,false);
-            for(int bay=0;bay<10;bay++)
-            {
-                float x=-12.6f+bay*2.8f;
-                if(Mathf.Abs(x)<3)continue;
-                var shelf=LibraryInterior.Group(root.transform,"Perimeter collection bay",new Vector3(x,0,back-.55f));
-                furniture.Bookcase(shelf,2.45f,2.65f,.50f,bay+73);
-            }
-            Box("Clerestory glazing",new Vector3(0,3.75f,back-.15f),new Vector3(width-.8f,1.15f,.04f),sky,false);
-            for(float x=-width/2+.45f;x<width/2;x+=2.4f)
-                Box("Clerestory mullion",new Vector3(x,3.75f,back-.2f),new Vector3(.05f,1.25f,.08f),furniture.Metal);
-            foreach(float y in new[]{3.12f,4.38f})
-                Box("Clerestory transom",new Vector3(0,y,back-.2f),new Vector3(width-.8f,.07f,.08f),furniture.Metal);
-            Box("Alcove bench",new Vector3(0,.43f,back-.65f),new Vector3(4.8f,.16f,.8f),furniture.Fabric);
-            Box("Alcove bench plinth",new Vector3(0,.18f,back-.6f),new Vector3(4.6f,.36f,.65f),furniture.DarkOak);
-            var sign=LibraryInterior.Group(root.transform,"Library sign",new Vector3(0,2.15f,back-.21f));
-            var label=sign.gameObject.AddComponent<TextMesh>();label.text="QUIET STUDY";label.anchor=TextAnchor.MiddleCenter;
-            label.alignment=TextAlignment.Center;label.characterSize=.075f;label.fontSize=80;
-            label.color=new Color(.78f,.75f,.64f);
+            Box("Far wall",new Vector3(0,height/2,back),new Vector3(width,height,.2f),wall,false);
+            Box("Ceiling",new Vector3(0,height+.06f,(front+back)/2),new Vector3(width,.12f,back-front),ceiling,false);
+            // Use the identical segmented side walls/lintels as the hit-test plan.
+            foreach(var cover in LibraryFloorPlan.Covers(Vector3d.Zero,new DevelopmentGameSettings(),0))
+                if(cover.Id.StartsWith("wall-") || cover.Id.StartsWith("lintel-"))
+                    Box(cover.Id,Unity(cover.Center),Unity(cover.HalfSize*2),wall,false);
 
-            // Peripheral reading tables frame the central field without crossing entry aisles.
-            foreach(float side in new[]{-1f,1f})
-                for(int row=-2;row<5;row++)
-                {
-                    // The full table/chair group fits between offscreen entry lanes.
-                    float z=(float)targetDistanceM+game.libraryFirstRowOffsetM+(row+.5f)*game.libraryRowSpacingM;
-                    furniture.StudyTable(root.transform,new Vector3(side*11.6f,0,z));
-                }
-            // Oak ceiling rafts and suspended linear fixtures, spaced like real building services.
-            for(float z=5;z<back;z+=8)
+            foreach(int side in new[]{-1,1})
             {
-                foreach(float x in new[]{-9f,0f,9f})
+                var doors=side<0?LibraryFloorPlan.LeftDoors:LibraryFloorPlan.RightDoors;
+                for(int i=0;i<doors.Length;i++)
                 {
-                    Box("Acoustic ceiling raft",new Vector3(x,height-.08f,z),new Vector3(5.5f,.12f,2.1f),furniture.DarkOak,false);
-                    for(int slat=0;slat<12;slat++)
-                        Box("Oak acoustic slat",new Vector3(x-2.5f+slat*.45f,height-.16f,z),new Vector3(.12f,.08f,2.1f),furniture.Oak,false);
-                    foreach(float offset in new[]{-1.6f,1.6f})
-                        Box("Pendant cable",new Vector3(x+offset,height-.40f,z),new Vector3(.012f,.5f,.012f),furniture.Metal,false);
-                    Box("Pendant housing",new Vector3(x,height-.68f,z),new Vector3(3.6f,.10f,.16f),furniture.Metal,false);
-                    Box("Warm pendant diffuser",new Vector3(x,height-.738f,z),new Vector3(3.48f,.018f,.13f),diffuser,false);
+                    float z=(float)doors[i],x=side*10.88f;
+                    foreach(float edge in new[]{-.92f,.92f})
+                        Box("Door jamb",new Vector3(x,1.1f,z+edge),new Vector3(.12f,2.2f,.09f),furniture.Oak);
+                    Box("Door header",new Vector3(x,2.24f,z),new Vector3(.12f,.10f,1.94f),furniture.Oak);
+                    // A dark short vestibule gives incoming actors a real occluded origin.
+                    Box("Vestibule back",new Vector3(side*12.6f,1.15f,z),new Vector3(.1f,2.3f,2.2f),furniture.DarkOak,false);
+                    foreach(float edge in new[]{-1.08f,1.08f})
+                        Box("Vestibule return",new Vector3(side*11.8f,1.15f,z+edge),new Vector3(1.6f,2.3f,.1f),wall,false);
+                    LibraryInterior.Label(root,side<0?"COLLECTIONS":"STUDY ROOMS",new Vector3(side*10.78f,2.5f,z),.04f,side<0?90:-90);
                 }
             }
-            var lightHost=new GameObject("Soft window daylight");lightHost.transform.SetParent(root.transform,false);
+            // Window bays, rather than identical windows wrapping every wall.
+            foreach(float z in new[]{6.8f,17.4f,26f})
+            {
+                Box("Window reveal",new Vector3(10.86f,2.02f,z),new Vector3(.20f,2.62f,4.3f),furniture.DarkOak,false);
+                Box("Daylight glazing",new Vector3(10.73f,2.05f,z),new Vector3(.035f,2.42f,4.05f),glass,false);
+                foreach(float edge in new[]{-2.08f,0,2.08f})
+                    Box("Window mullion",new Vector3(10.67f,2.05f,z+edge),new Vector3(.09f,2.5f,.055f),furniture.Metal,false);
+                Box("Window sill",new Vector3(10.60f,.79f,z),new Vector3(.45f,.08f,4.35f),furniture.Oak);
+            }
+
+            int seed=0;
+            foreach(var fixture in LibraryFloorPlan.Fixtures)furniture.Fixture(root,fixture,seed++);
+            LibraryInterior.Label(root,"INFORMATION",new Vector3(-3.9f,.66f,1.215f),.047f);
+            LibraryInterior.Label(root,"NEW BOOKS",new Vector3(-.6f,1.04f,4.86f),.035f);
+            LibraryInterior.Label(root,"READING ROOM",new Vector3(0,2.65f,27.86f),.055f);
+            // Service tools and reader belongings establish function without filling the aisles.
+            furniture.Monitor(root,new Vector3(-3.8f,1.02f,1.8f));
+            furniture.BookPile(root,new Vector3(-2.8f,1.02f,1.7f),17);
+            foreach(var fixture in LibraryFloorPlan.Fixtures)
+            {
+                if(fixture.Kind==LibraryFixtureKind.Table)
+                {
+                    var p=new Vector3((float)fixture.Center.X,.76f,(float)fixture.Center.Z);
+                    furniture.TableLamp(root,p+new Vector3(.55f,0,.08f),lightSurface);
+                    furniture.BookPile(root,p+new Vector3(-.55f,0,.17f),fixture.Id.Length);
+                    Box("Reader notebook",p+new Vector3(.35f,.012f,-.30f),new Vector3(.28f,.024f,.21f),furniture.Paper);
+                }
+                if(fixture.Kind==LibraryFixtureKind.Stack && fixture.Size.Z>3)
+                    LibraryInterior.Label(root,fixture.Id.StartsWith("literature")?"LITERATURE":"REFERENCE",
+                        new Vector3((float)fixture.Center.X,1.85f,(float)(fixture.Center.Z-fixture.Size.Z/2)-.02f),.027f);
+            }
+            // Long suspended lights follow the reading area; compact lights run across
+            // the stack bays. There is no repeating theatrical raft over each target.
+            foreach(float z in new[]{2f,7.5f,14.4f,21f,26f})
+                foreach(float x in new[]{-5.4f,1f,6.8f})
+                {
+                    Box("Pendant housing",new Vector3(x,3.35f,z),new Vector3(2.4f,.075f,.17f),furniture.Metal,false);
+                    Box("Pendant diffuser",new Vector3(x,3.305f,z),new Vector3(2.32f,.018f,.14f),lightSurface,false);
+                    foreach(float offset in new[]{-.85f,.85f})
+                        Box("Pendant suspension",new Vector3(x+offset,3.59f,z),new Vector3(.008f,.43f,.008f),furniture.Metal,false);
+                }
+            for(int i=0;i<7;i++)
+                Box("Reading area acoustic baffle",new Vector3(6.4f,3.66f,4+i*3.2f),new Vector3(7,.16f,.10f),furniture.Oak,false);
+            furniture.Plant(root,new Vector3(9.8f,0,11.1f));
+            furniture.Plant(root,new Vector3(-9.8f,0,26.6f));
+            var lightHost=new GameObject("Window daylight");lightHost.transform.SetParent(root,false);
             var direction=settings.directionToLight.normalized;
-            var worldDirection=root.transform.TransformDirection(direction);
-            lightHost.transform.rotation=Quaternion.LookRotation(-worldDirection);
-            var light=lightHost.AddComponent<Light>();light.type=LightType.Directional;
-            light.color=settings.daylight;light.intensity=settings.lightIntensity;
-            light.shadows=LightShadows.Soft;light.shadowStrength=.70f;
-            light.shadowBias=.025f;light.shadowNormalBias=.08f;
-            light.cullingMask=1<<DevelopmentView.StimulusLayer;
-            var fillHost=new GameObject("Ceiling and wall bounce");fillHost.transform.SetParent(root.transform,false);
-            fillHost.transform.localRotation=Quaternion.Euler(-65,-25,0);
-            var fill=fillHost.AddComponent<Light>();fill.type=LightType.Directional;
-            fill.color=settings.bounceColor;fill.intensity=settings.bounceIntensity;fill.shadows=LightShadows.None;
-            fill.cullingMask=1<<DevelopmentView.StimulusLayer;
-            targetMaterial.SetVector("_LightDirection",worldDirection);
-            StaticBatchingUtility.Combine(root);
+            lightHost.transform.rotation=Quaternion.LookRotation(-direction);
+            var sun=lightHost.AddComponent<Light>();sun.type=LightType.Directional;sun.color=settings.daylight;sun.intensity=settings.lightIntensity;
+            sun.shadows=LightShadows.Soft;sun.shadowStrength=.8f;sun.shadowBias=.02f;sun.shadowNormalBias=.06f;sun.cullingMask=1<<DevelopmentView.StimulusLayer;
+            var fillHost=new GameObject("Indirect library light");fillHost.transform.SetParent(root,false);
+            fillHost.transform.rotation=Quaternion.Euler(-65,-25,0);
+            var fill=fillHost.AddComponent<Light>();fill.type=LightType.Directional;fill.color=settings.bounceColor;
+            fill.intensity=settings.bounceIntensity;fill.shadows=LightShadows.None;fill.cullingMask=1<<DevelopmentView.StimulusLayer;
+            targetMaterial.SetVector("_LightDirection",direction);
+            StaticBatchingUtility.Combine(root.gameObject);
         }
-
-        private static Vector3 ToUnity(Vector3d value)=>new Vector3((float)value.X,(float)value.Y,(float)value.Z);
+        private static Vector3 Unity(Vector3d value)=>new Vector3((float)value.X,(float)value.Y,(float)value.Z);
     }
 }

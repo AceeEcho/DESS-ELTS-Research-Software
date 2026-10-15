@@ -57,7 +57,9 @@ namespace Elts.Operator
                     slot=-1;
                     for(int attempt=0;attempt<settings.spawnPositionCount;attempt++)
                     {
-                        int candidate=nextFixedSlot++%settings.spawnPositionCount;
+                        // A coprime stride spreads the opening population across library zones.
+                        int stride=settings.spawnPositionCount==34?19:17;
+                        int candidate=(nextFixedSlot++*stride)%settings.spawnPositionCount;
                         if(!occupied.Contains(candidate) && !justVacated.Contains(candidate)){slot=candidate;break;}
                     }
                     if(slot<0)throw new InvalidOperationException("No unused library position is available.");

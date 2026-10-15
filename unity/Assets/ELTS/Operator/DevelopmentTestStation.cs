@@ -49,7 +49,7 @@ namespace Elts.Operator
         private bool held,wasArmed;
         private string? heldBlock;
         private long imageVersion;
-        private float orbitYaw=0,orbitPitch=5,orbitDistance=20,nextState;
+        private float orbitYaw=DevelopmentView.DefaultOrbitYaw,orbitPitch=DevelopmentView.DefaultOrbitPitch,orbitDistance=DevelopmentView.DefaultOrbitDistance,nextState;
         private readonly List<RunRow> blocks=new List<RunRow>();
         private string knownRun="";
         private sealed class RunRow
@@ -220,6 +220,8 @@ namespace Elts.Operator
                 case "next": session.StationNext();CancelClick();break;
                 case "abort": session.StationAbort((string?)command["reason"]??"");CancelClick();break;
                 case "note": session.StationNote((string?)command["text"]??"");break;
+                case "resetView":
+                    view.ResetOperatorView();orbitYaw=DevelopmentView.DefaultOrbitYaw;orbitPitch=DevelopmentView.DefaultOrbitPitch;orbitDistance=DevelopmentView.DefaultOrbitDistance;break;
                 case "viewOrbit":
                     orbitYaw=Finite(command,"yaw",orbitYaw);orbitPitch=Mathf.Clamp(Finite(command,"pitch",orbitPitch),-10,80);orbitDistance=Mathf.Clamp(Finite(command,"distance",orbitDistance),1.5f,20);
                     view.SetOperatorOrbit(orbitYaw,orbitPitch,orbitDistance);break;
@@ -357,6 +359,7 @@ namespace Elts.Operator
             {
                 yield return new WaitForEndOfFrame();
                 if(capturePending){yield return null;continue;}
+                view.RefreshOperatorScreen();
                 var request=new RenderPipeline.StandardRequest{destination=outsideTexture};
                 if(RenderPipeline.SupportsRenderRequest(view.OperatorCamera,request))RenderPipeline.SubmitRenderRequest(view.OperatorCamera,request);
                 if(SystemInfo.supportsAsyncGPUReadback)

@@ -26,7 +26,7 @@ let current = {
   state: 'Idle', participant: '', runId: '', blockId: '', condition: '', canStartParticipant: true,
   conditionOrder: conditions.slice(), testDurations: Object.fromEntries(conditions.map(c => [c, 300])),
   editableDurations: conditions.slice(), blocks: [], remainingSeconds: 0, activeSeconds: 0,
-  tracking: {}, camera: { yaw: 145, pitch: 20, distance: 4 },
+  tracking: {}, camera: { yaw: -32, pitch: 16, distance: 4.8 },
   data: {ready:true, busy:false, path:'collection data', message:'Local collection ready', profiles:[{id:'profile1',code:'P-001',name:'Fictional participant',sessions:'2',modifiedUtc:'2026-09-11T12:00:00Z'}]},
   tools: { practiceSeconds: 10, breakSeconds: 5, saveStatus: 'No recording yet.', notes: [], checkpoints: [],
     schedule: conditions.slice(), queueIndex: 0, repeatable: [], readiness: [], calibration: {}, recordings: [] }
@@ -37,6 +37,8 @@ const server = http.createServer(async (req, res) => {
     let data = ''; for await (const part of req) data += part;
     const command = JSON.parse(data); commands.push(command);
     if(command.action === "openDataFolder" && rejectFolder){res.setHeader("Content-Type","application/json");res.end(JSON.stringify({ok:false,message:"Explorer could not open the folder."}));return;}
+    if (command.action === 'viewOrbit') current.camera={yaw:command.yaw,pitch:command.pitch,distance:command.distance};
+    if (command.action === 'resetView') current.camera={yaw:-32,pitch:16,distance:4.8};
     if (command.action === 'applySetup') {
       current.conditionOrder = command.conditionOrder; current.testDurations = command.durations;
       current.tools.breakSeconds = command.breakSeconds; current.tools.practiceSeconds = command.practiceSeconds;
@@ -86,14 +88,21 @@ const server = http.createServer(async (req, res) => {
     await page.locator('#setupWelcome').waitFor({ state: 'visible' });
     assert.equal(await page.locator('#startDialog').isVisible(), false, 'Participant entry must not block setup');
     // Use a loaded image: the placeholder alone cannot reproduce native image dragging.
-    await page.evaluate(async () => {
+    const renderedPreview=path.join(output,'library-floorplan-v3/administrator-default.png');
+    const previewSource=fs.existsSync(renderedPreview)?'data:image/png;base64,'+fs.readFileSync(renderedPreview).toString('base64'):null;
+    await page.evaluate(async previewSource => {
       const image = document.getElementById('viewImage');
-      image.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1200"><rect width="1920" height="1200" fill="gray"/></svg>');
+      image.src = previewSource || 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1200"><rect width="1920" height="1200" fill="gray"/></svg>');
       await image.decode(); image.hidden = false;
       document.getElementById('viewPlaceholder').hidden = true;
       window.previewNativeDrags = 0;
       image.addEventListener('dragstart', () => window.previewNativeDrags++);
-    });
+    },previewSource);
+    await page.screenshot({path:path.join(output,'administrator-station-desktop.png'),fullPage:true});
+    await page.setViewportSize({width:390,height:844});
+    await page.screenshot({path:path.join(output,'administrator-station-mobile.png'),fullPage:true});
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth), 'Station preview must not cause horizontal overflow');
+    await page.setViewportSize({width:1440,height:1000});
     const preview = await page.locator('#viewport').boundingBox();
     for (let drag = 0; drag < 2; drag++) {
       const beforeOrbit = commands.filter(c => c.action === 'viewOrbit').length;
@@ -102,13 +111,17 @@ const server = http.createServer(async (req, res) => {
       await page.mouse.move(preview.x + preview.width / 2 + 100, preview.y + preview.height / 2 + 40, { steps: 12 });
       await page.mouse.up();
       await wait(() => commands.filter(c => c.action === 'viewOrbit').length > beforeOrbit);
-      assert.ok(commands.filter(c => c.action === 'viewOrbit').at(-1).yaw > 145, 'Dragging the image rotates the camera');
+      assert.ok(commands.filter(c => c.action === 'viewOrbit').at(-1).yaw > -32, 'Dragging the image rotates the camera');
     }
     assert.equal(await page.evaluate(() => window.previewNativeDrags), 0, 'Orbit gestures never start native image dragging');
     assert.equal(await page.evaluate(() => window.getSelection().toString()), '', 'Orbit gestures do not select overlay text');
     await page.locator('#settingsButton').click();
+    await page.locator('#resetCamera').click();
+    await wait(() => commands.some(c=>c.action==='resetView'));
+    assert.deepEqual(current.camera,{yaw:-32,pitch:16,distance:4.8});
     const handles = page.locator('.grab-handle');
     await handles.first().waitFor({ state: 'visible' });
+    await handles.first().scrollIntoViewIfNeeded();
     assert.equal(await page.locator('#conditionOrder [data-move]').count(), 0, 'Grab handles replace visible move arrows');
     await page.waitForTimeout(250);
     const first = await handles.nth(0).boundingBox(), third = await handles.nth(2).boundingBox();

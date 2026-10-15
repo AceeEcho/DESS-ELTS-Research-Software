@@ -22,14 +22,14 @@
   </section>
   <main class="workspace" id="workspace">
     <section class="view-pane pane">
-      <div class="pane-head"><div><span class="eyebrow">LIVE VIEW</span><h1>Outside view</h1></div><div class="view-tools"><span id="viewVersion" class="subtle">Waiting for camera</span></div></div>
+      <div class="pane-head"><div><span class="eyebrow">LIVE VIEW</span><h1>Participant &amp; screen</h1></div><div class="view-tools"><span id="viewVersion" class="subtle">Waiting for camera</span></div></div>
       <div id="viewport" class="viewport" tabindex="0" aria-label="Live outside view. Drag to orbit.">
         <img id="viewImage" alt="Live cached outside view" draggable="false" hidden>
         <div id="viewPlaceholder" class="view-placeholder"><span class="placeholder-glyph">◈</span><strong>Waiting for outside view</strong><span>The outside camera will appear here when the run is ready.</span></div>
         <div class="orbit-help">Drag to orbit · wheel to zoom</div>
       </div>
-      <div class="view-legend" aria-label="Outside view legend">Head and gaze · Weapon and bore · Screen · Targets</div>
-      <div class="tracking-strip"><div><span class="eyebrow">HEAD TRACKING</span><strong id="headTracking">No signal</strong></div><div><span class="eyebrow">WEAPON TRACKING</span><strong id="weaponTracking">No signal</strong></div><div><span class="eyebrow">CAMERA</span><strong id="cameraInfo">0° · 0° · 4.0 m</strong></div></div>
+      <div class="view-legend" aria-label="Participant &amp; screen legend">Head pose · Inferred body · Amber bore and screen aim</div>
+      <div class="tracking-strip"><div><span class="eyebrow">HEAD TRACKING</span><strong id="headTracking">No signal</strong></div><div><span class="eyebrow">WEAPON TRACKING</span><strong id="weaponTracking">No signal</strong></div><div><span class="eyebrow">CAMERA</span><strong id="cameraInfo">−32° · 16° · 4.8 m</strong></div></div>
     </section>
 
     <div id="splitHandle" class="split-handle" role="separator" aria-label="Resize panes" tabindex="0"></div>
@@ -85,9 +85,9 @@
       <section class="timing-settings" aria-labelledby="timingSettingsTitle"><div class="timing-heading"><span class="eyebrow">SESSION TIMING</span><h3 id="timingSettingsTitle">Durations</h3></div><div class="timing-settings-grid"><section class="timing-group" aria-labelledby="testDurationsTitle"><h4 id="testDurationsTitle">Test durations</h4><p class="subtle">Seconds per shooting test (1–3600). Each change saves automatically. Pause a running test before editing it.</p><div id="durationEditors"></div></section><section class="timing-group" aria-labelledby="phaseDurationsTitle"><h4 id="phaseDurationsTitle">Practice &amp; breaks</h4><form id="phaseTimingForm"><div class="phase-fields"><label class="field-label">Practice (seconds)<input id="practiceSeconds" type="number" min="0" max="3600" step="1" required></label><label class="field-label">Every break (seconds)<input id="breakSeconds" type="number" min="0" max="3600" step="1" required></label></div><p class="subtle">One duration applies to every break. Changes to a live break keep the time already elapsed.</p><button id="applyPhaseTiming" class="ghost-btn">Save practice &amp; breaks</button></form></section></div></section>
       <h3>Game window</h3><div class="secondary-actions"><button id="windowed" class="ghost-btn">Windowed</button><button id="fullscreen" class="ghost-btn">Fullscreen</button></div>
       <p class="subtle">F11 or Alt+Enter toggles fullscreen in the game. Escape returns to the last window size. Drag any window edge to resize.</p>
-      <label class="field-label">Preview refresh rate<select id="previewRate"><option value="5">5 fps · lower load</option><option value="10" selected>10 fps · balanced</option><option value="20">20 fps · smoother preview</option><option value="30">30 fps · highest load</option></select></label>
+      <label class="field-label">Preview refresh rate<select id="previewRate"><option value="5">5 fps · lower load</option><option value="10" selected>10 fps · balanced</option><option value="4.8">20 fps · smoother preview</option><option value="30">30 fps · highest load</option></select></label>
       <label class="check-label"><input id="reduceMotion" type="checkbox"> Reduce interface motion</label>
-      <h3>Outside camera</h3><label class="field-label">Zoom distance (metres)<input id="cameraDistance" type="range" min="1.5" max="20" step="0.1" value="20"></label><button id="resetCamera" class="ghost-btn">Reset camera</button>
+      <h3>Outside camera</h3><label class="field-label">Zoom distance (metres)<input id="cameraDistance" type="range" min="1.5" max="20" step="0.1" value="4.8"></label><button id="resetCamera" class="ghost-btn">Reset camera</button>
       <p id="settingsError" class="form-error" role="alert" hidden></p>
     </section>
   </div>

@@ -19,7 +19,7 @@
   let state = null, order = conditions.slice(), pollBusy = false, viewVersion = null;
   let workflows, dataViewer;
   let refreshIdle = Promise.resolve();
-  let orbit = { yaw: 0, pitch: 5, distance: 20 }, dragging = false, lastPoint = null;
+  let orbit = { yaw: -32, pitch: 16, distance: 4.8 }, dragging = false, lastPoint = null;
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const command = async (action, payload = {}) => {
     const response = await fetch('/api/command', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Elts-Token': token }, body: JSON.stringify({ action, runId: state?.runId || '', blockId: state?.blockId || '', ...payload }) });
@@ -300,7 +300,7 @@
     sendOrbit(); renderTracking();
   });
   $('cameraDistance').addEventListener('input', () => { orbit.distance = Number($('cameraDistance').value); sendOrbit(); });
-  $('resetCamera').addEventListener('click', () => { orbit = { yaw:0, pitch:5, distance:20 }; $('cameraDistance').value = 20; sendOrbit(); });
+  $('resetCamera').addEventListener('click', () => { orbit = { yaw:-32, pitch:16, distance:4.8 }; $('cameraDistance').value = 4.8; command('resetView'); });
   $('splitHandle').addEventListener('pointerdown', (event) => { const workspace = $('workspace');
   const move = (e) => { const ratio = Math.max(.3, Math.min(.65, (workspace.getBoundingClientRect().right - e.clientX) / workspace.clientWidth));
   document.documentElement.style.setProperty('--pane', `${ratio * 100}%`);

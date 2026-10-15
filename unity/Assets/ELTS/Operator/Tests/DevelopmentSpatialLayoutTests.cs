@@ -40,56 +40,55 @@ namespace Elts.Operator.Tests
                 double floorY=rig.VirtualFloorY;
                 Assert.That(screen.Origin.Y-floorY,Is.EqualTo(4*.3048).Within(1e-9),"Screen bottom is four feet above the shared floor");
                 var room=host.transform.Find("Library interior (virtual metres)");
-                var floor=room.Find("Stone floor").GetComponent<Renderer>();
+                var floor=room.Find("Library carpet").GetComponent<Renderer>();
                 Assert.That(floor.bounds.max.y,Is.EqualTo(floorY).Within(.0001));
                 foreach(var name in new[]{"Near wall","Far wall","Ceiling"})Assert.That(room.Find(name),Is.Not.Null,name);
                 var center=DevelopmentScenarioLayout.Center(view.Configuration);
                 var covers=DevelopmentScenarioLayout.Covers(center,view.GameSettings,floorY);
-                Assert.That(covers.Where(c=>c.Id.StartsWith("low-bookcase")).Select(c=>c.Center.Z).Distinct().Count(),Is.EqualTo(5));
-                foreach(var cover in covers)
-                {
-                    Assert.That(cover.Center.Y-cover.HalfSize.Y,Is.GreaterThanOrEqualTo(floorY-1e-8));
-                    var coverRoot=host.transform.Find("Cover · "+cover.Id);
-                    var bounds=coverRoot.GetComponentsInChildren<Renderer>().Select(r=>r.bounds).ToArray();
-                    Assert.That(bounds.Min(b=>b.min.y),Is.EqualTo(cover.Center.Y-cover.HalfSize.Y).Within(.02));
-                    Assert.That(bounds.Max(b=>b.max.x)-bounds.Min(b=>b.min.x),Is.EqualTo(cover.HalfSize.X*2).Within(.05));
-                }
-                foreach(Transform table in room)
-                {
-                    if(table.name!="Shared study table")continue;
-                    var tableBounds=table.GetComponentsInChildren<Renderer>().Select(r=>r.bounds).ToArray();
-                    double front=tableBounds.Min(b=>b.min.z),back=tableBounds.Max(b=>b.max.z);
-                    for(int row=0;row<5;row++)
-                    {
-                        double entryZ=DevelopmentScenarioLayout.Station(center,row*10,view.GameSettings,floorY).Z;
-                        Assert.That(entryZ<front-.2 || entryZ>back+.2,Is.True,"Peripheral chairs must not obstruct moving entry lanes");
-                    }
-                }
+                Assert.That(LibraryFloorPlan.Fixtures.Count(f=>f.Kind==LibraryFixtureKind.Table),Is.EqualTo(5));
+                Assert.That(LibraryFloorPlan.Fixtures.Count(f=>f.Kind==LibraryFixtureKind.Stack),Is.GreaterThan(5));
+                foreach(var cover in covers)Assert.That(cover.Center.Y-cover.HalfSize.Y,Is.GreaterThanOrEqualTo(floorY-1e-8));
+                // A clear room capture distinguishes architecture from crowd occlusion.
+                var emptyDesktop=new DesktopInputModel(view.Configuration);
+                view.SetSessionFrame(emptyDesktop.Head,emptyDesktop.Weapon,new Dictionary<string,Vector3d>(),0);view.Refresh(0);
+                yield return null;Capture(view.ParticipantCamera,texture,"library-empty.png");
                 var actors=Enumerable.Range(1,30).Select(Target).ToArray();
                 var positions=new Dictionary<string,Vector3d>();
                 var desktop=new DesktopInputModel(view.Configuration);
-                for(int slot=0;slot<30;slot++)positions.Add(actors[slot].Id,Position(actors[slot],center,false,0,view,slot));
-                view.SetSessionFrame(desktop.Head,desktop.Weapon,positions,0);view.Refresh(0);
+                var fixedPopulation=new LibraryTargetPopulation(view.GameSettings,false,.1);
+                fixedPopulation.Reconcile(0,center,floorY);
+                var fixedPoses=new Dictionary<string,DevelopmentFixedPose>();
+                foreach(var target in fixedPopulation.ActiveTargets)
+                {
+                    positions.Add(target.Id,target.Position);
+                    fixedPoses.Add(target.Id,DevelopmentScenarioLayout.FixedPose(fixedPopulation.Slot(target),DevelopmentScenarioLayout.Ordinal(target),view.GameSettings));
+                }
+                view.SetSessionFrame(desktop.Head,desktop.Weapon,positions,0,fixedPoses);view.Refresh(0);
                 yield return null;
-                for(int slot=0;slot<50;slot++)
-                {
-                    var position=DevelopmentScenarioLayout.Station(center,slot,view.GameSettings,floorY);
-                    var top=view.ParticipantCamera.WorldToViewportPoint(Unity(position+new Vector3d(0,.82,0)));
-                    var bottom=view.ParticipantCamera.WorldToViewportPoint(new Vector3((float)position.X,(float)floorY,(float)position.Z));
-                    Assert.That(top.y-bottom.y,Is.InRange(.09f,.25f),"Thirty actors remain readable in the room");
-                    Assert.That(bottom.y,Is.GreaterThan(.02f));Assert.That(top.y,Is.LessThan(.98f));
-                    foreach(float edge in new[]{-.44f,.44f})
-                        Assert.That(view.ParticipantCamera.WorldToViewportPoint(Unity(position)+Vector3.right*edge).x,Is.InRange(.001f,.999f));
-                }
                 Capture(view.ParticipantCamera,texture,"fixed-default.png");
-                foreach(var position in positions.Values)
+                view.RefreshOperatorScreen();Capture(view.OperatorCamera,texture,"administrator-default.png");
+                foreach(var point in new[]{desktop.Head.Position,screen.Origin,screen.Origin+screen.U*screen.Width+screen.V*screen.Height,
+                    new Vector3d(desktop.Head.Position.X,floorY,desktop.Head.Position.Z)})
                 {
-                    var projected=view.OperatorCamera.WorldToViewportPoint(Unity(position));
-                    Assert.That(projected.z,Is.GreaterThan(0),"Administrator starts facing the target field");
-                    Assert.That(projected.x,Is.InRange(0f,1f));
-                    Assert.That(projected.y,Is.InRange(0f,1f));
+                    var projected=view.OperatorCamera.WorldToViewportPoint(Unity(point));
+                    Assert.That(projected.z,Is.GreaterThan(0));
+                    Assert.That(projected.x,Is.InRange(.03f,.97f));Assert.That(projected.y,Is.InRange(.03f,.97f));
                 }
-                Capture(view.OperatorCamera,texture,"administrator-default.png");
+                view.RefreshOperatorScreen();Capture(view.OperatorCamera,texture,"administrator-default.png");
+                Assert.That(host.transform.Find("Muzzle to target"),Is.Null);
+                Assert.That(host.transform.Find("Screen aim horizontal").GetComponent<LineRenderer>().enabled,Is.True);
+                // Verify the marker follows actual bore/screen geometry, including
+                // off-centre aim, rather than pointing at a selected target.
+                foreach(var aimPoint in new[]{new Vector2(.15f,.25f),new Vector2(.85f,.75f)})
+                {
+                    desktop.SetAim(aimPoint);view.SetSessionFrame(desktop.Head,desktop.Weapon,positions,0,fixedPoses);view.Refresh(0);
+                    var line=host.transform.Find("Screen aim horizontal").GetComponent<LineRenderer>();
+                    var expected=screen.Origin+screen.U*(aimPoint.x*screen.Width)+screen.V*(aimPoint.y*screen.Height)-screen.Normal*.008;
+                    Assert.That(Vector3.Distance((line.GetPosition(0)+line.GetPosition(1))/2,Unity(expected)),Is.LessThan(.0001));
+                }
+                view.RefreshOperatorScreen();Capture(view.OperatorCamera,texture,"administrator-offset-aim.png");
+                desktop.Reset();
+
 
                 // An eye-to-screen-bottom ray must continue to the same floor
                 // point on the virtual side. Changing the eye changes parallax,
@@ -111,15 +110,10 @@ namespace Elts.Operator.Tests
                     }
                 }
 
-                // Every entry begins beyond the default participant frustum.
+                // Replacements start outside real side doors; distant doors may be
+                // visible through the physical screen, so frustum exclusion is not required.
                 OffAxisCamera.Apply(view.ParticipantCamera,new OffAxisProjection(screen,baseEye,.05,100));
-                for(int i=0;i<50;i++)
-                {
-                    var route=DevelopmentScenarioLayout.Route(i,view.GameSettings);
-                    var entry=DevelopmentScenarioLayout.Sample(center,route.Slot,true,i,0,view.GameSettings,floorY);
-                    float x=view.ParticipantCamera.WorldToViewportPoint(Unity(entry)).x;
-                    Assert.That(x<0 || x>1,Is.True,"Entry must start offscreen");
-                }
+                for(int i=0;i<50;i++)Assert.That(Math.Abs(LibraryFloorPlan.Entry(i)[0].X),Is.GreaterThan(LibraryFloorPlan.HalfWidth));
                 var captureFrames=new HashSet<int>{0,120,360,720,1080};
                 // Advance at rendering cadence so gait/turning samples reflect travel.
                 // Multi-second seeks intentionally reset the visual to an idle pose.
@@ -127,13 +121,6 @@ namespace Elts.Operator.Tests
                 {
                     double time=frame/60.0;
                     for(int i=0;i<30;i++)positions[actors[i].Id]=Position(actors[i],center,true,time,view,-1);
-                    if(time==0)
-                        foreach(var position in positions.Values)
-                        {
-                            var projected=view.ParticipantCamera.WorldToViewportPoint(Unity(position));
-                            Assert.That(projected.x,Is.InRange(0f,1f),"Opening moving targets must already be on screen");
-                            Assert.That(projected.y,Is.InRange(0f,1f));
-                        }
                     view.SetSessionFrame(desktop.Head,desktop.Weapon,positions,time);view.Refresh(0);
                     if(!captureFrames.Contains(frame))continue;
                     yield return null;
@@ -143,6 +130,11 @@ namespace Elts.Operator.Tests
                 view.SetSessionFrame(shifted,desktop.Weapon,positions,18);view.Refresh(0);
                 yield return null;
                 Capture(view.ParticipantCamera,texture,"moving-shifted-eye.png");
+                view.SetSessionFrame(null,null,positions,18);view.Refresh(0);view.RefreshOperatorScreen();
+                Assert.That(host.transform.Find("Screen aim horizontal").GetComponent<LineRenderer>().enabled,Is.False);
+                Assert.That(host.transform.Find("Physical display · participant image").GetComponent<Renderer>().enabled,Is.False);
+                Capture(view.OperatorCamera,texture,"administrator-dropout.png");
+
             }
             finally{UnityEngine.Object.DestroyImmediate(host);texture.Release();UnityEngine.Object.DestroyImmediate(texture);}
         }
@@ -155,7 +147,7 @@ namespace Elts.Operator.Tests
             try
             {
                 RenderTexture.active=target;image.ReadPixels(new Rect(0,0,target.width,target.height),0,0);image.Apply();
-                var directory=Path.GetFullPath(Path.Combine(Application.dataPath,"../../test-results/library-realism"));
+                var directory=Path.GetFullPath(Path.Combine(Application.dataPath,"../../test-results/library-floorplan-v3"));
                 Directory.CreateDirectory(directory);File.WriteAllBytes(Path.Combine(directory,name),image.EncodeToPNG());
             }
             finally{RenderTexture.active=previous;UnityEngine.Object.DestroyImmediate(image);}

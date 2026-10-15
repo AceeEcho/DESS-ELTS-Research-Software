@@ -220,10 +220,11 @@ namespace Elts.Operator.Tests
                 var positionMethod = layout.GetMethod("Position");
                 var target = new TargetEntity("target-1", Vector3d.Zero, Vector3d.Zero, .1, new MonotonicTimestamp(0));
                 Vector3d Position(double time) => (Vector3d)positionMethod.Invoke(null, new object[] { target, new Vector3d(0, 0, 3), true, time, settings, view.Configuration.Rig.VirtualFloorY, 0 });
-                // The lane must arrive with no velocity jump, including at the peek boundaries.
-                foreach (double boundary in new[] { 0, settings.runInSeconds, settings.runInSeconds + settings.peekCycleSeconds * .17,
-                    settings.runInSeconds + settings.peekCycleSeconds * .31, settings.runInSeconds + settings.peekCycleSeconds * .52,
-                    settings.runInSeconds + settings.peekCycleSeconds * .66 })
+                var route=DevelopmentScenarioLayout.Route(0,settings);
+                double ageOffset=DevelopmentScenarioLayout.InitialRouteAge(0,settings);
+                // The next circuit boundary stays continuous even when direction reverses.
+                foreach (double boundary in new[] { route.EntrySeconds+route.CycleSeconds-ageOffset,
+                    route.EntrySeconds+2*route.CycleSeconds-ageOffset })
                 {
                     var a = Position(Math.Max(0, boundary - .001));
                     var b = Position(boundary);
@@ -301,9 +302,9 @@ namespace Elts.Operator.Tests
                 view.SetSessionFrame(desktop.Head,desktop.Weapon,targets);
                 view.Refresh(0);view.enabled=false;
                 Assert.That(host.GetComponentsInChildren<MonoBehaviour>().Count(m=>m.GetType().Name=="DevelopmentHumanoidVisual"),Is.EqualTo(30),"Thirty consistent actors populate the library");
-                Assert.That(host.transform.Find("Cover · reading-desk-1"),Is.Not.Null);
-                Assert.That(host.transform.Find("Cover · low-bookcase-2"),Is.Not.Null);
-                Assert.That(host.transform.Find("Cover · low-bookcase-3"),Is.Not.Null);
+                Assert.That(host.transform.Find("Library interior (virtual metres)/Fixture · reading-table-1"),Is.Not.Null);
+                Assert.That(host.transform.Find("Library interior (virtual metres)/Fixture · literature-west"),Is.Not.Null);
+                Assert.That(host.transform.Find("Library interior (virtual metres)/Fixture · new-books"),Is.Not.Null);
                 var camera=view.ParticipantCamera;
                 var request=new RenderPipeline.StandardRequest{destination=texture};
                 RenderPipeline.SubmitRenderRequest(camera,request);

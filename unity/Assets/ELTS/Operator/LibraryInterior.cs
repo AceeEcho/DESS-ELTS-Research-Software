@@ -97,7 +97,7 @@ namespace Elts.Operator
             var root=Group(parent,"Reading chair",position,yaw);
             Box(root,"Upholstered seat",new Vector3(0,.45f,0),new Vector3(.43f,.07f,.43f),Fabric);
             var back=Box(root,"Upholstered back",new Vector3(0,.70f,.19f),new Vector3(.43f,.43f,.065f),Fabric);
-            back.transform.localRotation=Quaternion.Euler(-7,0,0);
+            // Keep the solid back aligned with the shared shot-occlusion volume.
             foreach(float x in new[]{-.18f,.18f})foreach(float z in new[]{-.16f,.16f})
                 Box(root,"Chair leg",new Vector3(x,.21f,z),new Vector3(.028f,.42f,.028f),Metal);
         }
@@ -113,6 +113,103 @@ namespace Elts.Operator
                 Chair(root,new Vector3(x,0,-.7f),180);
                 Chair(root,new Vector3(x,0,.7f));
                 Box(root,"Closed reference book",new Vector3(x,.794f,.15f),new Vector3(.25f,.035f,.32f),bindings[3]);
+            }
+        }
+
+        public static void Label(Transform parent,string text,Vector3 position,float size,float yaw=0)
+        {
+            var root=Group(parent,"Sign · "+text,position,yaw);
+            var label=root.gameObject.AddComponent<TextMesh>();label.text=text;label.anchor=TextAnchor.MiddleCenter;
+            label.alignment=TextAlignment.Center;label.characterSize=size*.3f;label.fontSize=64;
+            label.color=new Color(.90f,.88f,.79f);
+        }
+
+        public void Fixture(Transform parent,LibraryFixture fixture,int seed)
+        {
+            var p=fixture.Center;var s=fixture.Size;
+            var root=Group(parent,"Fixture · "+fixture.Id,new Vector3((float)p.X,0,(float)p.Z));
+            float width=(float)s.X,height=(float)s.Y,depth=(float)s.Z;
+            switch(fixture.Kind)
+            {
+                case LibraryFixtureKind.Stack:
+                case LibraryFixtureKind.LowShelf:
+                    if(depth>3)
+                    {
+                        root.localRotation=Quaternion.Euler(0,90,0);
+                        int bays=Mathf.RoundToInt(depth/2);
+                        for(int bay=0;bay<bays;bay++)
+                        {
+                            float x=-depth/2+(bay+.5f)*depth/bays;
+                            Bookcase(Group(root,"Collection front",new Vector3(x,0,-width/4)),depth/bays,height,width/2,seed+bay);
+                            Bookcase(Group(root,"Collection back",new Vector3(x,0,width/4),180),depth/bays,height,width/2,seed+bay+50);
+                        }
+                    }
+                    else Bookcase(root,width,height,depth,seed);
+                    break;
+                case LibraryFixtureKind.Table:
+                    Box(root,"Oak tabletop",new Vector3(0,.7375f,0),new Vector3(width,.045f,depth),Oak);
+                    foreach(float x in new[]{-1f,1f})foreach(float z in new[]{-1f,1f})
+                        Box(root,"Table leg",new Vector3(x*(width/2-.12f),.3575f,z*(depth/2-.12f)),new Vector3(.055f,.715f,.055f),Metal);
+                    break;
+                case LibraryFixtureKind.Chair:
+                    Chair(root,Vector3.zero,fixture.Facing);
+                    break;
+                case LibraryFixtureKind.Counter:
+                    Box(root,"Counter cabinet",new Vector3(0,(height-.04f)/2,0),new Vector3(width,height-.04f,depth),DarkOak);
+                    Box(root,"Countertop",new Vector3(0,height-.02f,0),new Vector3(width,.04f,depth),Oak);
+                    for(float x=-width/2+.12f;x<width/2;x+=.12f)
+                        Box(root,"Counter oak fluting",new Vector3(x,.50f,-depth/2-.002f),new Vector3(.035f,.90f,.008f),Oak,false);
+                    break;
+                case LibraryFixtureKind.Lounge:
+                    Box(root,"Upholstered base",new Vector3(0,.25f,0),new Vector3(width,.5f,depth),Fabric);
+                    Box(root,"Cushioned back",new Vector3(0,.65f,.35f),new Vector3(width,.4f,.30f),Fabric);
+                    foreach(float x in new[]{-1f,1f})
+                        Box(root,"Lounge arm",new Vector3(x*(width/2-.12f),.6f,0),new Vector3(.24f,.3f,depth),Fabric);
+                    break;
+                default:
+                    Box(root,"Column",new Vector3(0,height/2,0),new Vector3(width,height,depth),Paper);
+                    break;
+            }
+        }
+
+        public void BookPile(Transform parent,Vector3 position,int seed)
+        {
+            var pile=Group(parent,"Reader books",position);
+            for(int i=0;i<3;i++)
+            {
+                var book=Box(pile,"Hardcover",new Vector3(i*.009f,.017f+i*.038f,0),new Vector3(.24f,.034f,.31f),bindings[(seed+i)%bindings.Length]);
+                book.transform.localRotation=Quaternion.Euler(0,i*8-5,0);
+                Box(book.transform,"Page edges",new Vector3(0,0,-.006f),new Vector3(.94f,.66f,.96f),Paper,false);
+            }
+        }
+        public void TableLamp(Transform parent,Vector3 position,Material diffuser)
+        {
+            var root=Group(parent,"Reading lamp",position);
+            Box(root,"Lamp base",new Vector3(0,.015f,0),new Vector3(.20f,.03f,.16f),Metal);
+            Box(root,"Lamp stem",new Vector3(0,.20f,.035f),new Vector3(.018f,.38f,.018f),Metal);
+            Box(root,"Lamp shade",new Vector3(0,.39f,-.015f),new Vector3(.32f,.08f,.13f),Fabric);
+            Box(root,"Lamp diffuser",new Vector3(0,.346f,-.015f),new Vector3(.28f,.008f,.10f),diffuser,false);
+        }
+        public void Monitor(Transform parent,Vector3 position)
+        {
+            var root=Group(parent,"Circulation workstation",position,180);
+            Box(root,"Monitor base",new Vector3(0,.02f,0),new Vector3(.24f,.04f,.18f),Metal);
+            Box(root,"Monitor stand",new Vector3(0,.15f,0),new Vector3(.04f,.26f,.035f),Metal);
+            Box(root,"Monitor",new Vector3(0,.33f,0),new Vector3(.48f,.30f,.035f),Metal);
+            Box(root,"Monitor screen",new Vector3(0,.33f,-.02f),new Vector3(.44f,.26f,.004f),Fabric,false);
+            Box(root,"Keyboard",new Vector3(0,.014f,-.22f),new Vector3(.38f,.028f,.13f),Metal);
+        }
+        public void Plant(Transform parent,Vector3 position)
+        {
+            var root=Group(parent,"Window planter",position);
+            Box(root,"Planter",new Vector3(0,.24f,0),new Vector3(.42f,.48f,.42f),DarkOak);
+            for(int i=0;i<9;i++)
+            {
+                float angle=i*137.5f*Mathf.Deg2Rad;
+                var leaf=GameObject.CreatePrimitive(PrimitiveType.Sphere);leaf.name="Leaf";leaf.layer=DevelopmentView.StimulusLayer;
+                leaf.transform.SetParent(root,false);leaf.transform.localPosition=new Vector3(Mathf.Cos(angle)*.18f,.57f+i*.035f,Mathf.Sin(angle)*.18f);
+                leaf.transform.localScale=new Vector3(.14f,.38f,.055f);leaf.transform.localRotation=Quaternion.Euler(25,i*137.5f,35);
+                UnityEngine.Object.Destroy(leaf.GetComponent<Collider>());leaf.GetComponent<Renderer>().sharedMaterial=Fabric;
             }
         }
     }

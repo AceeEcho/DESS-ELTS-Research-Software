@@ -20,7 +20,8 @@ namespace Elts.Operator
     public sealed class DevelopmentView : MonoBehaviour
     {
         // View-only choices are centralized here; physical layout comes from the staged rig configuration.
-        public const int StimulusLayer = 30, OperatorLayer = 31;
+        // The near wall closes the participant room but is cut away for the outside camera.
+        public const int ParticipantBackdropLayer = 29, StimulusLayer = 30, OperatorLayer = 31;
         public const double NearMarginMeters = 0.05, FarDistanceMeters = 100;
         private const float DiagnosticControlsHeight = 220, SessionControlsHeight = 340, BannerHeight = 76, MinimumWindowWidth = 900;
         private float ControlsHeight => SessionControlsVisible ? SessionControlsHeight : DiagnosticControlsHeight;
@@ -129,11 +130,11 @@ namespace Elts.Operator
                 // Pose-driven markers and targets replace them while the application runs.
                 authoredEnvironment?.HideEditPreviewsForRuntime();
                 participant=authoredEnvironment!=null&&authoredEnvironment.HasAuthoredCameras
-                    ? authoredEnvironment.ParticipantCamera! : MakeCamera("Participant preview",1<<StimulusLayer,new Color(0.035f,0.05f,0.09f));
+                    ? authoredEnvironment.ParticipantCamera! : MakeCamera("Participant preview",(1<<StimulusLayer)|(1<<ParticipantBackdropLayer),new Color(0.035f,0.05f,0.09f));
                 operatorCamera=authoredEnvironment!=null&&authoredEnvironment.HasAuthoredCameras
-                    ? authoredEnvironment.OperatorCamera! : MakeCamera("Operator diagnostics",1<<OperatorLayer,new Color(0.07f,0.075f,0.1f));
-                ConfigureCamera(participant,1<<StimulusLayer,new Color(0.035f,0.05f,0.09f));
-                ConfigureCamera(operatorCamera,1<<OperatorLayer,new Color(0.07f,0.075f,0.1f));
+                    ? authoredEnvironment.OperatorCamera! : MakeCamera("Operator diagnostics",(1<<StimulusLayer)|(1<<OperatorLayer),new Color(0.07f,0.075f,0.1f));
+                ConfigureCamera(participant,(1<<StimulusLayer)|(1<<ParticipantBackdropLayer),new Color(0.035f,0.05f,0.09f));
+                ConfigureCamera(operatorCamera,(1<<StimulusLayer)|(1<<OperatorLayer),new Color(0.07f,0.075f,0.1f));
                 head=HeadMarker();
                 weapon=WeaponMarker();
                 eyeMarker=Sphere("Rendering eye",OperatorLayer,0.025f,Material(Color.white));

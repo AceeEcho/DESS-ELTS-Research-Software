@@ -41,9 +41,11 @@ namespace Elts.Operator.Tests
             {
                 yield return null;
                 Assert.That(view.Ready,Is.True,view.Error);
-                Assert.That(view.ParticipantCamera.cullingMask,Is.EqualTo(1<<DevelopmentView.StimulusLayer));
+                Assert.That(view.ParticipantCamera.cullingMask,Is.EqualTo((1<<DevelopmentView.StimulusLayer)|(1<<DevelopmentView.ParticipantBackdropLayer)));
                 Assert.That(view.ParticipantCamera.pixelRect.width/view.ParticipantCamera.pixelRect.height,Is.EqualTo(view.DisplayPlane.Width/view.DisplayPlane.Height).Within(0.001));
                 Assert.That(view.OperatorCamera.cullingMask&(1<<DevelopmentView.OperatorLayer),Is.Not.Zero);
+                Assert.That(view.OperatorCamera.cullingMask&(1<<DevelopmentView.StimulusLayer),Is.Not.Zero,"Keep the library visible around the centered station");
+                Assert.That(view.OperatorCamera.cullingMask&(1<<DevelopmentView.ParticipantBackdropLayer),Is.Zero,"Cut away the near wall for the outside view");
                 view.SetAnimation(true);view.SetPrediction(0);view.Refresh(0);var raw=view.RawHead.Value;
                 view.SetPrediction(0.02);view.Refresh(0);
                 Assert.That(view.RawHead.Value.Position.Equals(raw.Position),Is.True);

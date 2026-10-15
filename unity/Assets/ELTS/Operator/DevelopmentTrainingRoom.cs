@@ -44,7 +44,10 @@ namespace Elts.Operator
 
             Box("Library carpet",new Vector3(0,-.1f,(front+back)/2),new Vector3(width,.2f,back-front),carpet);
             Box("Window reading area carpet",new Vector3(6.2f,.003f,14.1f),new Vector3(7.9f,.006f,21),readingCarpet,false);
-            Box("Near wall",new Vector3(0,height/2,front),new Vector3(width,height,.2f),wall,false);
+            // The outside camera sits behind this wall when centered on the player.
+            // Cut it away only in that view, leaving the rest of the library visible.
+            var nearWall=LibraryInterior.Box(root,"Near wall",new Vector3(0,height/2,front),new Vector3(width,height,.2f),wall,false);
+            nearWall.layer=DevelopmentView.ParticipantBackdropLayer;
             Box("Far wall",new Vector3(0,height/2,back),new Vector3(width,height,.2f),wall,false);
             Box("Ceiling",new Vector3(0,height+.06f,(front+back)/2),new Vector3(width,.12f,back-front),ceiling,false);
             // Use the identical segmented side walls/lintels as the hit-test plan.

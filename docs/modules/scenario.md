@@ -73,7 +73,9 @@ lamps and plants are visual details, not mesh-accurate collision geometry. Layou
 scale moves furnishings, stations and routes together. The shared floor still
 uses `Rig.VirtualFloorY`, with no change to physical display assumptions.
 
-The dashboard starts centered on the participant and physical screen. A screen
+The dashboard starts centered on the participant and physical screen, with the
+library visible behind them. The near wall is cut away in this outside view so it
+cannot obstruct the station; the participant camera retains the wall. A screen
 surface shows the current participant camera image; amber lines show the corrected
 bore and its actual screen intersection. The body silhouette is inferred from the
 head pose. It is not body tracking. Missing head data hides the screen feed, and

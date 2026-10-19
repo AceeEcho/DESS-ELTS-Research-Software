@@ -1,5 +1,21 @@
 # ELTS Research Software
 
+## Planned work / To-do
+
+Discussion notes from October 19, 2026. These are pending requirements, not implemented behavior. Move items to **In progress** when development begins.
+
+- [ ] **Interactive participant tutorial:** replace the standalone full-length instructional video with an organized, interactive guided practice sequence. Begin with participant setup, tracker/sensor checks and calibration, then introduce the study interface and controls with prompts and feedback tied to participant actions. Final script and interaction details remain to be written.
+- [ ] **Practice progression:** transition from introductory practice targets into a separate practice scenario after interface familiarization.
+- [ ] **ELTS introduction and demonstration:** explain the apparatus and that its lights will be active in some conditions. Include a brief demonstration during practice; proposed duration is approximately five seconds, at most ten seconds, subject to the study protocol and required hardware validation.
+- [ ] **Procedure briefing:** explain four scenarios in randomized order, the configured time limit for each scenario, two-minute breaks between scenarios, a two-minute break after the final scenario, and the additional post-study form. Scenario time limits remain to be confirmed. Align the intended break-to-next-scenario transition with session controls; this is a proposed workflow, not a description of the current manual arming behavior.
+- [ ] **Mock participant controller:** begin development of the physical simulated controller next.
+- [ ] **ELTS integration and synchronization:** integrate the ELTS apparatus with the software and synchronize its condition state and events with the study session.
+- [ ] **Study data integration and synchronization:** coordinate heart-rate monitor data, eye-tracker data, NASA-TLX responses and other study measurements with participant/session/scenario identifiers and timing. NASA-TLX is a questionnaire; associate responses with their corresponding study segment.
+
+### In progress
+
+No items marked in progress yet.
+
 ## Download and install
 
 **Windows x64 · Download → Extract → Setup → Start**

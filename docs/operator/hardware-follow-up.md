@@ -1,6 +1,7 @@
 # Required follow-up before study use
 
 Status: synthetic development only. The ELTS apparatus is completed and built.
+Session symptoms, log paths, and the hardware facts this repository does not yet establish are in [session troubleshooting](troubleshooting.md).
 Testing equipment is unavailable. No synthetic pass completes a physical or
 safety criterion or authorizes a study.
 

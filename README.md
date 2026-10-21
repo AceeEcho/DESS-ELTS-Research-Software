@@ -225,6 +225,7 @@ The collection is local to this machine and excluded from Git. Pushing the proje
 | Order cannot be changed | Finish the current participant session; arrange the next participant's order afterward. |
 | A recording is incomplete or a save fails | Read the displayed error and keep its files. Do not treat it as a finalized recording. |
 | Startup stops with an error | Read the startup window and use the [setup troubleshooting guide](docs/operator/multi-machine-setup.md#if-something-goes-wrong). |
+| A device, export, or analysis step fails during a session | Use the [session troubleshooting guide](docs/operator/troubleshooting.md). It lists symptoms, the files and commands that exist in this repo, and the hardware facts that are still unknown. |
 
 For detailed behavior, see the [administrator reference](docs/modules/operator-dashboard.md).
 
@@ -252,7 +253,7 @@ For multi-computer work: pull, edit, review, commit and push before switching PC
 | `analysis/` | [Run ingestion and analysis](docs/modules/analysis.md) |
 | `config/`, `schemas/` | Editable settings and data contracts |
 | `scripts/`, `tools/` | Setup, build, validation, packaging and tests |
-| `docs/` | [Architecture](docs/architecture.md), [developer commands](docs/operator/developer-quick-start.md), [operator dashboard](docs/modules/operator-dashboard.md), [desktop controls](docs/modules/desktop-input.md) |
+| `docs/` | [Architecture](docs/architecture.md), [developer commands](docs/operator/developer-quick-start.md), [session troubleshooting](docs/operator/troubleshooting.md), [operator dashboard](docs/modules/operator-dashboard.md), [desktop controls](docs/modules/desktop-input.md) |
 | `jetson/` | [Controller integration limits](jetson/README.md) |
 
 Make the requested change, run relevant checks, then review/commit. With Python

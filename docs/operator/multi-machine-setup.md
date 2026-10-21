@@ -135,6 +135,8 @@ Before every editing session on the second computer, close Unity and click **Fet
 
 ## If something goes wrong
 
+Install and first-launch failures are in the table below. For a running session — participant window, dashboard, exports, analysis, the simulated controller, or hardware that the software does not detect yet — use [session troubleshooting](troubleshooting.md).
+
 **Start with the last error window.** Setup and startup now show the failed step,
 the underlying tool error, **How to resolve** instructions, and the full paths to
 the relevant logs/reports. A PowerShell exit code is a wrapper failure; read the

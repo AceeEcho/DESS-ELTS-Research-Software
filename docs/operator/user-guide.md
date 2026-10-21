@@ -149,5 +149,6 @@ The collection is local to this machine and excluded from Git. Pushing the proje
 | Order cannot be changed | Finish the current participant session; arrange the next participant's order afterward. |
 | A recording is incomplete or a save fails | Read the displayed error and keep its files. Do not treat it as a finalized recording. |
 | Startup stops with an error | Read the startup window and use the [setup troubleshooting guide](multi-machine-setup.md#if-something-goes-wrong). |
+| A device, save, export, or analysis step fails | Use the [session troubleshooting guide](troubleshooting.md). |
 
 For detailed behavior, see the [administrator reference](../modules/operator-dashboard.md).

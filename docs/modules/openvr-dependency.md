@@ -26,5 +26,6 @@ claim ABI/hardware acceptance from a successful checksum check.
 
 Actual OpenVR background initialization, device enumeration, serial binding,
 polling/reconnect behavior and physical validation are separate tracking tasks.
-The currently unavailable testing equipment prevents their physical acceptance;
+One base station and two Vive trackers are available, but their physical
+acceptance is still pending. See the [inventory and follow-up register](../operator/hardware-follow-up.md);
 this vendoring step does not pass a study gate.

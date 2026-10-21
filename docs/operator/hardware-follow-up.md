@@ -1,8 +1,40 @@
 # Required follow-up before study use
 
 Status: synthetic development only. The ELTS apparatus is completed and built.
-Testing equipment is unavailable. No synthetic pass completes a physical or
-safety criterion or authorizes a study.
+Physical validation remains pending. The available tracking equipment is recorded
+below; other required test/metrology equipment must be confirmed rather than
+assumed available. No synthetic pass completes a physical or safety criterion or
+authorizes a study.
+
+## Current inventory and starter room survey
+
+Inventory confirmed October 21, 2026:
+
+- Exactly **one base station** and **two Vive trackers** are available.
+- Tracker mounting posts and a headband with mounts are already available.
+- A second base station is not part of the current plan.
+- Availability is not evidence of fit, rigidity, calibration, serial binding,
+  tracking coverage, timing, or physical/safety acceptance. Keep those checks open.
+
+The initial hands-on task is deliberately limited to measurement and floor marking:
+
+1. Measure and record the actual screen width and height, with units. Identify
+   the measured screen edges; do not substitute an advertised diagonal size.
+2. Identify the floor projection of the screen's horizontal center. Measure
+   perpendicular out from the screen plane along that centerline, not diagonally
+   from an elevated screen-center point.
+3. Place small blue-tape marks at **5, 6, and 7 feet**, labeling each distance.
+   Record the reference point and marks in a simple sketch or photograph.
+4. Return the measurements and marked-position record for review. These are
+   candidate positions for later comparison, not a confirmed optimal distance or
+   an approved participant operating position.
+
+This starter task includes no CAD, fabrication, software changes, tracker
+calibration, or powered apparatus testing. It does not complete the broader room
+survey, safety paperwork, or physical-validation gates. Preserve clear walkways
+and leave equipment placement and test approval to the responsible operators.
+
+## Remaining validation
 
 | Area | Missing evidence or input | Required follow-up | Responsible role |
 |---|---|---|---|

@@ -12,6 +12,20 @@ Discussion notes from October 19, 2026. These are pending requirements, not impl
 - [ ] **ELTS integration and synchronization:** integrate the ELTS apparatus with the software and synchronize its condition state and events with the study session.
 - [ ] **Study data integration and synchronization:** coordinate heart-rate monitor data, eye-tracker data, NASA-TLX responses and other study measurements with participant/session/scenario identifiers and timing. NASA-TLX is a questionnaire; associate responses with their corresponding study segment.
 
+### Current physical setup and room survey
+
+Confirmed October 21, 2026: the available tracking setup is exactly **one base
+station and two Vive trackers**, with existing tracker mounting posts and a
+headband with mounts. A second base station is not part of the current plan.
+Equipment availability does not establish calibration, tracking coverage, mount
+rigidity, physical safety, or study readiness.
+
+The initial room-survey task is measurement only: record the actual screen width
+and height, then label blue-tape floor positions at 5, 6, and 7 feet perpendicular
+from the screen plane along its horizontal centerline. These are trial positions,
+not an approved best distance. No CAD, fabrication, software, or powered-apparatus
+work is included. See the [hardware inventory and survey checklist](docs/operator/hardware-follow-up.md#current-inventory-and-starter-room-survey).
+
 ### In progress
 
 No items marked in progress yet.

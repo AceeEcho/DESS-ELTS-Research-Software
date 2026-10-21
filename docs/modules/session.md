@@ -86,5 +86,6 @@ validate native mouse/keyboard interaction.
 Actual two-display assignment, SteamVR and physical tracker stability, measured
 calibration, real ELTS-link behavior, approved sync markers, full-load Study-PC
 timing and the lab operator dry session remain deferred. The apparatus is built;
-the testing equipment needed for these checks is unavailable. DEV completion does
+the [available tracking inventory](../operator/hardware-follow-up.md) does not
+establish completion of these checks. DEV completion does
 not pass the baseline P4 tasks or any physical/safety gate.

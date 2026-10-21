@@ -2,8 +2,9 @@
 
 This is a Windows x64 development player with generated tracking and an in-process
 mock controller. It never connects to the physical apparatus. It is **not study
-ready**. The apparatus is built, but the required testing equipment and physical
-validation remain unavailable. See [the follow-up register](HARDWARE-FOLLOW-UP.md).
+ready**. The apparatus is built. One base station, two Vive trackers, mounting
+posts, and a headband with mounts are available, but physical validation remains
+pending; availability of other test/metrology equipment must still be confirmed. See [the follow-up register](HARDWARE-FOLLOW-UP.md).
 
 ## Start the player
 

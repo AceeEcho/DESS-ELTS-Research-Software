@@ -66,7 +66,9 @@ at this boundary. Keep calibration, shared clock, session controller, condition
 rendering, hitscan, recording and replay downstream. Hardware timestamps, coordinate
 transforms, tracker bindings, trigger timing, calibration and physical validation
 must be established separately before replacing the desktop source for research.
-The apparatus is built; the required tracking/testing equipment is unavailable.
+The apparatus is built. One base station, two Vive trackers, mounting posts, and a
+headband with mounts are available; physical integration and validation remain
+pending. See the [inventory and follow-up register](../operator/hardware-follow-up.md).
 This mode provides no physical calibration, safety approval or G0-G8 acceptance.
 
 ## Verification

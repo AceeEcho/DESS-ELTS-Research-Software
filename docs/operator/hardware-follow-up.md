@@ -6,6 +6,9 @@ below; other required test/metrology equipment must be confirmed rather than
 assumed available. No synthetic pass completes a physical or safety criterion or
 authorizes a study.
 
+Session symptoms, log paths, and the hardware facts this repository does not yet
+establish are in [session troubleshooting](troubleshooting.md).
+
 ## Current inventory and starter room survey
 
 Inventory confirmed October 21, 2026:

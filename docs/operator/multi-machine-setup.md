@@ -75,7 +75,7 @@ There is no automatic sync. Before editing on a computer, pull the latest `main`
 
 ![Illustration of the setup phases: prerequisites, pinned tools, local configuration, Unity import, and verification.](images/setup-phases.svg)
 
-The setup script does not calibrate the physical ELTS apparatus or prove safety or study readiness. Physical testing equipment is unavailable, so hardware-dependent checks remain deferred. Synthetic tracking, simulated devices, and the offline browser simulation are suitable for development while that equipment is unavailable.
+The setup script does not calibrate the physical ELTS apparatus or prove safety or study readiness. The [tracking inventory](hardware-follow-up.md) is available, but hardware-dependent validation remains pending. Synthetic tracking, simulated devices, and the offline browser simulation are suitable for development; they do not establish physical acceptance.
 
 ## Open the project
 

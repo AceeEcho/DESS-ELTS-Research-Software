@@ -14,7 +14,8 @@ reported and does not count as Unity runtime acceptance. Use `-PythonExecutable`
 and `-UnityEditor` when the prerequisites are outside standard discovery paths.
 
 This is a development setup for software connected to the already built ELTS.
-Testing equipment is currently unavailable. No synthetic test establishes physical
+The [tracking inventory](hardware-follow-up.md) is available, but its physical
+integration and validation remain pending. No synthetic test establishes physical
 calibration, safety, timing, display, or study-readiness acceptance.
 
 1. Copy or clone the repository into a writable path; spaces are supported.

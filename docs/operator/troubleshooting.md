@@ -2,7 +2,7 @@
 
 Use this when a study session stalls and you need the next check, not a tour of the software. It covers the Unity participant window, the browser administrator dashboard, local export, install and startup, the Python analysis tools, and the simulated Jetson controller. The hardware section covers only what this repository establishes about the trigger, Vive trackers, the SteamVR base station, a wearable eye tracker, a heart-rate monitor, and the ELTS apparatus.
 
-Written 21 October 2026. The study hardware had arrived that day, and this repository contains no physical-validation record. Repository text still says testing equipment is unavailable. A passing setup, doctor report, or synthetic session does not accept a device, a calibration, or a study gate. See [required follow-up](hardware-follow-up.md) and [safety boundaries](../safety/README.md).
+Written 21 October 2026; reconciled with the inventory documented that day. One base station, two Vive trackers, mounting posts, and a headband with mounts are available. Other required test/metrology equipment must still be confirmed, and physical validation remains pending. A passing setup, doctor report, or synthetic session does not accept a device, a calibration, or a study gate. See [required follow-up](hardware-follow-up.md) and [safety boundaries](../safety/README.md).
 
 Claims below are taken from the current source, configs, schemas, and docs. Where a model, cable, driver, pairing step, port, or procedure is absent, the gap is marked and named in [the gap register](#gap-register).
 
@@ -405,7 +405,7 @@ These projects need the .NET SDK in `global.json`. They do not open a socket. `c
 
 ## Hardware
 
-Nothing in this section has been run against the equipment that arrived on 21 October 2026. The software described above will not detect that equipment. [Hardware follow-up](hardware-follow-up.md) is the list of missing physical evidence and the roles named for it. Generic vendor steps are labeled. They are not ELTS procedures.
+Nothing in this section establishes physical validation of the equipment recorded in the 21 October 2026 inventory. The software described above will not detect that equipment. [Hardware follow-up](hardware-follow-up.md) records the available equipment, the missing physical evidence, and the roles named for it. Generic vendor steps are labeled. They are not ELTS procedures.
 
 ### Trigger
 
@@ -446,9 +446,9 @@ Open one `samples.ndjson` line and read `head.trackerId`, `weapon.trackerId`, `c
 
 **Fix.** Keep using the synthetic serials for rehearsal. Binding real serials is the follow-up item "Bind actual trackers; measure positions...". After a real adapter exists, invalid rows must stay invalid; do not hand-edit NDJSON to force `Valid`, or checksums and ingest will fail.
 
-> **GAP-HW-VIVE-MODEL.** The repo does not name a Vive generation, tracker count beyond the two roles, mount, or the SteamVR serial format to copy into `trackerSerials`. Who can answer: the rig and calibration operator ([hardware follow-up](hardware-follow-up.md)).
+> **GAP-HW-VIVE-MODEL.** The inventory records two Vive trackers, mounting posts, and a headband with mounts. It does not establish the Vive generation, installed mounting geometry or rigidity, or the serial bindings to put in `trackerSerials`. Who can answer: the rig and calibration operator ([hardware follow-up](hardware-follow-up.md)).
 
-> **GAP-HW-VIVE-PAIR.** Pairing, dongle or USB layout, and the SteamVR role assignment are not described. Who can answer: the tracking/display engineer. The OpenVR module doc says enumeration, serial binding, and polling are separate tasks and that the testing equipment was unavailable when that doc was written.
+> **GAP-HW-VIVE-PAIR.** Pairing, dongle or USB layout, and the SteamVR role assignment are not described. Who can answer: the tracking/display engineer. The OpenVR module doc says enumeration, serial binding, and polling are separate tasks; having the trackers available does not establish those integrations or physical validation.
 
 > **General guidance, not an ELTS procedure.** Valve's upstream README, vendored at `unity/Assets/ThirdParty/OpenVR/UPSTREAM-README.md`, says the OpenVR runtime is SteamVR under Tools in Steam and links to `https://steamvr.com`. ELTS does not launch Steam, install SteamVR, or pair a tracker.
 
@@ -466,7 +466,7 @@ Open one `samples.ndjson` line and read `head.trackerId`, `weapon.trackerId`, `c
 
 > **GAP-HW-STEAMVR.** The repo does not name a SteamVR version, process name, log path, or a command ELTS should run. Who can answer: the tracking/display engineer. The toolchain note says the study Windows, GPU, driver, and SteamVR baseline is pending commissioning ([toolchain](toolchain.md)).
 
-> **GAP-HW-BASESTATION.** Model, count, power, channel, and mount are not in the repo. The simulation's single overhead station is an illustration. Who can answer: the tracking/display engineer.
+> **GAP-HW-BASESTATION.** The inventory confirms exactly one base station; a second is not part of the current plan. Model, power, channel, installed placement, and tracking coverage remain unrecorded. The simulation's overhead station is an illustration. Who can answer: the tracking/display engineer.
 
 ### Wearable eye tracker
 
@@ -512,7 +512,7 @@ The calibration "eye" is a different thing: `Eye` input is Left or Right plus a 
 
 **What the repo establishes.**
 
-- The apparatus is described as built. Testing equipment was unavailable when the safety and follow-up docs were written. This guide adds that arrival on 21 October 2026 is still not a validation record.
+- The apparatus is described as built. The safety and follow-up docs record one base station, two Vive trackers, mounting posts, and a headband with mounts as available. Other required test/metrology equipment must still be confirmed. Availability is not physical validation.
 - Unity may send lifecycle commands only. It must not send poses, world targets, turret angles, or per-LED commands. A normally closed physical E-stop and device-owned safeguards stay independent of Unity ([safety](../safety/README.md)).
 - The in-repo controller is the simulated one in [the previous section](#simulated-jetson-controller). `jetson/README.md` states the directory has no listener, wrapper, GPIO, network, serial, LED, or E-stop code, and no copy of the existing controller. `jetson/config/`, `jetson/scripts/`, `jetson/src/elts_link/`, `jetson/systemd/`, and `jetson/tests/` are empty placeholders.
 - The fixture schema is explicitly not compatible with the built controller. Field names and tick units are development conventions.
@@ -543,7 +543,7 @@ The calibration "eye" is a different thing: `Eye` input is Left or Right plus a 
 
 > **GAP-HW-SYNC (D-12).** No approved way to align the Unity clock with a Jetson clock, an eye tracker, or a heart-rate monitor. Offset metadata in the mock is not that method. Who can answer: the timing engineer and the research lead.
 
-> **GAP-HW-VALIDATION.** No file records a bench result for the equipment that arrived 21 October 2026. Who records acceptance: the research lead, the safety lead, and the maintainer ([hardware follow-up](hardware-follow-up.md) study-readiness row).
+> **GAP-HW-VALIDATION.** The inventory confirmed on 21 October 2026 is not a bench result; physical validation remains pending. Who records acceptance: the research lead, the safety lead, and the maintainer ([hardware follow-up](hardware-follow-up.md) study-readiness row).
 
 ## Open investigator decisions
 
@@ -580,10 +580,10 @@ Related decisions the code does name, because they change link and timing sympto
 | GAP-HW-DISPLAY | Study display technology, resolution, Windows mapping, and measured screen corners. Config display indices are validated and unused at runtime. Rig geometry is `synthetic_unmeasured`. | Rig and calibration operator; tracking/display engineer |
 | GAP-DEC-D17 | Approved calibration limits and the physical capture procedure behind them. D-17 is only named as not being the development thresholds. | Calibration operator and research lead |
 | GAP-HW-TRIGGER | Physical trigger model, connector, and timing path. | No trigger-specific role. Nearest: tracking/display engineer; research lead for acceptance |
-| GAP-HW-VIVE-MODEL | Vive generation, mounts, and the serial strings to put in `trackerSerials`. | Rig and calibration operator |
+| GAP-HW-VIVE-MODEL | Vive generation, installed mounting geometry/rigidity, and serial bindings. Two trackers, mounting posts, and a headband with mounts are available. | Rig and calibration operator |
 | GAP-HW-VIVE-PAIR | Pairing, dongle or USB, and SteamVR role assignment. OpenVR is vendored and never initialized. | Tracking/display engineer |
 | GAP-HW-STEAMVR | SteamVR version, process, log, and whether ELTS should start it. The player forces `SteamVrRunning=true`. | Tracking/display engineer. Baseline pending in `config/toolchain.json` |
-| GAP-HW-BASESTATION | Base-station model, count, power, channel, and mount. The on-screen "not connected" line is static. The simulation's overhead station is illustrative. | Tracking/display engineer |
+| GAP-HW-BASESTATION | Base-station model, power, channel, installed placement, and coverage. Exactly one is available; a second is not planned. The on-screen "not connected" line is static and the simulation placement is illustrative. | Tracking/display engineer |
 | GAP-HW-EYE | Wearable eye-tracker model, placement, SDK, and file format. Calibration "eye" is a tracker-to-eye offset. | No follow-up row. Nearest text: README integration checklist and the tutorial outline |
 | GAP-HW-POLAR | Polar is not named. Heart-rate model, radio, pairing, and file format are absent. | No follow-up row. Nearest text: README "Study data integration" |
 | GAP-SW-NASATLX | Questionnaire content, storage, and join to session ids. | Research lead for the protocol; no software owner named |
@@ -592,7 +592,7 @@ Related decisions the code does name, because they change link and timing sympto
 | GAP-HW-ELTS-LIGHTS | LED map, permission feedback point, and Brio connection. The three-turret picture is a briefing illustration. | ELTS code owner; controller engineer |
 | GAP-HW-ESTOP | Physical E-stop connector, pin, and reset procedure. The software latch is not that circuit. | Safety lead and controller engineer |
 | GAP-HW-SYNC | D-12 method for aligning Unity, Jetson, eye, and heart-rate clocks. | Timing engineer and research lead |
-| GAP-HW-VALIDATION | A recorded bench result for hardware present on 21 October 2026. The repo still says testing equipment is unavailable. | Research lead, safety lead, and maintainer |
+| GAP-HW-VALIDATION | Physical bench evidence and acceptance. The 21 October 2026 inventory establishes availability only; other required test/metrology equipment must still be confirmed. | Research lead, safety lead, and maintainer |
 | GAP-DEC-D05 | Decision D-05 is not in the repo. | Investigators who hold the decision list; the list is not in the repo |
 | GAP-DEC-D07 | Decision D-07 is not in the repo. | Same |
 | GAP-DEC-D08 | Decision D-08 is not in the repo. | Same |

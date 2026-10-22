@@ -1,7 +1,9 @@
 # Safety and physical validation
 
-The ELTS apparatus is built. Testing equipment is unavailable. Current software
-uses synthetic tracking and simulated device links; passing those checks does
+The ELTS apparatus is built. One base station, two Vive trackers, mounting posts,
+and a headband with mounts are available. Physical validation and approval remain
+pending; other required test/metrology equipment must still be confirmed. Current
+software uses synthetic tracking and simulated device links; passing those checks does
 not establish physical calibration, timing, safety or study readiness.
 
 Unity sends lifecycle commands only. It must never send head/weapon poses, world

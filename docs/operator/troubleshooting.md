@@ -337,7 +337,20 @@ The output path must be a new file. Ingest refuses to overwrite, and it refuses 
 
 ### Calibration argument
 
-`--calibration` is required. The committed file `analysis/fixtures/synthetic-calibration.json` has `calibrationId` `synthetic-identity-v1`, a zero muzzle offset, bore `(0,0,1)`, and an identity quaternion. Those are configuration values. They are not a measured zero. The fixture written beside a recording is a different file; the ingest command does not pick it up unless you pass that path, and the run verifier does not check it automatically. A quaternion that is not unit length within `1e-8` fails. Numeric strings and booleans are rejected.
+`--calibration` is required and must point to an analysis calibration JSON file with these four top-level fields. The committed `analysis/fixtures/synthetic-calibration.json`, used in the command above, contains:
+
+```json
+{
+  "calibrationId": "synthetic-identity-v1",
+  "muzzleOffsetMeters": [0, 0, 0],
+  "boreDirectionLocal": [0, 0, 1],
+  "zeroCorrectionQuaternion": [0, 0, 0, 1]
+}
+```
+
+These identity values are for synthetic analysis, not a measured weapon zero. `calibrationId` must be a non-empty string. The muzzle offset is in meters; the bore direction must be a nonzero three-number vector. The quaternion is ordered `[x, y, z, w]` and must be unit length within `1e-8`. All components must be finite numbers; numeric strings and booleans are rejected. Use values that match the recording's runtime rig configuration rather than assuming this identity example applies to every run.
+
+Do **not** pass the `synthetic-calibration-*.json` sidecar saved by **Accept fixture** to `--calibration`. It uses the separate `elts.synthetic-calibration.v1` format, lacks the required top-level analysis fields, and is rejected with `calibrationId must be a non-empty string`. It is fixture-review evidence, not a compatible analysis input. Accepting it does not change the startup rig configuration used by the session, and the run verifier does not automatically check this sidecar.
 
 The rig's own synthetic calibration id is `synthetic-identity` in `synthetic-rig.json`, which is a different string from the analysis fixture's `synthetic-identity-v1`.
 

@@ -1,10 +1,10 @@
 # Participant tutorial script outline
 
-Status: initial outline, October 19, 2026. This is a planning document, not a finalized participant script or implemented tutorial.
+Status: initial outline October 19, 2026; revised October 30, 2026 for tutorial playback and proposed handling familiarization. This is a planning document, not a finalized participant script or implemented tutorial.
 
 ## Voice and delivery
 
-Likely narration source: ElevenLabs-generated voice, for consistency, clarity and professionalism. Voice selection and final wording remain to be confirmed.
+Narration source: ElevenLabs, Eryn - Genuine, Friendly and Natural, using eleven_v4. Follow the working script and audio workflow linked below. Finish writing before generating additional audio.
 
 - Use one consistent voice and a calm, clear delivery.
 - Generate short clips for individual steps rather than one uninterrupted video.
@@ -17,8 +17,11 @@ Likely narration source: ElevenLabs-generated voice, for consistency, clarity an
 | Segment | Narration purpose | Visual / interaction cue | Completion or transition |
 | --- | --- | --- | --- |
 | 1. Welcome and orientation | Introduce the study session and explain that guided practice precedes the procedure. | Show a simple overview. | Participant ready; operator proceeds. |
-| 2. Participant setup | Explain that the operator will fit and check the study equipment. | Tracker, eye-tracker and heart-rate monitor setup cues. | Operator confirms setup. |
-| 3. Calibration | Explain the calibration stage and request that the participant follow the displayed prompts. | Calibration prompts and status feedback. | Calibration accepted. |
+| 2. Participant setup | Announce equipment fitting, then explain comfort adjustments and equipment checks. | Equipment overview, comfort message, then check message. | Manual hold for fitting; comfort message advances automatically to check message; manual hold for checks before continuing. |
+| 3. Head-tracker calibration | Ask the participant to stand upright and look straight ahead at a screen dot. | Upright posture illustration, then a stationary calibration dot. | Manual hold for operator capture, review, and continuation. |
+| 3.1. Holding the study replica | Identify the non-firing replica and demonstrate the stock-to-shoulder position after head calibration. | Operator demonstration and reference-based holding illustration. | Manual hold while the participant tries the position and the operator checks comfort. |
+| 3.2. Gun-tracker calibration | Ask the participant to hold the replica, look down its sights, and aim at a screen dot. | Holding reminder, then stationary gun-calibration dot. | Manual hold for operator capture, review, and continuation. |
+| 3.3. Calibration complete | Announce completion after both calibrations are accepted. | Completion message and next-section label. | Automatically continue to interface familiarization; operator pause remains available. |
 | 4. Interface familiarization | Introduce the study interface, practice targets and relevant status indicators. | Present one interface element at a time; detailed control wording remains to be drafted. | Required familiarization steps complete. |
 | 5. Guided practice | Explain that the participant can become familiar with the interface and receive feedback before the study begins. | Interactive prompts and feedback; transition into a separate practice scenario. | Practice completed; readiness confirmed. |
 | 6. ELTS introduction | Identify the apparatus and explain that its lights are active in some conditions. | Point out ELTS without implying physical validation is complete. | Operator ready for demonstration. |
@@ -37,9 +40,17 @@ Likely narration source: ElevenLabs-generated voice, for consistency, clarity an
 
 ## Details to finalize
 
-- Final narration wording and ElevenLabs voice/settings.
+- Final narration wording; keep the selected Eryn voice and v4 delivery consistent.
+- Reference images, remaining holding-position details, reference-dot configuration, physical capture controls, durations, acceptance criteria, and retry mechanics.
 - Exact scenario time limits and final demonstration duration.
 - Interactive completion events, replay behavior and operator intervention points.
 - Final practice-to-procedure and break-to-scenario transitions.
 - Post-study form content and delivery.
 - Associate NASA-TLX responses and sensor recordings with the corresponding participant, session and scenario.
+
+## Working files
+
+- [Working spoken script and screen directions](participant-tutorial-script.md).
+- [Audio generation, selection, and local file workflow](participant-tutorial-audio-workflow.md).
+
+Confirmed sequence: equipment setup → head-tracker calibration → holding demonstration → gun-tracker calibration → interface familiarization. The user specified upright posture and forward gaze at a dot for the head tracker, and stock-to-shoulder holding with sighted aim at a dot for the gun tracker. Main sections 4 onward retain their numbers. Detailed physical capture settings and acceptance criteria remain to be confirmed.

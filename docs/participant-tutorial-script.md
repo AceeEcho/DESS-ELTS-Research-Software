@@ -1,6 +1,6 @@
 # Participant tutorial script
 
-Status: first working draft, October 30, 2026. For wording and visual planning; not a finalized procedure or an implemented tutorial.
+Status: working draft, revised November 2, 2026; detailed planning through Part 11. For wording and visual planning; not a finalized procedure or an implemented tutorial.
 
 Based on `participant-tutorial-script-outline.md`. Detailed narration and visual directions live here; the outline has been revised with the user's agreement to reflect the setup and tracker-calibration sequence.
 
@@ -191,122 +191,324 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 ## Part 4 — Interface familiarization
 
+**Purpose:** Introduce the actual participant view and let the participant try each required control before free practice. Use the confirmed physical replica controls; mouse/keyboard development controls are not participant instructions.
+
+**Visual direction throughout:** Transition from the calibration screen into a separate tutorial scene with a persistent “Tutorial” label. Keep captions and the current instruction outside the target area. Present one element or action at a time using a steady muted blue outline. Do not add a crosshair, hit marker, scoring display, or status indicator unless it belongs in the confirmed participant interface. Tutorial highlights must disappear before ordinary practice. ELTS remains inactive during Parts 4 and 5.
+
 **Spoken:** “Let's look at the screen you'll use during the study. These are the practice targets.”
 
-**Screen / animation:** Show the practice interface and highlight a practice target. Keep other instructional overlays hidden so the target is easy to identify.
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-04/`; filename stem: `04-interface-and-targets`.
 
-### Part 4.1
+**Screen / animation:**
 
-**Spoken:** “We'll introduce the controls one step at a time, so you can try each action before moving on.”
+1. After Part 3.3, fade in the tutorial scene with an example of the actual target design. Keep the target stationary for this introduction. Begin narration once the scene is readable.
+2. On “practice targets,” outline one example target and place a short “Practice target” label beside it. Keep the label clear of the target's outline and sights. Use the real scene composition and target appearance rather than an unrelated generic illustration.
+3. Hold the view still until the sentence ends, then fade out the label and highlight over approximately 300 milliseconds. Keep the target visible for Part 4.1.
 
-**Screen / animation:** Present one control prompt, demonstrate its action, and then let the participant try it. Repeat for each required control.
+**Transition — Automatic:** Continue to the aiming instruction after the clip and a brief configurable gap. No physical task has been requested yet, so no mandatory Continue is needed here.
 
-**Production note:** Add a separate spoken-and-screen chunk for each confirmed participant control. Exact aiming, firing, reloading, movement, and status-indicator instructions remain to be drafted for the final equipment and interface. Do not substitute desktop development controls.
+### Part 4.1 — Try aiming
+
+**Spoken:** “Hold the replica as the operator showed you. Look down the sights and aim at the practice target.”
+
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-04/`; filename stem: `04-01-try-aiming`.
+
+**Screen / animation:**
+
+1. Keep the same tutorial target in place. Show “Aim at the practice target” above the target area, with captions below the scene.
+2. Briefly emphasize the target as it is named, then remove the outline so the participant sees the ordinary target while trying the action. Do not move the target or add an artificial aiming dot over it.
+3. Hold after narration while the participant tries aiming. Keep the scene responsive to the real participant tracking. The operator can demonstrate again or request an adjustment without starting any timed study scenario.
+
+**Transition — Manual continue:** Continue after the operator confirms the participant has tried the aiming action and understands the instruction. Do not infer understanding merely from a tracker pose or an elapsed timeout.
+
+### Part 4.2 — Firing, reloading, and interface indicators
+
+**Spoken:** “The operator will show you how to fire at the practice targets and reload. You'll have a chance to try both before practice begins.”
+
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-04/`; filename stem: `04-02-controls-demonstration`.
+
+**Screen / animation:**
+
+1. Keep the tutorial scene and target visible. During “fire,” show “Try firing” as the current instruction. The operator demonstrates the confirmed replica firing action and then lets the participant try it. Use the actual tutorial response rather than a prerecorded fake hit.
+2. Once that action is complete, the operator advances to “Try reloading” within this chunk's interactive sequence. Show only the confirmed physical reload action or operator-assisted reload instruction. Let the participant try it before continuing.
+3. If the final participant interface includes ammunition, remaining time, or another necessary status indicator, briefly highlight the relevant existing indicator during the operator's explanation. Do not introduce development-only statistics or enable feedback settings as part of the tutorial plan.
+4. Keep the scene available for replay and clarification. Narration does not need to loop while the participant performs the actions.
+
+**Transition — Manual continue:** The operator advances between the firing and reload demonstrations and continues to Part 5 once both required actions have been tried. A missed target is not, by itself, a reason to block familiarization; confirm comprehension rather than invent an accuracy threshold.
+
+**Production decisions still needed:** Confirm the replica's firing event, physical reload mapping or operator-assisted reload procedure, and the participant-visible indicators. The general narration above supports an operator-led demonstration without inventing those controls. Before making a self-guided version, replace the general demonstration with separate exact spoken instructions for each confirmed action. Do not import R-to-reload, mouse clicks, a 20-round capacity, damage values, or desktop HUD assumptions into the physical study script.
 
 ## Part 5 — Guided practice
 
-**Spoken:** “Now you'll have time to practice using the interface before the study begins.”
+**Purpose:** Move from individual demonstrations into a separate practice scenario. Practice completion does not start the study or activate ELTS.
 
-**Screen / animation:** Transition into the separate practice scenario. Keep a clear “Practice” label visible.
+**Spoken:** “Now you'll have time to practice using the interface. This is practice, and your shots will not count toward the study results. Let the operator know when you're ready to begin.”
 
-### Part 5.1
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-05/`; filename stem: `05-practice-introduction`.
 
-**Spoken:** “Follow the prompts on the screen, and ask the operator if you need help.”
+**Screen / animation:**
 
-**Screen / animation:** Guide the participant through the confirmed practice actions. Show feedback for each action when supported by the practice software. Allow replay or operator clarification before continuing.
+1. Fade out the tutorial overlays and reveal the practice scene in a ready state. Display a persistent “Practice” label in the upper corner and “Let the operator know when you're ready” in the instruction area.
+2. Keep the practice timer stopped and do not begin the interactive practice merely because this introduction finishes.
+3. When the operator starts practice, remove the ready message and enter Part 5.1. Keep the Practice label visible throughout.
 
-### Part 5.2
+**Transition — Manual start:** The operator starts practice after confirming participant readiness. Use the configured practice duration rather than a duration inferred from the narration or development defaults.
 
-**Spoken:** “Practice is complete. Let the operator know when you're ready to continue.”
+### Part 5.1 — Practice running
 
-**Screen / animation:** After practice actually ends, replace the practice prompts with “Practice complete.” Hold for the operator to confirm readiness.
+**Spoken:** “Use this time to practice aiming, firing, and reloading. If you need help or another demonstration, please ask the operator.”
 
-## Part 6 — ELTS introduction
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-05/`; filename stem: `05-01-practice-running`.
 
-**Spoken:** “This is the ELTS apparatus. Its lights will be active during some of the study conditions.”
+**Screen / animation:**
 
-**Screen / animation:** Show a photograph or illustration of the apparatus. Highlight the light locations without activating the hardware.
+1. Play this instruction once when interactive practice begins. Show the real practice targets and the confirmed participant interface. Do not replay introductory narration on every target or action.
+2. Present a short text reminder for the current practice action only when needed. Keep reminders outside the aiming area; remove them when the participant no longer needs them.
+3. Show target responses and other feedback only as provided by the configured practice experience. If a practice timer is displayed, bind it to the actual practice state. Do not invent a score or change study feedback settings.
+4. The operator can pause, clarify, replay an instruction, or restart practice using the available practice controls. Restarting practice must not restart equipment fitting, calibration, or the ELTS demonstration.
 
-**Production note:** Review participant-facing descriptions against the approved study procedure. An illustration is not evidence of physical validation.
+**Transition — Practice completion event:** Stay in practice until its configured timer finishes or the operator explicitly finishes it. Then enter Part 5.2. Audio completion alone does not finish practice. Interrupted or restarted practice must not play a false completion message.
 
-## Part 7 — Brief ELTS demonstration
+### Part 5.2 — Practice complete
 
-**Spoken:** “The operator will now demonstrate the lights briefly.”
+**Spoken:** “Practice is complete. Let the operator know if you'd like another explanation before we continue.”
 
-**Screen / animation:** Show a demonstration title and point out the apparatus. Hold until the operator initiates the approved demonstration.
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-05/`; filename stem: `05-02-practice-complete`.
 
-### Part 7.1
+**Screen / animation:**
+
+1. On the real practice-complete event, stop practice interaction and fade the scene to the neutral tutorial background. Show “Practice complete” with “Next: ELTS introduction” beneath it.
+2. Play this narration once and hold the screen. The operator can answer questions or return to practice if needed.
+3. When the participant is ready and the operator is ready for the upcoming ELTS demonstration, manually continue to Part 6.
+
+**Transition — Manual continue:** Hold for questions and operator readiness before the ELTS introduction and test activation. No apparatus activation is tied to practice completion.
+
+**Production notes:** Practice is separate from scored study scenarios; preserve its identity in logging rather than deleting practice recordings or treating them as study scores. The operator needs real practice start, finish, pause, and restart behavior; preview stand-ins must be labeled. Confirm practice duration and final control wording before audio production. No ELTS activation occurs in Parts 4 or 5.
+
+## Part 6 — ELTS introduction and test activation
+
+**Purpose:** Point to the actual apparatus, centered physically beneath the display, and give one brief ELTS demonstration at the downward-arrow cue. This replaces the previous plan to start a separate demonstration in Part 7.
+
+**Spoken:** “The ELTS apparatus is directly below the middle of the screen. Its lights will be active during some of the study conditions. The operator will now demonstrate the lights briefly.”
+
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-06/`; filename stem: `06-elts-introduction-and-test`.
+
+**Screen / animation:**
+
+1. Enter only after the operator continues from Part 5.2 and confirms readiness for this demonstration. Show the heading “ELTS introduction” near the upper center on the same charcoal background. Remove the practice scene, practice targets, and aiming dot completely.
+2. On “directly below the middle of the screen,” reveal a single large, muted blue downward arrow. Its shaft starts at the center of the display: 50% of screen width and approximately 50% of screen height. Run it straight down the vertical centerline, ending in a clear arrowhead just inside the bottom edge. The arrow points toward the real ELTS unit centered beneath the physical screen. Do not draw a virtual ELTS unit as though it were part of the screen or point diagonally toward a corner.
+3. At a 1920 × 1080 reference size, use a shaft approximately 12 pixels wide and an arrowhead approximately 100 pixels wide, ending around 94% of display height. Treat these as adjustable layout values, not measured apparatus coordinates. The lower-center placement is an intentional exception to the normal content margin. Check the visible display bounds so the arrowhead is never clipped.
+4. Reveal the arrow with a short fade or a single downward line-draw animation of approximately 400 milliseconds. Keep the completed arrow steady afterward: no bouncing, pulsing, blinking, or repeated sweeps. Display “ELTS below the screen” beside the shaft, rather than over its arrowhead.
+5. During this section, place captions in a wide band above the arrow's starting point, below the heading, so full captions remain visible without crossing the arrow. Reflow text rather than covering or shifting the vertical centerline. Keep caption font size consistent with the earlier sections.
+6. Keep the arrow visible through the explanation of the study lights and the demonstration announcement. At the end of “demonstrate the lights briefly,” enter the test-activation cue while the arrow is fully visible. This is the point for the single ELTS test fire; do not wait until a separate later demonstration section.
+7. Hold the arrow and heading steady during the physical demonstration. Show “ELTS demonstration” in the supporting-text area. The visible scene must not fabricate a light effect or suggest that an animated screen effect is the apparatus response.
+8. Stay on this screen until the demonstration has actually ended through the device/operator workflow. Then move to Part 7's completion message. Do not declare completion based solely on the audio length, a screen animation ending, or a guessed exposure time.
+
+**Transition — Operator-ready test cue, then demonstration completion event:** The operator's readiness confirmation before entry permits this demonstration cue. When the arrow is visible and the announcement has finished, the intended workflow requests one approved ELTS test activation through the apparatus lifecycle interface. If the operator pauses before that point, the cue must wait. If the device is unavailable or not ready, hold for the operator; do not silently skip to “complete.” When the demonstration ends, continue automatically to Part 7's completion message, which then holds for participant questions.
+
+**Replay and retry behavior:** Replaying narration or rebuilding this screen must not fire ELTS again. A pause/resume, duplicate completion callback, scene reload, or returning from another section must not create a second activation. A new test requires an explicit operator decision to repeat the demonstration. Retrying audio is different from repeating the apparatus test.
+
+**Production notes:** This is a plan for synchronization, not hardware execution. Unity continues to send lifecycle commands only; the device owns its lighting and safeguards. The visual arrow supplies no aiming coordinates, poses, turret angles, or individual LED commands. Preserve the existing software safety boundary and device-owned stop behavior. Actual exposure duration and readiness criteria come from the approved physical procedure; the old proposed five/ten-second values are not finalized settings. Preview this section with a clearly labeled simulated cue until the validated device path is available. No hardware is activated and no audio is generated by this document edit.
+
+## Part 7 — Demonstration complete and readiness check
 
 **Spoken:** “The demonstration is complete. Please let the operator know if you have any questions before we continue.”
 
-**Screen / animation:** Display this message only after the demonstration has ended. Hold while the operator checks readiness.
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-07/`; filename stem: `07-demonstration-complete`.
 
-**Production note:** This section is conditional on an approved, physically validated demonstration procedure. The outline proposes approximately five seconds, with an upper bound of ten seconds; final duration and exposure limits require confirmation. Do not use this draft as authorization to activate the apparatus or hard-code those proposed values.
+**Screen / animation:**
+
+1. Enter only after the Part 6 demonstration-end event. The narration ending or an estimated duration must not trigger this screen while ELTS is still active.
+2. Fade out the downward arrow and its label together over approximately 400 milliseconds. Keep the charcoal background constant. Replace “ELTS introduction” with “Demonstration complete.”
+3. During “questions,” fade in “Questions? Ask the operator” beneath the heading, with the same small speech-bubble icon used earlier. Keep all elements still once visible.
+4. Hold after narration while the operator answers questions and confirms readiness. Show no countdown, participant Next button, or additional demonstration cue.
+5. When the operator proceeds, fade out the message and reveal Part 8's scenario overview before beginning its narration.
+
+**Transition — Manual continue:** Wait for the operator to continue to Part 8. Replaying this completion message never requests another ELTS test. Any repeated demonstration is a separate explicit operator action under Part 6's repeat rules.
 
 ## Part 8 — Procedure overview
 
+**Visual direction throughout:** Use the same neutral background, typography, accent, and caption area as the earlier tutorial sections. Keep a fixed heading “Study overview.” The central visual is a horizontal sequence of four scenario cards with a break marker after each card, including the last. Use ordinary ordinal labels, not condition names, hidden assignments, or development condition codes. This is an explanation, not a live session dashboard.
+
 **Spoken:** “The study has four scenarios. You'll complete them in a randomized order.”
 
-**Screen / animation:** Reveal four scenario cards. Animate them into an example order, labeled “Example order,” without revealing condition details that the approved procedure does not permit.
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-08/`; filename stem: `08-four-scenarios`.
 
-### Part 8.1
+**Screen / animation:**
 
-**Spoken:** “Each scenario has a time limit.”
+1. Fade in the heading, then reveal four equal-size cards across the center labeled “Scenario 1,” “Scenario 2,” “Scenario 3,” and “Scenario 4.” Their numbers mean first through fourth in the participant's sequence, not specific conditions.
+2. During “randomized order,” show “Scenario order varies” beneath the sequence. Do not shuffle the actual assigned session order or animate ordinal cards into a confusing order such as 3, 1, 4, 2.
+3. Keep every card neutral: none has started or finished. Leave space between cards and after the final card for the break markers introduced in Part 8.2.
 
-**Screen / animation:** Add a timer symbol beside a scenario card. Show a numeric duration only when it matches the confirmed session configuration.
+**Transition — Automatic:** After narration and a brief configurable gap, continue to Part 8.1. Keep the scenario cards in their existing positions.
 
-### Part 8.2
+### Part 8.1 — Scenario time limits
+
+**Spoken:** “Each scenario has a time limit. The operator will prepare each one before you begin.”
+
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-08/`; filename stem: `08-01-scenario-time-limits`.
+
+**Screen / animation:**
+
+1. On “time limit,” fade a small timer symbol into each card. Replace the order explanation with “Each scenario has a time limit.” Do not animate a running countdown during the overview.
+2. A specific duration may appear only if it comes from the confirmed session configuration and is appropriate to disclose. If durations differ, do not imply a shared duration. The narration deliberately avoids an unconfirmed number.
+3. On “operator will prepare,” add “Operator prepares each scenario” beneath the cards. Do not show any card as armed or running merely because this explanatory animation plays.
+
+**Transition — Automatic:** Continue to Part 8.2 after the explanation. No operator confirmation is required between these informational chunks.
+
+### Part 8.2 — Breaks in the sequence
 
 **Spoken:** “You'll have a two-minute break between scenarios and another two-minute break after the final scenario.”
 
-**Screen / animation:** Place a break marker after each of the four cards, including the last. Highlight one break marker and show an illustrative “2:00” countdown labeled “Break.”
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-08/`; filename stem: `08-02-break-overview`.
 
-**Production note:** Two-minute breaks and randomized order come from the outline. Confirm that the approved procedure and actual session configuration match this wording before recording or use.
+**Screen / animation:**
+
+1. During “between scenarios,” reveal a small “Break” marker between cards 1 and 2, 2 and 3, and 3 and 4. Connect the cards and markers with a thin, static line.
+2. During “after the final scenario,” reveal the fourth marker after Scenario 4, labeled “Final break.” Arrange all four cards and four markers to fit within the content margins; do not let the final marker fall off-screen.
+3. Fade in a small example panel below the sequence reading “Break — 2:00,” with a visible “Example” label. Keep the value static. This demonstrates the countdown's appearance without starting a real break or implying that time has already elapsed.
+4. Hold the complete sequence briefly after narration, then fade into Part 9's readiness screen.
+
+**Transition — Automatic:** Continue to the first-scenario readiness explanation in Part 9, which supplies the mandatory readiness hold.
+
+**Production notes:** Four scenarios, randomized order, and two-minute breaks follow the outline. Check the session plan against this narration before use: planned break duration is 120 seconds, including the final break. Do not silently substitute development defaults, change a live session, or play two-minute narration over a different configured duration. Scenario durations and any disclosure of condition identities remain procedure decisions. The cards explain order; they do not implement randomization.
 
 ## Part 9 — Transition to the study
 
 **Spoken:** “The tutorial is complete. Let the operator know when you're ready for the first scenario.”
 
-**Screen / animation:** Show “Ready for the first scenario?” Hold while the operator confirms readiness and prepares the scenario.
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-09/`; filename stem: `09-ready-for-first-scenario`.
 
-### Part 9.1
+**Screen / animation:**
 
-**Spoken:** “Follow the instruction on the screen to begin.”
+1. Fade out the overview cards and example countdown. Show “Ready for the first scenario?” centered on the neutral background, with “Let the operator know when you're ready” underneath.
+2. Keep the scenario timer stopped. Do not show active study targets or activate ELTS as a consequence of entering this screen.
+3. Hold after narration while the operator checks readiness and prepares the actual first assigned scenario. The participant may ask questions or request clarification here.
+4. Once the scenario is prepared and armed through the confirmed controls, move to Part 9.1. Operator continuation does not, by itself, count as the participant's start action.
 
-**Screen / animation:** Present the actual start prompt only when the scenario is ready to start. Keep the scenario timer stopped until the required start event occurs.
+**Transition — Manual prepare/arm:** The operator prepares and arms the first scenario after participant readiness. Do not arm it automatically when the tutorial clip ends.
 
-**Production note:** Final start wording depends on the confirmed operator and participant workflow. Replace the general instruction with the exact action once agreed. The tutorial must not imply that finishing a clip automatically starts the study.
+### Part 9.1 — Start a prepared scenario
 
-## Part 10 — Break prompts
+**Spoken:** “When you're ready, follow the instruction on the screen to start this scenario.”
 
-**Spoken:** “This scenario is complete. Your two-minute break begins now.”
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-09/`; filename stem: `09-01-start-prepared-scenario`.
 
-**Screen / animation:** When the break actually starts, replace the scenario view with the live break countdown. Play this chunk for breaks between scenarios; use Part 11 after the final scenario.
+**Screen / animation:**
 
-### Part 10.1
+1. Enter only when the current assigned scenario is actually armed and ready. Display its ordinal position, such as “Scenario 1 of 4,” and the actual participant start instruction provided by the confirmed input workflow.
+2. Keep the time limit at its configured starting value until the real start event occurs. Do not animate a countdown or fade in a fake running scene during narration.
+3. Play the start instruction once. If the participant starts while the clip is still playing, stop any remaining start narration and remove the instructional overlay so it does not continue over the scenario.
+4. On the actual start event, show the live scenario and actual timer. Tutorial playback must not command a second start, change the assigned condition, or separately control the apparatus lights.
+5. If the operator disarms the scenario, remove the start prompt and hold for preparation. A replay of the narration does not rearm or start anything.
+
+**Transition — Participant start event:** Wait for the actual configured start action. At a normal scenario end, route to Part 10 when more scenarios remain and Part 11 after the fourth scenario. Do not replay the whole tutorial between scenarios; reuse only Part 9.1 after each new operator arm.
+
+**Production notes:** Existing development software uses an operator arm followed by a participant trigger start. Confirm the physical replica's exact start action and whether that action is excluded from scored shots before replacing the general spoken wording with a specific instruction. Do not substitute mouse clicks or infer physical behavior from the development player. A pause/resume continues the current scenario rather than starting the next one. A stopped, skipped, repeated, failed, or aborted attempt follows the operator's exception workflow; it must not blindly advance the ordinary four-scenario tutorial count or play false completion narration.
+
+## Part 10 — Breaks between scenarios
+
+**Routing:** Use Parts 10–10.2 after each normally completed scenario that has another scenario following it. After the fourth scenario, use Part 11's final-break sequence instead. A break begins on the real break-start event, not on scenario completion or audio playback.
+
+**Spoken:** “This scenario is complete. Please wait while the operator prepares your break.”
+
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-scenario-complete`.
+
+**Screen / animation:**
+
+1. On the actual scenario-end event, remove the active target scene and timer and show “Scenario complete.” Do not show a score summary unless the study's feedback policy requires one.
+2. Fade in “Your break will begin shortly.” Keep the countdown hidden while the system finishes saving and the operator prepares the break. Do not imply this waiting interval is already part of the two-minute rest timer.
+3. Hold this screen after narration until saving is complete and the operator starts the break. If break start occurs before this clip finishes, stop its waiting narration and enter Part 10.1 without overlapping clips.
+
+**Transition — Manual break start:** The operator starts the break when the recording checkpoint is ready. The planned tutorial does not shorten saving or start the countdown by itself.
+
+### Part 10.1 — Break running
+
+**Spoken:** “Your two-minute break begins now.”
+
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-01-break-running`.
+
+**Screen / animation:**
+
+1. Trigger this clip from the real break-start event. Show “Break” above a large, centrally aligned countdown starting from the configured two-minute duration.
+2. Bind the countdown to actual remaining break time; do not run a separate animation timer based on the narration. Keep surrounding graphics still. Do not add alerts or repeated spoken announcements as the timer approaches zero.
+3. Keep study targets absent and do not present a start prompt during the break. A paused tutorial narrator must not independently pause or extend a live break; operator controls must distinguish narration playback from session timing.
+4. At the real break-end event, stop any stale break-start narration and transition to Part 10.2. Do not display negative time or loop the countdown.
+
+**Transition — Break-end event:** Continue automatically to the readiness message when the configured break ends. This does not arm or start the next scenario.
+
+### Part 10.2 — Ready for the next scenario
 
 **Spoken:** “Your break is complete. Let the operator know when you're ready for the next scenario.”
 
-**Screen / animation:** When the countdown ends, show “Break complete.” Hold for the confirmed next-scenario workflow, then use the start instruction from Part 9.1 when appropriate.
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-02-ready-for-next-scenario`.
 
-**Production note:** Align “begins now” with the actual break-start event. A finished countdown must not imply that the next scenario has automatically started.
+**Screen / animation:** Replace the countdown with “Break complete” and “Let the operator know when you're ready.” Keep the view still and the next scenario timer stopped. When the participant is ready, the operator prepares and arms the next assigned scenario. Then show Part 9.1's real start instruction with the correct ordinal number.
 
-## Part 11 — Completion and post-study form
+**Transition — Manual prepare/arm:** Hold for readiness and operator preparation; then wait for the participant start event in Part 9.1. No automatic scenario start at countdown zero.
 
-**Spoken:** “You've completed all four scenarios. Your final two-minute break begins now.”
+**Production notes:** Repeat this same break sequence between scenarios; do not create different recordings of identical prompts for every repetition. If the operator skips a break, do not play “Your two-minute break begins now” or claim the participant completed the full break. Handle that exception explicitly according to the procedure and preserve it in the recording. A recording error, apparatus fault, or aborted session must interrupt ordinary transition prompts rather than continue to the next scenario.
 
-**Screen / animation:** Confirm scenario completion and show the final live break countdown when that break starts. Keep the label “Final break” visible.
+## Part 11 — Completion, final break, and post-study form
 
-### Part 11.1
+**Spoken:** “You've completed all four scenarios. Please wait while the operator prepares your final break.”
 
-**Spoken:** “Your final break is complete. Please complete the post-study form.”
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-scenarios-complete`.
 
-**Screen / animation:** When the final break ends, display the confirmed form instructions or direct the participant to the form provided by the operator.
+**Screen / animation:**
 
-### Part 11.2
+1. Enter only after the actual final required scenario completes. Show “All four scenarios complete.” Do not infer this from four audio plays, four trigger events, or an attempt counter that includes repeats and skips.
+2. Fade in “Your final break will begin shortly.” Show no running countdown yet and no next-scenario prompt. Keep the screen neutral while saving finishes and the operator prepares the final break.
+3. When the operator starts the final break, stop any remaining waiting narration and enter Part 11.1.
 
-**Spoken:** “Thank you for taking part.”
+**Transition — Manual final-break start:** The operator starts the final break after the final scenario checkpoint is ready. An early stop, skip, abort, or failed recording needs the appropriate exception wording rather than the normal claim that all four scenarios were completed.
 
-**Screen / animation:** Show a simple thank-you screen after the form is complete and the operator confirms the session has finished.
+### Part 11.1 — Final break running
 
-**Production note:** Confirm the form content and delivery method before replacing these general directions. Preserve the outline's requirement to associate NASA-TLX responses and sensor recordings with the correct participant, session, and scenario; questionnaire timing still needs confirmation.
+**Spoken:** “Your final two-minute break begins now. After the break, you'll complete the post-study form.”
+
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-01-final-break-running`.
+
+**Screen / animation:**
+
+1. Play this clip on the actual final-break start event. Show “Final break” and a large live countdown, using the same layout as Part 10.1.
+2. Place “Next: Post-study form” beneath the countdown. Keep the form itself closed throughout the break; do not ask the participant to fill it out while the final rest period is still running.
+3. On the real final-break end event, replace the timer with the form instructions in Part 11.2. Do not arm a scenario or route back to Part 9.1.
+
+**Transition — Final-break end event:** Continue to Part 11.2. Where the runtime closes the participant recording after the final break, preserve that closure and its save status. The tutorial can remain visible for the form without pretending that a closed sensor recording is still active.
+
+### Part 11.2 — Post-study form
+
+**Spoken:** “Your final break is complete. Please complete the post-study form provided by the operator. If you have any questions, please ask.”
+
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-02-post-study-form`.
+
+**Screen / animation:**
+
+1. Show “Post-study form” as the heading and “Please complete the form provided by the operator” below it. Add the small speech-bubble icon beside “Questions? Ask the operator.”
+2. Hold while the operator provides the confirmed form. Do not invent a URL, QR code, account sign-in, or external submission destination. If the approved form is integrated into the display, show its real interface only when it is ready.
+3. Keep the instruction visible for as long as the participant needs. Do not apply a form countdown or infer submission from opening, scrolling, or closing the form.
+4. When completion is confirmed by the actual submission workflow or the operator, proceed to Part 11.3. A failed or incomplete form submission stays here for assistance.
+
+**Transition — Form completion confirmation:** Use a trustworthy submission confirmation when available; otherwise the operator manually confirms completion. Do not advance on elapsed time or narration ending.
+
+### Part 11.3 — Thank you
+
+**Spoken:** “Thank you for being a participant in the ELTS Project Research Study.”
+
+**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-03-thank-you`.
+
+**Screen / animation:** Fade in a large “Thank you” heading with “ELTS Project Research Study” underneath. Keep the charcoal background and still layout. Show no new scenario, restart countdown, or promotional content. Hold the final screen after narration until the operator ends or resets the tutorial for the next participant.
+
+**Transition — End:** No automatic restart. Resetting for another participant is an explicit operator action and must not reuse the previous participant's identity or form association.
+
+**Production notes:** Confirm the post-study form content, delivery method, submission/completion signal, and questionnaire timing before final implementation. NASA-TLX responses and sensor recordings must retain the correct participant, session, and scenario associations. This draft does not decide whether NASA-TLX belongs after individual scenarios or in the final form; if per-scenario questionnaires are required, add them to the relevant break workflow before recording audio. Preserve raw recordings and prior attempts. Do not add questionnaire results to a closed sensor recording by rewriting it; use the intended association mechanism.
+
+## Playback and handoff rules for Parts 7–11
+
+- Explanations in Part 8 advance automatically. Questions, preparation, and physical checks use operator holds.
+- Real scenario, break, apparatus, and form events control phase changes. Narration and animation completion only advance informational chunks.
+- Play one narration clip at a time. On a phase change, cancel stale audio and pending visual callbacks so an old “begins now” or “ready to start” prompt cannot play in the wrong phase.
+- Replay repeats the selected narration and its explanatory visuals only. It never rearms a scenario, restarts a timer, opens a duplicate form submission, or activates ELTS again.
+- Keep remaining durations, scenario order, and ordinal labels bound to the current session. Never fabricate a completed phase to keep the script moving.
+- Parts 2–11 remain text plans with proposed filenames, not generated audio or implemented runtime behavior. After wording and remaining procedure decisions are settled, use the documented two-take selection workflow for audio production.

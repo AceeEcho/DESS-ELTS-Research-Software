@@ -2,7 +2,7 @@
 
 User-agreed workflow, October 30, 2026. Follow this for future participant tutorial narration work.
 
-Current stage, November 2, 2026: drafting now covers Parts 1–11. The user requested audio for Parts 2 and 3 only: the selected takes are now downloaded and linked in the script. Preserve the selected Part 1 files. Do not generate Parts 4–11 until requested.
+Current stage, November 2, 2026: drafting covers Parts 1–11. Parts 1–3 have selected audio files downloaded and linked in the script. Two takes per chunk have now been requested for Parts 4 and 5, pending Top/Bottom selection. Do not generate Parts 6–11 until requested. Keep the reading script synchronized with the detailed script using the process below.
 
 ## Source files and delivery
 
@@ -74,3 +74,5 @@ When handing off to an implementation agent, the script's Audio link is the auth
 Earlier test generations used four takes per initial node and single takes for welcome revisions. They remain historical tests; this two-take policy applies to future generations. On October 30, 2026, the user selected the top take for Parts 1, 1.1, and 1.2. The latest warm welcome and first takes of the other two chunks are downloaded in `participant-tutorial/audio/part-01/`, linked from the script, and identified in the Part 1 voice-prompts document. Do not regenerate existing clips merely to normalize their historical take counts.
 
 November 2, 2026: Parts 2 and 3 now have per-chunk take/session/node mappings in `participant-tutorial-part-2-voice-prompts.md` and `participant-tutorial-part-3-voice-prompts.md`. The user selected Bottom, Bottom, Bottom, Bottom, Top, Top, Bottom in chunk order 2, 2.1, 2.2, 3, 3.1, 3.2, 3.3. These seven files are downloaded, verified, and linked from the script and the corresponding voice-prompts documents.
+
+November 2, 2026: six chunks in Parts 4 and 5 have two requested takes each. Their exact prompts, node IDs, generation IDs, and Top/Bottom session mappings are in participant-tutorial-part-4-voice-prompts.md and participant-tutorial-part-5-voice-prompts.md. Selection and download are pending.

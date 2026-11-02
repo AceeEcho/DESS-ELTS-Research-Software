@@ -4,7 +4,7 @@ Status: initial outline October 19, 2026; revised November 2, 2026 with detailed
 
 ## Voice and delivery
 
-Narration source: ElevenLabs, Eryn - Genuine, Friendly and Natural, using eleven_v4. Follow the working script and audio workflow linked below. Finish writing before generating additional audio.
+Narration source: ElevenLabs, Eryn - Genuine, Friendly and Natural, using eleven_v4. Follow the working script and audio workflow linked below. Selected audio is saved for Parts 1–3; Parts 4 and 5 now have two requested takes per chunk pending selection. Parts 6–11 await an audio request.
 
 - Use one consistent voice and a calm, clear delivery.
 - Generate short clips for individual steps rather than one uninterrupted video.
@@ -58,6 +58,6 @@ Narration source: ElevenLabs, Eryn - Genuine, Friendly and Natural, using eleven
 
 Confirmed sequence: equipment setup → head-tracker calibration → holding demonstration → gun-tracker calibration → interface familiarization. The user specified upright posture and forward gaze at a dot for the head tracker, and stock-to-shoulder holding with sighted aim at a dot for the gun tracker. Main sections 4 onward retain their numbers. Detailed physical capture settings and acceptance criteria remain to be confirmed.
 
-Part 6 visual/event plan: reveal a downward arrow on the display centerline when identifying ELTS below the screen; keep the arrow visible and request the single test activation after the demonstration announcement. Part 7 only announces completion and checks readiness. This document specifies planned behavior; it does not activate hardware or establish physical validation. Audio generation remains deferred until writing is finished.
+Part 6 visual/event plan: reveal a downward arrow on the display centerline when identifying ELTS below the screen; keep the arrow visible and request the single test activation after the demonstration announcement. Part 7 only announces completion and checks readiness. This document specifies planned behavior; it does not activate hardware or establish physical validation. Additional audio beyond the explicitly requested sections remains deferred.
 
 Detailed writing now covers Parts 1–11. The normal final sequence is scenario completion → manual break start after saving → actual break countdown → manual next-scenario preparation and participant start; after the fourth scenario, final break → form completion confirmation → thank-you screen. Narration replay never starts or repeats a physical/session action. Remaining procedure decisions above must be resolved before final audio and implementation.

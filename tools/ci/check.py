@@ -59,6 +59,10 @@ def documentation():
             checked += 1
     print(f"PASS: {checked} local documentation links")
 
+    from tools.build.export_participant_tutorial import check_reading_script
+    check_reading_script()
+    print("PASS: readable participant tutorial matches its detailed source")
+
 
 def run():
     commands = [

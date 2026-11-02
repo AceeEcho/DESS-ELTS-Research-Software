@@ -6,7 +6,9 @@ Based on `participant-tutorial-script-outline.md`. Detailed narration and visual
 
 Audio generation and selection follow [the participant tutorial audio workflow](participant-tutorial-audio-workflow.md): two takes per node, identified as Top and Bottom; download the user's chosen take and link it directly beneath the matching spoken chunk.
 
-Current writing workflow: finish drafting the remaining script before generating more audio. Existing selected Part 1 audio is retained. Do not generate audio for new sections until the user requests the audio stage.
+Current audio workflow: Parts 1–3 have selected, downloaded audio linked below. Parts 2 and 3 selections were confirmed on November 2, 2026. Parts 4–11 remain deferred until requested.
+
+A [reading script](participant-tutorial-reading-script.md) contains only the narration and concise action/wait cues. Update the Spoken and Action / wait lines here, then regenerate that copy; see the audio workflow for the sync command.
 
 ## Format
 
@@ -26,6 +28,8 @@ Use short fades of approximately 300–400 milliseconds, with at most 16 px of v
 
 **Spoken:** “Welcome to the ELTS Project Research Study. Thank you for being a participant. Before the study begins, we'll guide you through equipment setup and practice.”
 
+**Action / wait:** [CONTINUE AUTOMATICALLY] Play Part 1.1.
+
 **Audio:** Selected — Top take, latest warm welcome. [01-welcome.mp3](participant-tutorial/audio/part-01/01-welcome.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
@@ -42,6 +46,8 @@ Use short fades of approximately 300–400 milliseconds, with at most 16 px of v
 
 **Spoken:** “We'll explain each step as you go. If you have a question or need an instruction repeated, please ask the operator.”
 
+**Action / wait:** [CONTINUE AUTOMATICALLY] Leave a short pause for questions, then play Part 1.2. The operator can pause if needed.
+
 **Audio:** Selected — Top (take 1). [01-01-guidance-and-questions.mp3](participant-tutorial/audio/part-01/01-01-guidance-and-questions.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
@@ -54,6 +60,8 @@ Use short fades of approximately 300–400 milliseconds, with at most 16 px of v
 ### Part 1.2
 
 **Spoken:** “When you're ready, let the operator know. We'll begin with equipment setup.”
+
+**Action / wait:** [WAIT — OPERATOR CONTINUE] Confirm the participant is ready, then begin equipment setup.
 
 **Audio:** Selected — Top (take 1). [01-02-ready-for-setup.mp3](participant-tutorial/audio/part-01/01-02-ready-for-setup.mp3). Use for this spoken chunk only.
 
@@ -74,7 +82,9 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “The operator will now fit you with the tracking equipment, eye tracker, and heart-rate monitor.”
 
-**Audio:** Not generated — waiting until script writing is complete. Planned folder: `participant-tutorial/audio/part-02/`; filename stem: `02-participant-setup`.
+**Action / wait:** [WAIT — OPERATOR CONTINUE] Fit all equipment before continuing to the comfort message.
+
+**Audio:** Selected — Bottom (take 2). [02-participant-setup.mp3](participant-tutorial/audio/part-02/02-participant-setup.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -91,7 +101,9 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “Please let the operator know if anything feels uncomfortable or needs adjusting.”
 
-**Audio:** Not generated — waiting until script writing is complete. Planned folder: `participant-tutorial/audio/part-02/`; filename stem: `02-01-comfort-and-adjustments`.
+**Action / wait:** [CONTINUE AUTOMATICALLY] After a short pause, play the equipment-check message. Pause if an adjustment is requested.
+
+**Audio:** Selected — Bottom (take 2). [02-01-comfort-and-adjustments.mp3](participant-tutorial/audio/part-02/02-01-comfort-and-adjustments.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -106,7 +118,9 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “The operator will check the equipment before we continue. Once setup is complete, we'll move on to calibration.”
 
-**Audio:** Not generated — waiting until script writing is complete. Planned folder: `participant-tutorial/audio/part-02/`; filename stem: `02-02-setup-check-and-calibration-transition`.
+**Action / wait:** [WAIT — OPERATOR CONTINUE] Finish equipment checks and adjustments, then begin head-tracker calibration.
+
+**Audio:** Selected — Bottom (take 2). [02-02-setup-check-and-calibration-transition.mp3](participant-tutorial/audio/part-02/02-02-setup-check-and-calibration-transition.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -117,7 +131,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Transition — Manual continue:** Once equipment checks and any adjustments are finished, the operator manually continues to Part 3 for head-tracker calibration. This is the second manual hold in Part 2.
 
-**Production notes:** Parts 2, 2.1, and 2.2 are separate spoken chunks. Playback order: announce fitting → manual hold for fitting → comfort message → automatic equipment-check message → manual hold for checks → Part 3 head-tracker calibration. The holding demonstration now follows head calibration as Part 3.1. Audio production is deferred until the writing stage is finished; planned filename stems above are not existing files. Use captions matching the spoken wording when audio is added. Keep comfort instructions available for replay during setup. Do not show equipment readiness or calibration acceptance based on narration ending. If operator controls are not connected, hold at each manual transition and provide continuation only in production preview controls.
+**Production notes:** Parts 2, 2.1, and 2.2 are separate spoken chunks. Playback order: announce fitting → manual hold for fitting → comfort message → automatic equipment-check message → manual hold for checks → Part 3 head-tracker calibration. The holding demonstration now follows head calibration as Part 3.1. The selected audio for each chunk is downloaded and linked above. Use those files without adding operator-wait silences to the recordings. Use captions matching the spoken wording when audio is added. Keep comfort instructions available for replay during setup. Do not show equipment readiness or calibration acceptance based on narration ending. If operator controls are not connected, hold at each manual transition and provide continuation only in production preview controls.
 
 ## Part 3 — Head-tracker calibration, holding position, and gun-tracker calibration
 
@@ -127,7 +141,9 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “First, we'll calibrate the head tracker. Please stand up straight and look straight ahead at the dot on the screen. Keep this position while the operator calibrates the tracker.”
 
-**Audio:** Not generated — waiting until script writing is complete. Planned folder: `participant-tutorial/audio/part-03/`; filename stem: `03-head-tracker-calibration`.
+**Action / wait:** [WAIT — OPERATOR CONTINUE] The participant stands upright and looks forward at the screen dot. Complete and check head-tracker calibration before continuing.
+
+**Audio:** Selected — Bottom (take 2). [03-head-tracker-calibration.mp3](participant-tutorial/audio/part-03/03-head-tracker-calibration.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -144,7 +160,9 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “For this study, you'll use a replica that cannot fire. The operator will show you how to hold it with the stock against your shoulder. Please try this position, and let the operator know if it feels uncomfortable.”
 
-**Audio:** Not generated — waiting until script writing is complete. Planned folder: `participant-tutorial/audio/part-03/`; filename stem: `03-01-holding-the-study-replica`.
+**Action / wait:** [WAIT — OPERATOR CONTINUE] Demonstrate the stock-to-shoulder position, let the participant try it, and check comfort.
+
+**Audio:** Selected — Top (take 1). [03-01-holding-the-study-replica.mp3](participant-tutorial/audio/part-03/03-01-holding-the-study-replica.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -158,13 +176,15 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Transition — Manual continue:** The operator demonstrates the position, lets the participant try it, and resolves any discomfort before continuing to Part 3.2. The head-tracker calibration has already been completed.
 
-**Production notes:** The user confirmed a non-firing study prop replica and a stock-to-shoulder position. Exact hand placement, shoulder choice, stance, and other handling details have not been specified; use the operator's confirmed demonstration as the visual reference rather than inventing a prescribed technique. This chunk teaches the basic study holding position, with aiming at the calibration dot introduced next in Part 3.2. Do not generate audio yet.
+**Production notes:** The user confirmed a non-firing study prop replica and a stock-to-shoulder position. Exact hand placement, shoulder choice, stance, and other handling details have not been specified; use the operator's confirmed demonstration as the visual reference rather than inventing a prescribed technique. This chunk teaches the basic study holding position, with aiming at the calibration dot introduced next in Part 3.2. The selected narration is downloaded and linked above.
 
 ### Part 3.2 — Gun-tracker calibration
 
 **Spoken:** “Now we'll calibrate the gun tracker. Hold the replica with the stock against your shoulder, as the operator showed you. Look down the sights and aim at the dot on the screen. Keep this position while the operator calibrates the tracker.”
 
-**Audio:** Not generated — waiting until script writing is complete. Planned folder: `participant-tutorial/audio/part-03/`; filename stem: `03-02-gun-tracker-calibration`.
+**Action / wait:** [WAIT — OPERATOR CONTINUE] The participant looks down the sights and aims at the screen dot. Complete and check gun-tracker calibration, then let them relax the position.
+
+**Audio:** Selected — Top (take 1). [03-02-gun-tracker-calibration.mp3](participant-tutorial/audio/part-03/03-02-gun-tracker-calibration.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -181,13 +201,15 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “Calibration is complete. Next, we'll show you the study interface.”
 
-**Audio:** Not generated — waiting until script writing is complete. Planned folder: `participant-tutorial/audio/part-03/`; filename stem: `03-03-calibration-complete`.
+**Action / wait:** [CONTINUE AUTOMATICALLY] Introduce the study interface.
+
+**Audio:** Selected — Bottom (take 2). [03-03-calibration-complete.mp3](participant-tutorial/audio/part-03/03-03-calibration-complete.mp3). Use for this spoken chunk only.
 
 **Screen / animation:** After the operator has confirmed both tracker calibrations, display “Calibration complete” with “Next: Study interface” beneath it. Keep the screen still while this short narration plays. Then crossfade into Part 4's opening view. Do not play this chunk on an unsuccessful or incomplete calibration.
 
 **Transition — Automatic:** Once the operator has explicitly ended Part 3.2, this short transition message leads automatically to Part 4. No additional mandatory Continue is needed between the completion message and the interface introduction. Operator pause and replay remain available.
 
-**Production notes:** The participant actions and order above were supplied by the user. Exact capture controls, capture duration, reference-dot coordinates, acceptance criteria, and retry mechanics still need to be matched to the physical calibration procedure. Do not invent these values or treat synthetic development calibration as physical acceptance. Keep preview states clearly identified when real capture is not connected. Audio production remains deferred.
+**Production notes:** The participant actions and order above were supplied by the user. Exact capture controls, capture duration, reference-dot coordinates, acceptance criteria, and retry mechanics still need to be matched to the physical calibration procedure. Do not invent these values or treat synthetic development calibration as physical acceptance. Keep preview states clearly identified when real capture is not connected. Selected narration for each chunk is downloaded and linked above.
 
 ## Part 4 — Interface familiarization
 
@@ -196,6 +218,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 **Visual direction throughout:** Transition from the calibration screen into a separate tutorial scene with a persistent “Tutorial” label. Keep captions and the current instruction outside the target area. Present one element or action at a time using a steady muted blue outline. Do not add a crosshair, hit marker, scoring display, or status indicator unless it belongs in the confirmed participant interface. Tutorial highlights must disappear before ordinary practice. ELTS remains inactive during Parts 4 and 5.
 
 **Spoken:** “Let's look at the screen you'll use during the study. These are the practice targets.”
+
+**Action / wait:** [CONTINUE AUTOMATICALLY] Play the aiming instruction.
 
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-04/`; filename stem: `04-interface-and-targets`.
 
@@ -211,6 +235,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “Hold the replica as the operator showed you. Look down the sights and aim at the practice target.”
 
+**Action / wait:** [WAIT — OPERATOR CONTINUE] Let the participant try aiming and confirm they understand.
+
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-04/`; filename stem: `04-01-try-aiming`.
 
 **Screen / animation:**
@@ -224,6 +250,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 ### Part 4.2 — Firing, reloading, and interface indicators
 
 **Spoken:** “The operator will show you how to fire at the practice targets and reload. You'll have a chance to try both before practice begins.”
+
+**Action / wait:** [WAIT — OPERATOR CONTINUE] Demonstrate firing, let the participant try it, then demonstrate reloading and let them try it. Continue when both actions are understood.
 
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-04/`; filename stem: `04-02-controls-demonstration`.
 
@@ -244,6 +272,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “Now you'll have time to practice using the interface. This is practice, and your shots will not count toward the study results. Let the operator know when you're ready to begin.”
 
+**Action / wait:** [WAIT — OPERATOR START] Confirm readiness, then start practice.
+
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-05/`; filename stem: `05-practice-introduction`.
 
 **Screen / animation:**
@@ -257,6 +287,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 ### Part 5.1 — Practice running
 
 **Spoken:** “Use this time to practice aiming, firing, and reloading. If you need help or another demonstration, please ask the operator.”
+
+**Action / wait:** [WAIT — PRACTICE ENDS] Let practice run until its timer finishes or the operator ends it. Help or repeat demonstrations as needed.
 
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-05/`; filename stem: `05-01-practice-running`.
 
@@ -272,6 +304,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 ### Part 5.2 — Practice complete
 
 **Spoken:** “Practice is complete. Let the operator know if you'd like another explanation before we continue.”
+
+**Action / wait:** [WAIT — OPERATOR CONTINUE] Answer questions and confirm readiness for the ELTS demonstration.
 
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-05/`; filename stem: `05-02-practice-complete`.
 
@@ -290,6 +324,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 **Purpose:** Point to the actual apparatus, centered physically beneath the display, and give one brief ELTS demonstration at the downward-arrow cue. This replaces the previous plan to start a separate demonstration in Part 7.
 
 **Spoken:** “The ELTS apparatus is directly below the middle of the screen. Its lights will be active during some of the study conditions. The operator will now demonstrate the lights briefly.”
+
+**Action / wait:** [ACTION — ELTS DEMONSTRATION] With the operator ready and the downward arrow visible, cue one approved ELTS test at the end of the announcement. Wait for the demonstration to end, then play Part 7. Replaying narration does not repeat the test.
 
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-06/`; filename stem: `06-elts-introduction-and-test`.
 
@@ -314,6 +350,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “The demonstration is complete. Please let the operator know if you have any questions before we continue.”
 
+**Action / wait:** [WAIT — OPERATOR CONTINUE] Answer questions before the study overview.
+
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-07/`; filename stem: `07-demonstration-complete`.
 
 **Screen / animation:**
@@ -332,6 +370,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “The study has four scenarios. You'll complete them in a randomized order.”
 
+**Action / wait:** [CONTINUE AUTOMATICALLY] Explain the scenario time limits.
+
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-08/`; filename stem: `08-four-scenarios`.
 
 **Screen / animation:**
@@ -346,6 +386,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “Each scenario has a time limit. The operator will prepare each one before you begin.”
 
+**Action / wait:** [CONTINUE AUTOMATICALLY] Explain the breaks.
+
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-08/`; filename stem: `08-01-scenario-time-limits`.
 
 **Screen / animation:**
@@ -359,6 +401,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 ### Part 8.2 — Breaks in the sequence
 
 **Spoken:** “You'll have a two-minute break between scenarios and another two-minute break after the final scenario.”
+
+**Action / wait:** [CONTINUE AUTOMATICALLY] Move to the first-scenario readiness message.
 
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-08/`; filename stem: `08-02-break-overview`.
 
@@ -377,6 +421,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “The tutorial is complete. Let the operator know when you're ready for the first scenario.”
 
+**Action / wait:** [WAIT — OPERATOR PREPARE/ARM] Confirm readiness, then prepare and arm the first scenario.
+
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-09/`; filename stem: `09-ready-for-first-scenario`.
 
 **Screen / animation:**
@@ -391,6 +437,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 ### Part 9.1 — Start a prepared scenario
 
 **Spoken:** “When you're ready, follow the instruction on the screen to start this scenario.”
+
+**Action / wait:** [WAIT — PARTICIPANT START] Start only on the actual participant start action. Let the scenario run. After scenarios 1–3 go to Part 10; after scenario 4 go to Part 11. Reuse this start prompt for each newly armed scenario.
 
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-09/`; filename stem: `09-01-start-prepared-scenario`.
 
@@ -412,6 +460,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “This scenario is complete. Please wait while the operator prepares your break.”
 
+**Action / wait:** [WAIT — OPERATOR START BREAK] Wait for saving to finish, then start the break.
+
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-scenario-complete`.
 
 **Screen / animation:**
@@ -425,6 +475,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 ### Part 10.1 — Break running
 
 **Spoken:** “Your two-minute break begins now.”
+
+**Action / wait:** [WAIT — BREAK ENDS] Show the actual two-minute countdown. At break end, automatically play Part 10.2.
 
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-01-break-running`.
 
@@ -441,6 +493,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “Your break is complete. Let the operator know when you're ready for the next scenario.”
 
+**Action / wait:** [WAIT — OPERATOR PREPARE/ARM] Confirm readiness and arm the next scenario, then return to Part 9.1. The break ending does not start a scenario.
+
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-02-ready-for-next-scenario`.
 
 **Screen / animation:** Replace the countdown with “Break complete” and “Let the operator know when you're ready.” Keep the view still and the next scenario timer stopped. When the participant is ready, the operator prepares and arms the next assigned scenario. Then show Part 9.1's real start instruction with the correct ordinal number.
@@ -452,6 +506,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 ## Part 11 — Completion, final break, and post-study form
 
 **Spoken:** “You've completed all four scenarios. Please wait while the operator prepares your final break.”
+
+**Action / wait:** [WAIT — OPERATOR START FINAL BREAK] After the final scenario is saved, start the final break.
 
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-scenarios-complete`.
 
@@ -467,6 +523,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “Your final two-minute break begins now. After the break, you'll complete the post-study form.”
 
+**Action / wait:** [WAIT — FINAL BREAK ENDS] Show the actual two-minute countdown, then automatically play the form instructions.
+
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-01-final-break-running`.
 
 **Screen / animation:**
@@ -480,6 +538,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 ### Part 11.2 — Post-study form
 
 **Spoken:** “Your final break is complete. Please complete the post-study form provided by the operator. If you have any questions, please ask.”
+
+**Action / wait:** [WAIT — FORM COMPLETION] Provide the form and confirm successful completion, or wait for the real submission confirmation.
 
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-02-post-study-form`.
 
@@ -496,6 +556,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “Thank you for being a participant in the ELTS Project Research Study.”
 
+**Action / wait:** [END] Hold the thank-you screen. The operator ends or resets the tutorial; do not restart automatically.
+
 **Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-03-thank-you`.
 
 **Screen / animation:** Fade in a large “Thank you” heading with “ELTS Project Research Study” underneath. Keep the charcoal background and still layout. Show no new scenario, restart countdown, or promotional content. Hold the final screen after narration until the operator ends or resets the tutorial for the next participant.
@@ -511,4 +573,4 @@ Illustrations must match the actual equipment selected for the session. Use veri
 - Play one narration clip at a time. On a phase change, cancel stale audio and pending visual callbacks so an old “begins now” or “ready to start” prompt cannot play in the wrong phase.
 - Replay repeats the selected narration and its explanatory visuals only. It never rearms a scenario, restarts a timer, opens a duplicate form submission, or activates ELTS again.
 - Keep remaining durations, scenario order, and ordinal labels bound to the current session. Never fabricate a completed phase to keep the script moving.
-- Parts 2–11 remain text plans with proposed filenames, not generated audio or implemented runtime behavior. After wording and remaining procedure decisions are settled, use the documented two-take selection workflow for audio production.
+- Parts 1–3 have selected audio files linked to their spoken chunks. Parts 4–11 remain text plans with proposed filenames and no generated audio. These documents do not implement runtime behavior. Use the documented two-take selection workflow for further audio production when requested.

@@ -53,6 +53,7 @@ Narration source: ElevenLabs, Eryn - Genuine, Friendly and Natural, using eleven
 ## Working files
 
 - [Working spoken script and screen directions](participant-tutorial-script.md).
+- [Reading script: narration and action/wait cues only](participant-tutorial-reading-script.md).
 - [Audio generation, selection, and local file workflow](participant-tutorial-audio-workflow.md).
 
 Confirmed sequence: equipment setup → head-tracker calibration → holding demonstration → gun-tracker calibration → interface familiarization. The user specified upright posture and forward gaze at a dot for the head tracker, and stock-to-shoulder holding with sighted aim at a dot for the gun tracker. Main sections 4 onward retain their numbers. Detailed physical capture settings and acceptance criteria remain to be confirmed.

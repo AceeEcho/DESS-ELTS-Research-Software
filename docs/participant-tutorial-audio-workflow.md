@@ -2,15 +2,28 @@
 
 User-agreed workflow, October 30, 2026. Follow this for future participant tutorial narration work.
 
-Current stage: finish writing the remaining tutorial before generating additional audio. Do not generate narration while drafting new parts. Resume generation only when the user requests the audio stage. Preserve the already selected Part 1 files.
+Current stage, November 2, 2026: drafting now covers Parts 1–11. The user requested audio for Parts 2 and 3 only: the selected takes are now downloaded and linked in the script. Preserve the selected Part 1 files. Do not generate Parts 4–11 until requested.
 
 ## Source files and delivery
 
 - Read `participant-tutorial-script-outline.md` for context. Keep detailed script edits in the working script; revise the outline only when the user requests or authorizes a sequence change, as with the head-tracker, holding, and gun-tracker sequence.
 - Edit narration and visual directions in `participant-tutorial-script.md`.
+- Keep [the reading script](participant-tutorial-reading-script.md) synchronized using the process below. It contains narration and ordinary action/wait cues, without scene-building directions or audio-production details.
 - Keep exact generation prompts and generation references in the matching voice-prompts document. Part 1 uses `participant-tutorial-part-1-voice-prompts.md`.
 - Use Eryn - Genuine, Friendly and Natural, voice ID `kdnRe2koJdOK4Ovxn2DI`, and `eleven_v4`, unless the user changes these choices. Confirm voice identity through the voice tool when needed; do not substitute another Eryn variant.
 - Keep delivery consistent across chunks. Current prompts use `[warmly] [calmly]`, natural punctuation, and occasional `[short pause]` tags. Preserve the spoken wording unless a revision is requested. Do not put screen directions or production notes into speech prompts.
+
+## Keep the readable and detailed scripts together
+
+The detailed script is the source of truth for both versions. Every numbered chunk has one **Spoken** line and one concise **Action / wait** line. Edit those lines there, keeping the concise cue consistent with the detailed transition, then run from the repository root:
+
+```text
+py -3 tools/build/export_participant_tutorial.py
+```
+
+The export updates `docs/participant-tutorial-reading-script.md` with only headings, narration, and human-readable cues. It does not generate audio or run the tutorial. Do not edit the exported copy separately; apply requested wording changes to the detailed script and regenerate it in the same change.
+
+Verify synchronization with `py -3 tools/build/export_participant_tutorial.py --check`. Repository documentation checks also reject an out-of-date reading script. On systems without the Windows Python launcher, use `python` instead of `py -3`. Keep the script, outline, audio mapping, and reading copy aligned when adding, removing, or renumbering chunks.
 
 ## Generate and select
 
@@ -59,3 +72,5 @@ When handing off to an implementation agent, the script's Audio link is the auth
 ## Current state
 
 Earlier test generations used four takes per initial node and single takes for welcome revisions. They remain historical tests; this two-take policy applies to future generations. On October 30, 2026, the user selected the top take for Parts 1, 1.1, and 1.2. The latest warm welcome and first takes of the other two chunks are downloaded in `participant-tutorial/audio/part-01/`, linked from the script, and identified in the Part 1 voice-prompts document. Do not regenerate existing clips merely to normalize their historical take counts.
+
+November 2, 2026: Parts 2 and 3 now have per-chunk take/session/node mappings in `participant-tutorial-part-2-voice-prompts.md` and `participant-tutorial-part-3-voice-prompts.md`. The user selected Bottom, Bottom, Bottom, Bottom, Top, Top, Bottom in chunk order 2, 2.1, 2.2, 3, 3.1, 3.2, 3.3. These seven files are downloaded, verified, and linked from the script and the corresponding voice-prompts documents.

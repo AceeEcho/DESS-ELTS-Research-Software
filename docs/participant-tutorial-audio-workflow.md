@@ -2,7 +2,7 @@
 
 User-agreed workflow, October 30, 2026. Follow this for future participant tutorial narration work.
 
-Current stage, November 2, 2026: drafting covers Parts 1–11. Parts 1–3 have selected audio files downloaded and linked in the script. Two takes per chunk have now been requested for Parts 4 and 5, pending Top/Bottom selection. Do not generate Parts 6–11 until requested. Keep the reading script synchronized with the detailed script using the process below.
+Current stage, November 2, 2026: drafting covers Parts 1–11. Parts 1–5 have selected audio saved and linked in the script. Part 5.2 uses the user-supplied replacement MP3; the other Part 4/5 chunks use Bottom takes. Do not generate Parts 6–11 until requested. Keep the reading script synchronized with the detailed script using the process below.
 
 ## Source files and delivery
 
@@ -75,4 +75,4 @@ Earlier test generations used four takes per initial node and single takes for w
 
 November 2, 2026: Parts 2 and 3 now have per-chunk take/session/node mappings in `participant-tutorial-part-2-voice-prompts.md` and `participant-tutorial-part-3-voice-prompts.md`. The user selected Bottom, Bottom, Bottom, Bottom, Top, Top, Bottom in chunk order 2, 2.1, 2.2, 3, 3.1, 3.2, 3.3. These seven files are downloaded, verified, and linked from the script and the corresponding voice-prompts documents.
 
-November 2, 2026: six chunks in Parts 4 and 5 have two requested takes each. Their exact prompts, node IDs, generation IDs, and Top/Bottom session mappings are in participant-tutorial-part-4-voice-prompts.md and participant-tutorial-part-5-voice-prompts.md. Selection and download are pending.
+November 2, 2026: six chunks in Parts 4 and 5 have two requested takes each. Their exact prompts, node IDs, generation IDs, and Top/Bottom session mappings are in participant-tutorial-part-4-voice-prompts.md and participant-tutorial-part-5-voice-prompts.md. Selections are saved: Bottom for 4, 4.1, 4.2, 5, and 5.1; user-supplied New tts node.mp3 for 5.2. The six files are verified and linked from the script and voice-prompts documents.

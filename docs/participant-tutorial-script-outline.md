@@ -4,7 +4,7 @@ Status: initial outline October 19, 2026; revised November 2, 2026 with detailed
 
 ## Voice and delivery
 
-Narration source: ElevenLabs, Eryn - Genuine, Friendly and Natural, using eleven_v4. Follow the working script and audio workflow linked below. Selected audio is saved for Parts 1–3; Parts 4 and 5 now have two requested takes per chunk pending selection. Parts 6–11 await an audio request.
+Narration source: ElevenLabs, Eryn - Genuine, Friendly and Natural, using eleven_v4. Follow the working script and audio workflow linked below. Selected audio is saved for Parts 1–5, including the user-supplied replacement for Part 5.2. Parts 6–11 await an audio request.
 
 - Use one consistent voice and a calm, clear delivery.
 - Generate short clips for individual steps rather than one uninterrupted video.

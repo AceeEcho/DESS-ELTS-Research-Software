@@ -5,7 +5,7 @@ Voice: Eryn - Genuine, Friendly and Natural (`kdnRe2koJdOK4Ovxn2DI`).
 Model: `eleven_v4`.
 Flow: `xup5jSg7uW0BxA3jqKBp`.
 
-Exactly two takes were submitted per chunk. The generation views track completion and playback. These are generation requests, not an independent listening review. No take is selected or downloaded yet.
+Exactly two takes were submitted per chunk. The user selected Bottom for every chunk in this section. Selected MP3s are saved locally and verified for format and duration; no new speech was generated for this selection.
 
 Top means take 1; Bottom means take 2, including in a paged player. Follow [the audio workflow](participant-tutorial-audio-workflow.md) to download only the user's selected take and link its local file in the detailed script.
 
@@ -18,8 +18,8 @@ Prompts preserve the script's spoken wording. Delivery uses `[warmly] [calmly]` 
 ```
 
 Speech node: `Y5ZcATD9NOjQN0EwKKGK`.
-Planned file: `docs/participant-tutorial/audio/part-04/04-interface-and-targets` plus the source extension.
-Selection: Pending.
+Saved file: [04-interface-and-targets.mp3](participant-tutorial/audio/part-04/04-interface-and-targets.mp3). Repository path: `docs/participant-tutorial/audio/part-04/04-interface-and-targets.mp3`.
+Selection: **Bottom (take 2)**. Selected generation: `RXRBN5JQBrJSzV2jO9Xs`. Verified duration: 4.88 seconds.
 
 | Position | Generation ID | Session ID |
 | --- | --- | --- |
@@ -33,8 +33,8 @@ Selection: Pending.
 ```
 
 Speech node: `Qh4Ygc4tdYiN3oxjVgod`.
-Planned file: `docs/participant-tutorial/audio/part-04/04-01-try-aiming` plus the source extension.
-Selection: Pending.
+Saved file: [04-01-try-aiming.mp3](participant-tutorial/audio/part-04/04-01-try-aiming.mp3). Repository path: `docs/participant-tutorial/audio/part-04/04-01-try-aiming.mp3`.
+Selection: **Bottom (take 2)**. Selected generation: `3UIJlazhPPoZX5hw7f8u`. Verified duration: 6 seconds.
 
 | Position | Generation ID | Session ID |
 | --- | --- | --- |
@@ -48,8 +48,8 @@ Selection: Pending.
 ```
 
 Speech node: `5Sybsfixp4Df4ymxD9Sx`.
-Planned file: `docs/participant-tutorial/audio/part-04/04-02-controls-demonstration` plus the source extension.
-Selection: Pending.
+Saved file: [04-02-controls-demonstration.mp3](participant-tutorial/audio/part-04/04-02-controls-demonstration.mp3). Repository path: `docs/participant-tutorial/audio/part-04/04-02-controls-demonstration.mp3`.
+Selection: **Bottom (take 2)**. Selected generation: `R0xaloeThEmct755un5o`. Verified duration: 7.28 seconds.
 
 | Position | Generation ID | Session ID |
 | --- | --- | --- |

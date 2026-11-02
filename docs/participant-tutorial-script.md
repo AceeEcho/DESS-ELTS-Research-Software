@@ -6,7 +6,7 @@ Based on `participant-tutorial-script-outline.md`. Detailed narration and visual
 
 Audio generation and selection follow [the participant tutorial audio workflow](participant-tutorial-audio-workflow.md): two takes per node, identified as Top and Bottom; download the user's chosen take and link it directly beneath the matching spoken chunk.
 
-Current audio workflow: Parts 1–3 have selected, downloaded audio linked below. Parts 2 and 3 selections were confirmed on November 2, 2026. Parts 4 and 5 have two requested takes per chunk pending selection; Parts 6–11 remain deferred until requested.
+Current audio workflow: Parts 1–5 have selected, saved audio linked below. Part 5.2 uses the user-supplied replacement MP3. Parts 6–11 remain deferred until requested.
 
 A [reading script](participant-tutorial-reading-script.md) contains only the narration and concise action/wait cues. Update the Spoken and Action / wait lines here, then regenerate that copy; see the audio workflow for the sync command.
 
@@ -221,7 +221,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [CONTINUE AUTOMATICALLY] Play the aiming instruction.
 
-**Audio:** Two takes requested — pending Top/Bottom selection. See [Part 4 takes and prompt](participant-tutorial-part-4-voice-prompts.md#part-4). Planned folder: `participant-tutorial/audio/part-04/`; filename stem: `04-interface-and-targets`. No local audio file selected yet.
+**Audio:** Selected — Bottom (take 2). [04-interface-and-targets.mp3](participant-tutorial/audio/part-04/04-interface-and-targets.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -237,7 +237,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — OPERATOR CONTINUE] Let the participant try aiming and confirm they understand.
 
-**Audio:** Two takes requested — pending Top/Bottom selection. See [Part 4.1 takes and prompt](participant-tutorial-part-4-voice-prompts.md#part-41). Planned folder: `participant-tutorial/audio/part-04/`; filename stem: `04-01-try-aiming`. No local audio file selected yet.
+**Audio:** Selected — Bottom (take 2). [04-01-try-aiming.mp3](participant-tutorial/audio/part-04/04-01-try-aiming.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -253,7 +253,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — OPERATOR CONTINUE] Demonstrate firing, let the participant try it, then demonstrate reloading and let them try it. Continue when both actions are understood.
 
-**Audio:** Two takes requested — pending Top/Bottom selection. See [Part 4.2 takes and prompt](participant-tutorial-part-4-voice-prompts.md#part-42). Planned folder: `participant-tutorial/audio/part-04/`; filename stem: `04-02-controls-demonstration`. No local audio file selected yet.
+**Audio:** Selected — Bottom (take 2). [04-02-controls-demonstration.mp3](participant-tutorial/audio/part-04/04-02-controls-demonstration.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -274,7 +274,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — OPERATOR START] Confirm readiness, then start practice.
 
-**Audio:** Two takes requested — pending Top/Bottom selection. See [Part 5 takes and prompt](participant-tutorial-part-5-voice-prompts.md#part-5). Planned folder: `participant-tutorial/audio/part-05/`; filename stem: `05-practice-introduction`. No local audio file selected yet.
+**Audio:** Selected — Bottom (take 2). [05-practice-introduction.mp3](participant-tutorial/audio/part-05/05-practice-introduction.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -290,7 +290,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — PRACTICE ENDS] Let practice run until its timer finishes or the operator ends it. Help or repeat demonstrations as needed.
 
-**Audio:** Two takes requested — pending Top/Bottom selection. See [Part 5.1 takes and prompt](participant-tutorial-part-5-voice-prompts.md#part-51). Planned folder: `participant-tutorial/audio/part-05/`; filename stem: `05-01-practice-running`. No local audio file selected yet.
+**Audio:** Selected — Bottom (take 2). [05-01-practice-running.mp3](participant-tutorial/audio/part-05/05-01-practice-running.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -307,7 +307,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — OPERATOR CONTINUE] Answer questions and confirm readiness for the ELTS demonstration.
 
-**Audio:** Two takes requested — pending Top/Bottom selection. See [Part 5.2 takes and prompt](participant-tutorial-part-5-voice-prompts.md#part-52). Planned folder: `participant-tutorial/audio/part-05/`; filename stem: `05-02-practice-complete`. No local audio file selected yet.
+**Audio:** Selected — user-supplied replacement. [05-02-practice-complete.mp3](participant-tutorial/audio/part-05/05-02-practice-complete.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -573,4 +573,4 @@ Illustrations must match the actual equipment selected for the session. Use veri
 - Play one narration clip at a time. On a phase change, cancel stale audio and pending visual callbacks so an old “begins now” or “ready to start” prompt cannot play in the wrong phase.
 - Replay repeats the selected narration and its explanatory visuals only. It never rearms a scenario, restarts a timer, opens a duplicate form submission, or activates ELTS again.
 - Keep remaining durations, scenario order, and ordinal labels bound to the current session. Never fabricate a completed phase to keep the script moving.
-- Parts 1–3 have selected audio files linked to their spoken chunks. Parts 4 and 5 have two requested takes per chunk awaiting selection; Parts 6–11 remain text plans with proposed filenames and no generated audio. These documents do not implement runtime behavior. Use the documented two-take selection workflow for further audio production when requested.
+- Parts 1–5 have selected audio files linked to their spoken chunks; Parts 6–11 remain text plans with proposed filenames and no generated audio. These documents do not implement runtime behavior. Use the documented two-take selection workflow for further audio production when requested.

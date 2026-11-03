@@ -2,7 +2,7 @@
 
 User-agreed workflow, October 30, 2026. Follow this for future participant tutorial narration work.
 
-Current stage, November 3, 2026: Parts 1–9 have selected audio except Part 9.1. Parts 7 and 9 use the supplied replacement MP3s. Parts 10–11 have two takes per chunk awaiting selection.
+Current stage, November 3, 2026: Parts 1–9 have selected audio. Parts 7, 9, and 9.1 use the supplied replacement MP3s. Parts 10–11 have two takes per chunk awaiting selection.
 
 ## Source files and delivery
 

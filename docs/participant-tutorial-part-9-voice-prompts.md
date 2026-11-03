@@ -32,7 +32,9 @@ Saved audio: [09-ready-for-first-scenario.mp3](participant-tutorial/audio/part-0
 
 Speech node: `yepfE6CulL7BO1dNwhl4`.
 Planned file stem: `docs/participant-tutorial/audio/part-09/09-01-start-prepared-scenario`.
-Selection: Pending.
+Selection: **user-supplied replacement**. Source attachment: New tts node (3).mp3. Duration: 4.08 seconds. The generated takes below are the original candidates.
+
+Saved audio: [09-01-start-prepared-scenario.mp3](participant-tutorial/audio/part-09/09-01-start-prepared-scenario.mp3).
 
 | Position | Generation ID | Session ID |
 | --- | --- | --- |

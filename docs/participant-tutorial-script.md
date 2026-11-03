@@ -6,7 +6,7 @@ Based on `participant-tutorial-script-outline.md`. Detailed narration and visual
 
 Audio generation and selection follow [the participant tutorial audio workflow](participant-tutorial-audio-workflow.md): two takes per node, identified as Top and Bottom; download the user's chosen take and link it directly beneath the matching spoken chunk.
 
-Current audio workflow: Parts 1–9 have selected audio except Part 9.1, which awaits a take selection. Parts 10–11 have two takes per chunk awaiting selection.
+Current audio workflow: Parts 1–9 have selected audio. Parts 10–11 have two takes per chunk awaiting selection.
 
 A [reading script](participant-tutorial-reading-script.md) contains only the narration and concise action/wait cues. Update the Spoken and Action / wait lines here, then regenerate that copy; see the audio workflow for the sync command.
 
@@ -440,7 +440,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — PARTICIPANT START] Start only on the actual participant start action. Let the scenario run. After scenarios 1–3 go to Part 10; after scenario 4 go to Part 11. Reuse this start prompt for each newly armed scenario.
 
-**Audio:** Two takes requested, pending selection. [Part 9.1 voice prompts](participant-tutorial-part-9-voice-prompts.md#part-91). Planned folder: `participant-tutorial/audio/part-09/`; filename stem: `09-01-start-prepared-scenario`.
+**Audio:** Selected — user-supplied replacement. [09-01-start-prepared-scenario.mp3](participant-tutorial/audio/part-09/09-01-start-prepared-scenario.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -573,4 +573,4 @@ Illustrations must match the actual equipment selected for the session. Use veri
 - Play one narration clip at a time. On a phase change, cancel stale audio and pending visual callbacks so an old “begins now” or “ready to start” prompt cannot play in the wrong phase.
 - Replay repeats the selected narration and its explanatory visuals only. It never rearms a scenario, restarts a timer, opens a duplicate form submission, or activates ELTS again.
 - Keep remaining durations, scenario order, and ordinal labels bound to the current session. Never fabricate a completed phase to keep the script moving.
-- Parts 1–9 have selected audio linked to their spoken chunks except Part 9.1. Parts 10–11 have two takes per chunk awaiting selection. These documents do not implement runtime behavior. Use the documented two-take selection workflow for further audio production when requested.
+- Parts 1–9 have selected audio linked to their spoken chunks. Parts 10–11 have two takes per chunk awaiting selection. These documents do not implement runtime behavior. Use the documented two-take selection workflow for further audio production when requested.

@@ -132,7 +132,7 @@ This copy is kept in sync with the [detailed script](participant-tutorial-script
 
 ## Part 9 — Transition to the study
 
-“The tutorial is complete. Let the operator know when you're ready for the first scenario.”
+“With that, the tutorial is complete. Let the operator know when you're ready for the first scenario.”
 
 **Cue:** [WAIT — OPERATOR PREPARE/ARM] Confirm readiness, then prepare and arm the first scenario.
 

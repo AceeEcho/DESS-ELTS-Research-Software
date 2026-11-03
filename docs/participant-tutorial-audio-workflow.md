@@ -2,7 +2,7 @@
 
 User-agreed workflow, October 30, 2026. Follow this for future participant tutorial narration work.
 
-Current stage, November 2, 2026: drafting covers Parts 1–11. Parts 1–5 have selected audio saved and linked in the script. Part 5.2 uses the user-supplied replacement MP3; the other Part 4/5 chunks use Bottom takes. Do not generate Parts 6–11 until requested. Keep the reading script synchronized with the detailed script using the process below.
+Current stage, November 3, 2026: Parts 1–9 have selected audio except Part 9.1. Parts 7 and 9 use the supplied replacement MP3s. Parts 10–11 have two takes per chunk awaiting selection.
 
 ## Source files and delivery
 

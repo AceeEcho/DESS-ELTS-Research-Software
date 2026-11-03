@@ -6,7 +6,7 @@ Based on `participant-tutorial-script-outline.md`. Detailed narration and visual
 
 Audio generation and selection follow [the participant tutorial audio workflow](participant-tutorial-audio-workflow.md): two takes per node, identified as Top and Bottom; download the user's chosen take and link it directly beneath the matching spoken chunk.
 
-Current audio workflow: Parts 1–5 have selected, saved audio linked below. Part 5.2 uses the user-supplied replacement MP3. Parts 6–11 remain deferred until requested.
+Current audio workflow: Parts 1–9 have selected audio except Part 9.1, which awaits a take selection. Parts 10–11 have two takes per chunk awaiting selection.
 
 A [reading script](participant-tutorial-reading-script.md) contains only the narration and concise action/wait cues. Update the Spoken and Action / wait lines here, then regenerate that copy; see the audio workflow for the sync command.
 
@@ -327,7 +327,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [ACTION — ELTS DEMONSTRATION] With the operator ready and the downward arrow visible, cue one approved ELTS test at the end of the announcement. Wait for the demonstration to end, then play Part 7. Replaying narration does not repeat the test.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-06/`; filename stem: `06-elts-introduction-and-test`.
+**Audio:** Selected — Top (take 1). [06-elts-introduction-and-test.mp3](participant-tutorial/audio/part-06/06-elts-introduction-and-test.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -352,7 +352,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — OPERATOR CONTINUE] Answer questions before the study overview.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-07/`; filename stem: `07-demonstration-complete`.
+**Audio:** Selected — user-supplied replacement. [07-demonstration-complete.mp3](participant-tutorial/audio/part-07/07-demonstration-complete.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -372,7 +372,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [CONTINUE AUTOMATICALLY] Explain the scenario time limits.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-08/`; filename stem: `08-four-scenarios`.
+**Audio:** Selected — Bottom (take 2). [08-four-scenarios.mp3](participant-tutorial/audio/part-08/08-four-scenarios.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -388,7 +388,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [CONTINUE AUTOMATICALLY] Explain the breaks.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-08/`; filename stem: `08-01-scenario-time-limits`.
+**Audio:** Selected — Bottom (take 2). [08-01-scenario-time-limits.mp3](participant-tutorial/audio/part-08/08-01-scenario-time-limits.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -404,7 +404,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [CONTINUE AUTOMATICALLY] Move to the first-scenario readiness message.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-08/`; filename stem: `08-02-break-overview`.
+**Audio:** Selected — Bottom (take 2). [08-02-break-overview.mp3](participant-tutorial/audio/part-08/08-02-break-overview.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -419,11 +419,11 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 ## Part 9 — Transition to the study
 
-**Spoken:** “The tutorial is complete. Let the operator know when you're ready for the first scenario.”
+**Spoken:** “With that, the tutorial is complete. Let the operator know when you're ready for the first scenario.”
 
 **Action / wait:** [WAIT — OPERATOR PREPARE/ARM] Confirm readiness, then prepare and arm the first scenario.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-09/`; filename stem: `09-ready-for-first-scenario`.
+**Audio:** Selected — user-supplied replacement. [09-ready-for-first-scenario.mp3](participant-tutorial/audio/part-09/09-ready-for-first-scenario.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -440,7 +440,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — PARTICIPANT START] Start only on the actual participant start action. Let the scenario run. After scenarios 1–3 go to Part 10; after scenario 4 go to Part 11. Reuse this start prompt for each newly armed scenario.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-09/`; filename stem: `09-01-start-prepared-scenario`.
+**Audio:** Two takes requested, pending selection. [Part 9.1 voice prompts](participant-tutorial-part-9-voice-prompts.md#part-91). Planned folder: `participant-tutorial/audio/part-09/`; filename stem: `09-01-start-prepared-scenario`.
 
 **Screen / animation:**
 
@@ -462,7 +462,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — OPERATOR START BREAK] Wait for saving to finish, then start the break.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-scenario-complete`.
+**Audio:** Two takes requested, pending selection. [Part 10 voice prompts](participant-tutorial-part-10-voice-prompts.md#part-10). Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-scenario-complete`.
 
 **Screen / animation:**
 
@@ -478,7 +478,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — BREAK ENDS] Show the actual two-minute countdown. At break end, automatically play Part 10.2.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-01-break-running`.
+**Audio:** Two takes requested, pending selection. [Part 10.1 voice prompts](participant-tutorial-part-10-voice-prompts.md#part-101). Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-01-break-running`.
 
 **Screen / animation:**
 
@@ -495,7 +495,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — OPERATOR PREPARE/ARM] Confirm readiness and arm the next scenario, then return to Part 9.1. The break ending does not start a scenario.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-02-ready-for-next-scenario`.
+**Audio:** Two takes requested, pending selection. [Part 10.2 voice prompts](participant-tutorial-part-10-voice-prompts.md#part-102). Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-02-ready-for-next-scenario`.
 
 **Screen / animation:** Replace the countdown with “Break complete” and “Let the operator know when you're ready.” Keep the view still and the next scenario timer stopped. When the participant is ready, the operator prepares and arms the next assigned scenario. Then show Part 9.1's real start instruction with the correct ordinal number.
 
@@ -509,7 +509,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — OPERATOR START FINAL BREAK] After the final scenario is saved, start the final break.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-scenarios-complete`.
+**Audio:** Two takes requested, pending selection. [Part 11 voice prompts](participant-tutorial-part-11-voice-prompts.md#part-11). Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-scenarios-complete`.
 
 **Screen / animation:**
 
@@ -525,7 +525,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — FINAL BREAK ENDS] Show the actual two-minute countdown, then automatically play the form instructions.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-01-final-break-running`.
+**Audio:** Two takes requested, pending selection. [Part 11.1 voice prompts](participant-tutorial-part-11-voice-prompts.md#part-111). Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-01-final-break-running`.
 
 **Screen / animation:**
 
@@ -541,7 +541,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — FORM COMPLETION] Provide the form and confirm successful completion, or wait for the real submission confirmation.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-02-post-study-form`.
+**Audio:** Two takes requested, pending selection. [Part 11.2 voice prompts](participant-tutorial-part-11-voice-prompts.md#part-112). Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-02-post-study-form`.
 
 **Screen / animation:**
 
@@ -558,7 +558,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [END] Hold the thank-you screen. The operator ends or resets the tutorial; do not restart automatically.
 
-**Audio:** Not generated — deferred until writing is complete. Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-03-thank-you`.
+**Audio:** Two takes requested, pending selection. [Part 11.3 voice prompts](participant-tutorial-part-11-voice-prompts.md#part-113). Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-03-thank-you`.
 
 **Screen / animation:** Fade in a large “Thank you” heading with “ELTS Project Research Study” underneath. Keep the charcoal background and still layout. Show no new scenario, restart countdown, or promotional content. Hold the final screen after narration until the operator ends or resets the tutorial for the next participant.
 
@@ -573,4 +573,4 @@ Illustrations must match the actual equipment selected for the session. Use veri
 - Play one narration clip at a time. On a phase change, cancel stale audio and pending visual callbacks so an old “begins now” or “ready to start” prompt cannot play in the wrong phase.
 - Replay repeats the selected narration and its explanatory visuals only. It never rearms a scenario, restarts a timer, opens a duplicate form submission, or activates ELTS again.
 - Keep remaining durations, scenario order, and ordinal labels bound to the current session. Never fabricate a completed phase to keep the script moving.
-- Parts 1–5 have selected audio files linked to their spoken chunks; Parts 6–11 remain text plans with proposed filenames and no generated audio. These documents do not implement runtime behavior. Use the documented two-take selection workflow for further audio production when requested.
+- Parts 1–9 have selected audio linked to their spoken chunks except Part 9.1. Parts 10–11 have two takes per chunk awaiting selection. These documents do not implement runtime behavior. Use the documented two-take selection workflow for further audio production when requested.

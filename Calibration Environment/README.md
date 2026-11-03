@@ -70,12 +70,21 @@ changes the recovered object pose while retaining the observed tracker pose.
 
 ## Connect VIVE / SteamVR trackers
 
-1. Run **SETUP-LIVE-TRACKING.cmd** once. It installs the pinned OpenVR reader into
-   this folder's own `.venv`. Installation needs internet access. Restart the
-   calibration launcher afterward so it uses that environment.
-2. Start SteamVR and pair/power the trackers. SteamVR must already be configured
-   to report their poses, including any required tracker-only runtime setup.
-   This app does not install SteamVR, modify its drivers, or change its room setup.
+1. Run **SETUP-TRACKING.cmd** in the project root on each new Windows x64 PC.
+   **SETUP-LIVE-TRACKING.cmd** in this folder runs the same complete setup.
+   Setup installs missing Python, creates this folder's `.venv`, installs the
+   pinned OpenVR reader, and installs Steam if missing. It opens the SteamVR
+   installer if required; finish sign-in and the download, then press Enter in
+   the setup window. Close SteamVR when asked so setup can apply its settings.
+   Internet access is required for missing packages. Unity and Git are not needed.
+2. Setup registers the runtime with OpenVR and enables the null headset driver
+   alongside real tracking. It backs up existing OpenVR path registration before
+   changing it and backs up `steamvr.vrsettings` before merging only these overrides:
+   `steamvr.requireHmd=false`, `steamvr.forcedDriver="null"`,
+   `steamvr.activateMultipleDrivers=true`, and `driver_null.enable=true`.
+   Runtime default files and existing pairing/room settings are preserved.
+   Start SteamVR, power the base station, connect the dongles, and pair the trackers.
+   Restart the calibration launcher afterward so it uses the installed environment.
 3. In **Tracking**, select **Live SteamVR trackers**. The device list reports
    serial numbers, device type and pose validity. Connection failures include
    the runtime error; use **Connect / retry SteamVR** after correcting it.
@@ -140,6 +149,24 @@ This is guided preview alignment, not measured tracking accuracy or physical
 acceptance. Distance, screen geometry and eye/mount translations still require
 measurement. It assumes SteamVR's standing-frame up axis is correct. Editable
 capture and gesture thresholds are in `web/head-calibration.js` (`DIRECTION_LIMITS`).
+
+### Tracking setup troubleshooting
+
+- **Check without installing or editing settings:** run `SETUP-TRACKING.cmd -Check`.
+- **Custom installations:** use `SETUP-TRACKING.cmd -SteamPath "D:\Steam"`
+  or add `-SteamVRPath "E:\SteamLibrary\steamapps\common\SteamVR"`.
+  Normal Steam library folders and OpenVR's registered paths are detected automatically.
+- **Setup interrupted:** rerun the same script. Missing dependencies are installed,
+  unrelated settings are preserved, and correct settings are not rewritten.
+- **Log:** `diagnostics/tracking-setup.log` in the project root records the latest
+  installation attempt. The read-only check does not replace this log.
+- **Existing VR headset configuration:** this setup intentionally selects the null
+  headset for tracker-only work. Original settings are saved beside
+  `steamvr.vrsettings` with a `.before-elts-tracking-...bak` suffix. To restore them,
+  close SteamVR and copy the desired backup over `steamvr.vrsettings`. If setup
+  changed OpenVR path registration, its original file has a matching backup too.
+- **New PC/room:** software setup does not pair hardware or transfer measured room
+  calibration. Pair trackers in SteamVR and check/recreate your profile on that PC.
 
 The reader uses OpenVR **standing-origin** poses with **zero added prediction**.
 It respects connected/valid/Running_OK status, checks rigid matrices, timestamps

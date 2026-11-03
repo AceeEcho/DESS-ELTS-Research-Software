@@ -1,5 +1,10 @@
 param([switch]$SetupTracking, [switch]$StopApp, [switch]$NoBrowser, [int]$Port = 8766)
 $ErrorActionPreference = 'Stop'
+if ($SetupTracking) {
+    & (Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe') -NoProfile -ExecutionPolicy Bypass `
+        -File (Join-Path $PSScriptRoot '../scripts/setup-tracking.ps1')
+    exit $LASTEXITCODE
+}
 Set-Location -LiteralPath $PSScriptRoot
 $localPython = Join-Path $PSScriptRoot '.venv\Scripts\python.exe'
 $pythonCommand = $null
@@ -20,17 +25,6 @@ if (Test-Path -LiteralPath $localPython) {
 }
 & $pythonCommand @pythonArguments -c 'import sys; assert sys.version_info >= (3, 10), "Python 3.10 or later is required"'
 if ($LASTEXITCODE -ne 0) { exit 1 }
-
-if ($SetupTracking) {
-    if (-not (Test-Path -LiteralPath $localPython)) {
-        & $pythonCommand @pythonArguments -m venv (Join-Path $PSScriptRoot '.venv')
-        if ($LASTEXITCODE -ne 0) { exit 1 }
-    }
-    & $localPython -m pip install -r (Join-Path $PSScriptRoot 'requirements-live.txt')
-    if ($LASTEXITCODE -ne 0) { exit 1 }
-    Write-Host 'Live tracker support installed. Start SteamVR, stop this dashboard if open, then start it again.'
-    exit 0
-}
 
 $serverArguments = @((Join-Path $PSScriptRoot 'server.py'), '--port', "$Port")
 if ($StopApp) { $serverArguments += '--stop' }

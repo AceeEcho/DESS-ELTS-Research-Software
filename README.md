@@ -72,6 +72,12 @@ If a step fails, keep the error window open and see [setup troubleshooting](docs
 
 ## Separate calibration workspace
 
+On a new tracking PC, first double-click **SETUP-TRACKING.cmd**. It installs the
+tracking Python environment and OpenVR reader, installs Steam if missing, opens
+SteamVR installation when needed, and configures headset-free tracking with
+backups of existing settings. Complete Steam sign-in/install prompts and close
+SteamVR when asked. This tracking-only setup does not require Unity or Git.
+
 Double-click **START-CALIBRATION.cmd** to open the independent tracker and room
 setup dashboard in **Calibration Environment/**. It includes screen/base-station
 geometry, head and weapon mounting offsets, a navigable 3D overview, forward

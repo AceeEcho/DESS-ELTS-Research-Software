@@ -1,0 +1,111 @@
+{
+  "status": "CAD checks only; physical fit and electrical operation untested",
+  "revision": "B_Fixed_Base",
+  "tracker_step_sha256": "d6a92f3d5a04dfa01b1e8b80da74cb02b7c250a603ebcba302438810fcca73df",
+  "parameters_sha256": "3e4237ed273fc4e26b7f0840b1c537e0cde12f61df3a6a63af8a2c835eed27fa",
+  "printed_parts": {
+    "body": {
+      "valid_solid": true,
+      "solids": 1,
+      "tracker_overlap_mm3": 0.0,
+      "mesh": {
+        "open_or_nonmanifold_edges": 0,
+        "connected_regions": 1,
+        "volume_mm3": 13271.982795941298,
+        "triangles": 5476,
+        "minimum_z_mm": 0.0
+      }
+    },
+    "insert_front": {
+      "valid_solid": true,
+      "solids": 1,
+      "tracker_overlap_mm3": 0.0,
+      "mesh": {
+        "open_or_nonmanifold_edges": 0,
+        "connected_regions": 1,
+        "volume_mm3": 119.27459212199756,
+        "triangles": 2532,
+        "minimum_z_mm": 0.0
+      }
+    },
+    "insert_rear": {
+      "valid_solid": true,
+      "solids": 1,
+      "tracker_overlap_mm3": 0.0,
+      "mesh": {
+        "open_or_nonmanifold_edges": 0,
+        "connected_regions": 1,
+        "volume_mm3": 119.27453725143957,
+        "triangles": 2532,
+        "minimum_z_mm": 0.0
+      }
+    },
+    "wire_cover": {
+      "valid_solid": true,
+      "solids": 1,
+      "tracker_overlap_mm3": 0.0,
+      "mesh": {
+        "open_or_nonmanifold_edges": 0,
+        "connected_regions": 1,
+        "volume_mm3": 2207.8655092921117,
+        "triangles": 2478,
+        "minimum_z_mm": 0.0
+      }
+    }
+  },
+  "pair_overlaps_mm3": {
+    "body/insert_front": 0.0,
+    "body/insert_rear": 0.0,
+    "body/wire_cover": 0.0,
+    "insert_front/insert_rear": 0.0,
+    "insert_front/wire_cover": 0.0,
+    "insert_rear/wire_cover": 0.0
+  },
+  "contact_checks": {
+    "pin_2_ground": {
+      "free_spring_overlap_mm3": 0.5576036874905381,
+      "overlap_outside_intended_contact_mm3": 0.0,
+      "seated_fixed_base_face_height_mm": 2.515,
+      "maximum_fixed_base_face_height_mm": 2.595,
+      "solder_barrel_accessible_length_mm": 1.285,
+      "unused_plunger_lowest_z_mm": -3.485,
+      "contact_window_diameter_mm": 1.6
+    },
+    "pin_4_trigger": {
+      "free_spring_overlap_mm3": 0.5576036874905372,
+      "overlap_outside_intended_contact_mm3": 0.0,
+      "seated_fixed_base_face_height_mm": 2.515,
+      "maximum_fixed_base_face_height_mm": 2.595,
+      "solder_barrel_accessible_length_mm": 1.285,
+      "unused_plunger_lowest_z_mm": -3.485,
+      "contact_window_diameter_mm": 1.6
+    }
+  },
+  "mount_fit_coupon": {
+    "open_or_nonmanifold_edges": 0,
+    "connected_regions": 1,
+    "volume_mm3": 791.6874627912744,
+    "triangles": 2544,
+    "minimum_z_mm": 0.0
+  },
+  "fasteners": {
+    "mount_screw_exposed_thread_mm": 4.5,
+    "mount_socket_head_recess_below_body_mm": 0.4250000000000007,
+    "mount_screw_length_mm": 15.875,
+    "reserved_additional_mount_thickness_mm": 3.175,
+    "body_bearing_z_mm": -8.2,
+    "additional_mount_piece_included": false,
+    "cover_screws": "M3 x 16 socket head, from Senyard SYD-511 kit",
+    "cover_nut_engagement_mm": 2.4,
+    "cover_screw_tip_z_mm": -1.0,
+    "cover_screw_protrusion_past_nut_mm": 1.0000000000000004,
+    "rigid_envelopes_clear": true
+  },
+  "assembly_step_solid_count": 11,
+  "limits": [
+    "Nominal seller and kit hardware dimensions; received parts unmeasured",
+    "Small contact windows and lips need slicer inspection and an insert fit check",
+    "Tracker spring force, print strength, electrical contact and physical alignment untested"
+  ],
+  "passed": true
+}

@@ -15,6 +15,14 @@ the revision as unversioned. Setup preserves existing local settings and recordi
 Internet access and permission to install the missing tools are needed on first use.
 The required Editor remains **Unity 6000.3.23f1 LTS**.
 
+For the separate VIVE tracker calibration workspace, run **SETUP-TRACKING.cmd**
+once on each new PC, then **START-CALIBRATION.cmd**. Tracking setup installs its
+own Python/OpenVR environment, helps install Steam/SteamVR, and configures the
+headset-free runtime automatically with settings backups. It does not require the
+Unity setup above. Complete Steam sign-in/install prompts and physical pairing;
+recheck alignment on the new machine. See the
+[tracking setup guide](../../Calibration%20Environment/README.md#connect-vive--steamvr-trackers).
+
 The rest of this guide covers the optional GitHub Desktop workflow for editing
 and synchronizing source changes between computers.
 

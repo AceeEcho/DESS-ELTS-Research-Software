@@ -1,0 +1,22 @@
+{
+  "mount_frame": {
+    "volume_mm3": 6782.355576196288,
+    "print_supports": "Inspect slicer; horizontal clamp holes may need local support"
+  },
+  "clamp_jaw": {
+    "volume_mm3": 785.8693941490508,
+    "print_supports": "Inspect slicer; horizontal clamp holes may need local support"
+  },
+  "setup_gauge_lower_0p0mm": {
+    "volume_mm3": 177.94529896167208,
+    "print_supports": "Inspect slicer; horizontal clamp holes may need local support"
+  },
+  "setup_gauge_lower_0p25mm": {
+    "volume_mm3": 148.28774913472674,
+    "print_supports": "Inspect slicer; horizontal clamp holes may need local support"
+  },
+  "setup_gauge_lower_0p5mm": {
+    "volume_mm3": 118.6301993077814,
+    "print_supports": "Inspect slicer; horizontal clamp holes may need local support"
+  }
+}

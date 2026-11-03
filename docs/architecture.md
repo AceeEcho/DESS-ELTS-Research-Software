@@ -13,6 +13,9 @@ illustrative application, not a validated hardware model.
 2. **Clock and tracking** provide a shared process monotonic timestamp and explicit
    validity with converted room-frame poses. Invalid observations remain invalid;
    logged data is not predicted or interpolated. See [tracking](modules/tracking.md).
+   Cross-device timing remains subject to D-12; account for the
+   [Pupil timing integration follow-up](operator/pupil-time-synchronization.md)
+   before the P8.4 synchronization rehearsal.
 3. **Geometry and calibration** compute screen transforms, pivot offsets, weapon
    zero and eye offsets. Units and transform directions are explicit. Synthetic
    calibration never qualifies a physical rig. See [geometry](modules/geometry.md)

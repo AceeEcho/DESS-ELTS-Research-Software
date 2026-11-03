@@ -12,6 +12,7 @@ namespace Elts.Operator
     public sealed class ParticipantTutorialNarration : IDisposable
     {
         private readonly AudioSource source;
+        private readonly double gapSeconds;
         private readonly Dictionary<string,AudioClip> clips=new Dictionary<string,AudioClip>();
         private ParticipantTutorial? owner;
         private TutorialStage stage;
@@ -21,8 +22,9 @@ namespace Elts.Operator
         public AudioClip? CurrentClip=>source.clip;
         public bool Paused=>paused;
 
-        public ParticipantTutorialNarration(GameObject host,float volume)
+        public ParticipantTutorialNarration(GameObject host,float volume,double gapSeconds=.25)
         {
+            this.gapSeconds=gapSeconds;
             var manifest=Resources.Load<TextAsset>("ELTS/ParticipantTutorialAudio");
             var paths=JsonConvert.DeserializeObject<Dictionary<string,string>>(manifest.text)!;
             foreach(var entry in paths)
@@ -35,21 +37,33 @@ namespace Elts.Operator
             source.spatialBlend=0;source.loop=false;source.volume=volume;
         }
         public double Duration(TutorialStep step,double fallback)
-            =>clips.TryGetValue(step.Script,out var clip)?clip.length+.25:fallback;
+            =>clips.TryGetValue(step.Script,out var clip)?clip.length+gapSeconds:fallback;
         public bool HasClip(TutorialStep step)=>clips.ContainsKey(step.Script);
+
+        // Playback, timing and dashboard status must use the same decision.
+        // Normal-schedule wording would be misleading after an exception.
+        private AudioClip? SelectClip(ParticipantTutorial flow,bool twoMinuteBreak)
+        {
+            if ((!twoMinuteBreak && (flow.Stage==TutorialStage.BreakOverview ||
+                flow.Stage==TutorialStage.BreakRunning || flow.Stage==TutorialStage.FinalBreak)) ||
+                (flow.Stage==TutorialStage.ScenarioEnded && flow.LastAttemptAbnormal) ||
+                (flow.Stage==TutorialStage.FinalEnded && !flow.AllScenariosCompleted) ||
+                ((flow.Stage==TutorialStage.Form || flow.Stage==TutorialStage.NextReady) && flow.LastBreakSkipped))
+                return null;
+            return clips.TryGetValue(flow.Step.Script,out var clip)?clip:null;
+        }
+        public bool HasClip(ParticipantTutorial flow,bool twoMinuteBreak)=>SelectClip(flow,twoMinuteBreak)!=null;
+        public double Duration(ParticipantTutorial flow,double fallback,bool twoMinuteBreak)
+        {
+            var clip=SelectClip(flow,twoMinuteBreak);
+            return clip!=null?clip.length+gapSeconds:fallback;
+        }
 
         public void Refresh(ParticipantTutorial flow, bool twoMinuteBreak = true)
         {
             if(owner!=flow || presentation!=flow.PresentationVersion)
             {
-                clips.TryGetValue(flow.Step.Script,out var clip);
-                // The chosen recordings describe the normal schedule.
-                if ((!twoMinuteBreak && (flow.Stage == TutorialStage.BreakOverview ||
-                    flow.Stage == TutorialStage.BreakRunning || flow.Stage == TutorialStage.FinalBreak)) ||
-                    (flow.Stage == TutorialStage.ScenarioEnded && flow.LastAttemptAbnormal) ||
-                    (flow.Stage == TutorialStage.FinalEnded && !flow.AllScenariosCompleted) ||
-                    (flow.Stage == TutorialStage.Form && flow.LastBreakSkipped))
-                    clip = null;
+                var clip=SelectClip(flow,twoMinuteBreak);
                 // Part 4.2 covers both actions. Moving from firing to reload
                 // must neither restart nor cut off that shared recording.
                 bool shared=owner==flow && stage==TutorialStage.Fire && flow.Stage==TutorialStage.Reload && source.clip==clip;
@@ -61,6 +75,10 @@ namespace Elts.Operator
                 }
                 owner=flow;stage=flow.Stage;presentation=flow.PresentationVersion;
             }
+            // An operator can change the break length while its cue is playing.
+            // Stop obsolete wording immediately without restarting narration.
+            if(source.clip!=null && SelectClip(flow,twoMinuteBreak)==null)
+            { source.Stop();source.clip=null; }
             if(flow.Paused!=paused)
             {
                 if(flow.Paused)source.Pause();else source.UnPause();

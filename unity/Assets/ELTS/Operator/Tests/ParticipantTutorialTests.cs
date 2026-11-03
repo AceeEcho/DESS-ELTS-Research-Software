@@ -53,6 +53,8 @@ namespace Elts.Operator.Tests
             try
             {
                 Assert.That(narration.ClipCount,Is.EqualTo(30));
+                foreach(var step in ParticipantTutorial.Steps.Values.Where(step=>step.Script!=""))
+                    Assert.That(narration.HasClip(step),Is.True,"Missing selected script node "+step.Script);
                 var flow=new ParticipantTutorial();flow.Begin(0);narration.Refresh(flow);
                 Assert.That(narration.CurrentClip.name,Is.EqualTo("01-welcome"));
                 double duration=narration.Duration(flow.Step,7);
@@ -70,6 +72,72 @@ namespace Elts.Operator.Tests
                 Assert.That(narration.HasClip(ParticipantTutorial.Steps[TutorialStage.Demonstration]),Is.True);
                 Assert.That(narration.Duration(ParticipantTutorial.Steps[TutorialStage.Demonstration],7),Is.GreaterThan(7));
                 narration.Stop();Assert.That(narration.CurrentClip,Is.Null);
+            }
+            finally{narration.Dispose();UnityEngine.Object.DestroyImmediate(host);}
+        }
+
+        [Test]
+        public void LaterNarrationFollowsEventsAndSuppressesInaccurateExceptionWording()
+        {
+            var host=new GameObject("Muted later narration fixture");
+            var narration=new ParticipantTutorialNarration(host,.85f,.5);
+            try
+            {
+                var flow=new ParticipantTutorial();flow.Begin(0);
+                // Advance through actual tutorial evidence, never assign a stage.
+                while(flow.Stage!=TutorialStage.FirstReady)
+                {
+                    narration.Refresh(flow);
+                    if(flow.Step.Automatic){flow.Tick(60,60);continue;}
+                    switch(flow.Stage)
+                    {
+                        case TutorialStage.HeadCalibration:case TutorialStage.GunCalibration:
+                            flow.AcceptCalibration(flow.Revision);break;
+                        case TutorialStage.Fire:
+                            flow.ObserveFire();flow.Continue(flow.Revision);
+                            var shared=narration.CurrentClip;narration.Refresh(flow);
+                            Assert.That(narration.CurrentClip,Is.SameAs(shared),"shared firing/reload clip must survive the handoff");
+                            break;
+                        case TutorialStage.Reload:flow.ObserveReload();flow.Continue(flow.Revision);break;
+                        case TutorialStage.PracticeReady:flow.PracticeStarted(flow.Revision);flow.PracticeFinished();break;
+                        case TutorialStage.Demonstration:
+                            double cue=narration.Duration(flow,7,true);
+                            flow.Tick(cue-.01,cue);Assert.That(flow.CanRequestDemo(cue),Is.False);
+                            flow.Tick(.02,cue);Assert.That(flow.CanRequestDemo(cue),Is.True);
+                            flow.MarkDemoRequested();flow.DemonstrationEnded(true);break;
+                        default:flow.Continue(flow.Revision);break;
+                    }
+                }
+                narration.Refresh(flow);Assert.That(narration.CurrentClip.name,Is.EqualTo("09-ready-for-first-scenario"));
+                flow.ObserveSession(SessionState.BlockReady,true,"A","A1",false,false,false);
+                narration.Refresh(flow);Assert.That(narration.CurrentClip.name,Is.EqualTo("09-01-start-prepared-scenario"));
+                foreach(string condition in new[]{"A","B","C","D"})
+                {
+                    bool final=condition=="D";
+                    flow.ObserveSession(SessionState.BlockRunning,false,condition,condition+"1",false,false,final);
+                    narration.Refresh(flow);Assert.That(narration.CurrentClip,Is.Null,"no stale instruction during a scenario");
+                    flow.ObserveSession(SessionState.BlockEnded,false,condition,condition+"1",false,false,final);
+                    narration.Refresh(flow);Assert.That(narration.CurrentClip.name,Is.EqualTo(final?"11-scenarios-complete":"10-scenario-complete"));
+                    Assert.That(narration.Duration(flow,7,true),Is.EqualTo(narration.CurrentClip.length+.5).Within(.001));
+                    flow.ObserveSession(SessionState.Break,false,condition,condition+"1",false,false,final);
+                    narration.Refresh(flow);Assert.That(narration.CurrentClip.name,Is.EqualTo(final?"11-01-final-break-running":"10-01-break-running"));
+                    narration.Refresh(flow,false);Assert.That(narration.CurrentClip,Is.Null,"changed break duration stops two-minute wording");
+                    Assert.That(narration.HasClip(flow,false),Is.False);
+                    Assert.That(narration.Duration(flow,7,false),Is.EqualTo(7),"silent fallback uses reading time");
+                    flow.ObserveSession(final?SessionState.SessionComplete:SessionState.BlockReady,false,condition,condition+"1",false,false,final);
+                    narration.Refresh(flow);Assert.That(narration.CurrentClip.name,Is.EqualTo(final?"11-02-post-study-form":"10-02-next-scenario-starting"));
+                }
+                flow.ConfirmForm(flow.Revision);narration.Refresh(flow);
+                Assert.That(narration.CurrentClip.name,Is.EqualTo("11-03-thank-you"));
+                // Reuse the completed flow for stopped intermediate attempts and skipped breaks.
+                flow.ObserveSession(SessionState.BlockEnded,false,"A","A2",true,false,false);
+                narration.Refresh(flow);Assert.That(narration.CurrentClip,Is.Null);
+                flow.MarkBreakSkipped();flow.ObserveSession(SessionState.BlockReady,false,"B","B2",false,false,false);
+                narration.Refresh(flow);Assert.That(narration.CurrentClip,Is.Null,"a skipped break is not complete");
+                flow.ObserveSession(SessionState.SessionComplete,false,"D","D2",false,false,true);
+                narration.Refresh(flow);Assert.That(narration.CurrentClip,Is.Null,"do not announce a completed final break after skipping it");
+                flow.ObserveSession(SessionState.Aborted,false,"","",false,false,true);
+                narration.Refresh(flow);Assert.That(narration.CurrentClip,Is.Null);
             }
             finally{narration.Dispose();UnityEngine.Object.DestroyImmediate(host);}
         }
@@ -184,6 +252,8 @@ namespace Elts.Operator.Tests
                 Assert.That(Directory.GetFiles(session.StationRecordingPath,"synthetic-calibration-*.json").Length,Is.EqualTo(2));
                 Assert.That(session.Tutorial.DemoAttempt,Is.EqualTo(1));
                 string run=session.StationRecordingPath;
+                yield return null;
+                Assert.That(session.Tutorial.Stage,Is.EqualTo(TutorialStage.FirstReady),"first readiness announcement must finish before arming");
                 session.Tutorial.Tick(60,60);
                 yield return null;
                 Assert.That(session.Tutorial.Stage,Is.EqualTo(TutorialStage.Armed));
@@ -199,6 +269,8 @@ namespace Elts.Operator.Tests
                         session.Tutorial.Stage!=(i==3?TutorialStage.FinalEnded:TutorialStage.ScenarioEnded)) &&
                         Time.realtimeSinceStartup<deadline)yield return null;
                     Assert.That(session.StationBreakReady,Is.True,"checkpoint must be durable before the break");
+                    yield return null;
+                    Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockEnded),"completion narration must finish before starting the break");
                     session.Tutorial.Tick(60,60);
                     yield return null;
                     Assert.That(session.Engine.State,Is.EqualTo(SessionState.Break));
@@ -210,6 +282,8 @@ namespace Elts.Operator.Tests
                     if(i<3)
                     {
                         Assert.That(session.Tutorial.Stage,Is.EqualTo(TutorialStage.NextReady));
+                        yield return null;
+                        Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),"next-scenario announcement must finish before starting");
                         session.Tutorial.Tick(60,60);
                         deadline=Time.realtimeSinceStartup+10;
                         while(session.Engine.State!=SessionState.BlockRunning && Time.realtimeSinceStartup<deadline)

@@ -62,7 +62,14 @@ These details are saved with the recording. Creating a recording does not start 
 
 ## 4. Begin the participant walkthrough
 
-Click **Begin tutorial / walkthrough** after preparation. Follow the current operator prompt through equipment setup, synthetic calibration, control practice, and the simulated ELTS demonstration. See the [walkthrough guide](../modules/participant-tutorial.md).
+Click **Begin tutorial / walkthrough**. Follow the setup checks, separate head and
+gun fixture reviews, and aiming/firing/reloading instructions. Each action waits
+for its actual input or operator confirmation. Calibration remains synthetic.
+
+Start practice when ready. Practice is unscored; pause, restart and early finish
+remain available. The simulated ELTS demonstration follows practice, then the
+study overview. All 30 selected recordings are connected. See the
+[walkthrough guide](../modules/participant-tutorial.md) for pacing and controls.
 
 ## 5. Start the study
 

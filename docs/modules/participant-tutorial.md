@@ -7,7 +7,7 @@ dashboard. The participant screen contains no operator buttons.
 
 ## Operator flow
 
-1. Welcome and questions advance as text-only explanations. Confirm readiness,
+1. Welcome and questions advance after their narration. Confirm readiness,
    equipment fitting and equipment checks separately.
 2. During the head step, wait for the stationary dot, capture the synthetic
    fixture, review it, then accept or redo it. Confirm the holding demonstration,
@@ -22,10 +22,10 @@ dashboard. The participant screen contains no operator buttons.
    visible while one **in-memory simulated** lifecycle demonstration runs.
    Completion requires acknowledged stop/disarm. An interruption holds for an
    explicit repeat. Instruction replay never requests another activation.
-6. After the overview, arm the first scenario. The participant's actual start
+6. After the overview and readiness cue, the first scenario arms automatically. The participant's actual start
    action starts it; that action is not scored. Subsequent prompts follow the
    real scenario, save checkpoint and break events.
-7. Start each break after saving. The final break leads to the operator-provided
+7. Each break starts after saving and its completion cue. The final break leads to the operator-provided
    form. Confirm completion to show the thank-you screen and allow another
    participant. Form confirmation saves a separate receipt associated with the
    participant and recording; it never rewrites closed sensor streams.
@@ -72,11 +72,15 @@ Part 10's recordings are reused after scenarios 1–3.
 Narration plays once on entering a step. Pause/resume follows the tutorial;
 Repeat instruction restarts the current recording. Part 4.2 plays once across
 firing and reloading. Leaving a step stops stale narration. Explanations with
-recordings advance after the clip duration plus 0.25 seconds; all participant,
+recordings advance after the clip duration plus `narrationGapSeconds` (0.25 seconds by default); all participant,
 calibration, practice and scenario checks still require their original events.
 The operator may deliberately continue a manual step before narration ends.
 Set `narrationEnabled` or `narrationVolume` in the presentation settings to control
 playback. Audio integration checks run with `-noaudio` to avoid audible playback.
+When a break is not 120 seconds, or an attempt/break was skipped, conflicting
+normal-schedule narration is suppressed. Those screens use their configured
+reading time and show the actual session state. Changing the duration during a
+break also stops an obsolete two-minute announcement.
 
 ## Boundaries and verification
 

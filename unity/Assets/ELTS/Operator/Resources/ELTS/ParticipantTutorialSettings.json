@@ -2,6 +2,7 @@
   "fadeSeconds": 0.35,
   "narrationEnabled": true,
   "narrationVolume": 0.85,
+  "narrationGapSeconds": 0.25,
   "revealSeconds": 1.1,
   "calibrationIllustrationSeconds": 3,
   "headDotX": 0.5,

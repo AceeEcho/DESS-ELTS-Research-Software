@@ -27,7 +27,8 @@ namespace Elts.Operator
         private bool tutorialDotVisible;
         public ParticipantTutorial Tutorial=>tutorial;
         public ParticipantTutorialSettings TutorialSettings=>tutorialSettings;
-        private double TutorialCueSeconds=>tutorialNarration?.Duration(tutorial.Step,tutorialSettings.Duration(tutorial.Step))
+        private bool TutorialHasNarration=>tutorialNarration?.HasClip(tutorial,stationBreakSeconds==120)==true;
+        private double TutorialCueSeconds=>tutorialNarration?.Duration(tutorial,tutorialSettings.Duration(tutorial.Step),stationBreakSeconds==120)
             ?? tutorialSettings.Duration(tutorial.Step);
         public bool TutorialDotVisible=>tutorialDotVisible;
         public bool TutorialCanInteract=>SeparateAdministrator && !IsBusy && !closing && tutorial.CanFire &&
@@ -45,7 +46,7 @@ namespace Elts.Operator
             tutorialSettings.Validate();
             if(tutorialSettings.narrationEnabled)
             {
-                tutorialNarration=new ParticipantTutorialNarration(gameObject,tutorialSettings.narrationVolume);
+                tutorialNarration=new ParticipantTutorialNarration(gameObject,tutorialSettings.narrationVolume,tutorialSettings.narrationGapSeconds);
                 if(FindFirstObjectByType<AudioListener>()==null)view.ParticipantCamera.gameObject.AddComponent<AudioListener>();
             }
         }
@@ -105,7 +106,7 @@ namespace Elts.Operator
             canRestartPractice=!IsBusy && !tutorial.Paused && (tutorial.Stage==TutorialStage.PracticeRunning || tutorial.Stage==TutorialStage.PracticeComplete),
             canFinishPractice=!IsBusy && tutorial.Stage==TutorialStage.PracticeRunning,
             practicePaused=engine?.PracticePaused==true,audioEnabled=tutorialNarration!=null,
-            audioAvailable=tutorialNarration?.HasClip(tutorial.Step)==true,audioSlot=tutorial.Step.AudioSlot,
+            audioAvailable=TutorialHasNarration,audioSlot=tutorial.Step.AudioSlot,
             status=TutorialOperatorStatus()
         };
         private string TutorialOperatorStatus()
@@ -118,9 +119,9 @@ namespace Elts.Operator
             if(tutorial.Stage==TutorialStage.Demonstration)return tutorial.DemoFailed?"Simulation interrupted. Explicitly repeat the demonstration when ready.":
                 tutorialDemo?.Active==true?"Simulated lifecycle active. No hardware outputs.":"The arrow cue will request one simulated demonstration. No hardware outputs.";
             if(tutorial.Stage==TutorialStage.Form)return "Provide the approved form. Confirm only after completion; a separate receipt retains this participant/run association.";
-            if(tutorial.Step.Automatic)return tutorialNarration?.HasClip(tutorial.Step)==true?
+            if(tutorial.Step.Automatic)return TutorialHasNarration?
                 "Explanation advances after narration. Pause or repeat as needed.":"Text-only explanation advances automatically. Pause or repeat as needed.";
-            return (tutorialNarration?.HasClip(tutorial.Step)==true?"Selected narration connected. ":"Narration pending for this step. ")+
+            return (TutorialHasNarration?"Selected narration connected. ":"Text-only instruction for the current session state. ")+
                 (tutorial.CanContinue?"Confirm the participant's action before continuing.":"Waiting for the current session action.");
         }
 

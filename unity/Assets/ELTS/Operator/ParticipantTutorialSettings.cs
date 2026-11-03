@@ -17,7 +17,7 @@ namespace Elts.Operator
         public string sceneBackgroundColor="#191E24", sceneFloorColor="#272F38";
         public float arrowWidth=12, arrowHeadWidth=100, arrowEndY=.94f;
         public bool reducedMotion=false, showHoldingDiagram=true;
-        public double explanationSeconds=7, simulatedDemoSeconds=2, targetDistanceM=15;
+        public double explanationSeconds=7, narrationGapSeconds=.25, simulatedDemoSeconds=2, targetDistanceM=15;
         public Dictionary<string,double> stepSeconds=new Dictionary<string,double>();
         public double Duration(TutorialStep step) => stepSeconds.TryGetValue(step.Script,out var value)?value:explanationSeconds;
         public void Validate()
@@ -34,6 +34,7 @@ namespace Elts.Operator
             Range(explanationSeconds,2,60,nameof(explanationSeconds));Range(simulatedDemoSeconds,.1,30,nameof(simulatedDemoSeconds));
             Range(targetDistanceM,.5,25,nameof(targetDistanceM));
             Range(narrationVolume,0,1,nameof(narrationVolume));
+            Range(narrationGapSeconds,0,3,nameof(narrationGapSeconds));
             foreach(string color in new[]{dotColor,sceneBackgroundColor,sceneFloorColor})
                 if(!System.Text.RegularExpressions.Regex.IsMatch(color??"","^#[0-9A-Fa-f]{6}$"))
                     throw new ArgumentException("Tutorial colors must use six-digit hexadecimal values.");

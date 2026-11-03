@@ -51,10 +51,10 @@ it is available before a participant or after the previous recording closes.
 ### Calibration, practice and readiness
 
 Creating a recording runs the existing two-second synthetic tracking preflight.
-The station then waits for explicit administrator calibration review: **Generate
-fixture**, review the reported provisional residuals, **Accept fixture**, then
-**Start practice**. **Redo** discards an unaccepted fixture. Acceptance saves the
-synthetic fixture and its audit note; it does not change the startup rig calibration.
+Select **Begin tutorial / walkthrough** for guided setup, head and gun fixture
+reviews, controls and practice. Capture and accept each review inside its tutorial
+step; **Redo** discards an unaccepted fixture. Acceptance saves the synthetic
+fixture and audit note; it does not change the startup rig calibration.
 
 Practice is a timed movement/aim familiarization period with no scored shots.
 The administrator can restart it before the first test or finish it early.

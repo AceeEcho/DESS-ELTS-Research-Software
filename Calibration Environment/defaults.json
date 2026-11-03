@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "coordinateSystem": "RH_X-right_Y-up_Z-toward-viewer_metres_YXZ-degrees",
+  "screen": {
+    "width": 1.44,
+    "height": 0.81,
+    "bottom": 0.9,
+    "x": 0,
+    "z": 0,
+    "rotation": [0, 0, 0]
+  },
+  "room": { "width": 6, "depth": 7, "height": 3 },
+  "registration": { "position": [0, 0, 0], "rotation": [0, 0, 0] },
+  "baseStations": [
+    {
+      "enabled": true,
+      "position": [-1.8, 2.2, 0.7],
+      "rotation": [-25, -140, 0]
+    },
+    { "enabled": false, "position": [1.8, 2.2, 3.5], "rotation": [-25, 35, 0] }
+  ],
+  "head": {
+    "serial": "",
+    "mount": { "position": [0, 0.13, 0.03], "rotation": [0, 0, 0] },
+    "eye": [0, 0, -0.09],
+    "manual": { "position": [0, 1.65, 2.5], "rotation": [0, 0, 0] },
+    "reference": null
+  },
+  "weapon": {
+    "serial": "",
+    "mount": { "position": [0, 0.085, 0], "rotation": [0, 0, 0] },
+    "muzzle": [0, 0.04, -0.48],
+    "bore": [0, 0, 0],
+    "length": 0.9,
+    "manual": { "position": [0.28, 1.25, 2.2], "rotation": [0, 0, 0] },
+    "reference": null
+  },
+  "person": { "height": 1.8, "radius": 0.22 },
+  "view": {
+    "axes": true,
+    "rays": true,
+    "frustum": true,
+    "labels": true,
+    "virtualDepth": 5,
+    "near": 0.02,
+    "far": 100,
+    "staleMs": 500
+  }
+}

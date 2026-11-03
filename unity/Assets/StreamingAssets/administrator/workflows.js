@@ -190,12 +190,20 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
   async function action(name, payload = {}) {
     if (actionBusy) return;
     actionBusy = true; $('testControlError').hidden = true;
-    try { await command(name, payload); await refresh(); }
+    try {
+      const context = name.startsWith('tutorial') ? { tutorialRevision: getState().tutorial.revision } : {};
+      await command(name, { ...context, ...payload }); await refresh();
+    }
     catch (e) { error('testControlError', e); throw e; }
     finally { actionBusy = false; render(getState()); }
   }
-  ['generateCalibration', 'redoCalibration', 'acceptCalibration', 'startPractice', 'restartPractice', 'finishPractice', 'startBreak', 'skipBreak']
+  ['tutorialRedo', 'tutorialPause', 'tutorialResume', 'tutorialReplay', 'tutorialStopDemo', 'tutorialRepeatDemo',
+    'tutorialRestartPractice', 'tutorialFinishPractice', 'startBreak', 'skipBreak']
     .forEach(id => $(id).addEventListener('click', () => action(id).catch(() => {})));
+  $('tutorialPrimary').addEventListener('click', () => {
+    const tutorial = getState()?.tutorial;
+    if (tutorial?.canPrimary) action(tutorial.primaryAction).catch(() => {});
+  });
   function openException(kind) {
     const state = getState();
     exceptionContext = { kind, runId: state.runId, blockId: state.blockId };
@@ -260,27 +268,27 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
 
   function render(state) {
     if (!state?.tools) return;
-    const tools = state.tools, calibration = tools.calibration || {};
+    const tools = state.tools, tutorial = state.tutorial;
     if (drag && !state.canStartParticipant) finishDrag(true);
     if (!drag && !setupBusy) {
       if (getOrder().join() !== state.conditionOrder.join()) setOrder(state.conditionOrder.slice());
       renderOrder();
     }
     $('setupWelcome').hidden = !state.canStartParticipant;
-    $('preparationPanel').hidden = state.state !== 'Calibration';
-    $('calibrationReview').textContent = calibration.review || 'Generate the synthetic fixture to review it.';
-    ['Generate', 'Redo', 'Accept'].forEach(key => { const id = key.toLowerCase() + 'Calibration'; $(id).disabled = actionBusy || !calibration['can' + key]; });
-    $('startPractice').disabled = actionBusy || !calibration.canPractice;
-    $('practicePanel').hidden = !tools.canRestartPractice && state.state !== 'Practice';
+    renderTutorial(state, tutorial);
+    $('practicePanel').hidden = !tutorial?.canRestartPractice && tutorial?.stage !== 'PracticeRunning';
     $('practiceTimer').textContent = state.state === 'Practice' ? formatTime(Math.ceil(state.remainingSeconds)) : 'Finished';
-    $('restartPractice').disabled = actionBusy || !tools.canRestartPractice;
-    $('finishPractice').disabled = actionBusy || !tools.canFinishPractice;
+    $('tutorialRestartPractice').disabled = actionBusy || !tutorial?.canRestartPractice;
+    $('tutorialFinishPractice').disabled = actionBusy || !tutorial?.canFinishPractice;
     const waitingForBreak = state.state === 'BlockEnded';
     $('breakPanel').hidden = !waitingForBreak && state.state !== 'Break';
     $('startBreak').hidden = !waitingForBreak;
     $('startBreak').disabled = actionBusy || !tools.canStartBreak;
     $('breakTimer').textContent = formatTime(Math.ceil(waitingForBreak ? tools.breakSeconds : state.remainingSeconds));
-    $('breakHelp').textContent = state.busy ? 'Saving the test. Continue when saving finishes.' : waitingForBreak ? 'Test saved. Press Start break when you are ready to begin the countdown.' : tools.queueIndex + 1 >= tools.schedule.length ? 'The participant session closes after this break.' : 'When the timer ends, press Arm test when you are ready.';
+    $('breakHelp').textContent = state.busy ? 'Saving the test.' : waitingForBreak
+      ? (tools.automaticStudy ? 'The break starts automatically after the transition prompt.' : 'Press Start break to begin the countdown.')
+      : tools.queueIndex + 1 >= tools.schedule.length ? 'The participant session closes after this break.'
+      : (tools.automaticStudy ? 'The next scenario starts automatically after the break and transition prompt.' : 'When the timer ends, press Arm test when ready.');
     $('skipBreak').disabled = actionBusy || !tools.canSkipBreak;
     $('skipTest').disabled = actionBusy || !tools.canSkipTest;
     $('repeatTest').disabled = actionBusy || !tools.canRepeat || !tools.repeatable?.length;
@@ -302,8 +310,30 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
   function offline() {
     finishDrag(true);
     $('conditionOrder').querySelectorAll('button').forEach(button => { button.disabled = true; });
-    ['generateCalibration', 'redoCalibration', 'acceptCalibration', 'startPractice', 'restartPractice', 'finishPractice', 'startBreak', 'skipBreak', 'skipTest', 'repeatTest', 'applyPhaseTiming', 'loadPreset', 'savePreset', 'exportRecording', 'refreshRecordings']
+    ['tutorialPrimary', 'tutorialRedo', 'tutorialPause', 'tutorialResume', 'tutorialReplay', 'tutorialStopDemo', 'tutorialRepeatDemo',
+      'tutorialRestartPractice', 'tutorialFinishPractice', 'startBreak', 'skipBreak', 'skipTest', 'repeatTest', 'applyPhaseTiming', 'loadPreset', 'savePreset', 'exportRecording', 'refreshRecordings']
       .forEach(id => { $(id).disabled = true; });
+  }
+  function renderTutorial(state, tutorial) {
+    $('tutorialPanel').hidden = !tutorial || !state.participant || ['Aborted', 'Failed'].includes(state.state);
+    if (!tutorial) return;
+    $('tutorialStep').textContent = tutorial.step ? `WALKTHROUGH · ${tutorial.step.replaceAll('-', '.')}` : 'PARTICIPANT WALKTHROUGH';
+    $('tutorialTitle').textContent = tutorial.started ? tutorial.title || 'Scenario running' : 'Begin the participant walkthrough';
+    $('tutorialInstruction').textContent = tutorial.started ? tutorial.instruction : 'Setup, calibration and practice are guided inside the game.';
+    $('tutorialStatus').textContent = tutorial.status;
+    $('tutorialPrimary').textContent = tutorial.primaryLabel || 'Waiting for session event';
+    $('tutorialPrimary').hidden = !tutorial.primaryLabel;
+    $('tutorialPrimary').disabled = actionBusy || !tutorial.canPrimary;
+    const controls = { tutorialRedo: tutorial.canRedo, tutorialPause: tutorial.canPause, tutorialResume: tutorial.canResume,
+      tutorialReplay: tutorial.canReplay, tutorialStopDemo: tutorial.demoActive, tutorialRepeatDemo: tutorial.canRepeatDemo };
+    for (const [id, available] of Object.entries(controls)) { $(id).hidden = !available; $(id).disabled = actionBusy || !available; }
+    $('tutorialPause').textContent = tutorial.stage === 'PracticeRunning' ? 'Pause practice' : 'Pause instruction';
+    $('tutorialCalibrationReview').hidden = !tutorial.calibrationReview;
+    $('tutorialCalibrationReview').textContent = tutorial.calibrationReview || '';
+    const checks = [['Head review', tutorial.headAccepted], ['Gun review', tutorial.gunAccepted],
+      ['Firing tried', tutorial.fired], ['Reload tried', tutorial.reloaded]];
+    html('tutorialChecks', tutorial.started ? checks.map(([label, complete]) =>
+      `<span class="tutorial-check ${complete ? 'is-complete' : ''}"><span aria-hidden="true">${complete ? '✓' : '○'}</span> ${label}</span>`).join('') : '');
   }
   renderPresets();
   return { render, renderOrder, offline };

@@ -23,7 +23,7 @@ namespace Elts.Operator
     /// furniture is rendered from the same plan used for routes and shot occlusion.</summary>
     internal static class DevelopmentTrainingRoom
     {
-        public static void Create(Transform parent,ScreenPlane screen,double floorY,TrainingRoomSettings settings,
+        public static Transform Create(Transform parent,ScreenPlane screen,double floorY,TrainingRoomSettings settings,
             List<Material> ownedMaterials,Material targetMaterial,DevelopmentGameSettings game,double targetDistanceM)
         {
             var center=screen.Origin+screen.U*(screen.Width*.5)+screen.V*(screen.Height*.5)+screen.Normal*targetDistanceM;
@@ -127,6 +127,7 @@ namespace Elts.Operator
             fill.intensity=settings.bounceIntensity;fill.shadows=LightShadows.None;fill.cullingMask=1<<DevelopmentView.StimulusLayer;
             targetMaterial.SetVector("_LightDirection",direction);
             StaticBatchingUtility.Combine(root.gameObject);
+            return root;
         }
         private static Vector3 Unity(Vector3d value)=>new Vector3((float)value.X,(float)value.Y,(float)value.Z);
     }

@@ -1,10 +1,10 @@
 # Participant tutorial script outline
 
-Status: initial outline October 19, 2026; revised November 2, 2026 with detailed planning through Part 11, explicit playback transitions, and the ELTS arrow/test cue. This is a planning document, not a finalized participant script or implemented tutorial.
+Status: initial outline October 19, 2026, revised November 3, 2026. The [synthetic walkthrough](modules/participant-tutorial.md) uses the automatic study sequence and selected narration.
 
 ## Voice and delivery
 
-Narration source: ElevenLabs, Eryn - Genuine, Friendly and Natural, using eleven_v4. Follow the working script and audio workflow linked below. Selected audio is saved through Part 9, with Parts 10–11 awaiting take selection.
+Narration uses Eryn in ElevenLabs v4 and supplied replacements. Selected audio covers all 30 chunks, including the automatic study transitions.
 
 - Use one consistent voice and a calm, clear delivery.
 - Generate short clips for individual steps rather than one uninterrupted video.
@@ -27,9 +27,9 @@ Narration source: ElevenLabs, Eryn - Genuine, Friendly and Natural, using eleven
 | 6. ELTS introduction and test activation | Identify the apparatus centered physically beneath the display; announce and cue one brief test fire. | Arrow from the middle of the screen straight down toward the actual ELTS below the display. Keep it visible during the test. | Operator confirms readiness before entry; one test request at the end of the announcement with the arrow visible; await actual demonstration-end event. Replaying audio never refires. |
 | 7. Demonstration complete and readiness check | Announce the end of the Part 6 test and invite questions. | Remove the arrow and show completion only after the demonstration ends. No second test activation. | Manual continue to Part 8 after questions and readiness confirmation. |
 | 8. Procedure overview | Explain four randomized scenarios, time limits, and two-minute breaks between scenarios and after the final scenario. | Four ordinal cards, time-limit symbols, and four break markers; example countdown remains static. | Automatically advance the explanatory chunks to Part 9 readiness hold. |
-| 9. Transition to procedure | Announce tutorial completion and readiness for the first scenario; reuse only the start prompt for later scenarios. | Ready screen, then the actual start prompt and configured timer once armed. | Manual operator prepare/arm, then participant start event. No automatic scenario start from narration. |
-| 10. Breaks between scenarios | Announce scenario completion, actual break start, and readiness after the break. | Waiting-for-break screen, real two-minute countdown, then readiness screen. | Manual break start after saving; automatic break-end message; manual preparation/arm before the next participant start. |
-| 11. Completion, final break, and post-study form | Announce four-scenario completion, final break, form instructions, and thanks. | Completion/wait screen, actual final-break countdown, form instruction, then thank-you screen. | Manual final-break start; actual break-end event; confirmed form completion; final screen holds without automatic restart. |
+| 9. Transition to procedure | Announce that the tutorial is complete. | Ready screen, then the participant start prompt. | Arm the first scenario automatically after the announcement. The participant starts it. |
+| 10. Breaks between scenarios | Announce completion, break start, and the next scenario. | Save status, actual countdown, and next-scenario cue. | Start the break after the checkpoint and completion cue. After the countdown and next-scenario cue, start the next scenario when tracking is valid. Reuse the same clips after scenarios 1–3. |
+| 11. Completion, final break, and post-study form | Announce scenario completion, final break, and form instructions. | Completion message, actual countdown, form instructions, and thank-you screen. | Start the final break automatically after saving. Show the form after the countdown. Confirm form completion to finish. |
 
 ## Example neutral narration fragments
 
@@ -60,4 +60,4 @@ Confirmed sequence: equipment setup → head-tracker calibration → holding dem
 
 Part 6 visual/event plan: reveal a downward arrow on the display centerline when identifying ELTS below the screen; keep the arrow visible and request the single test activation after the demonstration announcement. Part 7 only announces completion and checks readiness. This document specifies planned behavior; it does not activate hardware or establish physical validation. Additional audio beyond the explicitly requested sections remains deferred.
 
-Detailed writing now covers Parts 1–11. The normal final sequence is scenario completion → manual break start after saving → actual break countdown → manual next-scenario preparation and participant start; after the fourth scenario, final break → form completion confirmation → thank-you screen. Narration replay never starts or repeats a physical/session action. Remaining procedure decisions above must be resolved before final audio and implementation.
+The first participant start begins the automatic study sequence. Checkpoint completion and transition cues gate breaks and later scenario starts. Operator skip controls remain available. The final break leads to the post-study form.

@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>ELTS · Calibration Environment</title>
+        <link rel="icon" href="data:," />
+        <link rel="stylesheet" href="styles.css" />
+        <script type="importmap">
+            { "imports": { "three": "./vendor/build/three.module.js" } }
+        </script>
+    </head>
+    <body>
+        <header class="app-header">
+            <div class="brand">
+                <span class="brand-mark">E<span>↗</span></span>
+                <div>
+                    <p class="eyebrow">ELTS / INDEPENDENT WORKSPACE</p>
+                    <h1>Calibration Environment</h1>
+                </div>
+            </div>
+            <div class="header-actions">
+                <span id="save-state">Example setup</span
+                ><button id="profiles-button">Profiles &amp; export</button
+                ><button id="save-button" class="primary">Save profile</button>
+            </div>
+        </header>
+        <div class="status-bar">
+            <span class="mode-label" id="mode-label">MANUAL PREVIEW</span
+            ><span id="connection-status">Starting local workspace…</span
+            ><span class="isolation">Separate from ELTS sessions</span>
+        </div>
+        <main class="layout">
+            <aside class="inspector" aria-label="Calibration settings">
+                <div class="inspector-heading">
+                    <h2>Configure your setup</h2>
+                    <p>Metres &amp; degrees. Adjust, observe, save.</p>
+                </div>
+                <nav class="tabs" aria-label="Settings sections">
+                    <button data-tab="room" aria-pressed="true">Room</button
+                    ><button data-tab="head" aria-pressed="false">Head</button
+                    ><button data-tab="weapon" aria-pressed="false">
+                        Weapon</button
+                    ><button data-tab="tracking" aria-pressed="false">
+                        Tracking
+                    </button>
+                </nav>
+                <div id="settings" class="settings"></div>
+                <div class="axis-note">
+                    <strong>Room coordinates</strong><br />X → right · Y ↑ from
+                    floor · Z → toward person<br />Forward is −Z. Angles: pitch,
+                    yaw, roll.
+                </div>
+            </aside>
+            <section class="workspace" aria-label="Calibration visualization">
+                <div class="view-header">
+                    <div>
+                        <h2>Room overview</h2>
+                        <p>
+                            Drag to orbit · right-drag to pan · scroll to zoom
+                        </p>
+                    </div>
+                    <div class="view-buttons" aria-label="Camera presets">
+                        <button data-view="room">Room</button
+                        ><button data-view="front">Front</button
+                        ><button data-view="side">Side</button
+                        ><button data-view="top">Top</button>
+                    </div>
+                </div>
+                <div class="viewport" id="viewport">
+                    <canvas
+                        id="room-canvas"
+                        tabindex="0"
+                        aria-label="Interactive 3D room. Use arrow keys to orbit, plus or minus to zoom, or camera preset buttons."
+                    ></canvas>
+                    <div id="scene-labels" aria-hidden="true"></div>
+                    <div class="view-legend">
+                        <span class="head-dot">Head</span
+                        ><span class="weapon-dot">Weapon</span
+                        ><span class="tracker-dot">Tracker mounts</span>
+                    </div>
+                    <div class="view-scale">Grid: 0.5 m · schematic models</div>
+                    <p id="graphics-error" role="alert" hidden>
+                        3D graphics paused. Refresh the page; if this continues,
+                        check browser graphics acceleration.
+                    </p>
+                </div>
+                <div class="instrument-row">
+                    <section class="readouts">
+                        <div class="readout-heading">
+                            <h2>Pose monitor</h2>
+                            <span id="sample-status">Manual values</span>
+                        </div>
+                        <div class="pose-grid">
+                            <article class="pose-card head-card">
+                                <h3>
+                                    Head <span id="head-quality">Manual</span>
+                                </h3>
+                                <div id="head-angles" class="angles"></div>
+                                <p id="head-position"></p>
+                                <p
+                                    id="head-reference"
+                                    class="reference-state"
+                                ></p>
+                                <button id="head-forward">
+                                    Set looking forward
+                                </button>
+                                <label for="reset-distance">Reset distance from screen (m)</label>
+                                <input id="reset-distance" type="number" min="0.25" max="10" step="any" value="2" />
+                                <button id="reset-head" class="primary" disabled>Reset head in front of screen</button>
+                                <p class="help">Face the screen, then reset. Centres the head at screen height for preview.</p>
+                                <button id="calibrate-head" disabled>Calibrate head directions…</button>
+                            </article>
+                            <article class="pose-card weapon-card">
+                                <h3>
+                                    Weapon
+                                    <span id="weapon-quality">Manual</span>
+                                </h3>
+                                <div id="weapon-angles" class="angles"></div>
+                                <p id="weapon-position"></p>
+                                <p
+                                    id="weapon-reference"
+                                    class="reference-state"
+                                ></p>
+                                <button id="weapon-forward">
+                                    Set weapon forward
+                                </button>
+                            </article>
+                        </div>
+                        <div class="aim-readout" id="aim-readout">
+                            Screen intersection: —
+                        </div>
+                    </section>
+                    <section class="perspective">
+                        <div class="preview-heading">
+                            <h2>Screen perspective</h2>
+                            <button id="open-screen">Open screen ↗</button>
+                        </div>
+                        <div class="preview-wrap" id="preview-wrap">
+                            <canvas
+                                id="preview-canvas"
+                                aria-label="Head-position-dependent off-axis screen preview"
+                            ></canvas>
+                            <p id="preview-message" hidden></p>
+                        </div>
+                        <p id="eye-readout">
+                            View through the physical screen from the configured
+                            eye.
+                        </p>
+                    </section>
+                </div>
+                <p class="workspace-note">
+                    Example dimensions until measured. Live poses and saved
+                    settings do not establish physical calibration or study
+                    readiness.
+                </p>
+            </section>
+        </main>
+        <div id="notice" role="status" aria-live="polite" hidden></div>
+        <dialog id="direction-dialog" aria-labelledby="direction-title" aria-describedby="direction-instruction">
+            <p class="eyebrow" id="direction-progress">Head direction setup</p>
+            <div id="direction-symbol" aria-hidden="true">◎</div>
+            <h2 id="direction-title">Face the screen</h2>
+            <p id="direction-instruction"></p>
+            <p id="direction-summary" hidden></p>
+            <div id="direction-distance-row" hidden>
+                <label for="direction-distance">Preview distance from screen (m)</label>
+                <input id="direction-distance" type="number" min="0.25" max="10" step="any" value="2" />
+            </div>
+            <p id="direction-status" role="status" aria-live="polite"></p>
+            <div class="dialog-actions">
+                <button id="direction-back">Back</button>
+                <button id="direction-capture" class="primary">Capture after 3 seconds</button>
+                <button id="direction-apply" class="primary" hidden>Apply directions</button>
+            </div>
+            <button id="direction-cancel" class="text-button">Cancel without changes</button>
+            <p class="help">Keep the tracker mounted throughout. This aligns preview directions; it does not measure eye offsets, screen distance, or tracking accuracy.</p>
+        </dialog>
+        <dialog id="profiles-dialog" aria-labelledby="profiles-title">
+            <form method="dialog">
+                <button class="dialog-close" aria-label="Close profiles">
+                    ×
+                </button>
+            </form>
+            <h2 id="profiles-title">Calibration profiles</h2>
+            <p>
+                Profiles stay in this app’s own folder. Saving never applies
+                them to ELTS.
+            </p>
+            <label for="profile-name">Profile name</label
+            ><input
+                id="profile-name"
+                value="My calibration"
+                maxlength="64"
+            /><button id="save-profile" class="primary">
+                Save to profile folder
+            </button>
+            <label for="profile-list">Saved profiles</label
+            ><select id="profile-list"></select
+            ><button id="load-profile">Load selected profile</button>
+            <div class="dialog-divider"></div>
+            <div class="dialog-actions">
+                <button id="export-profile">Export JSON</button
+                ><button id="import-profile">Import JSON</button
+                ><input
+                    id="import-file"
+                    type="file"
+                    accept=".json,application/json"
+                    hidden
+                />
+            </div>
+            <button id="reset-profile" class="text-button">
+                Restore example setup
+            </button>
+            <p id="profile-result" role="status"></p>
+        </dialog>
+        <div id="screen-toolbar">
+            <span id="screen-status">Waiting for dashboard…</span
+            ><button id="fullscreen">Fullscreen</button>
+        </div>
+        <script type="module" src="app.js"></script>
+    </body>
+</html>

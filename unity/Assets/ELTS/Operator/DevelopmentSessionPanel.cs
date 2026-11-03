@@ -287,6 +287,11 @@ namespace Elts.Operator
                     engine.Abort("Scenario or logging failure: "+exception.Message);
                 }
                 if(view.SessionControlsVisible)view.SetSessionFrame(pair?.Head.Pose,pair?.Weapon.Pose,scenario?.Positions??visibleTargets,engine.CurrentActiveSeconds,scenario?.FixedPoses);
+                if(SeparateAdministrator)
+                {
+                    try { SynchronizeTutorial();PresentTutorialInteraction(); }
+                    catch(Exception exception){lastMessage=exception.Message;engine.Abort("Tutorial recording failure: "+exception.Message);}
+                }
                 if(!closing && (engine.State==SessionState.SessionComplete || engine.State==SessionState.Aborted || engine.State==SessionState.Failed))
                 { setupPending=false; closing=true; Begin(CloseRecordingAsync); }
             }
@@ -334,9 +339,11 @@ namespace Elts.Operator
         {
             if(destroyed) return;
             destroyed=true;
+            tutorialNarration?.Dispose();tutorialNarration=null;
             desktop?.Dispose();
             dashboard?.Dispose();
             Application.wantsToQuit -= OnWantsToQuit;
+            StopTutorialForShutdown();
             try
             {
                 if(operation!=null) await operation;
@@ -355,6 +362,7 @@ namespace Elts.Operator
         private async void FlushBeforeQuit()
         {
             quitInProgress=true;
+            StopTutorialForShutdown();
             try
             {
                 if(operation!=null) await operation;
@@ -370,6 +378,14 @@ namespace Elts.Operator
                 lastMessage="Shutdown incomplete: "+exception.Message;
                 quitInProgress=false;
             }
+        }
+        private void StopTutorialForShutdown()
+        {
+            tutorialNarration?.Stop();
+            // Stop/disarm first, then always attempt raw-recording closure even
+            // if the demonstration's final acknowledgement could not be logged.
+            try { tutorialDemo?.Stop(); }
+            catch(Exception exception) { Debug.LogError("ELTS_TUTORIAL_STOP_FAIL "+exception.Message); }
         }
     }
 }

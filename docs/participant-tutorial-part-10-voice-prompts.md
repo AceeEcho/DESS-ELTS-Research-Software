@@ -1,55 +1,44 @@
 # Participant tutorial — Part 10 voice prompts
 
-Date: November 3, 2026.
-Voice: Eryn - Genuine, Friendly and Natural (`kdnRe2koJdOK4Ovxn2DI`).
-Model: `eleven_v4`.
-Flow: `xup5jSg7uW0BxA3jqKBp`.
+November 3, 2026. Automatic study flow. Newly generated takes use Eryn and ElevenLabs v4.
 
-Two takes per chunk await selection. Top is take 1 and Bottom is take 2.
-
-Reuse the selected 10, 10.1, and 10.2 clips after each of scenarios 1–3.
+Reuse these three clips after each of scenarios 1–3.
 
 ## Part 10
 
-```text
-[warmly] [calmly] This scenario is complete. [short pause] Please wait while the operator prepares your break.
-```
+Selection: user-supplied New tts node (4).mp3.
 
-Speech node: `5cv1XS0gygFIAUGHRrk3`.
-Planned file stem: `docs/participant-tutorial/audio/part-10/10-scenario-complete`.
-Selection: Pending.
+Retained the opening sentence through the pause at 1.8 seconds. Removed the instruction to wait for operator preparation.
 
-| Position | Generation ID | Session ID |
-| --- | --- | --- |
-| Top (take 1) | `DghQds2mX0BXf625wZw4` | `dvHsf2CTsBelOR5UYAhA` |
-| Bottom (take 2) | `O38BVFpa7oDoOxcwOTrs` | `xh8WYm9Si4yjl0Z6jxKp` |
+Saved audio: [10-scenario-complete.mp3](participant-tutorial/audio/part-10/10-scenario-complete.mp3).
+
+SHA-256: ed4e44a81d486ab6029d3e0a297ddfd6e87550422a63f2733c65d8390017fb2c.
 
 ## Part 10.1
 
-```text
-[warmly] [calmly] Your two-minute break begins now.
-```
+Selection: user-supplied New tts node (5).mp3.
 
-Speech node: `aXGCDhSsEXihPXU6SuTJ`.
-Planned file stem: `docs/participant-tutorial/audio/part-10/10-01-break-running`.
-Selection: Pending.
+Saved audio: [10-01-break-running.mp3](participant-tutorial/audio/part-10/10-01-break-running.mp3).
 
-| Position | Generation ID | Session ID |
-| --- | --- | --- |
-| Top (take 1) | `5N7g9UaVUrsdxSHnhFB3` | `8QKQHT0j2j1MeDDQbQSi` |
-| Bottom (take 2) | `3bkIQGVwE9FRlYuRrLzA` | `1FVMCNfeC1Kjmd2vOcSj` |
+SHA-256: 0f974f2b92ef627e87c84bb94a9ff59e7d246526291ddce0f098711d96beae58.
 
 ## Part 10.2
 
-```text
-[warmly] [calmly] Your break is complete. [short pause] Let the operator know when you're ready for the next scenario.
-```
+Selection: user-supplied New tts node (9).mp3. Verified duration: 4.48 seconds. The prompts and take IDs below record the generated candidates.
 
-Speech node: `64j10bSmDjscNZb2awBd`.
-Planned file stem: `docs/participant-tutorial/audio/part-10/10-02-ready-for-next-scenario`.
-Selection: Pending.
+Saved audio: [10-02-next-scenario-starting.mp3](participant-tutorial/audio/part-10/10-02-next-scenario-starting.mp3).
+
+SHA-256: 0a2be0bc84cb6d508f7eee75ab0931c02813044438f1779062de1987b172ff3b.
+
+~~~text
+[warmly] [calmly] Your break is complete. [short pause] The next scenario will start shortly.
+~~~
+
+Speech node: 4srNI5d9T9ayo938g2jx. [Review takes](https://elevenlabs.io/app/flows/xup5jSg7uW0BxA3jqKBp?vs=viewstate_01m6hd6v0pen1rdecc082evc6k).
 
 | Position | Generation ID | Session ID |
 | --- | --- | --- |
-| Top (take 1) | `RLlCPnhCdwzjEl8hTXVG` | `rd4De0OeRdi8JB4CYvCR` |
-| Bottom (take 2) | `atwwm0fZWeRznIzhwRIR` | `shnlten1ouiy5Qpu9cjL` |
+| Top (take 1) | sXxRXrMpjxKs56B9bq8i | 0peYyIPZ9LrkItkjvXwo |
+| Bottom (take 2) | iiAqjGFeG0qjjkDdEMgE | R8Y3Evw6X83tJKk2mTHF |
+
+Superseded speech node: `64j10bsmdjscnzb2awbd`.

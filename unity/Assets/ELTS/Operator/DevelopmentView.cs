@@ -52,6 +52,11 @@ namespace Elts.Operator
         private UnityEngine.Rendering.AmbientMode previousAmbientMode;
         private Color previousAmbientLight;
         private bool roomLightingOwned, authoredFloorWasActive;
+        private Renderer[] trainingRoomRenderers=Array.Empty<Renderer>();
+        private bool[] roomVisibilityBeforeTutorial=Array.Empty<bool>();
+        private GameObject? tutorialFloor;
+        private Color backgroundBeforeTutorial;
+        public bool TutorialSceneVisible { get; private set; }
         private readonly List<Material> ownedMaterials = new List<Material>();
         private readonly List<Light> disabledLights = new List<Light>();
         private readonly List<Camera> disabledCameras = new List<Camera>();
@@ -155,7 +160,9 @@ namespace Elts.Operator
                 roomLightingOwned=true;
                 RenderSettings.ambientMode=UnityEngine.Rendering.AmbientMode.Flat;
                 RenderSettings.ambientLight=trainingRoom.ambient;
-                DevelopmentTrainingRoom.Create(transform,screen,configuration.Rig.VirtualFloorY,trainingRoom,ownedMaterials,targetMaterial,activeGameSettings,configuration.Scenario.TargetDistanceM);
+                var room=DevelopmentTrainingRoom.Create(transform,screen,configuration.Rig.VirtualFloorY,trainingRoom,ownedMaterials,targetMaterial,activeGameSettings,configuration.Scenario.TargetDistanceM);
+                trainingRoomRenderers=room.GetComponentsInChildren<Renderer>(true);
+                roomVisibilityBeforeTutorial=new bool[trainingRoomRenderers.Length];
                 screenPreview=new OperatorScreenPreview(transform,Material(Color.white));
                 body=MarkerPart(transform,"Participant silhouette · inferred from head",PrimitiveType.Capsule,Vector3.zero,Vector3.one,Material(new Color(.27f,.34f,.38f)));
                 MarkerPart(transform,"Physical station floor",PrimitiveType.Cube,new Vector3(0,(float)configuration.Rig.VirtualFloorY-.04f,.6f),new Vector3(3.4f,.08f,3.4f),Material(new Color(.12f,.15f,.18f)));
@@ -175,6 +182,39 @@ namespace Elts.Operator
         {
             var go=new GameObject(name);go.transform.SetParent(transform);var camera=go.AddComponent<Camera>();
             ConfigureCamera(camera,mask,background);return camera;
+        }
+        /// <summary>Use the real target on a clear teaching stage. Only scenery
+        /// changes; acquisition, target anatomy and scored-session rules do not.</summary>
+        public void SetTutorialPresentation(bool enabled,string backgroundHex,string floorHex)
+        {
+            if(!Ready || enabled==TutorialSceneVisible)return;
+            TutorialSceneVisible=enabled;
+            if(enabled)
+            {
+                backgroundBeforeTutorial=participant.backgroundColor;
+                if(ColorUtility.TryParseHtmlString(backgroundHex,out var background))participant.backgroundColor=background;
+                for(int i=0;i<trainingRoomRenderers.Length;i++)
+                {
+                    roomVisibilityBeforeTutorial[i]=trainingRoomRenderers[i].enabled;
+                    trainingRoomRenderers[i].enabled=false;
+                }
+                if(tutorialFloor==null)
+                {
+                    ColorUtility.TryParseHtmlString(floorHex,out var floorColor);
+                    // A broad virtual floor supports the target without any
+                    // furniture or occlusion. These are scene dimensions in m.
+                    tutorialFloor=LibraryInterior.Box(transform,"Tutorial floor",
+                        new Vector3(0,(float)configuration.Rig.VirtualFloorY-.05f,20),
+                        new Vector3(60,.1f,60),Material(floorColor),false);
+                }
+            }
+            else
+            {
+                participant.backgroundColor=backgroundBeforeTutorial;
+                for(int i=0;i<trainingRoomRenderers.Length;i++)
+                    trainingRoomRenderers[i].enabled=roomVisibilityBeforeTutorial[i];
+            }
+            if(tutorialFloor!=null)tutorialFloor.SetActive(enabled);
         }
         private static void ConfigureCamera(Camera camera,int mask,Color background)
         {

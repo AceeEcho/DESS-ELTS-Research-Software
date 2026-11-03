@@ -2,6 +2,9 @@
 
 All participants are fictional. Copies and recordings stay in an isolated temp
 folder; the repository's collection is never used by this test.
+The visible player needs a click at each firing step and R at each reload step.
+These real input checks cannot be bypassed through the administrator API. Audio
+is disabled for the entire run.
 """
 import argparse
 from contextlib import closing
@@ -34,7 +37,8 @@ def main():
         log = output / 'player.log'
         log.write_text('',encoding='utf-8')
         (output / 'result.json').write_text('{"result":"running"}\n',encoding='utf-8')
-        process = subprocess.Popen([str(player / 'ELTS-Synthetic.exe'), '-batchmode',
+        process = subprocess.Popen([str(player / 'ELTS-Synthetic.exe'), '-noaudio',
+                                    '-screen-fullscreen', '0', '-screen-width', '1280', '-screen-height', '720',
                                     '-eltsNoAdminWindow', '-logFile', str(log)], cwd=player,
                                    creationflags=subprocess.CREATE_NO_WINDOW)
         origin = token = ''
@@ -67,7 +71,8 @@ def main():
 
         def command(action, **values):
             current = state()
-            body = {'action': action, 'runId': current['runId'], 'blockId': current['blockId'], **values}
+            body = {'action': action, 'runId': current['runId'], 'blockId': current['blockId'],
+                    'tutorialRevision': current.get('tutorial', {}).get('revision', -1), **values}
             request = urllib.request.Request(origin + '/api/command', data=json.dumps(body).encode(),
                                              headers={'Content-Type': 'application/json', 'X-Elts-Token': token, 'Origin': origin})
             with urllib.request.urlopen(request, timeout=10) as response:
@@ -83,6 +88,35 @@ def main():
             assert not result['data']['error'], result['data']['error']
             return result
 
+        def prepare_walkthrough():
+            command('tutorialBegin')
+            deadline = time.monotonic() + 240
+            announced = set()
+            while time.monotonic() < deadline:
+                current = state()
+                if current['canArm']:
+                    return
+                tutorial = current['tutorial']
+                stage = tutorial['stage']
+                if current['busy']:
+                    time.sleep(.15)
+                    continue
+                if stage in ('Fire', 'Reload') and not tutorial['canPrimary'] and stage not in announced:
+                    print('PARTICIPANT INPUT: ' + ('Click and release in the game.' if stage == 'Fire' else 'Press R in the game.'), flush=True)
+                    announced.add(stage)
+                if tutorial['canPrimary']:
+                    command(tutorial['primaryAction'])
+                elif stage == 'PracticeRunning':
+                    command('tutorialFinishPractice')
+                else:
+                    time.sleep(.15)
+            raise AssertionError('Walkthrough did not finish; participant click/reload required: ' + json.dumps(state()['tutorial']))
+
+        def confirm_form():
+            wait(lambda s: s['tutorial']['stage'] == 'Form' and s['tutorial']['canPrimary'], 'Final recording close and form prompt')
+            command('tutorialForm')
+            wait(lambda s: s['canStartParticipant'] and not s['busy'], 'Form receipt saved')
+
         ready = wait(lambda s: s.get('data', {}).get('ready') and not s['data']['busy'], 'Storage initialization')
         collection = Path(ready['data']['path'])
         assert collection.is_relative_to(player), collection
@@ -93,24 +127,20 @@ def main():
         for iteration in range(2):
             command('startParticipant', participant='SQL-SMOKE-01', participantName="Fictional Zoë '雪'", initialNotes='Synthetic software verification only.', conditionOrder=conditions)
             wait(lambda s: s['state'] == 'Calibration' and not s['busy'], 'Calibration setup')
-            command('generateCalibration')
-            wait(lambda s: s['tools']['calibration']['canAccept'], 'Calibration review')
-            command('acceptCalibration')
-            command('startPractice')
-            wait(lambda s: s['state'] == 'BlockReady' and not s['busy'], 'Ready after practice')
+            prepare_walkthrough()
             for index in range(4):
                 command('skipTest', reason='Synthetic software save checkpoint test')
                 wait(lambda s: s['state'] == 'BlockEnded' and not s['busy'], 'Raw and SQL checkpoint saved')
                 command('skipBreak')
                 wait(lambda s: (s['state'] == 'SessionComplete' if index == 3 else s['state'] == 'BlockReady') and not s['busy'], 'Next state')
-            wait(lambda s: s['canStartParticipant'] and not s['busy'], 'Final recording close')
+            confirm_form()
             if iteration == 0:
                 command('repeatTest', condition='WE_FT', reason='Synthetic continuation identity check')
                 wait(lambda s: s['state'] == 'BlockReady' and not s['busy'], 'Continuation ready')
                 command('skipTest', reason='Synthetic repeated-test checkpoint')
                 wait(lambda s: s['state'] == 'BlockEnded' and not s['busy'], 'Continuation checkpoint saved')
                 command('skipBreak')
-                wait(lambda s: s['state'] == 'SessionComplete' and s['canStartParticipant'] and not s['busy'], 'Continuation finalized')
+                confirm_form()
         command('startParticipant', participant='SQL-SMOKE-02', participantName='Other fictional person', conditionOrder=conditions)
         wait(lambda s: s['state'] == 'Calibration' and not s['busy'], 'Second profile setup')
         command('abort', reason='Synthetic software export isolation check')
@@ -175,6 +205,10 @@ def main():
         assertions.append('Real player SQL, participant-only SQL and original-file ZIP exports download and open independently')
         (output / 'result.json').write_text(json.dumps({'result':'pass','checks':assertions,'physicalValidation':False},indent=2)+'\n',encoding='utf-8')
         print('PASS: copied-player storage, checkpoint indexing, profile grouping, downloads and export isolation')
+    except Exception as error:
+        (output / 'result.json').write_text(json.dumps({'result':'fail','checks':assertions,
+            'error':str(error),'physicalValidation':False},indent=2)+'\n',encoding='utf-8')
+        raise
     finally:
         if process is not None and process.poll() is None:
             # Only this test-owned process is terminated, after recordings close.

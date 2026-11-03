@@ -559,3 +559,11 @@ button:focus-visible,[tabindex]:focus-visible,input:focus-visible,select:focus-v
 .reduce-motion button { transform:none !important; }
 
 input[type="range"] { padding:0; margin:0; }
+.tutorial-panel { border-left: 3px solid #8ba9c0; background: rgba(139,169,192,.055); }
+.tutorial-panel h2 { margin: 12px 0 8px; }
+.tutorial-silent { color: var(--muted, #a8a8ae); font-size: 11px; white-space: nowrap; }
+.tutorial-primary { width: 100%; margin: 8px 0; text-align: center; }
+.tutorial-checks { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 12px 0; }
+.tutorial-check { color: #9a9ca5; font-size: 11px; }
+.tutorial-check.is-complete { color: #b4d3c6; }
+.tutorial-controls { margin-top: 8px; }

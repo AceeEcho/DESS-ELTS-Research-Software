@@ -70,11 +70,22 @@ If a step fails, keep the error window open and see [setup troubleshooting](docs
 
 ---
 
+## Separate calibration workspace
+
+Double-click **START-CALIBRATION.cmd** to open the independent tracker and room
+setup dashboard in **Calibration Environment/**. It includes screen/base-station
+geometry, head and weapon mounting offsets, a navigable 3D overview, forward
+rotation references, and a separate screen-perspective window. Manual preview
+works without tracking equipment; optional live input reads SteamVR trackers.
+Profiles stay separate from ELTS configuration and recordings. See the
+[calibration workspace guide](Calibration%20Environment/README.md) for setup and
+the live-tracking installer. Software checks do not establish physical calibration.
+
 ## Illustrated user guide
 
 Use this guide to run the **development** version of the administrator dashboard.
 
-**Quick flow:** Open → Settings → New participant → Calibration → Practice → ARM TEST → Participant starts → Test saves → Start break → ARM TEST again.
+***Quick flow:*** Open → Settings → New participant → Tutorial and practice → Participant starts once → Automatic scenarios and breaks → Final form.
 
 > This version uses synthetic inputs. It is for software rehearsal, not physical equipment validation or study-ready operation. Screenshots show the current interface with fictional demonstration data; the camera feed is not connected in these examples. Click any image on GitHub to enlarge it.
 
@@ -123,26 +134,27 @@ Click **New participant**. Enter the **Participant number / ID**; a name or alia
 
 These details are saved with the recording. Creating a recording does not start a shooting test.
 
-### 4. Review calibration and practice
+### 4. Begin the participant walkthrough
 
-In **Calibration & practice**:
+Click **Begin tutorial / walkthrough**. The game presents equipment setup,
+head-tracker review, a holding-position diagram, gun-tracker review, aiming,
+firing and reloading, then practice. Follow the current check in the administrator
+panel; capture, review and acceptance now happen inside the walkthrough.
 
-1. Click **Generate fixture**.
-2. Read the displayed review. Use **Redo** if you need another fixture.
-3. Click **Accept fixture**.
-4. Click **Start practice** when the participant is ready.
+Calibration remains a synthetic fixture exercise, not physical calibration.
+Firing and reloading must be tried before the operator confirms understanding.
+Practice is unscored and supports **Pause practice**, **Restart practice** and
+**Finish practice**. The ELTS introduction then uses a clearly labeled simulated
+demonstration before the scenario overview. Selected narration covers all 30 tutorial chunks.
 
-![Calibration panel with Generate fixture, Redo, Accept fixture and Start practice controls.](docs/operator/images/user-guide/texas-tech/05-preparation.png)
+See the [walkthrough guide](docs/modules/participant-tutorial.md) for controls,
+visual settings, completion checks and the final form-confirmation step.
 
-These are synthetic fixture controls; they do not calibrate the physical apparatus.
+### 5. Start the study
 
-During practice, let the participant try moving and aiming. Wait for the timer, or click **Finish practice** to end it early. **Restart practice** starts the practice timer again. Practice shots are not scored.
+With the walkthrough, the first scenario arms after the readiness message. The participant uses **Shoot to begin** once. The next scenarios start automatically.
 
-![Practice countdown with Restart practice and Finish practice buttons.](docs/operator/images/user-guide/texas-tech/06-practice.png)
-
-### 5. Arm and run a test
-
-Check the condition and duration in **Current task**. When the participant is ready, click **ARM TEST**.
+For a manual session, check the condition and duration in **Current task** and click **ARM TEST** when the participant is ready.
 
 ![Ready test showing its condition, duration and the large ARM TEST button.](docs/operator/images/user-guide/texas-tech/07-arm.png)
 
@@ -164,9 +176,11 @@ To resize the participant window, drag its edges. F11 or Alt+Enter toggles fulls
 
 For exceptions, **Skip this test…** skips a ready, disarmed test with a reason. **Repeat a test…** creates another attempt with a reason and preserves the earlier results. **Abort participant session** ends the entire session, including its remaining tests; use it only when you intend to finish that participant's session early.
 
-### 7. Start the break yourself
+### 7. Breaks and the next test
 
-After each test ends:
+The walkthrough starts each break after saving and the completion cue. The next scenario begins after the countdown and transition cue when tracking is valid. The final break leads to the form. **Skip break** and **Skip this test…** remain available in their applicable phases.
+
+For a manual session, use these controls after each test ends:
 
 1. Wait for the test to finish saving.
 2. Click **Start break** when you want the countdown to begin. Waiting before this click does not use any break time.
@@ -178,7 +192,7 @@ After each test ends:
 
 ![Running break countdown with Skip break and instructions to arm the next test afterward.](docs/operator/images/user-guide/texas-tech/11-break-countdown.png)
 
-**The timer never arms or starts the next test automatically.** After the final test, complete or skip its break to close the participant recording.
+After the final test, complete or skip its break to close the participant recording.
 
 ### 8. Finish and find the saved data
 

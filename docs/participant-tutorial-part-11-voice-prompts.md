@@ -1,70 +1,61 @@
 # Participant tutorial — Part 11 voice prompts
 
-Date: November 3, 2026.
-Voice: Eryn - Genuine, Friendly and Natural (`kdnRe2koJdOK4Ovxn2DI`).
-Model: `eleven_v4`.
-Flow: `xup5jSg7uW0BxA3jqKBp`.
-
-Two takes per chunk await selection. Top is take 1 and Bottom is take 2.
-
-Use these clips after scenario 4 and through form completion.
+November 3, 2026. Automatic study flow. Newly generated takes use Eryn and ElevenLabs v4.
 
 ## Part 11
 
-```text
-[warmly] [calmly] You've completed all four scenarios. [short pause] Please wait while the operator prepares your final break.
-```
+Selection: user-supplied New tts node (10).mp3. Verified duration: 2.56 seconds. The prompts and take IDs below record the generated candidates.
 
-Speech node: `V7O7nL7JUfOQNF9RmmZC`.
-Planned file stem: `docs/participant-tutorial/audio/part-11/11-scenarios-complete`.
-Selection: Pending.
+Saved audio: [11-scenarios-complete.mp3](participant-tutorial/audio/part-11/11-scenarios-complete.mp3).
+
+SHA-256: b08b9cf08c1fb0e15bf2e628ef0bd36252cef881735dd7b0080fe7fe262c2a16.
+
+~~~text
+[warmly] [calmly] You've completed all four scenarios.
+~~~
+
+Speech node: trRyDV5UayjzjVXlu3V5. [Review takes](https://elevenlabs.io/app/flows/xup5jSg7uW0BxA3jqKBp?vs=viewstate_01m6hd6w9xesbvh9yy9845etgm).
 
 | Position | Generation ID | Session ID |
 | --- | --- | --- |
-| Top (take 1) | `ypQiIkBocZ6y8IpZ5HcJ` | `Tj7PWB5DTNbMjkwygKx4` |
-| Bottom (take 2) | `w11r9e3F9IdmkhmJNc7F` | `W4plONfSCTOA3bj0dwpI` |
+| Top (take 1) | iA5Ac5oXPykFPOIl1H92 | SlZvykw1kIJ7wJoU3yxR |
+| Bottom (take 2) | guuy1bPwGKwNEN8ijDMq | iCCOMmFREniEz3VNnIlO |
+
+Superseded speech node: `v7o7nl7jufoqnf9rmmzc`.
 
 ## Part 11.1
 
-```text
-[warmly] [calmly] Your final two-minute break begins now. [short pause] After the break, you'll complete the post-study form.
-```
+Selection: user-supplied New tts node (11).mp3. Verified duration: 2.8 seconds. The prompts and take IDs below record the generated candidates.
 
-Speech node: `qOfu3ZE1ClhFEmhXjT0H`.
-Planned file stem: `docs/participant-tutorial/audio/part-11/11-01-final-break-running`.
-Selection: Pending.
+Saved audio: [11-01-final-break-running.mp3](participant-tutorial/audio/part-11/11-01-final-break-running.mp3).
+
+SHA-256: d477f6f2f00736437989cac46ced0b0541bb6e6a84daedd82db289282f892b74.
+
+~~~text
+[warmly] [calmly] Your final two-minute break begins now.
+~~~
+
+Speech node: ReU1vt81gSoSJvPoukX7. [Review takes](https://elevenlabs.io/app/flows/xup5jSg7uW0BxA3jqKBp?vs=viewstate_01m6hd6xmhej2rs4gwwzp0gkha).
 
 | Position | Generation ID | Session ID |
 | --- | --- | --- |
-| Top (take 1) | `DcmgqMBy52xNfgUUlUa0` | `0ZdyaCn8mHIFYn1Ku9d1` |
-| Bottom (take 2) | `ZOaf7vqBgilDpr86fxsA` | `bCNMqnXccGZWpx18LTAh` |
+| Top (take 1) | ONFh4GvCzTHRQBEakl74 | K5KOVz119fACelAGXUJu |
+| Bottom (take 2) | cltHQAr5oZAqtb8rgCGa | xwmb7HQ5ZhSmPNXIGw5P |
+
+Superseded speech node: `qofu3ze1clhfemhxjt0h`.
 
 ## Part 11.2
 
-```text
-[warmly] [calmly] Your final break is complete. [short pause] Please complete the post-study form provided by the operator. [short pause] If you have any questions, please ask.
-```
+Selection: user-supplied New tts node (8).mp3.
 
-Speech node: `jknpyTb54qRWsOkDSpph`.
-Planned file stem: `docs/participant-tutorial/audio/part-11/11-02-post-study-form`.
-Selection: Pending.
+Saved audio: [11-02-post-study-form.mp3](participant-tutorial/audio/part-11/11-02-post-study-form.mp3).
 
-| Position | Generation ID | Session ID |
-| --- | --- | --- |
-| Top (take 1) | `xhRq96XwxQ2Fr4Ali3wr` | `72U3cC3oUaRmKKR3Wjq2` |
-| Bottom (take 2) | `V2Uz1ExepOXCBMtNqiwL` | `cJ9tqRGOVS0cHkkXeT8J` |
+SHA-256: cd9aa489a3bce568d24384b7dd37050d772a601c4de88c610a706121d6fba5e1.
 
 ## Part 11.3
 
-```text
-[warmly] [calmly] Thank you for being a participant in the ELTS Project Research Study.
-```
+Selection: user-supplied New tts node (7).mp3.
 
-Speech node: `eE9pqG3Zhfmy5O52wJl5`.
-Planned file stem: `docs/participant-tutorial/audio/part-11/11-03-thank-you`.
-Selection: Pending.
+Saved audio: [11-03-thank-you.mp3](participant-tutorial/audio/part-11/11-03-thank-you.mp3).
 
-| Position | Generation ID | Session ID |
-| --- | --- | --- |
-| Top (take 1) | `O2Hjg0Nx1qfmrrAtclEo` | `G6sQlq71tciJwiEHl5lF` |
-| Bottom (take 2) | `IcaowUdkuqjIv5nbOpvV` | `cxAm5ACAoFdnmg8bWUun` |
+SHA-256: 506f0e95e522f092afd473c8abede3df84c624785c8b9f6552d7be6c3a478e0c.

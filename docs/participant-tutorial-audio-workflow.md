@@ -2,7 +2,7 @@
 
 User-agreed workflow, October 30, 2026. Follow this for future participant tutorial narration work.
 
-Current stage, November 3, 2026: Parts 1–9 have selected audio. Parts 7, 9, and 9.1 use the supplied replacement MP3s. Parts 10–11 have two takes per chunk awaiting selection.
+Current stage, November 3, 2026: all 30 tutorial recordings are selected, linked, and bundled in Unity. Parts 10.2, 11, and 11.1 use supplied attachments 9, 10, and 11 respectively.
 
 ## Source files and delivery
 
@@ -76,3 +76,5 @@ Earlier test generations used four takes per initial node and single takes for w
 November 2, 2026: Parts 2 and 3 now have per-chunk take/session/node mappings in `participant-tutorial-part-2-voice-prompts.md` and `participant-tutorial-part-3-voice-prompts.md`. The user selected Bottom, Bottom, Bottom, Bottom, Top, Top, Bottom in chunk order 2, 2.1, 2.2, 3, 3.1, 3.2, 3.3. These seven files are downloaded, verified, and linked from the script and the corresponding voice-prompts documents.
 
 November 2, 2026: six chunks in Parts 4 and 5 have two requested takes each. Their exact prompts, node IDs, generation IDs, and Top/Bottom session mappings are in participant-tutorial-part-4-voice-prompts.md and participant-tutorial-part-5-voice-prompts.md. Selections are saved: Bottom for 4, 4.1, 4.2, 5, and 5.1; user-supplied New tts node.mp3 for 5.2. The six files are verified and linked from the script and voice-prompts documents.
+
+November 3, 2026: the Unity walkthrough bundles all 30 selected recordings. Attachments 9, 10, and 11 supply the last three automatic-transition recordings. See the [implementation guide](modules/participant-tutorial.md) for playback and transition behavior.

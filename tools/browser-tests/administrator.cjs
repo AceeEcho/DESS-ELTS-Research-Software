@@ -47,6 +47,11 @@ const server = http.createServer(async (req, res) => {
       current.tools.breakSeconds = command.breakSeconds; current.tools.practiceSeconds = command.practiceSeconds;
     }
     if (command.action === 'setDuration') current.testDurations[command.condition] = command.seconds;
+    if (command.action === 'tutorialBegin') Object.assign(current.tutorial, {started:true, stage:'Welcome', step:'01',
+      title:'Welcome to the ELTS Project', instruction:'Thank you for being a participant.', revision:1,
+      primaryLabel:'',canPrimary:false,canPause:true,canReplay:true});
+    if (command.action === 'tutorialContinue') Object.assign(current.tutorial, {stage:'Reload',step:'04-02',
+      title:'Try reloading',revision:3,primaryLabel:'Reloading understood · continue',canPrimary:false});
     if (command.action === 'startBreak') { current.state = 'Break'; current.remainingSeconds = 22; current.tools.canStartBreak = false; }
     if (command.action === 'skipBreak') { current.state = 'BlockReady'; current.tools.canSkipBreak = false; }
     if (command.action === 'viewParticipant') current.data.profile = {participant:current.data.profiles[0],sessions:[{id:'session1',modifiedUtc:'2026-09-11T12:00:00Z',finalized:'1',review:JSON.stringify({attempts:[{condition:'WE_FT',blockId:'WE_FT-attempt-01',status:'Completed',hits:2,shots:3,activeSeconds:300}],notes:[{text:'<script>must remain text</script>'}]})}]};
@@ -159,6 +164,26 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator('#durationStatus-WE_FT').textContent(), 'Saved', 'Test duration autosaves with confirmation');
     await page.screenshot({ path: path.join(output, 'administrator-setup.png'), fullPage: true });
     await page.locator('#closeSettings').click();
+    Object.assign(current, {state:'Calibration',participant:'TUTORIAL-FIXTURE',runId:'tutorial-browser',canStartParticipant:false,
+      tutorial:{started:false,stage:'NotStarted',revision:0,primaryAction:'tutorialBegin',primaryLabel:'Begin tutorial / walkthrough',
+        canPrimary:true,status:'Start the walkthrough after the participant recording is ready.'}});
+    await page.locator('#tutorialPanel').waitFor({state:'visible'});
+    assert.equal(await page.locator('#generateCalibration, #acceptCalibration').count(),0,'Old fixture buttons are replaced by the walkthrough');
+    await page.locator('#tutorialPrimary').click();
+    await wait(()=>commands.some(c=>c.action==='tutorialBegin'));
+    assert.equal(commands.find(c=>c.action==='tutorialBegin').tutorialRevision,0,'Tutorial actions carry the displayed revision');
+    assert.equal(commands.find(c=>c.action==='tutorialBegin').runId,'tutorial-browser','Tutorial action is bound to its participant');
+    Object.assign(current.tutorial,{stage:'Fire',step:'04-02',title:'Try firing',instruction:'Follow the operator, then try firing.',
+      revision:2,primaryAction:'tutorialContinue',primaryLabel:'Firing understood · try reloading',canPrimary:false,
+      headAccepted:true,gunAccepted:true,status:'Waiting for a participant shot. A hit is not required.'});
+    await page.waitForFunction(()=>document.getElementById('tutorialTitle').textContent==='Try firing');
+    assert.equal(await page.locator('#tutorialPrimary').isDisabled(),true,'Incomplete action cannot be confirmed');
+    await page.screenshot({path:path.join(output,'administrator-tutorial.png'),fullPage:true});
+    current.tutorial.fired=true;current.tutorial.canPrimary=true;
+    await page.waitForFunction(()=>!document.getElementById('tutorialPrimary').disabled);
+    await page.locator('#tutorialPrimary').click();await wait(()=>current.tutorial.stage==='Reload');
+    assert.equal(commands.find(c=>c.action==='tutorialContinue').tutorialRevision,2,'Completed action uses the correct step revision');
+    delete current.tutorial;
     Object.assign(current, { state: 'BlockEnded', participant: 'SYNTHETIC', runId: 'fixture-run', blockId: 'WE_FT-attempt-01',
       condition: 'WE_FT', canStartParticipant: false, remainingSeconds: 22 });
     Object.assign(current.tools, { canStartBreak: true, canSkipBreak: true, canRepeat: true, repeatable: ['WE_FT'],

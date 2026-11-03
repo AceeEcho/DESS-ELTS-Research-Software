@@ -1,0 +1,8 @@
+{
+  "name": "elts-calibration-environment",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/geometry.test.mjs"
+  }
+}

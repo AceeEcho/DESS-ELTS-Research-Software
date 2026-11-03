@@ -276,6 +276,11 @@ namespace Elts.Session
         private readonly Dictionary<string, int> attemptCounts = new Dictionary<string, int>(StringComparer.Ordinal);
         private readonly HashSet<string> finishedConditions = new HashSet<string>(StringComparer.Ordinal);
         private double breakSeconds, practiceSeconds;
+        private double practicePausedSeconds;
+        private MonotonicTimestamp practicePausedAt;
+        public bool PracticePaused { get; private set; }
+        public double PracticeActiveSeconds => State==SessionState.Practice
+            ? Math.Max(0,((PracticePaused?practicePausedAt:clock.Now).Elapsed-phaseStarted.Elapsed).TotalSeconds-practicePausedSeconds) : 0;
         private readonly ISessionEventSink sink;
         private readonly ISessionLink? link;
         private ScenarioBlockController? block;
@@ -359,7 +364,7 @@ namespace Elts.Session
             get
             {
                 if ((State == SessionState.BlockRunning || State == SessionState.BlockPaused) && block != null) return block.RemainingSeconds;
-                if (State == SessionState.Practice) return Math.Max(0, practiceSeconds - (clock.Now.Elapsed - phaseStarted.Elapsed).TotalSeconds);
+                if (State == SessionState.Practice) return Math.Max(0, practiceSeconds - PracticeActiveSeconds);
                 if (State == SessionState.Break) return Math.Max(0, breakSeconds - (clock.Now.Elapsed - phaseStarted.Elapsed).TotalSeconds);
                 return 0;
             }
@@ -382,6 +387,7 @@ namespace Elts.Session
             else if (State == SessionState.Calibration)
             {
                 phaseStarted = clock.Now;
+                PracticePaused=false;practicePausedSeconds=0;
                 Transition(SessionState.Practice);
             }
             else if (State == SessionState.BlockEnded)
@@ -399,7 +405,7 @@ namespace Elts.Session
 
         public void Tick()
         {
-            if (State == SessionState.Practice && clock.Now.Elapsed - phaseStarted.Elapsed >= TimeSpan.FromSeconds(practiceSeconds))
+            if (State == SessionState.Practice && !PracticePaused && PracticeActiveSeconds >= practiceSeconds)
             {
                 Transition(SessionState.BlockReady);
                 return;
@@ -590,7 +596,25 @@ namespace Elts.Session
                 throw new InvalidOperationException("Practice can restart before the first test.");
             if (!Record(Event("PracticeRestarted"))) return;
             phaseStarted = clock.Now;
+            PracticePaused=false;practicePausedSeconds=0;
             Transition(SessionState.Practice);
+        }
+
+        /// <summary>Pause practice time only; raw sensor acquisition remains the caller's responsibility.</summary>
+        public void PauseDevelopmentPractice()
+        {
+            RequireDevelopmentControls();Require(SessionState.Practice);
+            if(PracticePaused)return;
+            if(!Record(Event("PracticePaused",LogField.NumberValue("remainingSeconds",RemainingSeconds))))return;
+            practicePausedAt=clock.Now;PracticePaused=true;
+        }
+        public void ResumeDevelopmentPractice()
+        {
+            RequireDevelopmentControls();Require(SessionState.Practice);
+            if(!PracticePaused)return;
+            if(!Record(Event("PracticeResumed",LogField.NumberValue("remainingSeconds",RemainingSeconds))))return;
+            practicePausedSeconds+=(clock.Now.Elapsed-practicePausedAt.Elapsed).TotalSeconds;
+            PracticePaused=false;
         }
 
         /// <summary>The caller must reserve a fresh recording before reopening a finished session.</summary>

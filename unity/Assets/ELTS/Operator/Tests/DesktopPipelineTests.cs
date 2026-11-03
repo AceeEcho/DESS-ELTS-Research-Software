@@ -174,6 +174,12 @@ namespace Elts.Operator.Tests
                 InputSystem.QueueStateEvent(mouse,new MouseState {position=new Vector2(320,300)});UpdateVirtualInput();
                 mouse.MakeCurrent();keyboard.MakeCurrent();
                 Assert.That(device.Read(session.PanelRoot.panel).Released,Is.True);
+                InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.R));UpdateVirtualInput();
+                keyboard.MakeCurrent();
+                Assert.That(device.Read(session.PanelRoot.panel).Reload,Is.True,"R must become a participant reload input frame");
+                InputSystem.QueueStateEvent(keyboard,new KeyboardState());UpdateVirtualInput();
+                keyboard.MakeCurrent();
+                Assert.That(device.Read(session.PanelRoot.panel).Reload,Is.False,"releasing R must not repeat the reload");
                 Assert.That(new MouseKeyboardControls(()=>false).Read(session.PanelRoot.panel).Focused,Is.False);
             }
             finally {InputSystem.RemoveDevice(mouse);InputSystem.RemoveDevice(keyboard);InputSystem.settings.backgroundBehavior=background;InputSystem.settings.updateMode=updateMode;InputSystem.settings.editorInputBehaviorInPlayMode=editorRouting;UnityEngine.Object.DestroyImmediate(host);}

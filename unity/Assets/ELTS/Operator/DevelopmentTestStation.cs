@@ -44,6 +44,7 @@ namespace Elts.Operator
         private PanelSettings settings=null!;
         private VisualElement ui=null!,prompt=null!;
         private Label title=null!,subtitle=null!,reticle=null!,ammo=null!;
+        private ParticipantTutorialView tutorialView=null!;
         private RenderTexture outsideTexture=null!;
         private Texture2D capture=null!;
         private bool held,wasArmed;
@@ -107,6 +108,7 @@ namespace Elts.Operator
             ui.RegisterCallback<GeometryChangedEvent>(_=>CancelClick());
             Resources.Load<VisualTreeAsset>("ELTS/ParticipantView").CloneTree(ui);
             prompt=ui.Q("participantPrompt");title=ui.Q<Label>("participantTitle");subtitle=ui.Q<Label>("participantSubtitle");reticle=ui.Q<Label>("participantReticle");ammo=ui.Q<Label>("participantAmmo");
+            tutorialView=new ParticipantTutorialView(ui,session,view);
             session.StationPublishPose(session.Desktop.Model.Head,session.Desktop.Model.Weapon);
             server=new AdministratorServer(Path.Combine(Application.streamingAssetsPath,"administrator"));
             // A local discovery file lets test tools locate this instance without
@@ -184,6 +186,10 @@ namespace Elts.Operator
         public void ApplyCommand(JObject command)
         {
             string action=(string?)command["action"]??"";
+            if(action.StartsWith("tutorial",StringComparison.Ordinal))
+            {
+                session.StationTutorialAction(action,(int?)command["tutorialRevision"]??-1);CancelClick();return;
+            }
             if((action=="pause" || action=="resume" || action=="stopTest" || action=="skipTest" || action=="skipBreak" || action=="startBreak" || action=="repeatTest") &&
                 (string?)command["blockId"]!=(session.Engine?.CurrentBlockId??""))
                 throw new InvalidOperationException("The test changed. Review the current test before trying again.");
@@ -230,6 +236,7 @@ namespace Elts.Operator
                 case "previewRate": previewFramesPerSecond=Mathf.Clamp((int)Finite(command,"fps",10),1,30);break;
                 default:throw new ArgumentException("Unknown administrator action.");
             }
+            session.SynchronizeTutorial();
         }
         private void SetFullscreen(bool fullscreen)
         {
@@ -251,7 +258,7 @@ namespace Elts.Operator
             var input=Controls.Read(ui.panel);var bounds=ui.worldBound;
             bool inside=input.Focused && bounds.width>0 && bounds.height>0 && bounds.Contains(input.Pointer);
             bool armed=session.TestArmed;
-            if(!input.Focused || armed!=wasArmed || heldBlock!=session.DesktopBlockId)CancelClick();
+            if(!input.Focused || armed!=wasArmed || heldBlock!=session.ParticipantInputPhase)CancelClick();
             if(input.Focused)
             {
                 if(input.Reset)session.Desktop.Model.Reset();
@@ -263,9 +270,9 @@ namespace Elts.Operator
             // The virtual tracker holds its last pose while the administrator
             // has focus. Mouse edges are canceled; synthetic tracking continues.
             session.StationPublishPose(session.Desktop.Model.Head,session.Desktop.Model.Weapon);
-            bool allowed=armed || session.CanDesktopFire;
+            bool allowed=armed || session.CanDesktopFire || session.TutorialCanInteract;
             if(!inside || !allowed)CancelClick();
-            if(inside && allowed && input.Pressed){held=true;heldBlock=session.DesktopBlockId;}
+            if(inside && allowed && input.Pressed){held=true;heldBlock=session.ParticipantInputPhase;}
             if(input.Released)
             {bool fire=held && inside && allowed;CancelClick();if(fire)session.StationParticipantTrigger();}
             wasArmed=session.TestArmed;
@@ -276,12 +283,15 @@ namespace Elts.Operator
         private void CancelClick(){held=false;heldBlock=null;}
         private void UpdateParticipantPrompt()
         {
+            tutorialView.Refresh();
+            bool tutorialVisible=session.Tutorial.Started;
             bool running=session.Engine?.State==SessionState.BlockRunning;
-            prompt.EnableInClassList("participant-hidden",running);
-            reticle.EnableInClassList("participant-hidden",!running);
-            ammo.EnableInClassList("participant-hidden",!running);
+            prompt.EnableInClassList("participant-hidden",running || tutorialVisible);
+            bool interacting=session.Tutorial.LiveScene && session.Tutorial.Stage!=TutorialStage.Targets && session.Tutorial.Stage!=TutorialStage.PracticeReady;
+            reticle.EnableInClassList("participant-hidden",!running && !interacting);
+            ammo.EnableInClassList("participant-hidden",!running && !interacting);
             string? reload=(Controls as IDesktopControlHints)?.ReloadHint;
-            ammo.text="AMMO  "+session.StationAmmo+" / "+session.StationMagazineCapacity+"   ·   "+
+            ammo.text="AMMO  "+session.ParticipantAmmo+" / "+session.StationMagazineCapacity+"   ·   "+
                 (reload==null?"RELOAD":reload.ToUpperInvariant()+" RELOAD");
             if(session.TestArmed){title.text="Shoot to begin";subtitle.text="Click and release when you are ready.";return;}
             switch(session.Engine?.State)
@@ -347,7 +357,7 @@ namespace Elts.Operator
                 camera=new{yaw=orbitYaw,pitch=orbitPitch,distance=orbitDistance},viewVersion=imageVersion,
                 fullscreen=Screen.fullScreen,previewFps=previewFramesPerSecond,
                 synthetic=true,canNext=!session.IsBusy && (engine?.State==SessionState.BlockEnded || (engine?.State==SessionState.Break && engine.RemainingSeconds<=0)),
-                tools=session.StationToolsState, data=session.CollectionState, downloadId=server?.RegisterExport(session.CollectionExportPath)??""
+                tools=session.StationToolsState, tutorial=session.TutorialState, data=session.CollectionState, downloadId=server?.RegisterExport(session.CollectionExportPath)??""
             });
         }
         private static object Pose(RigidPose? pose)=>new{

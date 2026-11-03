@@ -55,11 +55,13 @@ namespace Elts.Operator
             queueIndex=engine?.CurrentBlockIndex??0,
             repeatable=engine?.FinishedConditions.ToArray()??Array.Empty<string>(),
             canRepeat=!IsBusy && !TestArmed && engine!=null && (engine.CanScheduleRepeat || (engine.CanReopenForRepeat && StationCanStartParticipant)),
-            canSkipTest=!IsBusy && !closing && !TestArmed && engine?.State==SessionState.BlockReady,
-            canStartBreak=!IsBusy && engine?.State==SessionState.BlockEnded,
-            canSkipBreak=!IsBusy && (engine?.State==SessionState.Break || engine?.State==SessionState.BlockEnded),
+            canSkipTest=!IsBusy && !closing && !TestArmed && engine?.State==SessionState.BlockReady && (!SeparateAdministrator || tutorial.CanArm),
+            automaticStudy=tutorial.Started,
+            canStartBreak=StationBreakReady,
+            canSkipBreak=!IsBusy && (engine?.State==SessionState.Break || StationBreakReady),
             canRestartPractice=!IsBusy && !TestArmed && engine!=null &&
-                (engine.State==SessionState.Practice || (engine.State==SessionState.BlockReady && engine.CurrentBlockIndex==0)),
+                (engine.State==SessionState.Practice || (engine.State==SessionState.BlockReady && engine.CurrentBlockIndex==0)) &&
+                (!SeparateAdministrator || (!tutorial.Paused && (tutorial.Stage==TutorialStage.PracticeRunning || tutorial.Stage==TutorialStage.PracticeComplete))),
             canFinishPractice=!IsBusy && engine?.State==SessionState.Practice,
             calibration=new {
                 phase=calibration.State.ToString(), review=root.Q<Label>("calibrationReview").text,
@@ -89,7 +91,7 @@ namespace Elts.Operator
                     detail=diskFreeBytes>0?(diskFreeBytes/(double)(1024*1024*1024)).ToString("F1")+" GB free at recording setup.":"Free space is checked when creating the recording (2 GB required)." },
                 new { name="Configuration",status="Ready",detail="Loaded and validated: "+view.Configuration.EffectiveSha256.Substring(0,12) },
                 new { name="Calibration",status=calibration.State==CalibrationWizardState.Accepted?"Ready":"Waiting",
-                    detail=calibration.State==CalibrationWizardState.Accepted?"Synthetic fixture accepted; startup rig configuration remains active.":"Generate, review and accept the synthetic fixture before practice." },
+                    detail=calibration.State==CalibrationWizardState.Accepted?"Synthetic fixture accepted; startup rig configuration remains active.":"Complete the calibration steps inside the participant walkthrough." },
                 new { name="Devices and displays",status="Emulated",detail="Controller: "+(mockLink?.State.ToString()??"not created")+". Display and SteamVR readiness are emulated; physical study readiness is unavailable." }
             };
         }
@@ -123,6 +125,7 @@ namespace Elts.Operator
 
         public void StationPreparationAction(string action)
         {
+            if(SeparateAdministrator)throw new InvalidOperationException("Use the current tutorial step for calibration and practice.");
             if(IsBusy || engine==null || closing)throw new InvalidOperationException("No active preparation step is available.");
             switch(action)
             {
@@ -147,14 +150,18 @@ namespace Elts.Operator
         public void StationSkipBreak()
         {
             if(IsBusy || engine==null)throw new InvalidOperationException("Wait for the current test to finish saving.");
+            if(engine.State!=SessionState.Break && engine.State!=SessionState.BlockEnded)
+                throw new InvalidOperationException("There is no current break to skip.");
             // An unstarted break can also be explicitly skipped, preserving its events.
-            if(engine.State==SessionState.BlockEnded)engine.Advance();
+            if(engine.State==SessionState.BlockEnded)StationStartBreak();
             engine.SkipDevelopmentBreak();
             if(engine.State==SessionState.Failed)throw new InvalidOperationException(engine.Failure);
+            tutorial.MarkBreakSkipped();
         }
         public void StationSkipTest(string reason)
         {
             if(IsBusy || TestArmed || engine==null)throw new InvalidOperationException("Disarm and wait for saving before skipping a test.");
+            if(SeparateAdministrator && !tutorial.CanArm)throw new InvalidOperationException("Finish the walkthrough before managing scenario attempts.");
             engine.SkipDevelopmentTest(reason);
             if(engine.State==SessionState.Failed)throw new InvalidOperationException(engine.Failure);
         }

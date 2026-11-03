@@ -19,6 +19,7 @@ namespace Elts.Operator
     public sealed partial class DevelopmentSessionPanel
     {
         private bool stationPreparing;
+        private string? stationAutomaticallyArmedBlock;
         private string stationParticipant = "";
         private string stationParticipantName = "", stationInitialNotes = "";
         private double stationStartedAt;
@@ -27,9 +28,10 @@ namespace Elts.Operator
         };
         public bool SeparateAdministrator { get; private set; }
         public bool TestArmed { get; private set; }
-        public bool StationCanArm => !IsBusy && !closing && !TestArmed && engine?.State==SessionState.BlockReady;
+        public bool StationCanArm => !IsBusy && !closing && !TestArmed && engine?.State==SessionState.BlockReady && (!SeparateAdministrator || tutorial.CanArm);
         public bool StationCanStartParticipant => !IsBusy && !stationPreparing &&
-            (engine==null || (closing && recording?.IsOpen!=true));
+            (engine==null || (closing && recording?.IsOpen!=true && (!tutorial.Started ||
+                tutorial.Stage==TutorialStage.ThankYou || engine.State==SessionState.Aborted || engine.State==SessionState.Failed)));
         public string StationParticipant => stationParticipant;
         public string StationRunId => runId;
         public string StationMessage => engine?.Failure ?? lastMessage;
@@ -91,6 +93,7 @@ namespace Elts.Operator
         public void EnableSeparateAdministrator()
         {
             SeparateAdministrator=true;
+            InitializeTutorial();
             stationBreakSeconds=view.Configuration.Session.BreakDurationSeconds;
             stationPracticeSeconds=view.Configuration.Session.PracticeDurationSeconds;
             desktop!.SetOpen(false);
@@ -111,7 +114,9 @@ namespace Elts.Operator
             if(participantName.Length>120 || initialNotes.Length>2000)
                 throw new ArgumentException("Name is limited to 120 characters and initial notes to 2000 characters.");
             stationParticipant=participant;
+            ResetTutorial();
             stationNotes.Clear(); stationCheckpoints.Clear(); stationCheckpointId="";
+            stationAutomaticallyArmedBlock=null;
             stationSaveStatus="Recording will start after setup.";
             stationParticipantName=participantName.Trim();stationInitialNotes=initialNotes.Trim();
             stationStartedAt=clock?.Now.Elapsed.TotalSeconds ?? 0;
@@ -138,7 +143,7 @@ namespace Elts.Operator
                             participantId=stationParticipant,participantName=stationParticipantName,initialNotes=stationInitialNotes }));
                         AdvanceWithCalibration();
                         stationPreparing=false;
-                        lastMessage="Review the synthetic calibration fixture, then start practice.";
+                        lastMessage="Participant ready. Begin the tutorial / walkthrough.";
                     }
                     if(engine?.State==SessionState.BlockReady)
                     { stationPreparing=false;lastMessage="Ready. Arm the test when the participant is ready."; }
@@ -157,19 +162,51 @@ namespace Elts.Operator
                 scenario?.Refresh(0,acquisition?.Snapshot?.Head.Pose);
                 stationCheckpointId=engine.CurrentBlockId!;
                 var checkpoint=CreateStationCheckpoint();
-                // Save immediately; the administrator starts the break separately.
+                // Complete the durable checkpoint before allowing the break.
                 stationSaveStatus="Saving "+checkpoint.condition+"…";
                 Begin(()=>SaveStationCheckpointAsync(checkpoint));
             }
             if(!IsBusy && engine?.State==SessionState.Break && engine.RemainingSeconds<=0)
                 engine.Advance();
             if(engine?.State!=SessionState.BlockReady)TestArmed=false;
+            TickTutorial(UnityEngine.Time.unscaledDeltaTime);
         }
+
+        private void AdvanceAutomaticStudy()
+        {
+            if (IsBusy || closing || engine == null || tutorial.Paused) return;
+
+            // Allow the transition message to finish before moving on. The
+            // session state and recording checkpoint still own the transition.
+            if (tutorial.ElapsedSeconds < TutorialCueSeconds) return;
+
+            if (engine.State == SessionState.BlockEnded &&
+                (tutorial.Stage == TutorialStage.ScenarioEnded || tutorial.Stage == TutorialStage.FinalEnded) &&
+                StationBreakReady)
+            {
+                StationStartBreak();
+                SynchronizeTutorial();
+            }
+            else if (engine.State == SessionState.BlockReady && tutorial.Stage == TutorialStage.NextReady && !TestArmed)
+            {
+                TryStartStationBlock(automatic: true);
+            }
+            else if (tutorial.Stage == TutorialStage.FirstReady && StationCanArm &&
+                stationAutomaticallyArmedBlock != engine.CurrentBlockId)
+            {
+                StationArm();
+                SynchronizeTutorial();
+            }
+        }
+
+        public bool StationBreakReady => !IsBusy && engine?.State == SessionState.BlockEnded &&
+            stationCheckpoints.Any(checkpoint => checkpoint.blockId == engine.CurrentBlockId);
 
         public void StationArm()
         {
             if(!StationCanArm)throw new InvalidOperationException("The test is not ready to arm.");
             StationEvent("TestArmed");TestArmed=true;
+            stationAutomaticallyArmedBlock=engine!.CurrentBlockId;
             lastMessage="Armed. Waiting for the participant to shoot to begin.";
         }
         public void StationDisarm()
@@ -186,16 +223,17 @@ namespace Elts.Operator
         }
         public void StationStartBreak()
         {
-            if(IsBusy || engine?.State!=SessionState.BlockEnded)
+            if(!StationBreakReady)
                 throw new InvalidOperationException("Wait for the test to finish saving before starting its break.");
-            engine.Advance();
+            engine!.Advance();
         }
         public void StationNext()
         {
             if(IsBusy || engine==null || !engine.CanAdvance ||
                 (engine.State!=SessionState.BlockEnded && engine.State!=SessionState.Break))
                 throw new InvalidOperationException("The next phase is not available yet.");
-            engine.Advance();
+            if (engine.State == SessionState.BlockEnded) StationStartBreak();
+            else engine.Advance();
         }
         public void StationNote(string text)
         {
@@ -220,33 +258,49 @@ namespace Elts.Operator
         public bool StationParticipantTrigger()
         {
             if(IsBusy || closing || engine==null)return false;
-            if(TestArmed && engine.State==SessionState.BlockReady)
+            if(TutorialCanInteract)
             {
-                if(acquisition==null || !acquisition.TryCaptureForTrigger(out var pair) || !pair.IsValid)
-                {lastMessage="Waiting for a valid recorded pose before starting.";return false;}
-                TestArmed=false;
-                // The start click is consumed by the prompt, not counted as a
-                // target shot. Its source observation remains auditable.
-                if(!recording!.TryRecord(new SessionEvent(sequence!.Next(),clock!.Now,"ParticipantStartTrigger",new[]{
-                    LogField.String("blockId",engine.CurrentBlockId!),
-                    LogField.NumberValue("acquisitionSequence",pair.Sequence),
-                    LogField.NumberValue("observedMonotonicTicks",pair.Timestamp.Ticks),
-                    LogField.String("edge","falling")})))
-                {engine.Abort("Participant start could not be recorded.");return false;}
-                engine.StartBlock();
-                if(engine.State!=SessionState.BlockRunning)return false;
-                scenario!.Refresh(0,pair.Head.Pose);
-                view.SetSessionFrame(pair.Head.Pose,pair.Weapon.Pose,scenario.Positions,engine.CurrentActiveSeconds,scenario.FixedPoses);
-                lastMessage="Test running.";return true;
+                try{return SubmitTutorialTrigger();}
+                catch(Exception error){engine.Abort("Tutorial input failure: "+error.Message);return false;}
             }
+            if(TestArmed && engine.State==SessionState.BlockReady)
+                return TryStartStationBlock(automatic: false);
             if(engine.State!=SessionState.BlockRunning)return false;
             int before=StationShots;SubmitDesktopTrigger();return StationShots>before;
         }
 
+        private bool TryStartStationBlock(bool automatic)
+        {
+            if(engine?.State!=SessionState.BlockReady || IsBusy || closing)return false;
+            if(acquisition==null || !acquisition.TryCaptureForTrigger(out var pair) || !pair.IsValid)
+            {lastMessage="Waiting for a valid recorded pose before starting.";return false;}
+            TestArmed=false;
+            // Record the start and its observation separately from shots.
+            if(!recording!.TryRecord(new SessionEvent(sequence!.Next(),clock!.Now,
+                automatic ? "AutomaticScenarioStart" : "ParticipantStartTrigger",new[]{
+                LogField.String("blockId",engine.CurrentBlockId!),
+                LogField.NumberValue("acquisitionSequence",pair.Sequence),
+                LogField.NumberValue("observedMonotonicTicks",pair.Timestamp.Ticks),
+                LogField.String("edge",automatic ? "automatic" : "falling")})))
+            {engine.Abort("Scenario start could not be recorded.");return false;}
+            engine.StartBlock();
+            if(engine.State!=SessionState.BlockRunning)return false;
+            // Observe the start now, even if the next frame arrives after
+            // a short scenario has already ended.
+            SynchronizeTutorial();
+            scenario!.Refresh(0,pair.Head.Pose);
+            view.SetSessionFrame(pair.Head.Pose,pair.Weapon.Pose,scenario.Positions,engine.CurrentActiveSeconds,scenario.FixedPoses);
+            lastMessage="Test running.";return true;
+        }
+
         public bool StationReload()
         {
-            if(IsBusy || closing || engine?.State!=SessionState.BlockRunning)return false;
-            try{return scenario?.Reload()==true;}
+            if(IsBusy || closing || engine==null)return false;
+            try
+            {
+                if(TutorialCanInteract && tutorialInteraction?.Reload()==true){tutorial.ObserveReload();return true;}
+                return engine.State==SessionState.BlockRunning && scenario?.Reload()==true;
+            }
             catch(Exception error)
             {
                 engine.Abort("Weapon reload could not be recorded: "+error.Message);

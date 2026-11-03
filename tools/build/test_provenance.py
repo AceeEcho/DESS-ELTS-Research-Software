@@ -47,7 +47,9 @@ class BuildProvenanceTests(unittest.TestCase):
             finalize(root, {"mode": "synthetic-development", "studyReady": False, "version": "fixture"})
             products = [".run-1.reservation", "run-1/events.ndjson", "run-1/participant.json", "collection.sqlite", "collection.sqlite-wal", "collection.sqlite-shm",
                         "exports/participant-" + "b" * 32 + "-" + "c" * 32 + ".sqlite", "run-1/test-checkpoint-WE_FT-attempt-01.json",
-                        "run-1/test-checkpoint-WE_FT-attempt-02.json.pending", "exports/run-1-" + "a" * 32 + ".zip"]
+                        "run-1/test-checkpoint-WE_FT-attempt-02.json.pending", "exports/run-1-" + "a" * 32 + ".zip",
+                        "run-1/tutorial-completion-" + "a" * 32 + ".json",
+                        "run-1/tutorial-completion-" + "b" * 32 + ".json.pending"]
             for name in products:
                 product = root / "data/synthetic" / name
                 product.parent.mkdir(parents=True, exist_ok=True)

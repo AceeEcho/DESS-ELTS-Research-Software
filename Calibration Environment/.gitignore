@@ -1,0 +1,4 @@
+/profiles/*.json
+/profiles/*.tmp
+/.venv/
+/test-results/

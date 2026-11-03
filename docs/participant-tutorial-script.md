@@ -1,12 +1,12 @@
 # Participant tutorial script
 
-Status: working draft, revised November 2, 2026; detailed planning through Part 11. For wording and visual planning; not a finalized procedure or an implemented tutorial.
+Status: working draft, revised November 3, 2026. The synthetic walkthrough bundles the selected recordings and runs scenarios and breaks automatically after the initial participant start. See the [implementation guide](modules/participant-tutorial.md).
 
 Based on `participant-tutorial-script-outline.md`. Detailed narration and visual directions live here; the outline has been revised with the user's agreement to reflect the setup and tracker-calibration sequence.
 
 Audio generation and selection follow [the participant tutorial audio workflow](participant-tutorial-audio-workflow.md): two takes per node, identified as Top and Bottom; download the user's chosen take and link it directly beneath the matching spoken chunk.
 
-Current audio workflow: Parts 1–9 have selected audio. Parts 10–11 have two takes per chunk awaiting selection.
+Current audio workflow: all 30 spoken chunks have selected audio bundled in the Unity walkthrough.
 
 A [reading script](participant-tutorial-reading-script.md) contains only the narration and concise action/wait cues. Update the Spoken and Action / wait lines here, then regenerate that copy; see the audio workflow for the sync command.
 
@@ -16,7 +16,7 @@ Each numbered chunk pairs **Spoken** narration with **Screen / animation** direc
 
 Label each chunk's exit explicitly: **Manual continue** when the operator needs time to finish a physical action or check, and **Automatic** when the next chunk simply continues the explanation. Separate audio clips do not imply separate manual confirmations. Keep operator pause and replay available during automatic sequences.
 
-**Production notes** are not spoken. They identify decisions or operator actions needed before production. Visuals below are proposed, not claims about features already implemented. Use a calm, clear voice, allow time to follow each instruction, and keep replay available. Advance interactive steps on their confirmed completion event rather than on narration length alone.
+**Production notes** are not spoken. They identify decisions or operator actions needed before production. Visuals below describe the intended experience; the implementation guide records the current synthetic scope and remaining physical integration. Use a calm, clear voice, allow time to follow each instruction, and keep replay available. Advance interactive steps on their confirmed completion event rather than on narration length alone.
 
 ## Part 1 — Welcome and orientation
 
@@ -394,7 +394,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 1. On “time limit,” fade a small timer symbol into each card. Replace the order explanation with “Each scenario has a time limit.” Do not animate a running countdown during the overview.
 2. A specific duration may appear only if it comes from the confirmed session configuration and is appropriate to disclose. If durations differ, do not imply a shared duration. The narration deliberately avoids an unconfirmed number.
-3. On “operator will prepare,” add “Operator prepares each scenario” beneath the cards. Do not show any card as armed or running merely because this explanatory animation plays.
+3. On “operator will prepare,” add “Scenario setup is completed before the study starts” beneath the cards. Do not show any card as armed or running merely because this explanatory animation plays.
 
 **Transition — Automatic:** Continue to Part 8.2 after the explanation. No operator confirmation is required between these informational chunks.
 
@@ -421,119 +421,87 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Spoken:** “With that, the tutorial is complete. Let the operator know when you're ready for the first scenario.”
 
-**Action / wait:** [WAIT — OPERATOR PREPARE/ARM] Confirm readiness, then prepare and arm the first scenario.
+**Action / wait:** [AUTOMATIC ARM] The first scenario arms after the message. The participant starts the study using Part 9.1.
 
 **Audio:** Selected — user-supplied replacement. [09-ready-for-first-scenario.mp3](participant-tutorial/audio/part-09/09-ready-for-first-scenario.mp3). Use for this spoken chunk only.
 
-**Screen / animation:**
+**Screen / animation:** Show the readiness message. After it ends, arm the first scenario and show Part 9.1. An operator can disarm if needed.
 
-1. Fade out the overview cards and example countdown. Show “Ready for the first scenario?” centered on the neutral background, with “Let the operator know when you're ready” underneath.
-2. Keep the scenario timer stopped. Do not show active study targets or activate ELTS as a consequence of entering this screen.
-3. Hold after narration while the operator checks readiness and prepares the actual first assigned scenario. The participant may ask questions or request clarification here.
-4. Once the scenario is prepared and armed through the confirmed controls, move to Part 9.1. Operator continuation does not, by itself, count as the participant's start action.
-
-**Transition — Manual prepare/arm:** The operator prepares and arms the first scenario after participant readiness. Do not arm it automatically when the tutorial clip ends.
+**Transition — Automatic arm:** Wait for the participant’s first start action after arming.
 
 ### Part 9.1 — Start a prepared scenario
 
 **Spoken:** “When you're ready, follow the instruction on the screen to start this scenario.”
 
-**Action / wait:** [WAIT — PARTICIPANT START] Start only on the actual participant start action. Let the scenario run. After scenarios 1–3 go to Part 10; after scenario 4 go to Part 11. Reuse this start prompt for each newly armed scenario.
+**Action / wait:** [WAIT — PARTICIPANT START] The first start action begins the study. Subsequent scenarios and breaks run automatically.
 
 **Audio:** Selected — user-supplied replacement. [09-01-start-prepared-scenario.mp3](participant-tutorial/audio/part-09/09-01-start-prepared-scenario.mp3). Use for this spoken chunk only.
 
-**Screen / animation:**
+**Screen / animation:** Show the configured participant start instruction for the first scenario. On participant start, remove the prompt and display the running scenario.
 
-1. Enter only when the current assigned scenario is actually armed and ready. Display its ordinal position, such as “Scenario 1 of 4,” and the actual participant start instruction provided by the confirmed input workflow.
-2. Keep the time limit at its configured starting value until the real start event occurs. Do not animate a countdown or fade in a fake running scene during narration.
-3. Play the start instruction once. If the participant starts while the clip is still playing, stop any remaining start narration and remove the instructional overlay so it does not continue over the scenario.
-4. On the actual start event, show the live scenario and actual timer. Tutorial playback must not command a second start, change the assigned condition, or separately control the apparatus lights.
-5. If the operator disarms the scenario, remove the start prompt and hold for preparation. A replay of the narration does not rearm or start anything.
-
-**Transition — Participant start event:** Wait for the actual configured start action. At a normal scenario end, route to Part 10 when more scenarios remain and Part 11 after the fourth scenario. Do not replay the whole tutorial between scenarios; reuse only Part 9.1 after each new operator arm.
-
-**Production notes:** Existing development software uses an operator arm followed by a participant trigger start. Confirm the physical replica's exact start action and whether that action is excluded from scored shots before replacing the general spoken wording with a specific instruction. Do not substitute mouse clicks or infer physical behavior from the development player. A pause/resume continues the current scenario rather than starting the next one. A stopped, skipped, repeated, failed, or aborted attempt follows the operator's exception workflow; it must not blindly advance the ordinary four-scenario tutorial count or play false completion narration.
+**Transition — Participant start event:** Start scenario 1. Later scenarios start automatically after their preceding breaks and transition cues.
 
 ## Part 10 — Breaks between scenarios
 
 **Routing:** Use Parts 10–10.2 after each normally completed scenario that has another scenario following it. After the fourth scenario, use Part 11's final-break sequence instead. A break begins on the real break-start event, not on scenario completion or audio playback.
 
-**Spoken:** “This scenario is complete. Please wait while the operator prepares your break.”
+**Spoken:** “This scenario is complete.”
 
-**Action / wait:** [WAIT — OPERATOR START BREAK] Wait for saving to finish, then start the break.
+**Action / wait:** [AUTOMATIC BREAK] Wait for the recording checkpoint and this message to finish. The break starts automatically.
 
-**Audio:** Two takes requested, pending selection. [Part 10 voice prompts](participant-tutorial-part-10-voice-prompts.md#part-10). Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-scenario-complete`.
+**Audio:** Selected — user-supplied replacement. [10-scenario-complete.mp3](participant-tutorial/audio/part-10/10-scenario-complete.mp3). Use for this spoken chunk only.
 
-**Screen / animation:**
+**Screen / animation:** Show scenario completion and save progress. Play this clip after the checkpoint. Start the break when the transition cue finishes.
 
-1. On the actual scenario-end event, remove the active target scene and timer and show “Scenario complete.” Do not show a score summary unless the study's feedback policy requires one.
-2. Fade in “Your break will begin shortly.” Keep the countdown hidden while the system finishes saving and the operator prepares the break. Do not imply this waiting interval is already part of the two-minute rest timer.
-3. Hold this screen after narration until saving is complete and the operator starts the break. If break start occurs before this clip finishes, stop its waiting narration and enter Part 10.1 without overlapping clips.
-
-**Transition — Manual break start:** The operator starts the break when the recording checkpoint is ready. The planned tutorial does not shorten saving or start the countdown by itself.
+**Transition — Automatic break start:** Use the real break-start event to play Part 10.1.
 
 ### Part 10.1 — Break running
 
 **Spoken:** “Your two-minute break begins now.”
 
-**Action / wait:** [WAIT — BREAK ENDS] Show the actual two-minute countdown. At break end, automatically play Part 10.2.
+**Action / wait:** [WAIT — BREAK ENDS] Run the live countdown, then play Part 10.2 automatically.
 
-**Audio:** Two takes requested, pending selection. [Part 10.1 voice prompts](participant-tutorial-part-10-voice-prompts.md#part-101). Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-01-break-running`.
+**Audio:** Selected — user-supplied replacement. [10-01-break-running.mp3](participant-tutorial/audio/part-10/10-01-break-running.mp3). Use for this spoken chunk only.
 
-**Screen / animation:**
+**Screen / animation:** Display the actual break countdown. Play the break-start line once, when the countdown begins.
 
-1. Trigger this clip from the real break-start event. Show “Break” above a large, centrally aligned countdown starting from the configured two-minute duration.
-2. Bind the countdown to actual remaining break time; do not run a separate animation timer based on the narration. Keep surrounding graphics still. Do not add alerts or repeated spoken announcements as the timer approaches zero.
-3. Keep study targets absent and do not present a start prompt during the break. A paused tutorial narrator must not independently pause or extend a live break; operator controls must distinguish narration playback from session timing.
-4. At the real break-end event, stop any stale break-start narration and transition to Part 10.2. Do not display negative time or loop the countdown.
+**Transition — Break-end event:** The next-scenario announcement follows the break.
 
-**Transition — Break-end event:** Continue automatically to the readiness message when the configured break ends. This does not arm or start the next scenario.
+### Part 10.2 — Next scenario starts automatically
 
-### Part 10.2 — Ready for the next scenario
+**Spoken:** “Your break is complete. The next scenario will start shortly.”
 
-**Spoken:** “Your break is complete. Let the operator know when you're ready for the next scenario.”
+**Action / wait:** [AUTOMATIC NEXT SCENARIO] Play the transition message, then start the next scenario when tracking is valid.
 
-**Action / wait:** [WAIT — OPERATOR PREPARE/ARM] Confirm readiness and arm the next scenario, then return to Part 9.1. The break ending does not start a scenario.
+**Audio:** Selected — user-supplied replacement. [10-02-next-scenario-starting.mp3](participant-tutorial/audio/part-10/10-02-next-scenario-starting.mp3). Use for this spoken chunk only.
 
-**Audio:** Two takes requested, pending selection. [Part 10.2 voice prompts](participant-tutorial-part-10-voice-prompts.md#part-102). Planned folder: `participant-tutorial/audio/part-10/`; filename stem: `10-02-ready-for-next-scenario`.
+**Screen / animation:** Replace the countdown with the next-scenario message. Keep the scenario timer stopped until the actual start.
 
-**Screen / animation:** Replace the countdown with “Break complete” and “Let the operator know when you're ready.” Keep the view still and the next scenario timer stopped. When the participant is ready, the operator prepares and arms the next assigned scenario. Then show Part 9.1's real start instruction with the correct ordinal number.
-
-**Transition — Manual prepare/arm:** Hold for readiness and operator preparation; then wait for the participant start event in Part 9.1. No automatic scenario start at countdown zero.
-
-**Production notes:** Repeat this same break sequence between scenarios; do not create different recordings of identical prompts for every repetition. If the operator skips a break, do not play “Your two-minute break begins now” or claim the participant completed the full break. Handle that exception explicitly according to the procedure and preserve it in the recording. A recording error, apparatus fault, or aborted session must interrupt ordinary transition prompts rather than continue to the next scenario.
+**Transition — Automatic scenario start:** Start the next assigned scenario after the transition cue and valid tracking.
 
 ## Part 11 — Completion, final break, and post-study form
 
-**Spoken:** “You've completed all four scenarios. Please wait while the operator prepares your final break.”
+**Spoken:** “You've completed all four scenarios.”
 
-**Action / wait:** [WAIT — OPERATOR START FINAL BREAK] After the final scenario is saved, start the final break.
+**Action / wait:** [AUTOMATIC FINAL BREAK] Wait for the final checkpoint and completion message, then start the final break.
 
-**Audio:** Two takes requested, pending selection. [Part 11 voice prompts](participant-tutorial-part-11-voice-prompts.md#part-11). Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-scenarios-complete`.
+**Audio:** Selected — user-supplied replacement. [11-scenarios-complete.mp3](participant-tutorial/audio/part-11/11-scenarios-complete.mp3). Use for this spoken chunk only.
 
-**Screen / animation:**
+**Screen / animation:** Show completion after the final scenario. When saving and the completion cue are finished, start the final break.
 
-1. Enter only after the actual final required scenario completes. Show “All four scenarios complete.” Do not infer this from four audio plays, four trigger events, or an attempt counter that includes repeats and skips.
-2. Fade in “Your final break will begin shortly.” Show no running countdown yet and no next-scenario prompt. Keep the screen neutral while saving finishes and the operator prepares the final break.
-3. When the operator starts the final break, stop any remaining waiting narration and enter Part 11.1.
-
-**Transition — Manual final-break start:** The operator starts the final break after the final scenario checkpoint is ready. An early stop, skip, abort, or failed recording needs the appropriate exception wording rather than the normal claim that all four scenarios were completed.
+**Transition — Automatic final-break start:** Play Part 11.1 on the actual final-break start event. Use the alternate completion display for skipped or stopped attempts.
 
 ### Part 11.1 — Final break running
 
-**Spoken:** “Your final two-minute break begins now. After the break, you'll complete the post-study form.”
+**Spoken:** “Your final two-minute break begins now.”
 
-**Action / wait:** [WAIT — FINAL BREAK ENDS] Show the actual two-minute countdown, then automatically play the form instructions.
+**Action / wait:** [WAIT — FINAL BREAK ENDS] Run the live countdown and continue automatically to the post-study form.
 
-**Audio:** Two takes requested, pending selection. [Part 11.1 voice prompts](participant-tutorial-part-11-voice-prompts.md#part-111). Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-01-final-break-running`.
+**Audio:** Selected — user-supplied replacement. [11-01-final-break-running.mp3](participant-tutorial/audio/part-11/11-01-final-break-running.mp3). Use for this spoken chunk only.
 
-**Screen / animation:**
+**Screen / animation:** Show the live final-break countdown. Play the announcement at its start and keep the form closed until it ends.
 
-1. Play this clip on the actual final-break start event. Show “Final break” and a large live countdown, using the same layout as Part 10.1.
-2. Place “Next: Post-study form” beneath the countdown. Keep the form itself closed throughout the break; do not ask the participant to fill it out while the final rest period is still running.
-3. On the real final-break end event, replace the timer with the form instructions in Part 11.2. Do not arm a scenario or route back to Part 9.1.
-
-**Transition — Final-break end event:** Continue to Part 11.2. Where the runtime closes the participant recording after the final break, preserve that closure and its save status. The tutorial can remain visible for the form without pretending that a closed sensor recording is still active.
+**Transition — Final-break end event:** Open the post-study form instructions after the final break.
 
 ### Part 11.2 — Post-study form
 
@@ -541,7 +509,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [WAIT — FORM COMPLETION] Provide the form and confirm successful completion, or wait for the real submission confirmation.
 
-**Audio:** Two takes requested, pending selection. [Part 11.2 voice prompts](participant-tutorial-part-11-voice-prompts.md#part-112). Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-02-post-study-form`.
+**Audio:** Selected — user-supplied replacement. [11-02-post-study-form.mp3](participant-tutorial/audio/part-11/11-02-post-study-form.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
@@ -558,7 +526,7 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Action / wait:** [END] Hold the thank-you screen. The operator ends or resets the tutorial; do not restart automatically.
 
-**Audio:** Two takes requested, pending selection. [Part 11.3 voice prompts](participant-tutorial-part-11-voice-prompts.md#part-113). Planned folder: `participant-tutorial/audio/part-11/`; filename stem: `11-03-thank-you`.
+**Audio:** Selected — user-supplied replacement. [11-03-thank-you.mp3](participant-tutorial/audio/part-11/11-03-thank-you.mp3). Use for this spoken chunk only.
 
 **Screen / animation:** Fade in a large “Thank you” heading with “ELTS Project Research Study” underneath. Keep the charcoal background and still layout. Show no new scenario, restart countdown, or promotional content. Hold the final screen after narration until the operator ends or resets the tutorial for the next participant.
 
@@ -569,8 +537,8 @@ Illustrations must match the actual equipment selected for the session. Use veri
 ## Playback and handoff rules for Parts 7–11
 
 - Explanations in Part 8 advance automatically. Questions, preparation, and physical checks use operator holds.
-- Real scenario, break, apparatus, and form events control phase changes. Narration and animation completion only advance informational chunks.
+- Scenario, break, apparatus, and form events control phase changes. The first-ready cue paces arming. Completion cues pace automatic breaks after checkpoint saves, and next-scenario cues pace automatic starts when tracking is valid.
 - Play one narration clip at a time. On a phase change, cancel stale audio and pending visual callbacks so an old “begins now” or “ready to start” prompt cannot play in the wrong phase.
 - Replay repeats the selected narration and its explanatory visuals only. It never rearms a scenario, restarts a timer, opens a duplicate form submission, or activates ELTS again.
 - Keep remaining durations, scenario order, and ordinal labels bound to the current session. Never fabricate a completed phase to keep the script moving.
-- Parts 1–9 have selected audio linked to their spoken chunks. Parts 10–11 have two takes per chunk awaiting selection. These documents do not implement runtime behavior. Use the documented two-take selection workflow for further audio production when requested.
+- Each spoken chunk links to its selected recording. The Part 10 recordings repeat between scenarios.

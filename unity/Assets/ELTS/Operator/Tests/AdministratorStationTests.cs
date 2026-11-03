@@ -47,7 +47,7 @@ namespace Elts.Operator.Tests
                 station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="pause-test",
                     ["conditionOrder"]=new JArray("WE_FT","WE_MT","NE_FT","NE_MT")});
                 float limit=Time.realtimeSinceStartup+20;
-                while(session.Engine?.State!=SessionState.BlockReady && Time.realtimeSinceStartup<limit)
+                while(!session.StationCanArm && Time.realtimeSinceStartup<limit)
                 { ReviewFixtureWhenReady(session,station);clock.Advance(TimeSpan.FromSeconds(.1));yield return null; }
                 Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),session.StationMessage);
                 station.ApplyCommand(new JObject{["action"]="arm"});
@@ -146,7 +146,7 @@ namespace Elts.Operator.Tests
                     ["participantName"]="Synthetic Test Alias",["initialNotes"]="Initial fixture observation",
                     ["conditionOrder"]=new JArray("WE_FT","WE_MT","NE_FT","NE_MT")});
                 float limit=Time.realtimeSinceStartup+20;
-                while(session.Engine?.State!=SessionState.BlockReady && Time.realtimeSinceStartup<limit)
+                while(!session.StationCanArm && Time.realtimeSinceStartup<limit)
                 { ReviewFixtureWhenReady(session,station);clock.Advance(TimeSpan.FromSeconds(0.1));yield return null; }
                 Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),session.StationMessage);
                 string run=session.StationRecordingPath;
@@ -252,13 +252,13 @@ namespace Elts.Operator.Tests
                 {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
                 Assert.That(session.Engine.State,Is.EqualTo(SessionState.Calibration));
                 Assert.Throws<InvalidOperationException>(()=>station.ApplyCommand(new JObject{["action"]="startPractice"}),"Calibration acceptance is explicit");
-                station.ApplyCommand(new JObject{["action"]="generateCalibration"});
-                Assert.That((bool)JObject.Parse(station.StateJson())["tools"]["calibration"]["canAccept"],Is.True);
-                station.ApplyCommand(new JObject{["action"]="redoCalibration"});
-                ReviewFixtureWhenReady(session,station);
+                while(session.Engine.State!=SessionState.Practice && Time.realtimeSinceStartup<limit)
+                {ParticipantTutorialTests.AdvanceWalkthrough(session,station,false);clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
                 Assert.That(session.Engine.State,Is.EqualTo(SessionState.Practice));
-                station.ApplyCommand(new JObject{["action"]="restartPractice"});
-                station.ApplyCommand(new JObject{["action"]="finishPractice"});
+                ParticipantTutorialTests.Command(station,session,"tutorialRestartPractice");
+                ParticipantTutorialTests.Command(station,session,"tutorialFinishPractice");
+                while(!session.StationCanArm && Time.realtimeSinceStartup<limit)
+                {ReviewFixtureWhenReady(session,station);clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
                 string original=session.StationRecordingPath;
                 station.ApplyCommand(new JObject{["action"]="skipTest",["blockId"]=session.Engine.CurrentBlockId,["reason"]="Synthetic skip verification"});
                 yield return null;
@@ -285,7 +285,8 @@ namespace Elts.Operator.Tests
                     yield return WaitForSave(session);
                 }
                 station.ApplyCommand(new JObject{["action"]="skipBreak",["blockId"]=session.Engine.CurrentBlockId});yield return null;
-                limit=Time.realtimeSinceStartup+15;while(!session.StationCanStartParticipant && Time.realtimeSinceStartup<limit)yield return null;
+                yield return WaitForSave(session);
+                ParticipantTutorialTests.Command(station,session,"tutorialForm");
                 Assert.That(File.Exists(Path.Combine(original,"session-summary.json")),Is.True);
                 string originalEvents=File.ReadAllText(Path.Combine(original,"events.ndjson"));
                 station.ApplyCommand(new JObject{["action"]="reviewRecording",["id"]=Path.GetFileName(original)});
@@ -321,10 +322,7 @@ namespace Elts.Operator.Tests
 
         private static void ReviewFixtureWhenReady(DevelopmentSessionPanel session,DevelopmentTestStation station)
         {
-            if(session.IsBusy || session.Engine?.State!=SessionState.Calibration)return;
-            station.ApplyCommand(new JObject{["action"]="generateCalibration"});
-            station.ApplyCommand(new JObject{["action"]="acceptCalibration"});
-            station.ApplyCommand(new JObject{["action"]="startPractice"});
+            ParticipantTutorialTests.AdvanceWalkthrough(session,station);
         }
     }
 }

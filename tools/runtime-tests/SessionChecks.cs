@@ -36,7 +36,26 @@ static class SessionChecks
         ExerciseFlexibleControlsRequireDevelopment();
         ExercisePausedTriggerWindows();
         ExerciseAdministratorQueueAndBreaks();
+        ExercisePracticePause();
         Console.WriteLine("PASS: " + passed + " session checks");
+    }
+
+    private static void ExercisePracticePause()
+    {
+        var clock=new ManualSharedClock(DateTimeOffset.UnixEpoch);
+        var events=new List<SessionEvent>();var engine=NewEngine(clock,new Sink(events),new Link());
+        BeginFirstBlock(engine,clock);engine.SetDevelopmentPhaseDurations(10,30);engine.RestartDevelopmentPractice();
+        clock.Advance(TimeSpan.FromSeconds(3));engine.PauseDevelopmentPractice();
+        clock.Advance(TimeSpan.FromHours(1));engine.Tick();
+        True(engine.State==SessionState.Practice && engine.RemainingSeconds==7,"paused practice holds its timer without starting a test");
+        True(!engine.TargetsActive,"practice never grants scored target authority");
+        engine.ResumeDevelopmentPractice();clock.Advance(TimeSpan.FromSeconds(6));engine.Tick();
+        True(engine.State==SessionState.Practice && engine.RemainingSeconds==1,"practice resumes with preserved active time");
+        clock.Advance(TimeSpan.FromSeconds(1));engine.Tick();
+        True(engine.State==SessionState.BlockReady,"practice ends on its actual active-time deadline");
+        engine.RestartDevelopmentPractice();
+        True(!engine.PracticePaused && engine.RemainingSeconds==10,"practice restart clears prior pause accounting");
+        True(events.Exists(e=>e.EventType=="PracticePaused") && events.Exists(e=>e.EventType=="PracticeResumed"),"practice pause and resume are recorded");
     }
 
     private static void ExerciseAdministratorQueueAndBreaks()

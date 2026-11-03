@@ -60,26 +60,15 @@ Click **New participant**. Enter the **Participant number / ID**; a name or alia
 
 These details are saved with the recording. Creating a recording does not start a shooting test.
 
-## 4. Review calibration and practice
+## 4. Begin the participant walkthrough
 
-In **Calibration & practice**:
+Click **Begin tutorial / walkthrough** after preparation. Follow the current operator prompt through equipment setup, synthetic calibration, control practice, and the simulated ELTS demonstration. See the [walkthrough guide](../modules/participant-tutorial.md).
 
-1. Click **Generate fixture**.
-2. Read the displayed review. Use **Redo** if you need another fixture.
-3. Click **Accept fixture**.
-4. Click **Start practice** when the participant is ready.
+## 5. Start the study
 
-![Calibration panel with Generate fixture, Redo, Accept fixture and Start practice controls.](images/user-guide/texas-tech/05-preparation.png)
+With the walkthrough, the first test arms after the readiness message. The participant uses **Shoot to begin** once. The later tests start automatically after their breaks and transition announcements.
 
-These are synthetic fixture controls; they do not calibrate the physical apparatus.
-
-During practice, let the participant try moving and aiming. Wait for the timer, or click **Finish practice** to end it early. **Restart practice** starts the practice timer again. Practice shots are not scored.
-
-![Practice countdown with Restart practice and Finish practice buttons.](images/user-guide/texas-tech/06-practice.png)
-
-## 5. Arm and run a test
-
-Check the condition and duration in **Current task**. When the participant is ready, click **ARM TEST**.
+For a manual session, check the condition and duration in **Current task** and click **ARM TEST** when the participant is ready.
 
 ![Ready test showing its condition, duration and the large ARM TEST button.](images/user-guide/texas-tech/07-arm.png)
 
@@ -101,9 +90,11 @@ To resize the participant window, drag its edges. F11 or Alt+Enter toggles fulls
 
 For exceptions, **Skip this test…** skips a ready, disarmed test with a reason. **Repeat a test…** creates another attempt with a reason and preserves the earlier results. **Abort participant session** ends the entire session, including its remaining tests; use it only when you intend to finish that participant's session early.
 
-## 7. Start the break yourself
+## 7. Breaks and the next test
 
-After each test ends:
+With the walkthrough, each completed test saves its checkpoint before the break starts automatically. The next test starts after the countdown and transition announcement when tracking is valid. **Skip break** and **Skip this test…** remain available during their applicable phases. The final break leads to the post-study form.
+
+For a manual session, use these controls after each test ends:
 
 1. Wait for the test to finish saving.
 2. Click **Start break** when you want the countdown to begin. Waiting before this click does not use any break time.
@@ -115,7 +106,7 @@ After each test ends:
 
 ![Running break countdown with Skip break and instructions to arm the next test afterward.](images/user-guide/texas-tech/11-break-countdown.png)
 
-**The timer never arms or starts the next test automatically.** After the final test, complete or skip its break to close the participant recording.
+After the final test, complete or skip its break to close the participant recording.
 
 ## 8. Finish and find the saved data
 

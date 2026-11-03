@@ -57,8 +57,9 @@ fixture**, review the reported provisional residuals, **Accept fixture**, then
 synthetic fixture and its audit note; it does not change the startup rig calibration.
 
 Practice is a timed movement/aim familiarization period with no scored shots.
-The administrator can restart it before the first test or finish it early. The
-participant still starts each armed shooting test with their own trigger.
+The administrator can restart it before the first test or finish it early.
+After the walkthrough, the first test arms following the readiness cue and the
+participant starts it with their trigger. Later scenarios start automatically.
 **Readiness & diagnostics** shows writer health, sample drops, fresh synthetic
 tracking and observed rate, setup-time disk space, configuration and fixture status.
 Controller/display/SteamVR substitutions remain explicitly labeled as emulated.
@@ -79,19 +80,21 @@ pause, using the unchanged shared clock. The simulated WE link is stopped while
 paused and prepared with the remaining duration on resume.
 
 **Stop test** confirms an early finish, retains results so far, and marks that test
-as **Stopped early**. The administrator starts the break after saving finishes. A stopped test cannot resume;
+as **Stopped early**. The walkthrough starts the break after saving and the transition cue. A stopped test cannot resume;
 use Pause for a temporary hold.
 **Abort participant session** remains the separate action for ending the entire
-attempt. A participant-triggered start is still required for each new test.
+attempt. Manual sessions use an operator arm and participant start for each test.
 
 ### Breaks, skips and repeats
 
-Every finished or skipped test saves and waits, including the final test.
-Press **Start break** to begin the countdown. Both windows then show the remaining break time. **Settings → Every break** is
+Every finished or skipped test saves before its break. During the walkthrough,
+the break begins after the save and completion cue. In manual sessions,
+**Start break** begins the countdown. Both windows show the remaining break time. **Settings → Every break** is
 one shared duration (0–3600 seconds); changing it during a break preserves elapsed
 rest time. **Skip break** becomes available once the test's save checkpoint succeeds.
-When the timer expires, the next test becomes ready automatically. The administrator
-must still arm it. After the final break the participant recording closes.
+When the timer expires, the walkthrough announces and starts the next test when
+tracking is valid. Manual sessions wait for the operator to arm it. After the
+final break the participant recording closes.
 
 **Skip this test** is available for a disarmed, ready test and requires a reason.
 It records a skipped disposition without fabricating a zero-score shooting block.

@@ -6,6 +6,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -45,7 +46,7 @@ def documentation():
         if not file.exists(): continue
         content = re.sub(r"```.*?```", "", file.read_text(encoding="utf-8"), flags=re.S)
         for match in pattern.finditer(content):
-            target = match.group(1).split("#", 1)[0].strip("<>")
+            target = unquote(match.group(1).split("#", 1)[0].strip("<>"))
             if not target or re.match(r"[a-zA-Z]+:", target): continue
             # The packaged README uses release-relative links. Resolve them
             # through the actual packaging map instead of inventing source paths.

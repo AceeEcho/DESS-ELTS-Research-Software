@@ -134,43 +134,43 @@ This copy is kept in sync with the [detailed script](participant-tutorial-script
 
 “With that, the tutorial is complete. Let the operator know when you're ready for the first scenario.”
 
-**Cue:** [WAIT — OPERATOR PREPARE/ARM] Confirm readiness, then prepare and arm the first scenario.
+**Cue:** [AUTOMATIC ARM] The first scenario arms after the message. The participant starts the study using Part 9.1.
 
 ### Part 9.1 — Start a prepared scenario
 
 “When you're ready, follow the instruction on the screen to start this scenario.”
 
-**Cue:** [WAIT — PARTICIPANT START] Start only on the actual participant start action. Let the scenario run. After scenarios 1–3 go to Part 10; after scenario 4 go to Part 11. Reuse this start prompt for each newly armed scenario.
+**Cue:** [WAIT — PARTICIPANT START] The first start action begins the study. Subsequent scenarios and breaks run automatically.
 
 ## Part 10 — Breaks between scenarios
 
-“This scenario is complete. Please wait while the operator prepares your break.”
+“This scenario is complete.”
 
-**Cue:** [WAIT — OPERATOR START BREAK] Wait for saving to finish, then start the break.
+**Cue:** [AUTOMATIC BREAK] Wait for the recording checkpoint and this message to finish. The break starts automatically.
 
 ### Part 10.1 — Break running
 
 “Your two-minute break begins now.”
 
-**Cue:** [WAIT — BREAK ENDS] Show the actual two-minute countdown. At break end, automatically play Part 10.2.
+**Cue:** [WAIT — BREAK ENDS] Run the live countdown, then play Part 10.2 automatically.
 
-### Part 10.2 — Ready for the next scenario
+### Part 10.2 — Next scenario starts automatically
 
-“Your break is complete. Let the operator know when you're ready for the next scenario.”
+“Your break is complete. The next scenario will start shortly.”
 
-**Cue:** [WAIT — OPERATOR PREPARE/ARM] Confirm readiness and arm the next scenario, then return to Part 9.1. The break ending does not start a scenario.
+**Cue:** [AUTOMATIC NEXT SCENARIO] Play the transition message, then start the next scenario when tracking is valid.
 
 ## Part 11 — Completion, final break, and post-study form
 
-“You've completed all four scenarios. Please wait while the operator prepares your final break.”
+“You've completed all four scenarios.”
 
-**Cue:** [WAIT — OPERATOR START FINAL BREAK] After the final scenario is saved, start the final break.
+**Cue:** [AUTOMATIC FINAL BREAK] Wait for the final checkpoint and completion message, then start the final break.
 
 ### Part 11.1 — Final break running
 
-“Your final two-minute break begins now. After the break, you'll complete the post-study form.”
+“Your final two-minute break begins now.”
 
-**Cue:** [WAIT — FINAL BREAK ENDS] Show the actual two-minute countdown, then automatically play the form instructions.
+**Cue:** [WAIT — FINAL BREAK ENDS] Run the live countdown and continue automatically to the post-study form.
 
 ### Part 11.2 — Post-study form
 

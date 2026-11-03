@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:Style src="ParticipantTutorial.uss" />
+  <ui:VisualElement name="tutorialLayer" class="tutorial-layer tutorial-hidden" picking-mode="Ignore">
+    <ui:VisualElement name="tutorialCanvas" class="tutorial-canvas" picking-mode="Ignore">
+      <ui:Label name="tutorialEyebrow" class="tutorial-eyebrow" />
+      <ui:Label name="tutorialHeading" class="tutorial-heading" />
+      <ui:VisualElement name="tutorialContent" class="tutorial-content" picking-mode="Ignore" />
+      <ui:Label name="tutorialInstruction" class="tutorial-instruction" />
+      <ui:Label name="tutorialDetail" class="tutorial-detail" />
+      <ui:Label name="tutorialTimer" class="tutorial-timer tutorial-hidden" />
+      <ui:Label name="tutorialFooter" class="tutorial-footer" text="SYNTHETIC WALKTHROUGH" />
+      <ui:Label name="tutorialPaused" class="tutorial-paused tutorial-hidden" text="Paused · ask the operator" />
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

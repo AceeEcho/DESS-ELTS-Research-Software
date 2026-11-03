@@ -37,12 +37,24 @@
     <aside class="control-pane pane">
       <div class="pane-head compact"><div><span class="eyebrow">OPERATOR CONTROL</span><h1>Test session</h1></div><span id="stateBadge" class="badge">IDLE</span></div>
       <div id="setupWelcome" class="setup-welcome"><strong>Prepare your test setup first</strong><p>Use ⚙ Settings to arrange tests, set durations and load a preset. Choose New participant when you’re ready.</p></div>
-      <section id="preparationPanel" class="panel-section preparation-panel" hidden>
-        <h2>Calibration &amp; practice</h2><p id="calibrationReview" class="review-copy"></p>
-        <p class="subtle">Synthetic fixture review only. This does not calibrate physical equipment.</p>
-        <div class="secondary-actions wrap"><button id="generateCalibration" class="primary-btn">Generate fixture</button><button id="redoCalibration" class="ghost-btn">Redo</button><button id="acceptCalibration" class="primary-btn">Accept fixture</button><button id="startPractice" class="primary-btn">Start practice</button></div>
+      <section id="tutorialPanel" class="panel-section tutorial-panel" hidden aria-label="Participant walkthrough">
+        <div class="section-title"><span id="tutorialStep" class="eyebrow">PARTICIPANT WALKTHROUGH</span><span class="tutorial-silent">Audio pending</span></div>
+        <h2 id="tutorialTitle">Begin the participant walkthrough</h2>
+        <p id="tutorialInstruction" class="review-copy">Setup, calibration and practice are guided inside the game.</p>
+        <p id="tutorialStatus" class="subtle" role="status"></p>
+        <div id="tutorialChecks" class="tutorial-checks"></div>
+        <p id="tutorialCalibrationReview" class="review-copy" hidden></p>
+        <button id="tutorialPrimary" class="primary-btn tutorial-primary" disabled>Begin tutorial / walkthrough</button>
+        <div class="secondary-actions wrap tutorial-controls">
+          <button id="tutorialRedo" class="ghost-btn" hidden>Redo capture</button>
+          <button id="tutorialPause" class="ghost-btn" hidden>Pause instruction</button>
+          <button id="tutorialResume" class="primary-btn" hidden>Resume</button>
+          <button id="tutorialReplay" class="ghost-btn" hidden>Repeat instruction</button>
+          <button id="tutorialStopDemo" class="ghost-btn" hidden>Stop simulation</button>
+          <button id="tutorialRepeatDemo" class="ghost-btn" hidden>Repeat simulated demonstration</button>
+        </div>
       </section>
-      <section id="practicePanel" class="panel-section" hidden><div class="section-title"><h2>Practice · move and aim</h2><strong id="practiceTimer" class="countdown">00:00</strong></div><p class="subtle">Familiarization time; shots are not scored.</p><div class="secondary-actions"><button id="restartPractice" class="ghost-btn">Restart practice</button><button id="finishPractice" class="primary-btn">Finish practice</button></div></section>
+      <section id="practicePanel" class="panel-section" hidden><div class="section-title"><h2>Practice</h2><strong id="practiceTimer" class="countdown">00:00</strong></div><p class="subtle">Aim, fire and reload. Practice events are saved separately from scored tests.</p><div class="secondary-actions"><button id="tutorialRestartPractice" class="ghost-btn">Restart practice</button><button id="tutorialFinishPractice" class="primary-btn">Finish practice</button></div></section>
       <section id="breakPanel" class="break-panel" hidden><div><span class="eyebrow">BREAK</span><strong id="breakTimer" class="countdown">00:00</strong></div><p id="breakHelp">The next test will be ready when the timer ends.</p><div class="break-actions"><button id="startBreak" class="primary-btn">Start break</button><button id="skipBreak" class="ghost-btn">Skip break</button></div></section>
       <section class="task-card">
         <div class="task-card-head"><div><span class="eyebrow">CURRENT TASK</span><h2 id="condition">No condition selected</h2></div><span id="remaining" class="countdown">—</span></div>

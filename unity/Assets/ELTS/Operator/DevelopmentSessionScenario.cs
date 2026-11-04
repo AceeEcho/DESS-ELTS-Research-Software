@@ -42,6 +42,7 @@ namespace Elts.Operator
         private readonly Dictionary<string,DevelopmentFixedPose> fixedPoses = new Dictionary<string,DevelopmentFixedPose>();
         public IReadOnlyDictionary<string,DevelopmentFixedPose> FixedPoses => fixedPoses;
         public string LastShot { get; private set; } = "No shot";
+        public event Action<DevelopmentTargetImpact>? TargetHit;
         public int ShotCount { get; private set; }
         public int HitCount { get; private set; }
         public int HeadHits {get;private set;}
@@ -175,6 +176,8 @@ namespace Elts.Operator
                         else if(shots.Region=="body")BodyHits++;
                         else LimbHits++;
                         LastShot=shots.Region+" hit · "+shots.Damage+" damage · "+shots.RemainingHealth+" health left";
+                        if(shots.ImpactPoint.HasValue)
+                            TargetHit?.Invoke(new DevelopmentTargetImpact(shots.TargetId,shots.ImpactPoint.Value,ray.Direction,shots.RemainingHealth==0));
                         break;
                     case "Cover":CoverHits++;LastShot="Cover hit";break;
                     default:MissCount++;LastShot="Miss";break;

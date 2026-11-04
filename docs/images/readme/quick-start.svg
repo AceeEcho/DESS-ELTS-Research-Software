@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="250" viewBox="0 0 1200 250" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif">
+  <title>Quick start: download the ZIP, extract it, run SETUP-DEV.cmd once, then run START-ELTS.cmd</title>
+  <rect width="1200" height="250" rx="18" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+  <g fill="none" stroke="#96b3c9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <!-- connectors -->
+    <path d="M282 112h40M582 112h40M882 112h40" stroke="#536879"/>
+    <path d="M312 104l10 8-10 8M612 104l10 8-10 8M912 104l10 8-10 8" stroke="#536879"/>
+    <!-- 1 download: tray + arrow -->
+    <path d="M150 70v44M134 98l16 16 16-16M126 126h48"/>
+    <!-- 2 extract: zip box opening into folder -->
+    <path d="M420 84h20l8 8h34v38h-62z"/><path d="M436 96v-22h18" stroke="#9bc8b1"/>
+    <!-- 3 setup: gear -->
+    <circle cx="752" cy="104" r="14"/><path d="M752 76v8M752 124v8M724 104h8M772 104h8M732 84l6 6M766 118l6 6M772 84l-6 6M738 118l-6 6"/>
+    <!-- 4 start: play -->
+    <path d="M1040 82l30 22-30 22z" fill="#9bc8b1" stroke="#9bc8b1"/>
+  </g>
+  <g text-anchor="middle">
+    <g font-size="15" font-weight="700" fill="#96b3c9" letter-spacing="2">
+      <text x="150" y="44">STEP 1</text><text x="450" y="44">STEP 2</text><text x="750" y="44">STEP 3 · ONCE</text><text x="1050" y="44">STEP 4 · EVERY TIME</text>
+    </g>
+    <g font-size="22" font-weight="700" fill="#e6edf3">
+      <text x="150" y="168">Download ZIP</text><text x="450" y="168">Extract it</text><text x="750" y="168">SETUP-DEV.cmd</text><text x="1050" y="168">START-ELTS.cmd</text>
+    </g>
+    <g font-size="15" fill="#9aa6b2">
+      <text x="150" y="196">Green Code button</text><text x="150" y="216">→ Download ZIP</text>
+      <text x="450" y="196">Right-click → Extract All…</text><text x="450" y="216">Do not run from inside the ZIP</text>
+      <text x="750" y="196">Installs tools and Unity</text><text x="750" y="216">Wait for “success”</text>
+      <text x="1050" y="196">Opens the dashboard</text><text x="1050" y="216">and the participant window</text>
+    </g>
+  </g>
+</svg>

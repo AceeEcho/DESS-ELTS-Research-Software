@@ -27,6 +27,9 @@ namespace Elts.Operator
         private readonly Vector3d center;
         private TargetEntity? target;
         private int targetOrdinal;
+        private readonly double respawnSeconds;
+        private double respawnRemaining;
+        public DevelopmentTargetImpact? LastImpact { get; private set; }
         public string Scope { get; }
         public string InteractionId { get; }
         public int Ammo=>magazine.Remaining;
@@ -35,9 +38,9 @@ namespace Elts.Operator
         public string Feedback { get; private set; }="";
 
         public TutorialInteraction(DevelopmentConfiguration config,ISharedClock clock,ISessionEventSequence sequence,
-            Action<SessionEvent> record,int capacity,string scope,int attempt,double distanceM)
+            Action<SessionEvent> record,int capacity,string scope,int attempt,double distanceM,double respawnSeconds=1.1)
         {
-            this.config=config;this.clock=clock;this.sequence=sequence;this.record=record;Scope=scope;
+            this.config=config;this.clock=clock;this.sequence=sequence;this.record=record;Scope=scope;this.respawnSeconds=respawnSeconds;
             InteractionId=scope.ToLowerInvariant()+"-"+attempt.ToString("D2");
             magazine=new ManualMagazine(capacity);
             var screen=config.Rig.Display;
@@ -58,6 +61,7 @@ namespace Elts.Operator
         }
         public bool Fire(RigidPose weapon,RigidPose head,MonotonicTimestamp observedAt)
         {
+            LastImpact=null;
             if(target==null)return false;
             if(magazine.Remaining==0){Record("DryFire",Array.Empty<LogField>());Feedback="Reload to continue";return false;}
             var ray=new BoreRay(weapon,config.Rig.WeaponMuzzleOffsetM,config.Rig.WeaponZero,config.Rig.WeaponBoreLocalDirection).Ray;
@@ -70,8 +74,21 @@ namespace Elts.Operator
             }
             if(!shots.Accepted)return false;
             magazine.TryConsume();Feedback=shots.Outcome=="Hit"?"Target hit":"Shot observed";
-            if(target.State==TargetState.Destroyed)Spawn();
+            if(shots.ImpactPoint.HasValue)
+                LastImpact=new DevelopmentTargetImpact(shots.TargetId,shots.ImpactPoint.Value,ray.Direction,target.State==TargetState.Destroyed);
+            if(target.State==TargetState.Destroyed && positions.Count>0)
+            {
+                // Remove it from hit testing immediately, then leave enough
+                // presentation time for a visible fall before its replacement.
+                positions.Clear();poses.Clear();respawnRemaining=respawnSeconds;Feedback="Target down";
+            }
             return true;
+        }
+        public void Tick(double seconds)
+        {
+            if(target?.State!=TargetState.Destroyed)return;
+            respawnRemaining-=seconds;
+            if(respawnRemaining<=0)Spawn();
         }
         public bool Reload()
         {

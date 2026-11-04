@@ -41,6 +41,7 @@ namespace Elts.Operator
         public const float DefaultOrbitYaw=-32, DefaultOrbitPitch=16, DefaultOrbitDistance=4.8f;
         private Material stimulusMaterial = null!, scarletMaterial = null!, amberMaterial = null!, redMaterial = null!;
         private Material targetMaterial = null!;
+        private Material? hitSparkMaterial;
         private DevelopmentHumanoidVisual.Palette humanoidPalette=null!;
         [Header("Virtual training room")]
         [SerializeField] private TrainingRoomSettings trainingRoom = new TrainingRoomSettings();
@@ -185,7 +186,7 @@ namespace Elts.Operator
         }
         /// <summary>Use the real target on a clear teaching stage. Only scenery
         /// changes; acquisition, target anatomy and scored-session rules do not.</summary>
-        public void SetTutorialPresentation(bool enabled,string backgroundHex,string floorHex)
+        public void SetTutorialPresentation(bool enabled,string backgroundHex,string floorHex,double targetDistance=15)
         {
             if(!Ready || enabled==TutorialSceneVisible)return;
             TutorialSceneVisible=enabled;
@@ -201,11 +202,8 @@ namespace Elts.Operator
                 if(tutorialFloor==null)
                 {
                     ColorUtility.TryParseHtmlString(floorHex,out var floorColor);
-                    // A broad virtual floor supports the target without any
-                    // furniture or occlusion. These are scene dimensions in m.
-                    tutorialFloor=LibraryInterior.Box(transform,"Tutorial floor",
-                        new Vector3(0,(float)configuration.Rig.VirtualFloorY-.05f,20),
-                        new Vector3(60,.1f,60),Material(floorColor),false);
+                    tutorialFloor=DevelopmentPracticeRoom.Create(transform,configuration.Rig.Display,
+                        configuration.Rig.VirtualFloorY,targetDistance,floorColor,ownedMaterials);
                 }
             }
             else
@@ -237,6 +235,14 @@ namespace Elts.Operator
         {
             var target=DevelopmentHumanoidVisual.Create(transform,humanoidPalette,motionSettings,configuration.Rig.VirtualFloorY);
             target.name=name;return target.gameObject;
+        }
+        public void ShowTargetImpact(DevelopmentTargetImpact impact)
+        {
+            if(!Ready || !targetObjects.TryGetValue(impact.TargetId,out var actor) || actor==null)return;
+            hitSparkMaterial??=Material(new Color(1f,.85f,.4f));
+            var visual=actor.GetComponent<DevelopmentHumanoidVisual>();
+            DevelopmentHitSpark.Create(visual.ImpactAnchor,impact,hitSparkMaterial);
+            visual.ReactToHit(impact);
         }
         private GameObject Sphere(string name,int layer,float radius,Material material)
         {
@@ -375,8 +381,12 @@ namespace Elts.Operator
             {
                 // Destroy is deferred by Unity. Hide immediately so an explicit
                 // camera render cannot show an old target beside its replacement.
-                targetObjects[key].SetActive(false);
-                Destroy(targetObjects[key]);targetObjects.Remove(key);
+                var removed=targetObjects[key];
+                if(removed!=null && !removed.GetComponent<DevelopmentHumanoidVisual>().Dying)
+                {removed.SetActive(false);Destroy(removed);}
+                // A killed actor finishes its short visual fall after the
+                // authoritative target has left the active collection.
+                targetObjects.Remove(key);
             }
             foreach(var target in visibleTargets)
             {

@@ -90,6 +90,7 @@ namespace Elts.Scenario
         public int Damage {get;private set;}
         public int RemainingHealth {get;private set;}
         public string TargetId {get;private set;}="";
+        public Vector3d? ImpactPoint {get;private set;}
         /// <summary>Set by the development weapon immediately before dispatch.</summary>
         public int MagazineBefore {get;set;}
         public HumanoidShotModel(ISessionEventSequence sequence,TimeSpan minimumInterval,IReadOnlyList<HumanoidCover> covers,double floorY=HumanoidGeometry.DefaultFloorY)
@@ -97,7 +98,7 @@ namespace Elts.Scenario
 
         public IReadOnlyList<SessionEvent> Fire(ShotContext shot,string blockId,IEnumerable<TargetEntity> targets,Func<TargetEntity,bool> isVisible)
         {
-            Accepted=false;Outcome="";Region="";Damage=0;TargetId="";RemainingHealth=0;
+            Accepted=false;Outcome="";Region="";Damage=0;TargetId="";RemainingHealth=0;ImpactPoint=null;
             if(!shot.TrackingValid || !shot.IsTriggerFallingEdge ||
                 (previous.HasValue && shot.Timestamp.Ticks-previous.Value.Ticks<minimumInterval.Ticks))
                 return Array.Empty<SessionEvent>();
@@ -131,7 +132,7 @@ namespace Elts.Scenario
             var events=new List<SessionEvent>();
             if(hit!=null)
             {
-                Region=region;TargetId=hit.Id;
+                Region=region;TargetId=hit.Id;ImpactPoint=shot.BoreRay.At(nearest);
                 Damage=region=="head"?3:region=="body"?2:1;
                 hit.ApplyDamage(Damage);RemainingHealth=hit.Health;
                 fields.Add(LogField.String("targetId",TargetId));

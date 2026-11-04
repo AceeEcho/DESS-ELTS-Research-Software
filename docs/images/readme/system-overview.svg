@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif">
+  <title>How the parts of ELTS fit together</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#7d98ad"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="600" rx="18" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+
+  <!-- column titles -->
+  <g font-size="14" font-weight="700" fill="#96b3c9" letter-spacing="2">
+    <text x="40" y="48">1 · ROOM &amp; TRACKERS</text>
+    <text x="400" y="48">2 · RUN A SESSION</text>
+    <text x="900" y="48">3 · REVIEW DATA</text>
+  </g>
+
+  <!-- tracking workspace -->
+  <g>
+    <rect x="40" y="70" width="300" height="250" rx="14" fill="#1c232c" stroke="#3b4b59" stroke-width="2"/>
+    <text x="64" y="106" font-size="20" font-weight="700" fill="#e6edf3">Calibration workspace</text>
+    <text x="64" y="132" font-size="15" fill="#9aa6b2">Browser app · separate from ELTS</text>
+    <g font-size="15" fill="#c9d4de">
+      <text x="64" y="172">• Screen and base-station geometry</text>
+      <text x="64" y="198">• Head / weapon mount offsets</text>
+      <text x="64" y="224">• 3D room and screen perspective</text>
+      <text x="64" y="250">• Optional live SteamVR trackers</text>
+    </g>
+    <rect x="64" y="272" width="252" height="30" rx="15" fill="#21303b"/>
+    <text x="190" y="292" font-size="14" font-weight="700" fill="#dbe8f1" text-anchor="middle">START-CALIBRATION.cmd</text>
+  </g>
+
+  <!-- ELTS application -->
+  <g>
+    <rect x="400" y="70" width="440" height="430" rx="14" fill="#1c232c" stroke="#3b4b59" stroke-width="2"/>
+    <rect x="424" y="88" width="392" height="30" rx="15" fill="#3a1414"/>
+    <text x="620" y="108" font-size="14" font-weight="700" fill="#ffb4ad" text-anchor="middle">START-ELTS.cmd opens both windows</text>
+
+    <rect x="424" y="136" width="392" height="140" rx="12" fill="#161b22" stroke="#e90802" stroke-width="2"/>
+    <text x="446" y="170" font-size="19" font-weight="700" fill="#e6edf3">Administrator dashboard</text>
+    <text x="446" y="194" font-size="14" fill="#9aa6b2">In your browser · for the operator</text>
+    <g font-size="14" fill="#c9d4de">
+      <text x="446" y="224">Settings · New participant · Walkthrough</text>
+      <text x="446" y="248">controls · Arm / pause / stop · Breaks · Data</text>
+    </g>
+
+    <path d="M590 286v40" stroke="#7d98ad" stroke-width="2.5" marker-start="url(#a)" marker-end="url(#a)"/>
+    <text x="604" y="312" font-size="13" fill="#7d98ad">commands and live status</text>
+
+    <rect x="424" y="336" width="392" height="140" rx="12" fill="#161b22" stroke="#96b3c9" stroke-width="2"/>
+    <text x="446" y="370" font-size="19" font-weight="700" fill="#e6edf3">Participant window</text>
+    <text x="446" y="394" font-size="14" fill="#9aa6b2">Second screen · for the participant</text>
+    <g font-size="14" fill="#c9d4de">
+      <text x="446" y="424">Guided walkthrough with narration →</text>
+      <text x="446" y="448">practice → four scenarios with breaks</text>
+    </g>
+  </g>
+
+  <!-- arrows to data -->
+  <path d="M840 300h52" stroke="#7d98ad" stroke-width="2.5" marker-end="url(#a)"/>
+  <path d="M340 195h52" stroke="#7d98ad" stroke-width="2.5" stroke-dasharray="6 6" marker-end="url(#a)"/>
+  <text x="344" y="182" font-size="12" fill="#7d98ad">geometry</text>
+
+  <!-- data -->
+  <g>
+    <rect x="900" y="70" width="260" height="190" rx="14" fill="#1c232c" stroke="#3b4b59" stroke-width="2"/>
+    <text x="922" y="106" font-size="20" font-weight="700" fill="#e6edf3">collection data</text>
+    <text x="922" y="132" font-size="15" fill="#9aa6b2">Folder beside this README</text>
+    <g font-size="15" fill="#c9d4de">
+      <text x="922" y="170">• Raw streams, written live</text>
+      <text x="922" y="196">• collection.sqlite index</text>
+      <text x="922" y="222">• Checkpoint after each test</text>
+    </g>
+    <path d="M1030 268v36" stroke="#7d98ad" stroke-width="2.5" marker-end="url(#a)"/>
+    <rect x="900" y="312" width="260" height="188" rx="14" fill="#1c232c" stroke="#3b4b59" stroke-width="2"/>
+    <text x="922" y="348" font-size="20" font-weight="700" fill="#e6edf3">Data view</text>
+    <text x="922" y="374" font-size="15" fill="#9aa6b2">Data button in the dashboard</text>
+    <g font-size="15" fill="#c9d4de">
+      <text x="922" y="412">• Overview · Timeline · Shots</text>
+      <text x="922" y="438">• Excel, SQLite, ZIP, CSV</text>
+      <text x="922" y="464">• Stays on this computer</text>
+    </g>
+  </g>
+
+  <!-- footer: offline simulation -->
+  <rect x="40" y="350" width="300" height="150" rx="14" fill="#1c232c" stroke="#3b4b59" stroke-width="2" stroke-dasharray="7 6"/>
+  <text x="64" y="386" font-size="20" font-weight="700" fill="#e6edf3">Offline simulation</text>
+  <text x="64" y="412" font-size="15" fill="#9aa6b2">elts-simulation/index.html</text>
+  <g font-size="15" fill="#c9d4de">
+    <text x="64" y="448">Explore the apparatus layout.</text>
+    <text x="64" y="474">No install, no sessions, no hardware.</text>
+  </g>
+
+  <text x="600" y="560" font-size="15" fill="#9aa6b2" text-anchor="middle">Development build: synthetic inputs and a simulated ELTS link. No physical equipment is controlled or validated.</text>
+</svg>

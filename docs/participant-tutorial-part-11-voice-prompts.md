@@ -1,12 +1,14 @@
 # Participant tutorial — Part 11 voice prompts
 
+> Parts revised on November 3 use [the current revision prompts](participant-tutorial-revision-2026-11-03-voice-prompts.md). Superseded takes linked here are retained in the audio archives.
+
 November 3, 2026. Automatic study flow. Newly generated takes use Eryn and ElevenLabs v4.
 
 ## Part 11
 
 Selection: user-supplied New tts node (10).mp3. Verified duration: 2.56 seconds. The prompts and take IDs below record the generated candidates.
 
-Saved audio: [11-scenarios-complete.mp3](participant-tutorial/audio/part-11/11-scenarios-complete.mp3).
+Saved audio: [11-scenarios-complete.mp3](participant-tutorial/audio/part-11/archive/11-scenarios-complete-prior-b08b9cf08c1f.mp3).
 
 SHA-256: b08b9cf08c1fb0e15bf2e628ef0bd36252cef881735dd7b0080fe7fe262c2a16.
 
@@ -27,7 +29,7 @@ Superseded speech node: `v7o7nl7jufoqnf9rmmzc`.
 
 Selection: user-supplied New tts node (11).mp3. Verified duration: 2.8 seconds. The prompts and take IDs below record the generated candidates.
 
-Saved audio: [11-01-final-break-running.mp3](participant-tutorial/audio/part-11/11-01-final-break-running.mp3).
+Saved audio: [11-01-final-break-running.mp3](participant-tutorial/audio/part-11/archive/11-01-final-break-running-prior-d477f6f2f007.mp3).
 
 SHA-256: d477f6f2f00736437989cac46ced0b0541bb6e6a84daedd82db289282f892b74.
 
@@ -48,7 +50,7 @@ Superseded speech node: `qofu3ze1clhfemhxjt0h`.
 
 Selection: user-supplied New tts node (8).mp3.
 
-Saved audio: [11-02-post-study-form.mp3](participant-tutorial/audio/part-11/11-02-post-study-form.mp3).
+Saved audio: [11-02-post-study-form.mp3](participant-tutorial/audio/part-11/archive/11-02-post-study-form-prior-cd9aa489a3bc.mp3).
 
 SHA-256: cd9aa489a3bce568d24384b7dd37050d772a601c4de88c610a706121d6fba5e1.
 

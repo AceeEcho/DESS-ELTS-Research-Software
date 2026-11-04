@@ -34,6 +34,13 @@ namespace Elts.Operator
         private double previousTime;
         private Vector3 previousPosition;
         private bool hasFrame;
+        private Vector3 restingPosition;
+        private Quaternion restingRotation;
+        private float hitStarted=-100;
+        private Vector3 flinchAxis;
+        internal Transform ImpactAnchor=>model.transform;
+        public bool Dying { get; private set; }
+        public const float DeathSeconds=.9f;
 
         internal sealed class Palette
         {
@@ -95,6 +102,8 @@ namespace Elts.Operator
             actor.FitStandingModel();
             actor.model.transform.localPosition = actor.fittedPosition;
             actor.model.transform.localScale = actor.fittedScale;
+            actor.restingPosition=actor.model.transform.localPosition;
+            actor.restingRotation=actor.model.transform.localRotation;
             foreach (var bone in actor.model.GetComponentsInChildren<Transform>())
             {
                 if (bone.name == "foot_l") actor.leftFoot = bone;
@@ -215,6 +224,38 @@ namespace Elts.Operator
             // the scenario centre lowering so the supporting foot stays on the floor.
             float correction = standingFootY + (float)HumanoidGeometry.StandingCenterAt(floorY) - position.y - LowestFootY();
             model.transform.localPosition += Vector3.up * correction;
+            restingPosition=model.transform.localPosition;restingRotation=model.transform.localRotation;
+        }
+
+        public void ReactToHit(DevelopmentTargetImpact impact)
+        {
+            if(Dying)return;
+            var direction=new Vector3((float)impact.Direction.X,0,(float)impact.Direction.Z);
+            flinchAxis=transform.InverseTransformDirection(Vector3.Cross(Vector3.up,direction)).normalized;
+            hitStarted=Time.unscaledTime;
+            Dying=impact.Killed;
+        }
+        private void LateUpdate()
+        {
+            if(model==null)return;
+            // Apply reaction only to the rendered child. The scenario's anatomy,
+            // root position and recorded target lifecycle remain authoritative.
+            float age=Time.unscaledTime-hitStarted;
+            model.transform.localPosition=restingPosition;model.transform.localRotation=restingRotation;
+            if(Dying)
+            {
+                float fall=Mathf.SmoothStep(0,1,age/.55f);
+                model.transform.localRotation=restingRotation*Quaternion.Euler(-86*fall,0,8*fall);
+                model.transform.localPosition=restingPosition+Vector3.down*(.08f*fall);
+                if(age>=DeathSeconds)Destroy(gameObject);
+            }
+            else if(age<.22f && flinchAxis!=Vector3.zero)
+            {
+                // A quick lean away from the shot with a slower, smooth recovery.
+                float flinch=age<.035f?Mathf.SmoothStep(0,1,age/.035f):
+                    Mathf.SmoothStep(1,0,(age-.035f)/.185f);
+                model.transform.localRotation=Quaternion.AngleAxis(3*flinch,flinchAxis)*restingRotation;
+            }
         }
 
         private float LowestFootY() => Mathf.Min(transform.InverseTransformPoint(leftFoot.position).y,

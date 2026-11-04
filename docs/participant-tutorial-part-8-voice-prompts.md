@@ -1,5 +1,7 @@
 # Participant tutorial — Part 8 voice prompts
 
+> Parts revised on November 3 use [the current revision prompts](participant-tutorial-revision-2026-11-03-voice-prompts.md). Superseded takes linked here are retained in the audio archives.
+
 Date: November 3, 2026.
 Voice: Eryn - Genuine, Friendly and Natural (`kdnRe2koJdOK4Ovxn2DI`).
 Model: `eleven_v4`.
@@ -51,7 +53,7 @@ Speech node: `hHtCXL82vi5IZ4MYt9gR`.
 Planned file stem: `docs/participant-tutorial/audio/part-08/08-02-break-overview`.
 Selection: **Bottom (take 2)**. Generation ID: HV6Chp2WkNMIskJvmL7I.
 
-Saved audio: [08-02-break-overview.mp3](participant-tutorial/audio/part-08/08-02-break-overview.mp3).
+Saved audio: [08-02-break-overview.mp3](participant-tutorial/audio/part-08/archive/08-02-break-overview-HV6Chp2WkNMIskJvmL7I.mp3).
 
 | Position | Generation ID | Session ID |
 | --- | --- | --- |

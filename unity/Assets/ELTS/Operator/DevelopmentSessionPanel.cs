@@ -179,6 +179,7 @@ namespace Elts.Operator
                 }
                 if(engine.State == SessionState.Failed)throw new IOException(engine.Failure);
                 scenario=new DevelopmentSessionScenario(config,clock,engine,recording,sequence,view.GameSettings);
+                scenario.TargetHit+=view.ShowTargetImpact;
                 RecordInputSource();
                 StartAcquisition(config);
                 firstValidAt=-1; setupPending=true; closing=false;
@@ -222,6 +223,7 @@ namespace Elts.Operator
             await SaveParticipantIdentityAsync();
             engine.RerunCurrentBlock();
             scenario=new DevelopmentSessionScenario(view.Configuration,clock!,engine,recording,sequence!,view.GameSettings);
+            scenario.TargetHit+=view.ShowTargetImpact;
             RecordInputSource();
             StartAcquisition(view.Configuration);
             closing=false;

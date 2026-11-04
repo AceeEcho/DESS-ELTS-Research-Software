@@ -28,6 +28,7 @@ namespace Elts.Operator
         };
         public bool SeparateAdministrator { get; private set; }
         public bool TestArmed { get; private set; }
+        public bool ParticipantStartEnabled => TestArmed && (!SeparateAdministrator || tutorial.CanStartScenario);
         public bool StationCanArm => !IsBusy && !closing && !TestArmed && engine?.State==SessionState.BlockReady && (!SeparateAdministrator || tutorial.CanArm);
         public bool StationCanStartParticipant => !IsBusy && !stationPreparing &&
             (engine==null || (closing && recording?.IsOpen!=true && (!tutorial.Started ||
@@ -166,7 +167,7 @@ namespace Elts.Operator
                 stationSaveStatus="Saving "+checkpoint.condition+"…";
                 Begin(()=>SaveStationCheckpointAsync(checkpoint));
             }
-            if(!IsBusy && engine?.State==SessionState.Break && engine.RemainingSeconds<=0)
+            if(!IsBusy && engine?.State==SessionState.Break && engine.RemainingSeconds<=0 && (!SeparateAdministrator || tutorial.CueFinished))
                 engine.Advance();
             if(engine?.State!=SessionState.BlockReady)TestArmed=false;
             TickTutorial(UnityEngine.Time.unscaledDeltaTime);
@@ -178,7 +179,7 @@ namespace Elts.Operator
 
             // Allow the transition message to finish before moving on. The
             // session state and recording checkpoint still own the transition.
-            if (tutorial.ElapsedSeconds < TutorialCueSeconds) return;
+            if (!tutorial.CueFinished) return;
 
             if (engine.State == SessionState.BlockEnded &&
                 (tutorial.Stage == TutorialStage.ScenarioEnded || tutorial.Stage == TutorialStage.FinalEnded) &&
@@ -272,6 +273,10 @@ namespace Elts.Operator
         private bool TryStartStationBlock(bool automatic)
         {
             if(engine?.State!=SessionState.BlockReady || IsBusy || closing)return false;
+            // Every entry path, including early clicks and delayed administrator
+            // commands, must wait for the currently displayed start cue.
+            if(SeparateAdministrator && (!tutorial.CanStartScenario ||
+                (automatic?tutorial.Stage!=TutorialStage.NextReady:tutorial.Stage!=TutorialStage.Armed)))return false;
             if(acquisition==null || !acquisition.TryCaptureForTrigger(out var pair) || !pair.IsValid)
             {lastMessage="Waiting for a valid recorded pose before starting.";return false;}
             TestArmed=false;
@@ -298,7 +303,8 @@ namespace Elts.Operator
             if(IsBusy || closing || engine==null)return false;
             try
             {
-                if(TutorialCanInteract && tutorialInteraction?.Reload()==true){tutorial.ObserveReload();return true;}
+                if(TutorialCanInteract && tutorialInteraction?.Reload()==true)
+                {tutorial.ObserveReload();SynchronizeTutorial();return true;}
                 return engine.State==SessionState.BlockRunning && scenario?.Reload()==true;
             }
             catch(Exception error)

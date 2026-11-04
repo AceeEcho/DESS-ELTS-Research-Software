@@ -1,5 +1,7 @@
 # Participant tutorial — Part 9 voice prompts
 
+> Parts revised on November 3 use [the current revision prompts](participant-tutorial-revision-2026-11-03-voice-prompts.md). Superseded takes linked here are retained in the audio archives.
+
 Date: November 3, 2026.
 Voice: Eryn - Genuine, Friendly and Natural (`kdnRe2koJdOK4Ovxn2DI`).
 Model: `eleven_v4`.
@@ -34,7 +36,7 @@ Speech node: `yepfE6CulL7BO1dNwhl4`.
 Planned file stem: `docs/participant-tutorial/audio/part-09/09-01-start-prepared-scenario`.
 Selection: **user-supplied replacement**. Source attachment: New tts node (3).mp3. Duration: 4.08 seconds. The generated takes below are the original candidates.
 
-Saved audio: [09-01-start-prepared-scenario.mp3](participant-tutorial/audio/part-09/09-01-start-prepared-scenario.mp3).
+Saved audio: [09-01-start-prepared-scenario.mp3](participant-tutorial/audio/part-09/archive/09-01-start-prepared-scenario-prior-46aaf1378ba7.mp3).
 
 | Position | Generation ID | Session ID |
 | --- | --- | --- |

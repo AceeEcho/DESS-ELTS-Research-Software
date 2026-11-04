@@ -321,6 +321,9 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
     $('tutorialTitle').textContent = tutorial.started ? tutorial.title || 'Scenario running' : 'Begin the participant walkthrough';
     $('tutorialInstruction').textContent = tutorial.started ? tutorial.instruction : 'Setup, calibration and practice are guided inside the game.';
     $('tutorialStatus').textContent = tutorial.status;
+    // Narration is optional per step; say which applies rather than a fixed label.
+    $('tutorialAudio').textContent = !tutorial.started ? '' : tutorial.audioAvailable ? 'Narration on' :
+      tutorial.audioEnabled ? 'No narration for this step' : 'Narration off';
     $('tutorialPrimary').textContent = tutorial.primaryLabel || 'Waiting for session event';
     $('tutorialPrimary').hidden = !tutorial.primaryLabel;
     $('tutorialPrimary').disabled = actionBusy || !tutorial.canPrimary;

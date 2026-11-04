@@ -1,0 +1,471 @@
+[
+  {
+    "script": "03-00-01",
+    "title": "Look left",
+    "line": "Stay in the same place. Turn your head to look at the dot on the left. Keep your head upright, and hold still.",
+    "prompt": "[in a clear, instructive tone] [calmly] Stay in the same place. Turn your head to look at the dot on the left. Keep your head upright, and hold still.",
+    "stem": "03-00-01-look-left",
+    "selectedTake": 2,
+    "selectedGenerationId": "WhzlxTril7Kfg4P5nV89",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "Soop1sjnwqBfS0gRCt4L",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "Pi4uRWeMYUOIkDAPUOnE",
+        "generationId": "wfXFxKB3ml5W15Ye1TwY"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "OXORDEfPDSQoIzvtBgRc",
+        "generationId": "WhzlxTril7Kfg4P5nV89"
+      }
+    ],
+    "verifiedFileDurationSeconds": 7.28
+  },
+  {
+    "script": "03-00-02",
+    "title": "Look right",
+    "line": "Now turn your head to look at the dot on the right. Keep your body in the same place, and hold still.",
+    "prompt": "[in a clear, instructive tone] [calmly] Now turn your head to look at the dot on the right. Keep your body in the same place, and hold still.",
+    "stem": "03-00-02-look-right",
+    "selectedTake": 1,
+    "selectedGenerationId": "pvRQ9yTYDgSnPwr3rzzN",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "BL5kLggdtPM0P2I0X8bU",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "kfiu13x2xnwlqxG7dGYS",
+        "generationId": "pvRQ9yTYDgSnPwr3rzzN"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "8dIvLsGa7bt3Ttdy3vhR",
+        "generationId": "3EG6JuoVo3hgTdVLoa5x"
+      }
+    ],
+    "verifiedFileDurationSeconds": 6.0
+  },
+  {
+    "script": "03-00-03",
+    "title": "Look up",
+    "line": "Face forward again, then gently look up at the top dot. Keep your body in place, and hold still.",
+    "prompt": "[in a clear, instructive tone] [calmly] Face forward again, then gently look up at the top dot. Keep your body in place, and hold still.",
+    "stem": "03-00-03-look-up",
+    "selectedTake": 1,
+    "selectedGenerationId": "Wg4G0kjFTZxhryy5zcKZ",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "cPl2aaCVOtJLW4zqkDxF",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "IkHoeW1fFKuw2ar83OtI",
+        "generationId": "Wg4G0kjFTZxhryy5zcKZ"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "lmfqIGD2m73E8wVp3sgn",
+        "generationId": "alsWTC7TwsdxwSO9sO4X"
+      }
+    ],
+    "verifiedFileDurationSeconds": 6.4
+  },
+  {
+    "script": "03-00-04",
+    "title": "Step left",
+    "line": "Face straight ahead. Step to your left until you are in front of the dot. Keep your head upright and facing forward, then hold still.",
+    "prompt": "[in a clear, instructive tone] [calmly] Face straight ahead. Step to your left until you are in front of the dot. Keep your head upright and facing forward, then hold still.",
+    "stem": "03-00-04-step-left",
+    "selectedTake": 2,
+    "selectedGenerationId": "3y53IHlIbrgbwvBADktM",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "BGipTrhTbEb5nAOu9ctC",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "Aw5vl1nZb5F14SS2IOi1",
+        "generationId": "65Yj4V8tse6oZa7RExmd"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "blW9v5H6MENmtjQhkfth",
+        "generationId": "3y53IHlIbrgbwvBADktM"
+      }
+    ],
+    "verifiedFileDurationSeconds": 8.48
+  },
+  {
+    "script": "03-00-05",
+    "title": "Step right",
+    "line": "Now step to your right until you are in front of the dot on the right. Keep facing straight ahead, then hold still.",
+    "prompt": "[in a clear, instructive tone] [calmly] Now step to your right until you are in front of the dot on the right. Keep facing straight ahead, then hold still.",
+    "stem": "03-00-05-step-right",
+    "selectedTake": 2,
+    "selectedGenerationId": "cfPTrZCVTFvDCslUuLgp",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "E5ZG5z7rkEu6gJcfFEER",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "sykHasqzR2qdHh8u9kqG",
+        "generationId": "S2YdqLXr3sPnDGenQa6S"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "fuQBNntZ3VdWdHRnaBHN",
+        "generationId": "cfPTrZCVTFvDCslUuLgp"
+      }
+    ],
+    "verifiedFileDurationSeconds": 6.64
+  },
+  {
+    "script": "03-00-06",
+    "title": "Return to center",
+    "line": "Return to your starting position in the center. Look straight ahead at the center dot, and hold still while the operator checks the calibration.",
+    "prompt": "[in a clear, instructive tone] [calmly] Return to your starting position in the center. Look straight ahead at the center dot, and hold still while the operator checks the calibration.",
+    "stem": "03-00-06-return-to-center",
+    "selectedTake": 1,
+    "selectedGenerationId": "NPw3glBaC9rS7YZYjl2j",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "hx0VeCJfR4kWMPzVuSow",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "buOFbBr2FPNpeet2smLR",
+        "generationId": "NPw3glBaC9rS7YZYjl2j"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "PYuAlBURmfQjOVPEREGc",
+        "generationId": "SPyTPolcODpjRM2Q1IKJ"
+      }
+    ],
+    "verifiedFileDurationSeconds": 7.92
+  },
+  {
+    "script": "04-02",
+    "title": "Try firing",
+    "line": "Pull the trigger to fire the gun. Try firing once.",
+    "prompt": "[in a clear, instructive tone] [calmly] Pull the trigger to fire the gun. Try firing once.",
+    "stem": "04-02-controls-demonstration",
+    "selectedTake": 1,
+    "selectedGenerationId": "nVV3VmHRc2b579rGgBT8",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "5kUCr4o01c74lxqB8ymM",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "fuU6j1tRZAryoFih9MBi",
+        "generationId": "nVV3VmHRc2b579rGgBT8"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "3apVeqj3ibW5Uy4MdYni",
+        "generationId": "LBDZlQOgsLF9nGgXHdBB"
+      }
+    ],
+    "verifiedFileDurationSeconds": 3.52
+  },
+  {
+    "script": "04-03",
+    "title": "Firing confirmed",
+    "line": "Well done. You've fired a shot. Next, try reloading.",
+    "prompt": "[in a clear, instructive tone] [calmly] Well done. You've fired a shot. Next, try reloading.",
+    "stem": "04-03-firing-confirmed",
+    "selectedTake": 1,
+    "selectedGenerationId": "aPFrKYogOKeWKil044Qv",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "tVVHFOjpCVE4lAQaohEm",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "uNjgLfzdCpm2tyIKkS9K",
+        "generationId": "aPFrKYogOKeWKil044Qv"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "MBxBHmrHXLeRQtQqUlzg",
+        "generationId": "dVbXKnZqPnKYOC5ZUQEJ"
+      }
+    ],
+    "verifiedFileDurationSeconds": 4.4
+  },
+  {
+    "script": "04-04",
+    "title": "Try reloading",
+    "line": "Use the reload action the operator showed you to refill your ammunition.",
+    "prompt": "[in a clear, instructive tone] [calmly] Use the reload action the operator showed you to refill your ammunition.",
+    "stem": "04-04-try-reloading",
+    "selectedTake": 1,
+    "selectedGenerationId": "Dhy9N4DcYbP3cd7I57fY",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "GCzXFJxYfCKN9thGUEfU",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "aeAVjzAdgao2LKmlgd1b",
+        "generationId": "Dhy9N4DcYbP3cd7I57fY"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "iAdbAb6A8fUM3kCrdZzu",
+        "generationId": "5NK0Tp8h392HLu43xuQk"
+      }
+    ],
+    "verifiedFileDurationSeconds": 4.24
+  },
+  {
+    "script": "04-05",
+    "title": "Reload confirmed",
+    "line": "Good job. Your ammunition is full again.",
+    "prompt": "[in a clear, instructive tone] [calmly] Good job. Your ammunition is full again.",
+    "stem": "04-05-reload-confirmed",
+    "selectedTake": 1,
+    "selectedGenerationId": "7EJubwnG4dZiMynMxTXG",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "HFGrkFQUlNR9MPzWTapP",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "XvOoHgQMjtodmA6f3v8s",
+        "generationId": "7EJubwnG4dZiMynMxTXG"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "Xzj0HYbRVp18Hr8O7mwj",
+        "generationId": "L9WKJGCJw7hK4g4mQ4gx"
+      }
+    ],
+    "verifiedFileDurationSeconds": 3.04
+  },
+  {
+    "script": "08-02",
+    "title": "Break overview",
+    "line": "You'll have a break between scenarios and another break after the final scenario.",
+    "prompt": "[in a clear, instructive tone] [calmly] You'll have a break between scenarios and another break after the final scenario.",
+    "stem": "08-02-break-overview",
+    "selectedTake": 2,
+    "selectedGenerationId": "tZv6LU5P5MQ4yvHhH4ut",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "90CJ2xf9XuJnwzvurPuR",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "T65DX1IT32rshDpThnxB",
+        "generationId": "drJ1ObIqxPp4xJILNBXX"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "nkpj2lGiRejJt40twAnB",
+        "generationId": "tZv6LU5P5MQ4yvHhH4ut"
+      }
+    ],
+    "verifiedFileDurationSeconds": 4.88
+  },
+  {
+    "script": "09-01",
+    "title": "Start a prepared scenario",
+    "line": "When you're ready, pull the trigger to begin this scenario.",
+    "prompt": "[in a clear, instructive tone] [calmly] When you're ready, pull the trigger to begin this scenario.",
+    "stem": "09-01-start-prepared-scenario",
+    "selectedTake": 2,
+    "selectedGenerationId": "1jtfVsiByJs7BIxLqeid",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "EtLJEG8pWBiGoad8bfbi",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "zJKvTQe7sGui1X2wIyT4",
+        "generationId": "40EajOeJDVLpEtnkUpde"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "exQeIdnmC7UFBegFkpYG",
+        "generationId": "1jtfVsiByJs7BIxLqeid"
+      }
+    ],
+    "verifiedFileDurationSeconds": 3.6
+  },
+  {
+    "script": "10",
+    "title": "Scenario ended",
+    "line": "This scenario has ended. Your break will begin shortly.",
+    "prompt": "[in a clear, instructive tone] [calmly] This scenario has ended. Your break will begin shortly.",
+    "stem": "10-scenario-complete",
+    "selectedTake": 2,
+    "selectedGenerationId": "CQK7R3CdH4n9HmizwXRv",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "MvbE41O12Yul5rZmi5Av",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "f9mEuNRb2xTynLs908v8",
+        "generationId": "EJ0kLoLmNv4zA827oSpO"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "pyS1jYmTq2lDhT74LMUR",
+        "generationId": "CQK7R3CdH4n9HmizwXRv"
+      }
+    ],
+    "verifiedFileDurationSeconds": 3.92
+  },
+  {
+    "script": "10-01",
+    "title": "Break running",
+    "line": "Your break will begin now.",
+    "prompt": null,
+    "stem": "10-01-break-running",
+    "selectedTake": null,
+    "selectedGenerationId": null,
+    "flowId": null,
+    "nodeId": null,
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "DDZBtRaCrsjR8SDgcx2H",
+        "generationId": "yTxxqCHoRl3O7p7KM0Bb"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "s7u4Iops4b1YgdZV1J10",
+        "generationId": "A8rKkk9oRqy27SCnAIjJ"
+      }
+    ],
+    "sourceAttachment": "New tts node (13).mp3",
+    "verifiedFileDurationSeconds": 2.24
+  },
+  {
+    "script": "10-02",
+    "title": "Next scenario",
+    "line": "The next scenario will start shortly.",
+    "prompt": "[in a clear, instructive tone] [calmly] The next scenario will start shortly.",
+    "stem": "10-02-next-scenario-starting",
+    "selectedTake": 2,
+    "selectedGenerationId": "A994Qzgpwf6QUM3xHd2X",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "suSBDQX3aFyQvv2wcG25",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "sIwfIvY536TB1YUBK961",
+        "generationId": "g00RWuFBKvegrAWT1Lyr"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "gIaWC4k9IaDdoI4QfcRb",
+        "generationId": "A994Qzgpwf6QUM3xHd2X"
+      }
+    ],
+    "verifiedFileDurationSeconds": 2.64
+  },
+  {
+    "script": "11",
+    "title": "Scheduled scenarios ended",
+    "line": "The scheduled scenarios have ended. Your final break will begin shortly.",
+    "prompt": "[in a clear, instructive tone] [calmly] The scheduled scenarios have ended. Your final break will begin shortly.",
+    "stem": "11-scenarios-complete",
+    "selectedTake": 2,
+    "selectedGenerationId": "0BAsmtE7bFE3Ifx0jLTU",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "HskvxLy0XfWgQYxGhaCR",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "g53gHfPV0k75JVR72NFi",
+        "generationId": "OofzjqAYOvRSVPXeFwhr"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "8oaSqM1QBsltk9E7Jz4Z",
+        "generationId": "0BAsmtE7bFE3Ifx0jLTU"
+      }
+    ],
+    "verifiedFileDurationSeconds": 4.56
+  },
+  {
+    "script": "11-01",
+    "title": "Final break",
+    "line": "Your final break begins now. After your break, you'll complete the post-study form.",
+    "prompt": "[in a clear, instructive tone] [calmly] Your final break begins now. After your break, you'll complete the post-study form.",
+    "stem": "11-01-final-break-running",
+    "selectedTake": 1,
+    "selectedGenerationId": "0NQXIECFtiw5sY8tJlDY",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "DgaIgNjvP0UbJbyUyIzx",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "fYRiXGkatkKW3sdbUNZf",
+        "generationId": "0NQXIECFtiw5sY8tJlDY"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "W2AvzGQ0bwg15jXDNmRX",
+        "generationId": "QOLeOT4BcSh9EaFqAVSZ"
+      }
+    ],
+    "verifiedFileDurationSeconds": 5.68
+  },
+  {
+    "script": "11-02",
+    "title": "Post-study form",
+    "line": "Please complete the post-study form provided by the operator. If you have any questions, please ask.",
+    "prompt": "[in a clear, instructive tone] [calmly] Please complete the post-study form provided by the operator. If you have any questions, please ask.",
+    "stem": "11-02-post-study-form",
+    "selectedTake": 2,
+    "selectedGenerationId": "t6rO2X3C9W0IaDyPkOEE",
+    "flowId": "8F6yBGwuD9NVHRvF3SQo",
+    "nodeId": "yALLizmFeNPswHhomZoJ",
+    "takes": [
+      {
+        "take": 1,
+        "label": "Top",
+        "sessionId": "BgjWrttcgze6vAWQvjOm",
+        "generationId": "QVZrTlROiEqQaYYqbhaX"
+      },
+      {
+        "take": 2,
+        "label": "Bottom",
+        "sessionId": "TQSv6Lce51w7guQ6DEuY",
+        "generationId": "t6rO2X3C9W0IaDyPkOEE"
+      }
+    ],
+    "verifiedFileDurationSeconds": 5.76
+  }
+]

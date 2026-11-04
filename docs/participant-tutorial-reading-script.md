@@ -44,7 +44,43 @@ This copy is kept in sync with the [detailed script](participant-tutorial-script
 
 “First, we'll calibrate the head tracker. Please stand up straight and look straight ahead at the dot on the screen. Keep this position while the operator calibrates the tracker.”
 
-**Cue:** [WAIT — OPERATOR CONTINUE] The participant stands upright and looks forward at the screen dot. Complete and check head-tracker calibration before continuing.
+**Cue:** [WAIT — OPERATOR CAPTURE] Stand upright and look at the center dot. After the complete instruction, capture the center pose and continue to the left-look cue.
+
+### Part 3.0.1 — Look left
+
+“Stay in the same place. Turn your head to look at the dot on the left. Keep your head upright, and hold still.”
+
+**Cue:** [WAIT — OPERATOR CAPTURE] Complete the movement, hold still, then capture this pose after the instruction finishes.
+
+### Part 3.0.2 — Look right
+
+“Now turn your head to look at the dot on the right. Keep your body in the same place, and hold still.”
+
+**Cue:** [WAIT — OPERATOR CAPTURE] Complete the movement, hold still, then capture this pose after the instruction finishes.
+
+### Part 3.0.3 — Look up
+
+“Face forward again, then gently look up at the top dot. Keep your body in place, and hold still.”
+
+**Cue:** [WAIT — OPERATOR CAPTURE] Complete the movement, hold still, then capture this pose after the instruction finishes.
+
+### Part 3.0.4 — Step left
+
+“Face straight ahead. Step to your left until you are in front of the dot. Keep your head upright and facing forward, then hold still.”
+
+**Cue:** [WAIT — OPERATOR CAPTURE] Complete the movement, hold still, then capture this pose after the instruction finishes.
+
+### Part 3.0.5 — Step right
+
+“Now step to your right until you are in front of the dot on the right. Keep facing straight ahead, then hold still.”
+
+**Cue:** [WAIT — OPERATOR CAPTURE] Complete the movement, hold still, then capture this pose after the instruction finishes.
+
+### Part 3.0.6 — Return to center
+
+“Return to your starting position in the center. Look straight ahead at the center dot, and hold still while the operator checks the calibration.”
+
+**Cue:** [WAIT — OPERATOR CAPTURE] Complete the movement, hold still, then capture this pose after the instruction finishes.
 
 ### Part 3.1 — Holding the study replica
 
@@ -76,11 +112,29 @@ This copy is kept in sync with the [detailed script](participant-tutorial-script
 
 **Cue:** [WAIT — OPERATOR CONTINUE] Let the participant try aiming and confirm they understand.
 
-### Part 4.2 — Firing, reloading, and interface indicators
+### Part 4.2 — Try firing
 
-“The operator will show you how to fire at the practice targets and reload. You'll have a chance to try both before practice begins.”
+“Pull the trigger to fire the gun. Try firing once.”
 
-**Cue:** [WAIT — OPERATOR CONTINUE] Demonstrate firing, let the participant try it, then demonstrate reloading and let them try it. Continue when both actions are understood.
+**Cue:** [WAIT — PARTICIPANT SHOT] Finish the instruction, then accept one recorded trigger pull. A hit is not required.
+
+### Part 4.3 — Firing confirmed
+
+“Well done. You've fired a shot. Next, try reloading.”
+
+**Cue:** [CONTINUE AUTOMATICALLY] Play the complete firing confirmation, then show the reload instruction.
+
+### Part 4.4 — Try reloading
+
+“Use the reload action the operator showed you to refill your ammunition.”
+
+**Cue:** [WAIT — PARTICIPANT RELOAD] Finish the instruction, then wait for an actual magazine refill.
+
+### Part 4.5 — Reload confirmed
+
+“Good job. Your ammunition is full again.”
+
+**Cue:** [CONTINUE AUTOMATICALLY] Play the complete reload confirmation, then show practice readiness.
 
 ## Part 5 — Guided practice
 
@@ -88,11 +142,11 @@ This copy is kept in sync with the [detailed script](participant-tutorial-script
 
 **Cue:** [WAIT — OPERATOR START] Confirm readiness, then start practice.
 
-### Part 5.1 — Practice running
+### Part 5.1 — Practice instruction before the timer
 
 “Use this time to practice aiming, firing, and reloading. If you need help or another demonstration, please ask the operator.”
 
-**Cue:** [WAIT — PRACTICE ENDS] Let practice run until its timer finishes or the operator ends it. Help or repeat demonstrations as needed.
+**Cue:** [WAIT — FULL INSTRUCTION] Play this cue with the practice timer stopped. After the entire cue, start the full configured practice duration.
 
 ### Part 5.2 — Practice complete
 
@@ -126,7 +180,7 @@ This copy is kept in sync with the [detailed script](participant-tutorial-script
 
 ### Part 8.2 — Breaks in the sequence
 
-“You'll have a two-minute break between scenarios and another two-minute break after the final scenario.”
+“You'll have a break between scenarios and another break after the final scenario.”
 
 **Cue:** [CONTINUE AUTOMATICALLY] Move to the first-scenario readiness message.
 
@@ -138,43 +192,43 @@ This copy is kept in sync with the [detailed script](participant-tutorial-script
 
 ### Part 9.1 — Start a prepared scenario
 
-“When you're ready, follow the instruction on the screen to start this scenario.”
+“When you're ready, pull the trigger to begin this scenario.”
 
 **Cue:** [WAIT — PARTICIPANT START] The first start action begins the study. Subsequent scenarios and breaks run automatically.
 
 ## Part 10 — Breaks between scenarios
 
-“This scenario is complete.”
+“This scenario has ended. Your break will begin shortly.”
 
 **Cue:** [AUTOMATIC BREAK] Wait for the recording checkpoint and this message to finish. The break starts automatically.
 
 ### Part 10.1 — Break running
 
-“Your two-minute break begins now.”
+“Your break will begin now.”
 
 **Cue:** [WAIT — BREAK ENDS] Run the live countdown, then play Part 10.2 automatically.
 
 ### Part 10.2 — Next scenario starts automatically
 
-“Your break is complete. The next scenario will start shortly.”
+“The next scenario will start shortly.”
 
 **Cue:** [AUTOMATIC NEXT SCENARIO] Play the transition message, then start the next scenario when tracking is valid.
 
 ## Part 11 — Completion, final break, and post-study form
 
-“You've completed all four scenarios.”
+“The scheduled scenarios have ended. Your final break will begin shortly.”
 
 **Cue:** [AUTOMATIC FINAL BREAK] Wait for the final checkpoint and completion message, then start the final break.
 
 ### Part 11.1 — Final break running
 
-“Your final two-minute break begins now.”
+“Your final break begins now. After your break, you'll complete the post-study form.”
 
 **Cue:** [WAIT — FINAL BREAK ENDS] Run the live countdown and continue automatically to the post-study form.
 
 ### Part 11.2 — Post-study form
 
-“Your final break is complete. Please complete the post-study form provided by the operator. If you have any questions, please ask.”
+“Please complete the post-study form provided by the operator. If you have any questions, please ask.”
 
 **Cue:** [WAIT — FORM COMPLETION] Provide the form and confirm successful completion, or wait for the real submission confirmation.
 

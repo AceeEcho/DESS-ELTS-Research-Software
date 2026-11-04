@@ -8,7 +8,7 @@ static class TutorialChecks
     static void Check(bool value,string message){if(!value)throw new Exception(message);checks++;}
     static void Reject(Action action,string message)
     {try{action();}catch(InvalidOperationException){checks++;return;}throw new Exception(message);}
-    static void Continue(ParticipantTutorial flow)=>flow.Continue(flow.Revision);
+    static void Continue(ParticipantTutorial flow){Explain(flow);flow.Continue(flow.Revision);}
     static void Explain(ParticipantTutorial flow)=>flow.Tick(60,7);
     static ParticipantTutorial ThroughSetup()
     {
@@ -18,18 +18,32 @@ static class TutorialChecks
         Continue(flow);Explain(flow);Continue(flow);
         Check(flow.Stage==TutorialStage.HeadCalibration,"head calibration precedes replica handling");
         Explain(flow);Reject(()=>Continue(flow),"head calibration was accepted by elapsed time");
-        flow.AcceptCalibration(flow.Revision);Continue(flow);flow.AcceptCalibration(flow.Revision);Explain(flow);Explain(flow);
+        Reject(()=>flow.AcceptCalibration(flow.Revision),"incomplete head direction sequence was accepted");
+        for(int i=0;i<7;i++)
+        {
+            Explain(flow);Check(flow.HeadCalibrationIndex==i,"head direction order changed");
+            flow.ConfirmHeadPose(flow.Revision);
+        }
+        flow.AcceptCalibration(flow.Revision);Continue(flow);Explain(flow);flow.AcceptCalibration(flow.Revision);Explain(flow);Explain(flow);
         Check(flow.Stage==TutorialStage.Aim && flow.HeadAccepted && flow.GunAccepted,"both reviews are required before aiming");
         Continue(flow);Reject(()=>Continue(flow),"firing advance accepted without a shot");
-        flow.ObserveReload();flow.ObserveFire();Continue(flow);
-        Reject(()=>Continue(flow),"a reload from an earlier step counted");flow.ObserveReload();Continue(flow);
+        // A replay restarts the cue but preserves already recorded evidence.
+        flow.Replay(flow.Revision);flow.ObserveFire();Check(!flow.Fired,"early trigger bypassed the firing instruction");
+        Explain(flow);flow.ObserveReload();flow.ObserveFire();
+        Check(flow.Stage==TutorialStage.FireConfirmed && flow.Fired,"accepted trigger did not open confirmation");
+        flow.ObserveFire();Explain(flow);
+        Reject(()=>flow.Continue(flow.Revision),"a reload from an earlier step counted");
+        flow.ObserveReload();Check(!flow.Reloaded,"early reload bypassed the instruction");
+        Explain(flow);flow.ObserveReload();Check(flow.Stage==TutorialStage.ReloadConfirmed,"reload confirmation missing");Explain(flow);
         Check(flow.Stage==TutorialStage.PracticeReady,"controls lead to manual practice start");
         return flow;
     }
     static ParticipantTutorial ThroughTutorial()
     {
-        var flow=ThroughSetup();flow.PracticeStarted(flow.Revision);Explain(flow);
+        var flow=ThroughSetup();StartPractice(flow);Explain(flow);
         Check(flow.Stage==TutorialStage.PracticeRunning,"reading time cannot finish practice");
+        flow.Replay(flow.Revision);flow.Tick(.1,60);
+        Check(flow.CueFinished && flow.CanFire,"a silent practice screen must remain interactive after replay");
         flow.PracticeFinished();Continue(flow);Explain(flow);
         Check(flow.CanRequestDemo(7),"ready operator permits one demonstration cue");flow.MarkDemoRequested();
         flow.Replay(flow.Revision);Explain(flow);Check(!flow.CanRequestDemo(7),"replay refired demonstration");
@@ -39,8 +53,16 @@ static class TutorialChecks
         flow.DemonstrationEnded(true);int revision=flow.Revision;flow.DemonstrationEnded(true);
         Check(flow.Revision==revision,"duplicate completion advanced twice");
         Continue(flow);Explain(flow);Explain(flow);Explain(flow);
-        Check(flow.Stage==TutorialStage.FirstReady && flow.CanArm,"overview leads to operator arm hold");
+        Check(flow.Stage==TutorialStage.FirstReady && !flow.CanArm,"overview skipped the readiness narration");
+        Explain(flow);Check(flow.CanArm,"finished readiness cue did not open arm control");
         return flow;
+    }
+    static void StartPractice(ParticipantTutorial flow)
+    {
+        Explain(flow);flow.PreparePractice(flow.Revision);
+        Reject(()=>flow.PracticeStarted(flow.Revision),"practice timer started before its introduction");
+        Check(!flow.CanFire,"practice input opened during its introduction");
+        Explain(flow);flow.PracticeStarted(flow.Revision);
     }
     static void Main()
     {
@@ -54,8 +76,12 @@ static class TutorialChecks
             string condition=conditions[i],attempt=condition+"-attempt-01";bool final=i==3;
             flow.ObserveSession(SessionState.BlockReady,true,condition,attempt,false,false,final);
             Check(flow.Stage==TutorialStage.Armed,"armed start prompt missing");
+            Check(!flow.CanStartScenario,"armed trigger bypassed the start announcement");
+            Explain(flow);Check(flow.CanStartScenario,"start trigger stayed locked after its announcement");
             flow.Replay(flow.Revision);Check(flow.Stage==TutorialStage.Armed,"replay started scenario");
+            Check(!flow.CanStartScenario,"replaying the start cue left input active");
             flow.ObserveSession(SessionState.BlockReady,false,condition,attempt,false,false,final);
+            Explain(flow);
             Check(flow.CanArm,"disarm did not return to readiness");
             flow.ObserveSession(SessionState.BlockRunning,false,condition,attempt,false,false,final);
             flow.ObserveSession(SessionState.BlockPaused,false,condition,attempt,false,false,final);
@@ -78,7 +104,7 @@ static class TutorialChecks
         Check(exceptions.LastBreakSkipped,"skipped final break lost exception wording");
         exceptions.ObserveSession(SessionState.Aborted,false,"","",false,false,true);
         Check(exceptions.Stage==TutorialStage.Interrupted,"abort left normal completion prompts visible");
-        var failedDemo=ThroughSetup();failedDemo.PracticeStarted(failedDemo.Revision);failedDemo.PracticeFinished();Continue(failedDemo);
+        var failedDemo=ThroughSetup();StartPractice(failedDemo);failedDemo.PracticeFinished();Continue(failedDemo);Explain(failedDemo);
         failedDemo.MarkDemoRequested();failedDemo.DemonstrationEnded(false);Explain(failedDemo);
         Check(failedDemo.Stage==TutorialStage.Demonstration && !failedDemo.CanRequestDemo(0),"failed demonstration silently retried");
         failedDemo.RepeatDemonstration(failedDemo.Revision);Explain(failedDemo);

@@ -6,7 +6,7 @@ Based on `participant-tutorial-script-outline.md`. Detailed narration and visual
 
 Audio generation and selection follow [the participant tutorial audio workflow](participant-tutorial-audio-workflow.md): two takes per node, identified as Top and Bottom; download the user's chosen take and link it directly beneath the matching spoken chunk.
 
-Current audio workflow: all 30 spoken chunks have selected audio bundled in the Unity walkthrough.
+Current audio workflow: all 39 spoken chunks have selected audio bundled in the Unity walkthrough. The November 3 revision includes six additional head-direction cues and separate firing/reload confirmations.
 
 A [reading script](participant-tutorial-reading-script.md) contains only the narration and concise action/wait cues. Update the Spoken and Action / wait lines here, then regenerate that copy; see the audio workflow for the sync command.
 
@@ -135,26 +135,121 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 ## Part 3 — Head-tracker calibration, holding position, and gun-tracker calibration
 
-**Sequence:** Head-tracker calibration → manual confirmation → holding demonstration → manual confirmation → gun-tracker calibration → manual confirmation → interface familiarization. These are separate steps; the participant does not need to hold the replica during head-tracker calibration.
-
-**Visual direction throughout:** Continue the charcoal background, warm-white text, muted blue accents, fixed heading, and reserved caption area. Use short 300–400 millisecond fades for explanatory content. During either calibration capture, keep the reference dot completely stationary and unobstructed. Its position must use the configured calibration reference for that step; the head and gun calibration steps need not share a position unless the confirmed procedure specifies this. Dot position, size, and contrast must be configurable and checked on the actual display. Do not use pulsing, drifting targets, aiming scores, decorative reticles, countdowns, or animated progress. Place instructions and captions away from the dot.
+**Sequence:** Center → look left → look right → look up → step left → step right → return to center → operator review → holding demonstration → gun-tracker calibration. The participant does not hold the replica during the head sequence. This follows the seven directions in the separate Calibration Environment dashboard.
 
 **Spoken:** “First, we'll calibrate the head tracker. Please stand up straight and look straight ahead at the dot on the screen. Keep this position while the operator calibrates the tracker.”
 
-**Action / wait:** [WAIT — OPERATOR CONTINUE] The participant stands upright and looks forward at the screen dot. Complete and check head-tracker calibration before continuing.
+**Action / wait:** [WAIT — OPERATOR CAPTURE] Stand upright and look at the center dot. After the complete instruction, capture the center pose and continue to the left-look cue.
 
 **Audio:** Selected — Bottom (take 2). [03-head-tracker-calibration.mp3](participant-tutorial/audio/part-03/03-head-tracker-calibration.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
-1. Enter after the operator finishes the equipment checks in Part 2.2. Fade in the heading “Head-tracker calibration,” with “Participant tutorial” above it.
-2. During “stand up straight,” show a simple side-view illustration of an upright person facing the display. Use the supporting instruction “Stand up straight.” Show no replica in the person's hands. The illustration explains posture without prescribing unconfirmed foot placement or joint angles.
-3. Before “the dot on the screen” is spoken, fade out the posture illustration and reveal the actual head-calibration reference dot. Use a small, clearly visible solid dot with a clean edge. Keep the rest of the central area clear. Do not animate a line between the person's eyes and the target during capture.
-4. Show “Look straight ahead at the dot” above or below the target area, with enough separation that the text and captions cannot obscure it. On “Keep this position,” change the instruction to “Keep looking at the dot while the operator calibrates the head tracker.”
-5. When narration finishes, keep the dot and instruction unchanged. The operator positions the participant as needed, performs the head-tracker calibration, and reviews it. Capture starts through the actual calibration controls, not simply because narration has finished. Keep the target visible through capture and review; do not imply acceptance from the participant's gaze or posture alone.
-6. If a repeat is needed, keep or restore the same reference dot and replay the instruction on the operator's request. After the operator confirms head calibration and proceeds, fade out the dot and instruction and reveal Part 3.1. Do not require the participant to keep staring at the dot once the operator ends this step.
+1. Show “Head-tracker calibration,” a stationary center dot, and “Stand upright. Look straight ahead at the dot.” Keep all text away from the dot.
+2. The dot is visible from the start of narration. Do not pulse it, animate it during capture, or hide it behind an illustration.
+3. The operator captures each direction after its full instruction. Every capture retains its actual recorded pose reference and direction. Elapsed time and gaze do not capture or accept anything.
+4. Each later cue changes the dot only on entry. Look-left/right dots sit farther from center; step-left/right dots sit nearer center, so the participant steps directly in front of them while facing forward. All coordinates remain adjustable.
+5. After the return-to-center capture, hold the center dot for the review. Acceptance leads to Part 3.1; redo restarts the seven directions. Replay retains the same dot and never captures again.
 
-**Transition — Manual continue:** Hold while the participant stands upright and looks forward at the dot. The operator completes and reviews head-tracker calibration, then explicitly continues to the holding demonstration. No automatic advance into gun handling.
+**Transition:** Operator capture advances one direction at a time. The final review must be explicitly accepted before the holding lesson.
+
+**Production notes:** The desktop integration logs synthetic observed poses and retains its existing fixture review. It does not apply the independent dashboard's measured head-direction fit, alter the startup rig, or establish physical calibration. Display placement, capture quality, and physical controls require the actual procedure and equipment.
+
+### Part 3.0.1 — Look left
+
+**Spoken:** “Stay in the same place. Turn your head to look at the dot on the left. Keep your head upright, and hold still.”
+
+**Action / wait:** [WAIT — OPERATOR CAPTURE] Complete the movement, hold still, then capture this pose after the instruction finishes.
+
+**Audio:** Selected — Bottom (take 2). [03-00-01-look-left.mp3](participant-tutorial/audio/part-03/03-00-01-look-left.mp3). Use for this spoken chunk only.
+
+**Screen / animation:**
+
+1. Place the stationary dot at the configured left side position. Show only the movement instruction and the current step number.
+2. Keep the dot visible through capture, pause, and replay. For side steps, explicitly retain forward head orientation; looking toward the screen center does not replace the body movement.
+3. Record the left-look pose on the operator capture action. No timer, animation, or narrator completion records a pose.
+
+**Transition:** After the operator capture, show the next dot cue.
+
+### Part 3.0.2 — Look right
+
+**Spoken:** “Now turn your head to look at the dot on the right. Keep your body in the same place, and hold still.”
+
+**Action / wait:** [WAIT — OPERATOR CAPTURE] Complete the movement, hold still, then capture this pose after the instruction finishes.
+
+**Audio:** Selected — Top (take 1). [03-00-02-look-right.mp3](participant-tutorial/audio/part-03/03-00-02-look-right.mp3). Use for this spoken chunk only.
+
+**Screen / animation:**
+
+1. Place the stationary dot at the configured right side position. Show only the movement instruction and the current step number.
+2. Keep the dot visible through capture, pause, and replay. For side steps, explicitly retain forward head orientation; looking toward the screen center does not replace the body movement.
+3. Record the right-look pose on the operator capture action. No timer, animation, or narrator completion records a pose.
+
+**Transition:** After the operator capture, show the next dot cue.
+
+### Part 3.0.3 — Look up
+
+**Spoken:** “Face forward again, then gently look up at the top dot. Keep your body in place, and hold still.”
+
+**Action / wait:** [WAIT — OPERATOR CAPTURE] Complete the movement, hold still, then capture this pose after the instruction finishes.
+
+**Audio:** Selected — Top (take 1). [03-00-03-look-up.mp3](participant-tutorial/audio/part-03/03-00-03-look-up.mp3). Use for this spoken chunk only.
+
+**Screen / animation:**
+
+1. Place the stationary dot at the configured top center position. Show only the movement instruction and the current step number.
+2. Keep the dot visible through capture, pause, and replay. For side steps, explicitly retain forward head orientation; looking toward the screen center does not replace the body movement.
+3. Record the up-look pose on the operator capture action. No timer, animation, or narrator completion records a pose.
+
+**Transition:** After the operator capture, show the next dot cue.
+
+### Part 3.0.4 — Step left
+
+**Spoken:** “Face straight ahead. Step to your left until you are in front of the dot. Keep your head upright and facing forward, then hold still.”
+
+**Action / wait:** [WAIT — OPERATOR CAPTURE] Complete the movement, hold still, then capture this pose after the instruction finishes.
+
+**Audio:** Selected — Bottom (take 2). [03-00-04-step-left.mp3](participant-tutorial/audio/part-03/03-00-04-step-left.mp3). Use for this spoken chunk only.
+
+**Screen / animation:**
+
+1. Place the stationary dot at the configured middle left position. Show only the movement instruction and the current step number.
+2. Keep the dot visible through capture, pause, and replay. For side steps, explicitly retain forward head orientation; looking toward the screen center does not replace the body movement.
+3. Record the left-step pose on the operator capture action. No timer, animation, or narrator completion records a pose.
+
+**Transition:** After the operator capture, show the next dot cue.
+
+### Part 3.0.5 — Step right
+
+**Spoken:** “Now step to your right until you are in front of the dot on the right. Keep facing straight ahead, then hold still.”
+
+**Action / wait:** [WAIT — OPERATOR CAPTURE] Complete the movement, hold still, then capture this pose after the instruction finishes.
+
+**Audio:** Selected — Bottom (take 2). [03-00-05-step-right.mp3](participant-tutorial/audio/part-03/03-00-05-step-right.mp3). Use for this spoken chunk only.
+
+**Screen / animation:**
+
+1. Place the stationary dot at the configured middle right position. Show only the movement instruction and the current step number.
+2. Keep the dot visible through capture, pause, and replay. For side steps, explicitly retain forward head orientation; looking toward the screen center does not replace the body movement.
+3. Record the right-step pose on the operator capture action. No timer, animation, or narrator completion records a pose.
+
+**Transition:** After the operator capture, show the next dot cue.
+
+### Part 3.0.6 — Return to center
+
+**Spoken:** “Return to your starting position in the center. Look straight ahead at the center dot, and hold still while the operator checks the calibration.”
+
+**Action / wait:** [WAIT — OPERATOR CAPTURE] Complete the movement, hold still, then capture this pose after the instruction finishes.
+
+**Audio:** Selected — Top (take 1). [03-00-06-return-to-center.mp3](participant-tutorial/audio/part-03/03-00-06-return-to-center.mp3). Use for this spoken chunk only.
+
+**Screen / animation:**
+
+1. Place the stationary dot at the configured center position. Show only the movement instruction and the current step number.
+2. Keep the dot visible through capture, pause, and replay. For side steps, explicitly retain forward head orientation; looking toward the screen center does not replace the body movement.
+3. Record the return-to-center pose on the operator capture action. No timer, animation, or narrator completion records a pose.
+
+**Transition:** Hold for the operator review, then accept or redo the full head sequence.
 
 ### Part 3.1 — Holding the study replica
 
@@ -247,24 +342,63 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Transition — Manual continue:** Continue after the operator confirms the participant has tried the aiming action and understands the instruction. Do not infer understanding merely from a tracker pose or an elapsed timeout.
 
-### Part 4.2 — Firing, reloading, and interface indicators
+### Part 4.2 — Try firing
 
-**Spoken:** “The operator will show you how to fire at the practice targets and reload. You'll have a chance to try both before practice begins.”
+**Spoken:** “Pull the trigger to fire the gun. Try firing once.”
 
-**Action / wait:** [WAIT — OPERATOR CONTINUE] Demonstrate firing, let the participant try it, then demonstrate reloading and let them try it. Continue when both actions are understood.
+**Action / wait:** [WAIT — PARTICIPANT SHOT] Finish the instruction, then accept one recorded trigger pull. A hit is not required.
 
-**Audio:** Selected — Bottom (take 2). [04-02-controls-demonstration.mp3](participant-tutorial/audio/part-04/04-02-controls-demonstration.mp3). Use for this spoken chunk only.
+**Audio:** Selected — Top (take 1). [04-02-controls-demonstration.mp3](participant-tutorial/audio/part-04/04-02-controls-demonstration.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
-1. Keep the tutorial scene and target visible. During “fire,” show “Try firing” as the current instruction. The operator demonstrates the confirmed replica firing action and then lets the participant try it. Use the actual tutorial response rather than a prerecorded fake hit.
-2. Once that action is complete, the operator advances to “Try reloading” within this chunk's interactive sequence. Show only the confirmed physical reload action or operator-assisted reload instruction. Let the participant try it before continuing.
-3. If the final participant interface includes ammunition, remaining time, or another necessary status indicator, briefly highlight the relevant existing indicator during the operator's explanation. Do not introduce development-only statistics or enable feedback settings as part of the tutorial plan.
-4. Keep the scene available for replay and clarification. Narration does not need to loop while the participant performs the actions.
+1. Show the real practice room and target. Highlight the ammunition display and show the direct trigger instruction.
+2. Keep firing disabled until narration and the one-pass diagram are complete. Ignore early presses; require a fresh press and release after the cue.
+3. One accepted shot spends ammunition and opens the confirmation dialog. Only an actual hit produces a spark and target recoil.
 
-**Transition — Manual continue:** The operator advances between the firing and reload demonstrations and continues to Part 5 once both required actions have been tried. A missed target is not, by itself, a reason to block familiarization; confirm comprehension rather than invent an accuracy threshold.
+**Transition:** An accepted participant shot opens Part 4.3 immediately.
 
-**Production decisions still needed:** Confirm the replica's firing event, physical reload mapping or operator-assisted reload procedure, and the participant-visible indicators. The general narration above supports an operator-led demonstration without inventing those controls. Before making a self-guided version, replace the general demonstration with separate exact spoken instructions for each confirmed action. Do not import R-to-reload, mouse clicks, a 20-round capacity, damage values, or desktop HUD assumptions into the physical study script.
+### Part 4.3 — Firing confirmed
+
+**Spoken:** “Well done. You've fired a shot. Next, try reloading.”
+
+**Action / wait:** [CONTINUE AUTOMATICALLY] Play the complete firing confirmation, then show the reload instruction.
+
+**Audio:** Selected — Top (take 1). [04-03-firing-confirmed.mp3](participant-tutorial/audio/part-04/04-03-firing-confirmed.mp3). Use for this spoken chunk only.
+
+**Screen / animation:**
+
+Show a compact “Well done” confirmation beside the target with a check mark and “Shot confirmed.” Hold it for its full narration. This confirms the trigger action, not aim accuracy.
+
+**Transition:** After the confirmation finishes, enter Part 4.4. Replay cannot fire another shot.
+
+### Part 4.4 — Try reloading
+
+**Spoken:** “Use the reload action the operator showed you to refill your ammunition.”
+
+**Action / wait:** [WAIT — PARTICIPANT RELOAD] Finish the instruction, then wait for an actual magazine refill.
+
+**Audio:** Selected — Top (take 1). [04-04-try-reloading.mp3](participant-tutorial/audio/part-04/04-04-try-reloading.mp3). Use for this spoken chunk only.
+
+**Screen / animation:**
+
+Show “Try reloading,” the ammunition display, and a visible “Press R to reload” hint for the desktop build. The spoken line asks participants to use the action demonstrated by the operator; the desktop hint identifies its own R control. Keep the real ammo count visible.
+
+**Transition:** An actual reload opens Part 4.5. Reloads from earlier steps do not satisfy this hold.
+
+### Part 4.5 — Reload confirmed
+
+**Spoken:** “Good job. Your ammunition is full again.”
+
+**Action / wait:** [CONTINUE AUTOMATICALLY] Play the complete reload confirmation, then show practice readiness.
+
+**Audio:** Selected — Top (take 1). [04-05-reload-confirmed.mp3](participant-tutorial/audio/part-04/04-05-reload-confirmed.mp3). Use for this spoken chunk only.
+
+**Screen / animation:**
+
+Show “Good job,” a check mark, “Reload confirmed,” and the refilled ammunition count. Hold the dialog while its narration plays.
+
+**Transition:** Enter Part 5 after the confirmation finishes. Replay never refills the magazine again.
 
 ## Part 5 — Guided practice
 
@@ -284,22 +418,22 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 **Transition — Manual start:** The operator starts practice after confirming participant readiness. Use the configured practice duration rather than a duration inferred from the narration or development defaults.
 
-### Part 5.1 — Practice running
+### Part 5.1 — Practice instruction before the timer
 
 **Spoken:** “Use this time to practice aiming, firing, and reloading. If you need help or another demonstration, please ask the operator.”
 
-**Action / wait:** [WAIT — PRACTICE ENDS] Let practice run until its timer finishes or the operator ends it. Help or repeat demonstrations as needed.
+**Action / wait:** [WAIT — FULL INSTRUCTION] Play this cue with the practice timer stopped. After the entire cue, start the full configured practice duration.
 
 **Audio:** Selected — Bottom (take 2). [05-01-practice-running.mp3](participant-tutorial/audio/part-05/05-01-practice-running.mp3). Use for this spoken chunk only.
 
 **Screen / animation:**
 
-1. Play this instruction once when interactive practice begins. Show the real practice targets and the confirmed participant interface. Do not replay introductory narration on every target or action.
-2. Present a short text reminder for the current practice action only when needed. Keep reminders outside the aiming area; remove them when the participant no longer needs them.
-3. Show target responses and other feedback only as provided by the configured practice experience. If a practice timer is displayed, bind it to the actual practice state. Do not invent a score or change study feedback settings.
-4. The operator can pause, clarify, replay an instruction, or restart practice using the available practice controls. Restarting practice must not restart equipment fitting, calibration, or the ELTS demonstration.
+1. Keep the practice room and target visible. Show “Practice begins shortly” and explain that the timer starts after the instruction.
+2. Fire and reload are unavailable during this cue. There is no running countdown yet.
+3. Once the complete narration and visual cue finish, start the actual practice phase with its full configured duration. At a ten-second setting, the participant receives ten seconds of active practice after the instruction.
+4. During active practice, show the live timer and ammunition. Accepted hits produce a short spark and body recoil. A destroyed target visibly falls, then respawns after the configured delay.
 
-**Transition — Practice completion event:** Stay in practice until its configured timer finishes or the operator explicitly finishes it. Then enter Part 5.2. Audio completion alone does not finish practice. Interrupted or restarted practice must not play a false completion message.
+**Transition:** The actual practice-completion event opens Part 5.2. Restart practice replays this introduction while the timer is paused, then starts a fresh full practice duration. Instruction replay alone never restarts the timer.
 
 ### Part 5.2 — Practice complete
 
@@ -400,11 +534,13 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 ### Part 8.2 — Breaks in the sequence
 
-**Spoken:** “You'll have a two-minute break between scenarios and another two-minute break after the final scenario.”
+**Spoken:** “You'll have a break between scenarios and another break after the final scenario.”
 
 **Action / wait:** [CONTINUE AUTOMATICALLY] Move to the first-scenario readiness message.
 
 **Audio:** Selected — Bottom (take 2). [08-02-break-overview.mp3](participant-tutorial/audio/part-08/08-02-break-overview.mp3). Use for this spoken chunk only.
+
+**Previous selection (superseded wording):** [Archived original](participant-tutorial/audio/part-08/archive/08-02-break-overview-HV6Chp2WkNMIskJvmL7I.mp3).
 
 **Screen / animation:**
 
@@ -416,6 +552,9 @@ Illustrations must match the actual equipment selected for the session. Use veri
 **Transition — Automatic:** Continue to the first-scenario readiness explanation in Part 9, which supplies the mandatory readiness hold.
 
 **Production notes:** Four scenarios, randomized order, and two-minute breaks follow the outline. Check the session plan against this narration before use: planned break duration is 120 seconds, including the final break. Do not silently substitute development defaults, change a live session, or play two-minute narration over a different configured duration. Scenario durations and any disclosure of condition identities remain procedure decisions. The cards explain order; they do not implement randomization.
+
+
+**Revision behavior:** This wording remains valid when the operator shortens a scenario or skips a break. A new state stops the old cue before its own cue plays. Scenario input remains unavailable until the current start announcement and diagram finish.
 
 ## Part 9 — Transition to the study
 
@@ -431,85 +570,117 @@ Illustrations must match the actual equipment selected for the session. Use veri
 
 ### Part 9.1 — Start a prepared scenario
 
-**Spoken:** “When you're ready, follow the instruction on the screen to start this scenario.”
+**Spoken:** “When you're ready, pull the trigger to begin this scenario.”
 
 **Action / wait:** [WAIT — PARTICIPANT START] The first start action begins the study. Subsequent scenarios and breaks run automatically.
 
-**Audio:** Selected — user-supplied replacement. [09-01-start-prepared-scenario.mp3](participant-tutorial/audio/part-09/09-01-start-prepared-scenario.mp3). Use for this spoken chunk only.
+**Audio:** Selected — Bottom (take 2). [09-01-start-prepared-scenario.mp3](participant-tutorial/audio/part-09/09-01-start-prepared-scenario.mp3). Use for this spoken chunk only.
+
+**Previous selection (superseded wording):** [Archived original](participant-tutorial/audio/part-09/archive/09-01-start-prepared-scenario-prior-46aaf1378ba7.mp3).
 
 **Screen / animation:** Show the configured participant start instruction for the first scenario. On participant start, remove the prompt and display the running scenario.
 
 **Transition — Participant start event:** Start scenario 1. Later scenarios start automatically after their preceding breaks and transition cues.
 
+
+**Revision behavior:** This wording remains valid when the operator shortens a scenario or skips a break. A new state stops the old cue before its own cue plays. Scenario input remains unavailable until the current start announcement and diagram finish.
+
 ## Part 10 — Breaks between scenarios
 
 **Routing:** Use Parts 10–10.2 after each normally completed scenario that has another scenario following it. After the fourth scenario, use Part 11's final-break sequence instead. A break begins on the real break-start event, not on scenario completion or audio playback.
 
-**Spoken:** “This scenario is complete.”
+**Spoken:** “This scenario has ended. Your break will begin shortly.”
 
 **Action / wait:** [AUTOMATIC BREAK] Wait for the recording checkpoint and this message to finish. The break starts automatically.
 
-**Audio:** Selected — user-supplied replacement. [10-scenario-complete.mp3](participant-tutorial/audio/part-10/10-scenario-complete.mp3). Use for this spoken chunk only.
+**Audio:** Selected — Bottom (take 2). [10-scenario-complete.mp3](participant-tutorial/audio/part-10/10-scenario-complete.mp3). Use for this spoken chunk only.
+
+**Previous selection (superseded wording):** [Archived original](participant-tutorial/audio/part-10/archive/10-scenario-complete-prior-ed4e44a81d48.mp3).
 
 **Screen / animation:** Show scenario completion and save progress. Play this clip after the checkpoint. Start the break when the transition cue finishes.
 
 **Transition — Automatic break start:** Use the real break-start event to play Part 10.1.
 
+
+**Revision behavior:** This wording remains valid when the operator shortens a scenario or skips a break. A new state stops the old cue before its own cue plays. Scenario input remains unavailable until the current start announcement and diagram finish.
+
 ### Part 10.1 — Break running
 
-**Spoken:** “Your two-minute break begins now.”
+**Spoken:** “Your break will begin now.”
 
 **Action / wait:** [WAIT — BREAK ENDS] Run the live countdown, then play Part 10.2 automatically.
 
-**Audio:** Selected — user-supplied replacement. [10-01-break-running.mp3](participant-tutorial/audio/part-10/10-01-break-running.mp3). Use for this spoken chunk only.
+**Audio:** Selected — user-supplied recording. [10-01-break-running.mp3](participant-tutorial/audio/part-10/10-01-break-running.mp3). Use for this spoken chunk only.
+
+**Previous selection (superseded wording):** [Archived original](participant-tutorial/audio/part-10/archive/10-01-break-running-prior-0f974f2b92ef.mp3).
 
 **Screen / animation:** Display the actual break countdown. Play the break-start line once, when the countdown begins.
 
 **Transition — Break-end event:** The next-scenario announcement follows the break.
 
+
+**Revision behavior:** This wording remains valid when the operator shortens a scenario or skips a break. A new state stops the old cue before its own cue plays. Scenario input remains unavailable until the current start announcement and diagram finish.
+
 ### Part 10.2 — Next scenario starts automatically
 
-**Spoken:** “Your break is complete. The next scenario will start shortly.”
+**Spoken:** “The next scenario will start shortly.”
 
 **Action / wait:** [AUTOMATIC NEXT SCENARIO] Play the transition message, then start the next scenario when tracking is valid.
 
-**Audio:** Selected — user-supplied replacement. [10-02-next-scenario-starting.mp3](participant-tutorial/audio/part-10/10-02-next-scenario-starting.mp3). Use for this spoken chunk only.
+**Audio:** Selected — Bottom (take 2). [10-02-next-scenario-starting.mp3](participant-tutorial/audio/part-10/10-02-next-scenario-starting.mp3). Use for this spoken chunk only.
+
+**Previous selection (superseded wording):** [Archived original](participant-tutorial/audio/part-10/archive/10-02-next-scenario-starting-prior-0a2be0bc84cb.mp3).
 
 **Screen / animation:** Replace the countdown with the next-scenario message. Keep the scenario timer stopped until the actual start.
 
 **Transition — Automatic scenario start:** Start the next assigned scenario after the transition cue and valid tracking.
 
+
+**Revision behavior:** This wording remains valid when the operator shortens a scenario or skips a break. A new state stops the old cue before its own cue plays. Scenario input remains unavailable until the current start announcement and diagram finish.
+
 ## Part 11 — Completion, final break, and post-study form
 
-**Spoken:** “You've completed all four scenarios.”
+**Spoken:** “The scheduled scenarios have ended. Your final break will begin shortly.”
 
 **Action / wait:** [AUTOMATIC FINAL BREAK] Wait for the final checkpoint and completion message, then start the final break.
 
-**Audio:** Selected — user-supplied replacement. [11-scenarios-complete.mp3](participant-tutorial/audio/part-11/11-scenarios-complete.mp3). Use for this spoken chunk only.
+**Audio:** Selected — Bottom (take 2). [11-scenarios-complete.mp3](participant-tutorial/audio/part-11/11-scenarios-complete.mp3). Use for this spoken chunk only.
+
+**Previous selection (superseded wording):** [Archived original](participant-tutorial/audio/part-11/archive/11-scenarios-complete-prior-b08b9cf08c1f.mp3).
 
 **Screen / animation:** Show completion after the final scenario. When saving and the completion cue are finished, start the final break.
 
 **Transition — Automatic final-break start:** Play Part 11.1 on the actual final-break start event. Use the alternate completion display for skipped or stopped attempts.
 
+
+**Revision behavior:** This wording remains valid when the operator shortens a scenario or skips a break. A new state stops the old cue before its own cue plays. Scenario input remains unavailable until the current start announcement and diagram finish.
+
 ### Part 11.1 — Final break running
 
-**Spoken:** “Your final two-minute break begins now.”
+**Spoken:** “Your final break begins now. After your break, you'll complete the post-study form.”
 
 **Action / wait:** [WAIT — FINAL BREAK ENDS] Run the live countdown and continue automatically to the post-study form.
 
-**Audio:** Selected — user-supplied replacement. [11-01-final-break-running.mp3](participant-tutorial/audio/part-11/11-01-final-break-running.mp3). Use for this spoken chunk only.
+**Audio:** Selected — Top (take 1). [11-01-final-break-running.mp3](participant-tutorial/audio/part-11/11-01-final-break-running.mp3). Use for this spoken chunk only.
+
+**Previous selection (superseded wording):** [Archived original](participant-tutorial/audio/part-11/archive/11-01-final-break-running-prior-d477f6f2f007.mp3).
 
 **Screen / animation:** Show the live final-break countdown. Play the announcement at its start and keep the form closed until it ends.
 
 **Transition — Final-break end event:** Open the post-study form instructions after the final break.
 
+
+**Revision behavior:** This wording remains valid when the operator shortens a scenario or skips a break. A new state stops the old cue before its own cue plays. Scenario input remains unavailable until the current start announcement and diagram finish.
+
 ### Part 11.2 — Post-study form
 
-**Spoken:** “Your final break is complete. Please complete the post-study form provided by the operator. If you have any questions, please ask.”
+**Spoken:** “Please complete the post-study form provided by the operator. If you have any questions, please ask.”
 
 **Action / wait:** [WAIT — FORM COMPLETION] Provide the form and confirm successful completion, or wait for the real submission confirmation.
 
-**Audio:** Selected — user-supplied replacement. [11-02-post-study-form.mp3](participant-tutorial/audio/part-11/11-02-post-study-form.mp3). Use for this spoken chunk only.
+**Audio:** Selected — Bottom (take 2). [11-02-post-study-form.mp3](participant-tutorial/audio/part-11/11-02-post-study-form.mp3). Use for this spoken chunk only.
+
+**Previous selection (superseded wording):** [Archived original](participant-tutorial/audio/part-11/archive/11-02-post-study-form-prior-cd9aa489a3bc.mp3).
 
 **Screen / animation:**
 
@@ -519,6 +690,9 @@ Illustrations must match the actual equipment selected for the session. Use veri
 4. When completion is confirmed by the actual submission workflow or the operator, proceed to Part 11.3. A failed or incomplete form submission stays here for assistance.
 
 **Transition — Form completion confirmation:** Use a trustworthy submission confirmation when available; otherwise the operator manually confirms completion. Do not advance on elapsed time or narration ending.
+
+
+**Revision behavior:** This wording remains valid when the operator shortens a scenario or skips a break. A new state stops the old cue before its own cue plays. Scenario input remains unavailable until the current start announcement and diagram finish.
 
 ### Part 11.3 — Thank you
 
@@ -542,3 +716,5 @@ Illustrations must match the actual equipment selected for the session. Use veri
 - Replay repeats the selected narration and its explanatory visuals only. It never rearms a scenario, restarts a timer, opens a duplicate form submission, or activates ELTS again.
 - Keep remaining durations, scenario order, and ordinal labels bound to the current session. Never fabricate a completed phase to keep the script moving.
 - Each spoken chunk links to its selected recording. The Part 10 recordings repeat between scenarios.
+
+**November 3 revision:** Every manual tutorial action waits for the current narration and diagram to finish. Explicit operator skip/stop controls may interrupt obsolete transition speech; they select the new state immediately without allowing the next scenario to bypass its own introduction. The participant footer no longer says “Synthetic walkthrough.”

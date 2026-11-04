@@ -1,36 +1,151 @@
 .tutorial-layer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: #191e24; overflow: hidden; }
 .tutorial-layer.tutorial-live { background-color: rgba(0, 0, 0, 0); }
 .tutorial-canvas { position: absolute; width: 1920px; height: 1080px; color: #f5f3ee; }
-.tutorial-eyebrow { position: absolute; top: 108px; left: 192px; right: 192px; font-size: 27px; color: #96b3c9; letter-spacing: 5px; -unity-text-align: middle-center; }
-.tutorial-heading { position: absolute; top: 165px; left: 192px; right: 192px; font-size: 64px; -unity-font-style: bold; -unity-text-align: middle-center; white-space: normal; }
-.tutorial-content { position: absolute; left: 192px; right: 192px; top: 380px; height: 340px; flex-direction: row; justify-content: center; align-items: center; }
-.tutorial-card { width: 420px; height: 310px; margin-left: 20px; margin-right: 20px; align-items: center; justify-content: center; border-width: 2px; border-color: #3b4752; border-radius: 18px; background-color: #1e252d; }
-.tutorial-card-emphasis { border-color: #96b3c9; background-color: #222e39; }
-.tutorial-card-icon { width: 140px; height: 140px; margin-bottom: 24px; }
-.tutorial-card-label { font-size: 40px; -unity-text-align: middle-center; white-space: normal; }
-.tutorial-card-note { font-size: 25px; color: #a8b3bf; margin-top: 12px; -unity-text-align: middle-center; }
-.tutorial-instruction { position: absolute; top: 782px; left: 192px; right: 192px; font-size: 38px; -unity-text-align: middle-center; white-space: normal; }
-.tutorial-detail { position: absolute; top: 880px; left: 192px; right: 192px; font-size: 30px; color: #a8b3bf; -unity-text-align: middle-center; white-space: normal; }
-.tutorial-footer { position: absolute; left: 192px; right: 192px; bottom: 66px; font-size: 22px; color: #8894a0; -unity-text-align: middle-center; }
-.tutorial-illustration { position: absolute; left: 300px; right: 300px; top: 345px; height: 375px; }
-.tutorial-dot { position: absolute; background-color: #f5f3ee; border-radius: 50%; }
-.tutorial-arrow { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
-.tutorial-arrow-label { position: absolute; left: 1040px; top: 700px; width: 500px; color: #b4cddd; font-size: 34px; white-space: normal; }
-.tutorial-arrow-mode .tutorial-instruction { top: 330px; font-size: 36px; }
-.tutorial-arrow-mode .tutorial-detail { top: 430px; font-size: 30px; }
-.tutorial-arrow-mode .tutorial-footer { -unity-text-align: middle-left; }
-.tutorial-live .tutorial-eyebrow { top: 44px; left: 64px; right: auto; font-size: 24px; background-color: #191e24; padding: 12px 20px; border-left-width: 4px; border-left-color: #96b3c9; }
-.tutorial-live .tutorial-heading { top: 110px; font-size: 48px; background-color: rgba(25,30,36,0.92); padding: 12px; border-radius: 12px; }
-.tutorial-live .tutorial-instruction { top: auto; bottom: 130px; font-size: 32px; background-color: rgba(25,30,36,0.92); padding: 14px; border-radius: 12px; }
-.tutorial-live .tutorial-detail { top: auto; bottom: 68px; left: 384px; right: 384px; font-size: 26px; color: #d5e2ec; background-color: rgba(25,30,36,0.92); padding: 8px 14px; border-radius: 8px; }
-.tutorial-live .tutorial-footer { display: none; }
+
+/* Fixed reading order on every screen (1920 x 1080 reference canvas):
+   where you are (tracker) · what this is (heading) · one picture (content)
+   · what to do now (dock: badge, one instruction line, optional status). */
+.tutorial-eyebrow { position: absolute; top: 84px; left: 192px; right: 192px; font-size: 27px; color: #96b3c9; letter-spacing: 5px; -unity-text-align: middle-center; }
+.tutorial-heading { position: absolute; top: 140px; left: 192px; right: 192px; font-size: 60px; -unity-font-style: bold; -unity-text-align: middle-center; white-space: normal; }
+.tutorial-content { position: absolute; left: 192px; right: 192px; top: 290px; height: 430px; flex-direction: row; justify-content: center; align-items: center; }
+.tutorial-dock { position: absolute; top: 740px; left: 192px; right: 192px; flex-direction: column; align-items: center; }
+.tutorial-dock-text { align-self: stretch; }
+.tutorial-instruction { margin-top: 18px; font-size: 40px; -unity-text-align: middle-center; white-space: normal; }
+.tutorial-detail { margin-top: 10px; font-size: 28px; color: #a8b3bf; -unity-text-align: middle-center; white-space: normal; }
+.tutorial-footer { position: absolute; left: 192px; right: 192px; bottom: 56px; font-size: 22px; color: #8894a0; -unity-text-align: middle-center; }
 .tutorial-timer { position: absolute; left: 300px; right: 300px; top: 395px; font-size: 150px; -unity-text-align: middle-center; }
-.tutorial-live .tutorial-timer { top: 48px; left: auto; right: 64px; font-size: 32px; background-color: #191e24; padding: 12px 20px; }
-.tutorial-target-label { position: absolute; font-size: 28px; background-color: #222e39; color: #e0ebf3; padding: 10px 18px; border-radius: 8px; }
-.tutorial-target-outline { position: absolute; border-width: 3px; border-color: #96b3c9; border-radius: 8px; }
-.tutorial-small-card { width: 265px; height: 280px; margin-left: 8px; margin-right: 8px; }
-.tutorial-small-card .tutorial-card-label { font-size: 32px; }
-.tutorial-small-card .tutorial-card-icon { width: 80px; height: 80px; }
-.tutorial-break-marker { width: 100px; font-size: 24px; color: #b0c6d7; white-space: normal; -unity-text-align: middle-center; }
 .tutorial-paused { position: absolute; top: 34px; right: 64px; padding: 10px 20px; font-size: 24px; background-color: #303c48; color: #e0e8ed; border-radius: 8px; }
 .tutorial-hidden { display: none; }
+
+/* Walkthrough progress: past chapters filled, current ringed, none ticked. */
+.tutorial-tracker { position: absolute; top: 44px; left: 435px; width: 1050px; flex-direction: row; padding: 12px 0; border-radius: 14px; }
+.tutorial-tracker-step { width: 150px; align-items: center; }
+.tutorial-tracker-line { position: absolute; top: 10px; left: 88px; width: 124px; height: 2px; background-color: #3b4b59; }
+.tutorial-tracker-dot { width: 22px; height: 22px; border-radius: 11px; border-width: 2px; border-color: #536879; }
+.tutorial-tracker-label { font-size: 22px; color: #7d8b97; margin-top: 8px; }
+.tutorial-tracker-past .tutorial-tracker-dot { background-color: #96b3c9; border-color: #96b3c9; }
+.tutorial-tracker-past .tutorial-tracker-line { background-color: #96b3c9; }
+.tutorial-tracker-past .tutorial-tracker-label { color: #a8b3bf; }
+.tutorial-tracker-current .tutorial-tracker-dot { border-width: 6px; border-color: #f5f3ee; }
+.tutorial-tracker-current .tutorial-tracker-label { color: #f5f3ee; -unity-font-style: bold; }
+
+/* What to do now: listen, your turn, tell the operator, wait or rest. */
+.tutorial-cue { flex-direction: row; flex-shrink: 0; }
+.tutorial-cue-pill { flex-direction: row; align-items: center; padding: 10px 30px 10px 18px; border-radius: 32px; border-width: 2px; border-color: #4b5d6b; background-color: #222b33; }
+.tutorial-cue-icon { width: 40px; height: 40px; margin-right: 14px; }
+.tutorial-cue-text { font-size: 26px; letter-spacing: 4px; -unity-font-style: bold; color: #d5dde3; }
+.tutorial-cue-act .tutorial-cue-pill { border-color: #9bc8b1; background-color: #1f3229; }
+.tutorial-cue-act .tutorial-cue-text { color: #d4eee0; }
+.tutorial-cue-tell .tutorial-cue-pill, .tutorial-cue-watch .tutorial-cue-pill { border-color: #96b3c9; background-color: #21303b; }
+.tutorial-cue-tell .tutorial-cue-text, .tutorial-cue-watch .tutorial-cue-text { color: #dbe8f1; }
+.tutorial-cue-rest .tutorial-cue-pill { border-color: #7fa9ad; background-color: #1f2e30; }
+
+/* Live scene: opaque panels only at the top (progress, heading) and one dock
+   at the bottom, all clear of the practice target. */
+.tutorial-live .tutorial-tracker { top: 20px; background-color: #191e24; }
+.tutorial-live .tutorial-eyebrow { top: 20px; left: 64px; right: auto; font-size: 24px; letter-spacing: 3px; background-color: #191e24; padding: 26px 22px; border-radius: 14px; border-left-width: 4px; border-left-color: #9bc8b1; color: #d4eee0; }
+.tutorial-live .tutorial-heading { top: 116px; left: 560px; right: 560px; font-size: 44px; background-color: #191e24; padding: 10px 16px; border-radius: 14px; }
+.tutorial-live .tutorial-dock { top: auto; bottom: 32px; left: 380px; right: 380px; flex-direction: row; align-items: center; padding: 16px 28px 16px 18px; background-color: #191e24; border-radius: 16px; }
+.tutorial-live .tutorial-cue { margin-right: 24px; }
+.tutorial-live .tutorial-cue-pill { padding: 6px 22px 6px 14px; }
+.tutorial-live .tutorial-cue-icon { width: 32px; height: 32px; }
+.tutorial-live .tutorial-cue-text { font-size: 22px; letter-spacing: 3px; }
+.tutorial-live .tutorial-dock-text { flex-grow: 1; flex-shrink: 1; align-self: auto; }
+.tutorial-live .tutorial-instruction { margin-top: 0; font-size: 32px; -unity-text-align: middle-left; }
+.tutorial-live .tutorial-detail { margin-top: 4px; font-size: 22px; -unity-text-align: middle-left; }
+.tutorial-live .tutorial-footer { display: none; }
+.tutorial-live .tutorial-timer { top: 20px; left: auto; right: 64px; font-size: 32px; background-color: #191e24; padding: 14px 22px; border-radius: 14px; }
+.tutorial-live .tutorial-paused { top: 100px; }
+.tutorial-target-label { position: absolute; font-size: 28px; background-color: #222e39; color: #e0ebf3; padding: 10px 18px; border-radius: 8px; }
+.tutorial-target-outline { position: absolute; border-width: 3px; border-color: #96b3c9; border-radius: 8px; }
+
+/* Shared picture labels: one or two words, never a paragraph. */
+.tutorial-picture-label { font-size: 38px; -unity-font-style: bold; -unity-text-align: middle-center; white-space: normal; }
+.tutorial-kicker { font-size: 23px; letter-spacing: 3px; color: #96b3c9; white-space: normal; margin-bottom: 14px; }
+.tutorial-caption { font-size: 26px; color: #a8b3bf; white-space: normal; margin-top: 16px; }
+.tutorial-inline-arrow { font-size: 32px; color: #7d98ad; -unity-text-align: middle-center; }
+
+/* Welcome route: Setup is outlined as the next stage. */
+.tutorial-route { flex-direction: row; align-items: center; justify-content: center; }
+.tutorial-route-stop { width: 360px; height: 360px; align-items: center; justify-content: center; border-radius: 24px; border-width: 2px; border-color: rgba(0,0,0,0); }
+.tutorial-route-next { border-color: #96b3c9; background-color: #202a33; }
+.tutorial-route-icon { width: 190px; height: 190px; margin-bottom: 22px; }
+.tutorial-route-title { font-size: 42px; -unity-font-style: bold; }
+.tutorial-route-arrow { width: 110px; font-size: 56px; color: #96b3c9; -unity-text-align: middle-center; flex-shrink: 0; }
+
+/* "You → Operator" scene; name centres match the drawn people. */
+.tutorial-conversation { width: 760px; align-items: center; }
+.tutorial-conversation-art { width: 760px; height: 380px; }
+.tutorial-conversation-names { width: 760px; flex-direction: row; justify-content: space-between; }
+.tutorial-conversation-name { width: 304px; font-size: 30px; color: #a8b3bf; -unity-text-align: middle-center; }
+
+.tutorial-equipment { flex-direction: row; }
+.tutorial-equipment-role { width: 420px; align-items: center; }
+.tutorial-equipment-art { width: 220px; height: 220px; margin-bottom: 26px; }
+.tutorial-review-art { width: 840px; height: 420px; }
+
+/* Calibration keeps the central field clear for the reference dot. */
+.tutorial-dot { position: absolute; background-color: #f5f3ee; border-radius: 50%; }
+.tutorial-calibration-cue { position: absolute; left: 330px; top: 300px; width: 1260px; height: 420px; align-items: center; justify-content: center; }
+.tutorial-calibration-holding { width: 840px; height: 420px; }
+.tutorial-pose { position: absolute; left: 700px; top: 222px; width: 520px; height: 228px; }
+.tutorial-dot-ring { position: absolute; border-width: 2px; border-radius: 50%; }
+
+.tutorial-contact-figure { width: 880px; height: 440px; }
+.tutorial-contact-art { width: 880px; height: 440px; }
+.tutorial-stock-label { position: absolute; left: 526px; top: 52px; font-size: 34px; color: #b7d2e4; -unity-font-style: bold; }
+.tutorial-shoulder-label { position: absolute; left: 10px; top: 334px; font-size: 34px; color: #b7d2e4; -unity-font-style: bold; }
+
+.tutorial-check-row { flex-direction: row; align-items: center; justify-content: center; }
+.tutorial-check-item { width: 440px; align-items: center; }
+.tutorial-check-art { width: 220px; height: 220px; margin-bottom: 24px; }
+.tutorial-summary-icon { width: 320px; height: 160px; margin-bottom: 20px; }
+.tutorial-summary-line { flex-direction: row; align-items: center; }
+.tutorial-receipt-check { width: 48px; height: 48px; margin-right: 12px; flex-shrink: 0; }
+.tutorial-start-art { width: 440px; height: 220px; margin-bottom: 24px; }
+
+/* Controls lesson: a picture card beside the live target. */
+.tutorial-control-lesson { position: absolute; left: 64px; top: 116px; width: 460px; padding: 28px; align-items: center; background-color: #191e24; border-left-width: 4px; border-left-color: #96b3c9; border-radius: 12px; }
+.tutorial-control-art { width: 400px; height: 200px; }
+.tutorial-control-title { font-size: 40px; -unity-font-style: bold; white-space: normal; }
+.tutorial-control-status { font-size: 30px; color: #d6e7f2; white-space: normal; -unity-text-align: middle-center; margin-top: 12px; }
+.tutorial-control-confirmation { border-left-color: #9bc8b1; }
+.tutorial-confirmation-art { width: 220px; height: 220px; }
+/* Window pixels: Refresh sizes this to the ammunition display beneath it. */
+.tutorial-ammo-hint { position: absolute; align-items: center; }
+.tutorial-ammo-hint-label { font-size: 22px; -unity-font-style: bold; color: #191e24; background-color: #96b3c9; padding: 6px 14px; border-radius: 6px; }
+.tutorial-ammo-hint-caret { width: 14px; height: 14px; margin-top: -8px; background-color: #96b3c9; rotate: 45deg; }
+
+.tutorial-practice-guide { position: absolute; left: 435px; top: 204px; width: 1050px; flex-direction: row; align-items: center; justify-content: center; padding: 14px 24px; background-color: #191e24; border-radius: 14px; }
+.tutorial-practice-action { flex-direction: row; align-items: center; margin-left: 18px; margin-right: 18px; }
+.tutorial-practice-icon { width: 110px; height: 55px; margin-right: 12px; }
+.tutorial-practice-label { font-size: 32px; -unity-font-style: bold; }
+
+/* ELTS demonstration: the arrow owns the lower half of the screen. */
+.tutorial-arrow { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+.tutorial-arrow-label { position: absolute; left: 1010px; top: 760px; font-size: 56px; -unity-font-style: bold; color: #b4cddd; }
+.tutorial-arrow-mode .tutorial-dock { top: 236px; }
+.tutorial-arrow-mode .tutorial-footer { -unity-text-align: middle-left; }
+
+.tutorial-scenario-sequence { flex-direction: row; align-items: center; }
+.tutorial-scenario-group { flex-direction: row; align-items: center; width: 350px; flex-shrink: 0; }
+.tutorial-scenario-card { width: 210px; height: 295px; padding: 25px 16px; align-items: center; border-width: 2px; border-color: #4b5d6b; border-radius: 14px; background-color: #20272e; flex-shrink: 0; }
+.tutorial-scenario-card .tutorial-kicker { font-size: 22px; margin-bottom: 0; }
+.tutorial-scenario-number { font-size: 110px; color: #d5e3ed; margin-bottom: 4px; }
+.tutorial-time-limit { flex-direction: row; align-items: center; }
+.tutorial-clock-icon { width: 37px; height: 37px; margin-right: 8px; }
+.tutorial-time-limit .tutorial-caption { margin-top: 0; font-size: 25px; }
+.tutorial-sequence-rest { width: 140px; align-items: center; flex-shrink: 0; }
+.tutorial-break-title { font-size: 28px; color: #b7d2e4; white-space: normal; -unity-text-align: middle-center; margin-top: 8px; }
+.tutorial-break-duration { font-size: 26px; color: #a8b3bf; margin-top: 10px; }
+
+.tutorial-rest-route { position: absolute; top: 640px; left: 470px; width: 980px; flex-direction: row; align-items: center; justify-content: center; }
+.tutorial-rest-current { font-size: 32px; color: #dce8ef; padding: 16px 30px; background-color: #25333e; border-radius: 12px; }
+.tutorial-rest-next { font-size: 32px; color: #a8b3bf; margin-left: 32px; }
+.tutorial-rest-route .tutorial-inline-arrow { margin-left: 32px; }
+
+/* Single large symbol: checkpoint, waiting, hold, form and thank-you. */
+.tutorial-hero { align-items: center; }
+.tutorial-hero-art { width: 260px; height: 260px; }
+.tutorial-hero-caption { font-size: 30px; color: #a8b3bf; margin-top: 24px; }
+.tutorial-thanks-message { font-size: 56px; margin-top: 28px; }

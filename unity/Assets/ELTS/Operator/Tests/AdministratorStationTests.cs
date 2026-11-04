@@ -47,10 +47,10 @@ namespace Elts.Operator.Tests
                 station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="pause-test",
                     ["conditionOrder"]=new JArray("WE_FT","WE_MT","NE_FT","NE_MT")});
                 float limit=Time.realtimeSinceStartup+20;
-                while(!session.StationCanArm && Time.realtimeSinceStartup<limit)
+                while(session.Tutorial.Stage!=Elts.Session.TutorialStage.FirstReady && Time.realtimeSinceStartup<limit)
                 { ReviewFixtureWhenReady(session,station);clock.Advance(TimeSpan.FromSeconds(.1));yield return null; }
                 Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),session.StationMessage);
-                station.ApplyCommand(new JObject{["action"]="arm"});
+                ParticipantTutorialTests.ArmAfterInstructions(session,station);
                 input.Frame=new DesktopControlFrame(true,new Vector2(300,300),Vector3.zero,pressed:true);yield return null;
                 input.Frame=new DesktopControlFrame(true,new Vector2(300,300),Vector3.zero,released:true);yield return null;
                 Assert.That(session.Engine.RemainingSeconds,Is.EqualTo(20).Within(.001));
@@ -98,9 +98,10 @@ namespace Elts.Operator.Tests
                 Assert.That(session.StationCanArm,Is.False);
                 station.ApplyCommand(new JObject{["action"]="startBreak",["blockId"]=session.Engine.CurrentBlockId});
                 Assert.That(session.Engine.State,Is.EqualTo(SessionState.Break));
-                Assert.That(session.Engine.RemainingSeconds,Is.EqualTo(5).Within(.001));
+                Assert.That(session.Engine.RemainingSeconds,Is.EqualTo(session.Engine.BreakDurationSeconds).Within(.001));
                 Assert.Throws<InvalidOperationException>(()=>session.StationArm());
-                clock.Advance(TimeSpan.FromSeconds(5));yield return null;
+                ParticipantTutorialTests.FinishInstruction(session);
+                clock.Advance(TimeSpan.FromSeconds(session.Engine.BreakDurationSeconds));yield return null;
                 Assert.That(session.TestArmed,Is.False,"Timer completion never arms a test");
                 Assert.That(session.Engine.CurrentCondition,Is.EqualTo("WE_MT"));
                 Assert.That(session.Engine.CurrentDurationSeconds,Is.EqualTo(40));
@@ -146,7 +147,7 @@ namespace Elts.Operator.Tests
                     ["participantName"]="Synthetic Test Alias",["initialNotes"]="Initial fixture observation",
                     ["conditionOrder"]=new JArray("WE_FT","WE_MT","NE_FT","NE_MT")});
                 float limit=Time.realtimeSinceStartup+20;
-                while(!session.StationCanArm && Time.realtimeSinceStartup<limit)
+                while(session.Tutorial.Stage!=Elts.Session.TutorialStage.FirstReady && Time.realtimeSinceStartup<limit)
                 { ReviewFixtureWhenReady(session,station);clock.Advance(TimeSpan.FromSeconds(0.1));yield return null; }
                 Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),session.StationMessage);
                 string run=session.StationRecordingPath;
@@ -155,7 +156,7 @@ namespace Elts.Operator.Tests
                     Assert.That(session.StationParticipantTrigger(),Is.False,"Unarmed participant cannot begin");
                     // A mouse press made before arming cannot later start a block.
                     input.Frame=new DesktopControlFrame(true,new Vector2(300,300),Vector3.zero,pressed:true);yield return null;
-                    station.ApplyCommand(new JObject{["action"]="arm"});yield return null;
+                    ParticipantTutorialTests.ArmAfterInstructions(session,station);yield return null;
                     clock.Advance(TimeSpan.FromSeconds(30));yield return null;
                     Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),"Armed waiting must not start the block clock");
                     Assert.That(station.ParticipantRoot.Q<Label>("participantTitle").text,Is.EqualTo("Shoot to begin"));
@@ -196,9 +197,10 @@ namespace Elts.Operator.Tests
                 Assert.That(session.StationCanArm,Is.False);
                 station.ApplyCommand(new JObject{["action"]="startBreak",["blockId"]=session.Engine.CurrentBlockId});
                 Assert.That(session.Engine.State,Is.EqualTo(SessionState.Break));
-                Assert.That(session.Engine.RemainingSeconds,Is.EqualTo(5).Within(.001));
+                Assert.That(session.Engine.RemainingSeconds,Is.EqualTo(session.Engine.BreakDurationSeconds).Within(.001));
                 Assert.Throws<InvalidOperationException>(()=>session.StationArm());
-                clock.Advance(TimeSpan.FromSeconds(5));yield return null;
+                ParticipantTutorialTests.FinishInstruction(session);
+                clock.Advance(TimeSpan.FromSeconds(session.Engine.BreakDurationSeconds));yield return null;
                 Assert.That(session.TestArmed,Is.False,"Timer completion never arms a test");
                     yield return null;
                 }
@@ -256,8 +258,9 @@ namespace Elts.Operator.Tests
                 {ParticipantTutorialTests.AdvanceWalkthrough(session,station,false);clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
                 Assert.That(session.Engine.State,Is.EqualTo(SessionState.Practice));
                 ParticipantTutorialTests.Command(station,session,"tutorialRestartPractice");
+                ParticipantTutorialTests.FinishInstruction(session);yield return null;
                 ParticipantTutorialTests.Command(station,session,"tutorialFinishPractice");
-                while(!session.StationCanArm && Time.realtimeSinceStartup<limit)
+                while(session.Tutorial.Stage!=Elts.Session.TutorialStage.FirstReady && Time.realtimeSinceStartup<limit)
                 {ReviewFixtureWhenReady(session,station);clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
                 string original=session.StationRecordingPath;
                 station.ApplyCommand(new JObject{["action"]="skipTest",["blockId"]=session.Engine.CurrentBlockId,["reason"]="Synthetic skip verification"});
@@ -271,7 +274,7 @@ namespace Elts.Operator.Tests
                 station.ApplyCommand(new JObject{["action"]="skipBreak",["blockId"]=session.Engine.CurrentBlockId});
                 Assert.That(session.Engine.CurrentBlockId,Is.EqualTo("NE_FT-attempt-02"));
                 yield return null;
-                station.ApplyCommand(new JObject{["action"]="arm"});
+                ParticipantTutorialTests.ArmAfterInstructions(session,station);
                 Assert.That(session.StationParticipantTrigger(),Is.True);
                 clock.Advance(TimeSpan.FromSeconds(2));yield return null;
                 yield return WaitForSave(session);
@@ -286,6 +289,7 @@ namespace Elts.Operator.Tests
                 }
                 station.ApplyCommand(new JObject{["action"]="skipBreak",["blockId"]=session.Engine.CurrentBlockId});yield return null;
                 yield return WaitForSave(session);
+                ParticipantTutorialTests.FinishInstruction(session);
                 ParticipantTutorialTests.Command(station,session,"tutorialForm");
                 Assert.That(File.Exists(Path.Combine(original,"session-summary.json")),Is.True);
                 string originalEvents=File.ReadAllText(Path.Combine(original,"events.ndjson"));

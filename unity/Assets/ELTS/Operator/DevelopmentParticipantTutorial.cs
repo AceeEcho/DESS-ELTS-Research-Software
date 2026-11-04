@@ -27,9 +27,11 @@ namespace Elts.Operator
         private bool tutorialDotVisible;
         public ParticipantTutorial Tutorial=>tutorial;
         public ParticipantTutorialSettings TutorialSettings=>tutorialSettings;
-        private bool TutorialHasNarration=>tutorialNarration?.HasClip(tutorial,stationBreakSeconds==120)==true;
-        private double TutorialCueSeconds=>tutorialNarration?.Duration(tutorial,tutorialSettings.Duration(tutorial.Step),stationBreakSeconds==120)
-            ?? tutorialSettings.Duration(tutorial.Step);
+        private bool TutorialHasNarration=>tutorialNarration?.HasClip(tutorial)==true;
+        private double TutorialCueSeconds=>tutorial.Step.Script.Length==0?0:Math.Max(
+            tutorialSettings.reducedMotion?0:tutorialSettings.diagramSeconds+tutorialSettings.fadeSeconds,
+            tutorialNarration?.Duration(tutorial,tutorialSettings.Duration(tutorial.Step))
+                ?? tutorialSettings.Duration(tutorial.Step));
         public bool TutorialDotVisible=>tutorialDotVisible;
         public bool TutorialCanInteract=>SeparateAdministrator && !IsBusy && !closing && tutorial.CanFire &&
             tutorialInteraction!=null && (engine?.State!=SessionState.Practice || !engine.PracticePaused);
@@ -80,17 +82,18 @@ namespace Elts.Operator
 
         private bool TutorialCalibrationStep=>tutorial.Stage==TutorialStage.HeadCalibration || tutorial.Stage==TutorialStage.GunCalibration;
         private bool TutorialCanBegin=>!IsBusy && !closing && engine?.State==SessionState.Calibration && !tutorial.Started;
-        private bool TutorialCanCapture=>!IsBusy && !tutorial.Paused && TutorialCalibrationStep && tutorialDotVisible && calibration.State==CalibrationWizardState.Idle;
-        private bool TutorialCanAccept=>!IsBusy && !tutorial.Paused && TutorialCalibrationStep && calibration.State==CalibrationWizardState.Review && calibrationWithinLimits;
+        private bool TutorialCanCapture=>!IsBusy && !tutorial.Paused && tutorial.CueFinished && TutorialCalibrationStep && tutorialDotVisible && calibration.State==CalibrationWizardState.Idle;
+        private bool TutorialCanAccept=>!IsBusy && !tutorial.Paused && tutorial.CueFinished && TutorialCalibrationStep && calibration.State==CalibrationWizardState.Review && calibrationWithinLimits;
         private string TutorialPrimaryAction => !tutorial.Started?"tutorialBegin":TutorialCalibrationStep?
             (calibration.State==CalibrationWizardState.Idle?"tutorialCapture":"tutorialAccept"):
             tutorial.Stage==TutorialStage.PracticeReady?"tutorialPractice":tutorial.Stage==TutorialStage.Form?"tutorialForm":"tutorialContinue";
         private string TutorialPrimaryLabel => !tutorial.Started?"Begin tutorial / walkthrough":TutorialCalibrationStep?
-            (calibration.State==CalibrationWizardState.Idle?"Capture synthetic "+(tutorial.Stage==TutorialStage.HeadCalibration?"head":"gun")+" fixture":
+            (calibration.State==CalibrationWizardState.Idle?(tutorial.Stage==TutorialStage.HeadCalibration?
+                "Capture direction "+(tutorial.HeadCalibrationIndex+1)+" of 7 · "+tutorial.Step.Title:"Capture synthetic gun fixture"):
                 "Accept review · continue"):tutorial.Step.OperatorAction;
         private bool TutorialPrimaryEnabled => !IsBusy && (TutorialCanBegin || TutorialCanCapture || TutorialCanAccept ||
-            tutorial.CanContinue || (!tutorial.Paused && tutorial.Stage==TutorialStage.PracticeReady) ||
-            (tutorial.Stage==TutorialStage.Form && engine?.State==SessionState.SessionComplete && recording?.IsOpen!=true && !stationSaveStatus.StartsWith("SAVE FAILED",StringComparison.Ordinal)));
+            tutorial.CanContinue || (!tutorial.Paused && tutorial.CueFinished && tutorial.Stage==TutorialStage.PracticeReady) ||
+            (tutorial.CueFinished && tutorial.Stage==TutorialStage.Form && engine?.State==SessionState.SessionComplete && recording?.IsOpen!=true && !stationSaveStatus.StartsWith("SAVE FAILED",StringComparison.Ordinal)));
         public object TutorialState=>new {
             started=tutorial.Started,stage=tutorial.Stage.ToString(),step=tutorial.Step.Script,title=tutorial.Step.Title,
             instruction=tutorial.Step.Instruction,revision=tutorial.Revision,paused=tutorial.Paused,
@@ -102,8 +105,9 @@ namespace Elts.Operator
                 (tutorial.Stage==TutorialStage.Demonstration || tutorial.Stage==TutorialStage.DemonstrationComplete),
             demoActive=tutorialDemo?.Active==true,demoFailed=tutorial.DemoFailed,
             calibrationReview=TutorialCalibrationStep && calibration.State==CalibrationWizardState.Review?root.Q<Label>("calibrationReview").text:"",
-            headAccepted=tutorial.HeadAccepted,gunAccepted=tutorial.GunAccepted,fired=tutorial.Fired,reloaded=tutorial.Reloaded,
-            canRestartPractice=!IsBusy && !tutorial.Paused && (tutorial.Stage==TutorialStage.PracticeRunning || tutorial.Stage==TutorialStage.PracticeComplete),
+            headAccepted=tutorial.HeadAccepted,headDirection=tutorial.HeadCalibrationIndex+1,headDirectionsComplete=tutorial.HeadSequenceComplete,
+            cueFinished=tutorial.CueFinished,gunAccepted=tutorial.GunAccepted,fired=tutorial.Fired,reloaded=tutorial.Reloaded,
+            canRestartPractice=!IsBusy && !tutorial.Paused && tutorial.CueFinished && (tutorial.Stage==TutorialStage.PracticeRunning || tutorial.Stage==TutorialStage.PracticeComplete),
             canFinishPractice=!IsBusy && tutorial.Stage==TutorialStage.PracticeRunning,
             practicePaused=engine?.PracticePaused==true,audioEnabled=tutorialNarration!=null,
             audioAvailable=TutorialHasNarration,audioSlot=tutorial.Step.AudioSlot,
@@ -113,6 +117,7 @@ namespace Elts.Operator
         {
             if(!tutorial.Started)return "Start the walkthrough after the participant recording is ready.";
             if(tutorial.Paused)return engine?.State==SessionState.Practice?"Practice paused. Recording continues.":"Instruction paused. Resume when ready.";
+            if(!tutorial.CueFinished)return "Let the current narration and diagram finish. The action will become available afterward.";
             if(TutorialCalibrationStep)return "Synthetic fixture review only; this does not calibrate physical equipment.";
             if(tutorial.Stage==TutorialStage.Fire)return tutorial.Fired?"Firing observed. Confirm understanding to continue.":"Waiting for a participant shot. A hit is not required.";
             if(tutorial.Stage==TutorialStage.Reload)return tutorial.Reloaded?"Reload observed. Confirm understanding to continue.":"Waiting for a reload. If the magazine is full, fire once first.";
@@ -139,21 +144,27 @@ namespace Elts.Operator
                 case "tutorialContinue":tutorial.Continue(revision);break;
                 case "tutorialCapture":
                     if(!TutorialCanCapture)throw new InvalidOperationException("Wait for the stationary dot, then capture this calibration fixture.");
-                    CaptureCalibrationFixture();RecordTutorialChange("TutorialFixtureCaptured",tutorial.Stage);tutorial.InvalidateControls();break;
+                    if(tutorial.Stage==TutorialStage.HeadCalibration)CaptureTutorialHeadDirection(revision);
+                    else {CaptureCalibrationFixture();RecordTutorialChange("TutorialFixtureCaptured",tutorial.Stage);tutorial.InvalidateControls();}
+                    break;
                 case "tutorialRedo":
                     if(!TutorialCalibrationStep || tutorial.Paused || calibration.State!=CalibrationWizardState.Review)
                         throw new InvalidOperationException("Only the current unaccepted calibration review can be redone.");
-                    ResetCalibration();RecordTutorialChange("TutorialFixtureDiscarded",tutorial.Stage);tutorial.InvalidateControls();break;
+                    ResetCalibration();RecordTutorialChange("TutorialFixtureDiscarded",tutorial.Stage);
+                    if(tutorial.Stage==TutorialStage.HeadCalibration)tutorial.RestartHeadCalibration(revision);
+                    else tutorial.InvalidateControls();break;
                 case "tutorialAccept":
                     if(!TutorialCanAccept)throw new InvalidOperationException("Capture and review a fixture within the development limits first.");
                     AcceptCalibrationFixture();tutorial.AcceptCalibration(revision);break;
                 case "tutorialPractice":
-                    if(tutorial.Stage!=TutorialStage.PracticeReady || tutorial.Paused)throw new InvalidOperationException("Finish the controls walkthrough first.");
-                    AdvanceWithCalibration();tutorial.PracticeStarted(revision);break;
+                    if(tutorial.Stage!=TutorialStage.PracticeReady)throw new InvalidOperationException("Finish the controls walkthrough first.");
+                    tutorial.PreparePractice(revision);break;
                 case "tutorialRestartPractice":
                     if(tutorial.Paused || (tutorial.Stage!=TutorialStage.PracticeRunning && tutorial.Stage!=TutorialStage.PracticeComplete))
                         throw new InvalidOperationException("Practice can restart from the practice steps only.");
-                    EndTutorialInteraction();engine.RestartDevelopmentPractice();tutorial.PracticeStarted(revision);break;
+                    tutorial.PreparePractice(revision);EndTutorialInteraction();
+                    if(engine.State==SessionState.Practice && !engine.PracticePaused)engine.PauseDevelopmentPractice();
+                    break;
                 case "tutorialFinishPractice":
                     if(tutorial.Stage!=TutorialStage.PracticeRunning)throw new InvalidOperationException("Practice is not running.");
                     EndTutorialInteraction();engine.FinishDevelopmentPractice();tutorial.PracticeFinished();break;
@@ -163,7 +174,9 @@ namespace Elts.Operator
                     if(tutorialDemo?.Active==true){tutorialDemo.Stop();tutorial.DemonstrationEnded(false);}break;
                 case "tutorialResume":
                     tutorial.SetPaused(false,revision);
-                    if(engine.State==SessionState.Practice)engine.ResumeDevelopmentPractice();break;
+                    // A repeated practice introduction keeps the existing timer
+                    // paused until its complete cue starts a fresh practice period.
+                    if(engine.State==SessionState.Practice && tutorial.Stage==TutorialStage.PracticeRunning)engine.ResumeDevelopmentPractice();break;
                 case "tutorialReplay":tutorial.Replay(revision);break;
                 case "tutorialStopDemo":
                     if(tutorialDemo?.Active!=true)throw new InvalidOperationException("No simulated demonstration is running.");
@@ -174,6 +187,26 @@ namespace Elts.Operator
             }
             if(engine.State==SessionState.Failed)throw new IOException(engine.Failure);
             SynchronizeTutorial();
+        }
+        private void CaptureTutorialHeadDirection(int revision)
+        {
+            // Record the exact admitted pose used at this guided hold. These are
+            // desktop observations, not physical tracker calibration results.
+            if(acquisition==null || !acquisition.TryCaptureForTrigger(out var pair) || !pair.IsValid)
+                throw new InvalidOperationException("A valid recorded head pose is required for this direction.");
+            var pose=pair.Head.Pose!.Value;
+            RecordTutorialEvent(new SessionEvent(sequence!.Next(),pair.Timestamp,"TutorialHeadPoseCaptured",new[]{
+                LogField.NumberValue("directionIndex",tutorial.HeadCalibrationIndex),
+                LogField.String("direction",tutorial.Step.Script),LogField.NumberValue("acquisitionSequence",pair.Sequence),
+                LogField.NumberValue("x",pose.Position.X),LogField.NumberValue("y",pose.Position.Y),LogField.NumberValue("z",pose.Position.Z),
+                LogField.NumberValue("qx",pose.Orientation.X),LogField.NumberValue("qy",pose.Orientation.Y),
+                LogField.NumberValue("qz",pose.Orientation.Z),LogField.NumberValue("qw",pose.Orientation.W),
+                LogField.Boolean("synthetic",true)}));
+            if(tutorial.HeadCalibrationIndex==ParticipantTutorial.HeadCalibrationSteps.Count-1)
+            {
+                CaptureCalibrationFixture();RecordTutorialChange("TutorialFixtureCaptured",tutorial.Stage);
+            }
+            tutorial.ConfirmHeadPose(revision);
         }
         private void ConfirmTutorialForm(int revision)
         {
@@ -198,7 +231,17 @@ namespace Elts.Operator
                 SynchronizeTutorial();
                 tutorial.Tick(deltaSeconds,TutorialCueSeconds);
                 SynchronizeTutorial();
-                if(TutorialCalibrationStep && tutorial.ElapsedSeconds>=tutorialSettings.calibrationIllustrationSeconds)tutorialDotVisible=true;
+                if(TutorialCalibrationStep && (tutorial.Stage==TutorialStage.HeadCalibration ||
+                    tutorial.ElapsedSeconds>=tutorialSettings.calibrationIllustrationSeconds))tutorialDotVisible=true;
+                if(tutorial.Stage==TutorialStage.PracticeIntroduction && tutorial.CueFinished && !tutorial.Paused)
+                {
+                    // The complete running-practice cue plays while the session
+                    // clock is still stopped. Only then give the full practice time.
+                    if(engine.State==SessionState.Calibration)AdvanceWithCalibration();
+                    else engine.RestartDevelopmentPractice();
+                    tutorial.PracticeStarted(tutorial.Revision);SynchronizeTutorial();
+                }
+                if(!tutorial.Paused)tutorialInteraction?.Tick(deltaSeconds);
                 if(tutorial.CanRequestDemo(TutorialCueSeconds))
                 {
                     tutorial.MarkDemoRequested();
@@ -221,7 +264,7 @@ namespace Elts.Operator
             if(engine==null)return;
             tutorial.ObserveSession(engine.State,TestArmed,engine.CurrentCondition??"",engine.CurrentBlockId??"",
                 engine.CurrentBlockStoppedEarly,engine.CurrentBlockSkipped,engine.CurrentBlockIndex==engine.ScheduledConditions.Count-1);
-            tutorialNarration?.Refresh(tutorial, stationBreakSeconds == 120);
+            tutorialNarration?.Refresh(tutorial);
             if(previousTutorialStage!=tutorial.Stage)
             {
                 if(tutorial.Stage==TutorialStage.GunCalibration)ResetCalibration();
@@ -230,12 +273,12 @@ namespace Elts.Operator
             }
             if((engine.State==SessionState.Aborted || engine.State==SessionState.Failed) && tutorialDemo?.Active==true)tutorialDemo.Stop();
             bool live=tutorial.LiveScene && !closing;
-            view.SetTutorialPresentation(live,tutorialSettings.sceneBackgroundColor,tutorialSettings.sceneFloorColor);
+            view.SetTutorialPresentation(live,tutorialSettings.sceneBackgroundColor,tutorialSettings.sceneFloorColor,tutorialSettings.targetDistanceM);
             string scope=tutorial.Stage==TutorialStage.PracticeRunning?"Practice":"Tutorial";
             if(tutorialInteraction!=null && (!live || tutorialInteraction.Scope!=scope))EndTutorialInteraction();
             if(live && tutorialInteraction==null)
                 tutorialInteraction=new TutorialInteraction(view.Configuration,clock!,sequence!,RecordTutorialEvent,
-                    StationMagazineCapacity,scope,++tutorialPracticeAttempt,tutorialSettings.targetDistanceM);
+                    StationMagazineCapacity,scope,++tutorialPracticeAttempt,tutorialSettings.targetDistanceM,tutorialSettings.targetRespawnSeconds);
         }
         private void EndTutorialInteraction()
         { try{tutorialInteraction?.End();}finally{tutorialInteraction=null;} }
@@ -252,8 +295,9 @@ namespace Elts.Operator
                 LogField.String("blockId",tutorialInteraction!.InteractionId),LogField.String("scope",tutorialInteraction.Scope),
                 LogField.NumberValue("acquisitionSequence",pair.Sequence),LogField.Boolean("scored",false),LogField.String("edge","falling")}));
             bool fired=tutorialInteraction.Fire(pair.Weapon.Pose!.Value,pair.Head.Pose!.Value,pair.Timestamp);
+            if(tutorialInteraction.LastImpact.HasValue)view.ShowTargetImpact(tutorialInteraction.LastImpact.Value);
             if(fired)tutorial.ObserveFire();
-            PresentTutorialInteraction();return fired;
+            SynchronizeTutorial();PresentTutorialInteraction();return fired;
         }
     }
 }

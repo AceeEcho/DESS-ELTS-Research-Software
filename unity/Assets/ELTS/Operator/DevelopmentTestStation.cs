@@ -257,7 +257,7 @@ namespace Elts.Operator
             if(TexasTechIntro.IsShowing){CancelClick();return;}
             var input=Controls.Read(ui.panel);var bounds=ui.worldBound;
             bool inside=input.Focused && bounds.width>0 && bounds.height>0 && bounds.Contains(input.Pointer);
-            bool armed=session.TestArmed;
+            bool armed=session.ParticipantStartEnabled;
             if(!input.Focused || armed!=wasArmed || heldBlock!=session.ParticipantInputPhase)CancelClick();
             if(input.Focused)
             {
@@ -275,7 +275,7 @@ namespace Elts.Operator
             if(inside && allowed && input.Pressed){held=true;heldBlock=session.ParticipantInputPhase;}
             if(input.Released)
             {bool fire=held && inside && allowed;CancelClick();if(fire)session.StationParticipantTrigger();}
-            wasArmed=session.TestArmed;
+            wasArmed=session.ParticipantStartEnabled;
             Vector2 at=new Vector2(session.Desktop.Model.Aim.x*bounds.width,(1-session.Desktop.Model.Aim.y)*bounds.height);
             reticle.style.left=at.x-9;reticle.style.top=at.y-9;
             if(!Application.isEditor)UnityEngine.Cursor.visible=!input.Focused;

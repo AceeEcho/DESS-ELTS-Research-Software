@@ -10,15 +10,24 @@ namespace Elts.Operator
 {
     /// <summary>Participant-only slides and cues, scaled from a 1920x1080 canvas.
     /// All checks live in the controller; rebuilding a screen has no side effects.</summary>
-    public sealed class ParticipantTutorialView
+    public sealed partial class ParticipantTutorialView
     {
         private readonly DevelopmentSessionPanel session;
         private readonly DevelopmentView view;
         private readonly VisualElement host,layer,canvas,content;
         private readonly Label eyebrow,heading,instruction,detail,timer,footer,paused;
         private readonly List<VisualElement> extras=new List<VisualElement>();
-        private readonly List<VisualElement> reveals=new List<VisualElement>();
-        private VisualElement? illustration,dot,targetOutline,targetLabel;
+        private readonly List<(VisualElement element, float delay)> reveals=new List<(VisualElement, float)>();
+        private readonly List<ParticipantTutorialArt> drawings=new List<ParticipantTutorialArt>();
+        // Persistent chrome: where you are in the walkthrough, and what to do now.
+        private static readonly string[] Chapters={"Welcome","Equipment","Calibration","Controls","Practice","ELTS","Overview"};
+        private readonly VisualElement tracker,cue,dock;
+        private readonly List<VisualElement> chapterSteps=new List<VisualElement>();
+        private readonly ParticipantTutorialArt cueIcon;
+        private readonly Label cueText;
+        private string cueMode="";
+        private Label? actionStatus,saveStatus;
+        private VisualElement? illustration,dot,targetOutline,targetLabel,ammoHint;
         private int version=-1;
         private float width=-1,height=-1;
         public ParticipantTutorialView(VisualElement host,DevelopmentSessionPanel session,DevelopmentView view)
@@ -29,6 +38,17 @@ namespace Elts.Operator
             eyebrow=host.Q<Label>("tutorialEyebrow");heading=host.Q<Label>("tutorialHeading");
             instruction=host.Q<Label>("tutorialInstruction");detail=host.Q<Label>("tutorialDetail");
             timer=host.Q<Label>("tutorialTimer");footer=host.Q<Label>("tutorialFooter");paused=host.Q<Label>("tutorialPaused");
+            tracker=host.Q("tutorialTracker");cue=host.Q("tutorialCue");dock=host.Q("tutorialDock");
+            for(int i=0;i<Chapters.Length;i++)
+            {
+                var step=Element(tracker,"tutorial-tracker-step");
+                if(i<Chapters.Length-1)Element(step,"tutorial-tracker-line");
+                Element(step,"tutorial-tracker-dot");Text(step,Chapters[i],"tutorial-tracker-label");
+                chapterSteps.Add(step);
+            }
+            var pill=Element(cue,"tutorial-cue-pill");
+            cueIcon=new ParticipantTutorialArt("speaker",session.TutorialSettings);cueIcon.AddToClassList("tutorial-cue-icon");pill.Add(cueIcon);
+            cueText=Text(pill,"","tutorial-cue-text");
         }
         public void Refresh()
         {
@@ -43,46 +63,111 @@ namespace Elts.Operator
             canvas.EnableInClassList("tutorial-arrow-mode",flow.Stage==TutorialStage.Demonstration);
             paused.EnableInClassList("tutorial-hidden",!flow.Paused);
             heading.EnableInClassList("tutorial-hidden",running);
-            instruction.EnableInClassList("tutorial-hidden",running);
-            detail.EnableInClassList("tutorial-hidden",running);
+            dock.EnableInClassList("tutorial-hidden",running);
             footer.EnableInClassList("tutorial-hidden",running);
-            float fade=Mathf.Clamp01((float)(flow.ElapsedSeconds/settings.fadeSeconds));
+            // A pause during the entrance must still leave the instruction
+            // readable; reduced motion also skips the text entrance entirely.
+            float fade=settings.reducedMotion || flow.Paused?1:Mathf.Clamp01((float)(flow.ElapsedSeconds/settings.fadeSeconds));
             // Fade the content, never the opaque backdrop (which could expose a
             // previous scenario). Reference dots remain steady through replay.
             heading.style.opacity=fade;instruction.style.opacity=fade;
-            for(int i=0;i<reveals.Count;i++)
-                reveals[i].style.opacity=settings.reducedMotion?fade:Mathf.Clamp01((float)((flow.ElapsedSeconds-i*settings.revealSeconds)/settings.fadeSeconds));
+            foreach(var reveal in reveals)
+                reveal.element.style.opacity=settings.reducedMotion?1:Mathf.Clamp01((float)((flow.ElapsedSeconds-reveal.delay)/settings.fadeSeconds));
+            foreach(var drawing in drawings)drawing.SetElapsed(flow.ElapsedSeconds);
+            host.Q("participantAmmo")?.EnableInClassList("participant-ammo-teaching",
+                flow.Stage==TutorialStage.Fire || flow.Stage==TutorialStage.Reload);
+            if(actionStatus!=null)
+                actionStatus.text=flow.Stage==TutorialStage.Fire
+                    ?(flow.Fired?"✓ Shot fired":"Fire once · a hit is not needed")
+                    :(flow.Reloaded?"✓ Reloaded":"Watch the ammo refill");
+            if(saveStatus!=null)saveStatus.text=session.IsBusy?"Saving…":"Break next";
             if(illustration!=null && dot!=null)
             {
-                bool showDot=session.TutorialDotVisible;
+                bool showDot=flow.Stage==TutorialStage.HeadCalibration || session.TutorialDotVisible;
                 illustration.EnableInClassList("tutorial-hidden",showDot);dot.EnableInClassList("tutorial-hidden",!showDot);
-                instruction.text=showDot?(flow.Stage==TutorialStage.HeadCalibration?"Keep looking at the dot while the operator checks the head tracker.":
-                    "Keep aiming at the dot while the operator checks the gun tracker."):flow.Step.Instruction;
+                instruction.text=showDot && flow.Stage==TutorialStage.GunCalibration?"Keep aiming at the dot.":flow.Step.Instruction;
             }
+            if(flow.Stage==TutorialStage.HeadCalibration && flow.HeadSequenceComplete)detail.text="All 7 steps captured · the operator is checking";
             if(flow.Stage==TutorialStage.Demonstration)
-                detail.text=flow.DemoFailed?"Demonstration interrupted · please wait":flow.DemoRequested?"Simulated ELTS demonstration":"The operator will demonstrate the sequence briefly.";
+                detail.text=flow.DemoFailed?"Demonstration interrupted · please wait":flow.DemoRequested?"Simulated ELTS demonstration":"";
             if(flow.Stage==TutorialStage.ScenarioEnded || flow.Stage==TutorialStage.FinalEnded)
-            {
                 heading.text=flow.LastAttemptAbnormal?"Attempt ended":flow.Stage==TutorialStage.FinalEnded && !flow.AllScenariosCompleted?"Scheduled attempts finished":flow.Step.Title;
-                detail.text=session.IsBusy?"Saving your recording…":"Your break will begin shortly.";
-            }
-            if(flow.Stage==TutorialStage.NextReady && flow.LastBreakSkipped)detail.text="Break skipped. The next scenario will start shortly.";
-            if(flow.Stage==TutorialStage.Form && flow.LastBreakSkipped)detail.text="The final break was skipped. Questions? Ask the operator.";
+            if(flow.Stage==TutorialStage.NextReady && flow.LastBreakSkipped)detail.text="Break skipped";
+            if(flow.Stage==TutorialStage.Form && flow.LastBreakSkipped)detail.text="Final break skipped · questions? Ask the operator.";
             bool hasTimer=running || flow.Stage==TutorialStage.PracticeRunning || flow.Stage==TutorialStage.BreakRunning || flow.Stage==TutorialStage.FinalBreak;
             timer.EnableInClassList("tutorial-hidden",!hasTimer);
             if(hasTimer)timer.text=FormatTime(engine?.RemainingSeconds??0);
-            if(flow.Stage==TutorialStage.PracticeRunning && engine?.PracticePaused==true)heading.text="Practice paused";
-            else if(flow.Stage==TutorialStage.PracticeRunning)heading.text=flow.Step.Title;
+            if(flow.Stage==TutorialStage.PracticeRunning && engine?.PracticePaused==true)
+            {heading.text="Practice paused";instruction.text="Please wait for the operator.";}
+            else if(flow.Stage==TutorialStage.PracticeRunning){heading.text=flow.Step.Title;instruction.text=flow.Step.Instruction;}
             if(flow.Stage==TutorialStage.Armed)
             {
                 int number=Math.Min(4,Array.IndexOf(session.StationOrder,engine?.CurrentCondition)+1);
                 eyebrow.text=engine?.RerunIndex>0?"REPEAT SCENARIO":"SCENARIO "+number+" OF 4";
-                detail.text="Time limit  "+FormatTime(engine?.CurrentDurationSeconds??0)+"   ·   Timer starts with your first click";
+                detail.text="Time limit  "+FormatTime(engine?.CurrentDurationSeconds??0);
             }
             if(running)eyebrow.text="SCENARIO";
+            eyebrow.EnableInClassList("tutorial-hidden",String.IsNullOrEmpty(eyebrow.text));
             detail.EnableInClassList("tutorial-hidden",running || String.IsNullOrWhiteSpace(detail.text));
+            RefreshCue(flow,engine?.PracticePaused==true);
             PositionTargetCue();
+            PositionAmmoHint();
         }
+        private void PositionAmmoHint()
+        {
+            if(ammoHint==null)return;
+            // Measure the real ammunition display each frame and centre the
+            // callout above it, so it lines up at any window size or text width.
+            var ammo=host.Q("participantAmmo");
+            bool visible=ammo!=null && ammo.resolvedStyle.display==DisplayStyle.Flex && ammo.worldBound.width>0 && layer.layout.height>0;
+            ammoHint.EnableInClassList("tutorial-hidden",!visible);
+            if(!visible)return;
+            var bounds=layer.WorldToLocal(ammo!.worldBound);
+            ammoHint.style.left=bounds.xMin;ammoHint.style.width=bounds.width;
+            ammoHint.style.bottom=layer.layout.height-bounds.yMin+6;
+        }
+        private void RefreshCue(ParticipantTutorial flow,bool practicePaused)
+        {
+            var (mode,label,icon)=CueFor(flow,practicePaused);
+            cue.EnableInClassList("tutorial-hidden",mode.Length==0);
+            if(label==cueText.text && mode==cueMode)return;
+            cue.RemoveFromClassList("tutorial-cue-"+cueMode);cueMode=mode;cue.AddToClassList("tutorial-cue-"+mode);
+            cueText.text=label;cueIcon.Kind=icon;
+            cueIcon.Ink=mode=="act"?Confirmed:mode=="tell" || mode=="watch"?new Color(.59f,.70f,.79f):new Color(.75f,.79f,.83f);
+        }
+        /// <summary>One badge says whether to listen, act, speak up or wait. It
+        /// follows the cue clock only, so a replay returns it to "Listen" and an
+        /// early action can never be invited before the instruction ends.</summary>
+        private static (string mode,string label,string icon) CueFor(ParticipantTutorial flow,bool practicePaused)
+        {
+            var stage=flow.Stage;
+            if(stage==TutorialStage.Running || stage==TutorialStage.ThankYou)return ("","","");
+            if(stage==TutorialStage.BreakRunning || stage==TutorialStage.FinalBreak)return ("rest","REST","rest");
+            if(!flow.CueFinished && flow.Step.Script.Length>0)return ("listen","LISTEN","speaker");
+            switch(stage)
+            {
+                case TutorialStage.ReadyForSetup:case TutorialStage.PracticeReady:case TutorialStage.PracticeComplete:
+                case TutorialStage.DemonstrationComplete:case TutorialStage.FirstReady:
+                    return ("tell","TELL THE OPERATOR","bubble");
+                case TutorialStage.HeadCalibration:case TutorialStage.GunCalibration:
+                    return ("act","HOLD STILL","look");
+                case TutorialStage.PracticeRunning when practicePaused:
+                    return ("wait","PLEASE WAIT","hourglass");
+                case TutorialStage.Holding:case TutorialStage.Aim:case TutorialStage.Fire:case TutorialStage.Reload:
+                case TutorialStage.PracticeRunning:case TutorialStage.Armed:case TutorialStage.Form:
+                    return ("act","YOUR TURN","hand");
+                case TutorialStage.Demonstration:
+                    return ("watch","WATCH BELOW THE SCREEN","watch");
+                case TutorialStage.Equipment:case TutorialStage.EquipmentCheck:case TutorialStage.ScenarioPaused:
+                case TutorialStage.Interrupted:case TutorialStage.ScenarioEnded:case TutorialStage.FinalEnded:case TutorialStage.NextReady:
+                    return ("wait","PLEASE WAIT","hourglass");
+                default: return ("listen","LISTEN","speaker");
+            }
+        }
+        private static int ChapterOf(TutorialStage stage) =>
+            stage<TutorialStage.Equipment?0:stage<TutorialStage.HeadCalibration?1:stage<TutorialStage.Targets?2:
+            stage<TutorialStage.PracticeReady?3:stage<TutorialStage.Demonstration?4:stage<TutorialStage.Scenarios?5:
+            stage<TutorialStage.FirstReady?6:-1;
         private void Resize()
         {
             float w=host.resolvedStyle.width,h=host.resolvedStyle.height;
@@ -95,88 +180,66 @@ namespace Elts.Operator
         }
         private void Build()
         {
-            foreach(var extra in extras)extra.RemoveFromHierarchy();extras.Clear();reveals.Clear();content.Clear();
-            illustration=null;dot=null;targetOutline=null;targetLabel=null;
-            var flow=session.Tutorial;var settings=session.TutorialSettings;var stage=flow.Stage;
+            foreach(var extra in extras)extra.RemoveFromHierarchy();
+            extras.Clear();reveals.Clear();drawings.Clear();content.Clear();
+            illustration=null;dot=null;ammoHint=null;targetOutline=null;targetLabel=null;actionStatus=null;saveStatus=null;
+            var flow=session.Tutorial;var stage=flow.Stage;
             heading.text=flow.Step.Title;instruction.text=flow.Step.Instruction;detail.text="";
-            eyebrow.text=stage==TutorialStage.PracticeReady || stage==TutorialStage.PracticeRunning?"PRACTICE · NOT SCORED":
-                stage>=TutorialStage.FirstReady?"ELTS PROJECT RESEARCH STUDY":"PARTICIPANT TUTORIAL";
-            if(flow.LiveScene)eyebrow.text+=" · SYNTHETIC";
-            footer.text="SYNTHETIC WALKTHROUGH";
-            switch(flow.Step.Visual)
+            eyebrow.text=stage==TutorialStage.PracticeReady || stage==TutorialStage.PracticeIntroduction || stage==TutorialStage.PracticeRunning?"NOT SCORED":
+                stage>=TutorialStage.FirstReady && stage!=TutorialStage.ThankYou?"ELTS PROJECT RESEARCH STUDY":"";
+            footer.text="";
+            // The tracker replaces the eyebrow during the walkthrough. Calibration
+            // hides it so no second dot appears near the reference dots.
+            int chapter=ChapterOf(stage);
+            tracker.EnableInClassList("tutorial-hidden",chapter<0 || stage==TutorialStage.HeadCalibration || stage==TutorialStage.GunCalibration);
+            for(int i=0;i<chapterSteps.Count;i++)
             {
-                case "welcome":
-                    Card("Setup","setup",true);Card("Practice","practice");Card("Study","study");break;
-                case "equipment":
-                    Card("Tracking\nequipment","tracking");Card("Eye tracker","eye");Card("Heart-rate\nmonitor","heart");
-                    detail.text=stage==TutorialStage.EquipmentCheck?"Next: Calibration":"The operator handles fitting and adjustments.";break;
-                case "head":case "gun":
-                    illustration=Extra(new ParticipantTutorialArt(flow.Step.Visual=="head"?"posture":"holding",settings),"tutorial-illustration");
-                    if(flow.Step.Visual=="gun" && !settings.showHoldingDiagram)illustration.visible=false;
-                    dot=Extra(new VisualElement(),"tutorial-dot");
-                    float x=flow.Step.Visual=="head"?settings.headDotX:settings.gunDotX;
-                    float y=flow.Step.Visual=="head"?settings.headDotY:settings.gunDotY;
-                    dot.style.left=x*1920-settings.dotDiameter/2;dot.style.top=y*1080-settings.dotDiameter/2;
-                    dot.style.width=settings.dotDiameter;dot.style.height=settings.dotDiameter;
-                    if(ColorUtility.TryParseHtmlString(settings.dotColor,out var dotColor))dot.style.backgroundColor=dotColor;
-                    detail.text="Wait for the operator's review.";break;
-                case "holding":
-                    if(settings.showHoldingDiagram)
-                    {
-                        Extra(new ParticipantTutorialArt("holding",settings),"tutorial-illustration");
-                        PlacedLabel("Stock",1000,392,230);PlacedLabel("Against your shoulder",275,588,480);
-                        detail.text="Contact diagram · follow the operator's demonstration.";
-                    }
-                    else { LargeSymbol("questions");detail.text="Follow the operator's demonstration."; }
+                chapterSteps[i].EnableInClassList("tutorial-tracker-past",i<chapter);
+                chapterSteps[i].EnableInClassList("tutorial-tracker-current",i==chapter);
+            }
+
+            // Choose by lesson, not a shared decorative icon. Related overview
+            // steps retain their geometry and reveal only the new information.
+            switch(stage)
+            {
+                case TutorialStage.Welcome: BuildWelcome();break;
+                case TutorialStage.Questions: BuildQuestions();break;
+                case TutorialStage.ReadyForSetup: BuildReadiness();break;
+                case TutorialStage.Equipment: BuildEquipment();break;
+                case TutorialStage.Comfort: BuildComfort();break;
+                case TutorialStage.EquipmentCheck: BuildEquipmentReview();break;
+                case TutorialStage.HeadCalibration: BuildCalibration(false);break;
+                case TutorialStage.Holding: BuildHolding();break;
+                case TutorialStage.GunCalibration: BuildCalibration(true);break;
+                case TutorialStage.CalibrationComplete: BuildCalibrationSummary();break;
+                case TutorialStage.Targets:case TutorialStage.Aim:
+                    targetOutline=Extra(new VisualElement(),"tutorial-target-outline");
+                    targetLabel=Extra(new Label("Practice target"),"tutorial-target-label");
+                    if(stage==TutorialStage.Aim)detail.text="Desktop rehearsal · move the mouse";
                     break;
-                case "target":case "reload":
-                    if(stage==TutorialStage.Targets || stage==TutorialStage.Aim)
-                    {
-                        targetOutline=Extra(new VisualElement(),"tutorial-target-outline");
-                        targetLabel=Extra(new Label("Practice target"),"tutorial-target-label");
-                    }
-                    if(stage==TutorialStage.Fire)detail.text="Desktop rehearsal: click and release to fire.";
-                    if(stage==TutorialStage.Reload)detail.text="Desktop rehearsal: press R to reload.";
-                    if(stage==TutorialStage.Aim)detail.text="Desktop rehearsal: move the mouse to aim.";
-                    break;
-                case "practice":break;
-                case "arrow":
-                    reveals.Add(Extra(new ParticipantTutorialArt("arrow",settings),"tutorial-arrow"));
-                    Extra(new Label("ELTS below\nthe screen"),"tutorial-arrow-label");
-                    footer.text="SIMULATED DEMONSTRATION · NO HARDWARE OUTPUTS";break;
-                case "scenarios":
-                    for(int i=0;i<4;i++)
-                    {
-                        var card=Card("Scenario "+(i+1),stage==TutorialStage.Scenarios?"study":"clock");card.AddToClassList("tutorial-small-card");
-                        var marker=new Label(i==3?"Final\nbreak":"Break");marker.AddToClassList("tutorial-break-marker");content.Add(marker);
-                        marker.style.opacity=stage==TutorialStage.BreakOverview?1:0;
-                    }
-                    if(stage==TutorialStage.BreakOverview)detail.text="Example: Break — "+FormatTime(session.Engine?.BreakDurationSeconds??0)+"   ·   Not counting down";
-                    break;
-                case "complete":LargeSymbol("complete");break;
-                case "questions":LargeSymbol("questions");break;
-                case "ready":LargeSymbol("ready");break;
-                case "form":LargeSymbol("form");detail.text="Questions? Ask the operator.";break;
-                case "thanks":LargeSymbol("complete");footer.text="";break;
+                case TutorialStage.Fire:case TutorialStage.Reload: BuildControlLesson(stage);break;
+                case TutorialStage.FireConfirmed:case TutorialStage.ReloadConfirmed:BuildControlConfirmation();break;
+                case TutorialStage.PracticeReady:case TutorialStage.PracticeIntroduction: BuildPracticeGuide();break;
+                case TutorialStage.PracticeComplete: BuildPracticeSummary();break;
+                case TutorialStage.Demonstration: BuildDemonstration();break;
+                case TutorialStage.DemonstrationComplete: BuildDebrief();break;
+                case TutorialStage.Scenarios:case TutorialStage.TimeLimits:case TutorialStage.BreakOverview:
+                    BuildScenarioSequence(stage);break;
+                case TutorialStage.FirstReady: BuildReadiness();break;
+                case TutorialStage.Armed: BuildStartCue();break;
+                case TutorialStage.ScenarioPaused: BuildHold(false);break;
+                case TutorialStage.ScenarioEnded:case TutorialStage.FinalEnded: BuildCheckpoint();break;
+                case TutorialStage.BreakRunning:case TutorialStage.FinalBreak: BuildRest(stage==TutorialStage.FinalBreak);break;
+                case TutorialStage.NextReady: BuildNextScenario();break;
+                case TutorialStage.Form: BuildForm();break;
+                case TutorialStage.ThankYou: BuildThanks();footer.text="";break;
+                case TutorialStage.Interrupted: BuildHold(true);break;
             }
         }
-        private VisualElement Card(string label,string icon,bool emphasized=false)
-        {
-            var card=new VisualElement();card.AddToClassList("tutorial-card");
-            if(emphasized)card.AddToClassList("tutorial-card-emphasis");
-            var art=new ParticipantTutorialArt(icon,session.TutorialSettings);art.AddToClassList("tutorial-card-icon");card.Add(art);
-            var text=new Label(label);text.AddToClassList("tutorial-card-label");card.Add(text);content.Add(card);reveals.Add(card);return card;
-        }
-        private void LargeSymbol(string kind)
-        {
-            var art=new ParticipantTutorialArt(kind,session.TutorialSettings);art.style.width=210;art.style.height=210;content.Add(art);reveals.Add(art);
-        }
         private T Extra<T>(T element,string className) where T:VisualElement
-        {element.AddToClassList(className);element.pickingMode=PickingMode.Ignore;canvas.Add(element);extras.Add(element);return element;}
-        private void PlacedLabel(string text,float x,float y,float w)
         {
-            var label=Extra(new Label(text),"tutorial-card-note");label.style.position=Position.Absolute;
-            label.style.left=x;label.style.top=y;label.style.width=w;
+            foreach(string name in className.Split(new[]{' '},StringSplitOptions.RemoveEmptyEntries))element.AddToClassList(name);
+            element.pickingMode=PickingMode.Ignore;canvas.Add(element);extras.Add(element);return element;
         }
         private void PositionTargetCue()
         {

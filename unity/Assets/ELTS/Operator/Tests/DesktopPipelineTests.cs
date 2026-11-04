@@ -106,7 +106,7 @@ namespace Elts.Operator.Tests
                     panel.SubmitDesktopTrigger();Assert.That(scenario.ShotCount,Is.EqualTo(1));
                     panel.DesktopPrimaryAction();Assert.That(panel.Engine.State,Is.EqualTo(SessionState.Break));
                     Assert.That(panel.DesktopPrimaryEnabled,Is.False);
-                    clock.Advance(TimeSpan.FromSeconds(5));yield return null;
+                    clock.Advance(TimeSpan.FromSeconds(panel.Engine.BreakDurationSeconds));yield return null;
                     panel.DesktopPrimaryAction();yield return null;
                 }
                 Assert.That(panel.Engine.State,Is.EqualTo(SessionState.SessionComplete));

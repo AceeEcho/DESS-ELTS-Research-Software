@@ -1,5 +1,7 @@
 # Participant tutorial — Part 4 voice prompts
 
+> Parts revised on November 3 use [the current revision prompts](participant-tutorial-revision-2026-11-03-voice-prompts.md). Superseded takes linked here are retained in the audio archives.
+
 Date: November 2, 2026.
 Voice: Eryn - Genuine, Friendly and Natural (`kdnRe2koJdOK4Ovxn2DI`).
 Model: `eleven_v4`.
@@ -48,7 +50,7 @@ Selection: **Bottom (take 2)**. Selected generation: `3UIJlazhPPoZX5hw7f8u`. Ver
 ```
 
 Speech node: `5Sybsfixp4Df4ymxD9Sx`.
-Saved file: [04-02-controls-demonstration.mp3](participant-tutorial/audio/part-04/04-02-controls-demonstration.mp3). Repository path: `docs/participant-tutorial/audio/part-04/04-02-controls-demonstration.mp3`.
+Saved file: [04-02-controls-demonstration.mp3](participant-tutorial/audio/part-04/archive/04-02-controls-demonstration-R0xaloeThEmct755un5o.mp3). Repository path: `docs/participant-tutorial/audio/part-04/archive/04-02-controls-demonstration-R0xaloeThEmct755un5o.mp3`.
 Selection: **Bottom (take 2)**. Selected generation: `R0xaloeThEmct755un5o`. Verified duration: 7.28 seconds.
 
 | Position | Generation ID | Session ID |

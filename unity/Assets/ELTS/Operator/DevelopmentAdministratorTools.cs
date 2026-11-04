@@ -55,7 +55,7 @@ namespace Elts.Operator
             queueIndex=engine?.CurrentBlockIndex??0,
             repeatable=engine?.FinishedConditions.ToArray()??Array.Empty<string>(),
             canRepeat=!IsBusy && !TestArmed && engine!=null && (engine.CanScheduleRepeat || (engine.CanReopenForRepeat && StationCanStartParticipant)),
-            canSkipTest=!IsBusy && !closing && !TestArmed && engine?.State==SessionState.BlockReady && (!SeparateAdministrator || tutorial.CanArm),
+            canSkipTest=!IsBusy && !closing && !TestArmed && engine?.State==SessionState.BlockReady && (!SeparateAdministrator || tutorial.CanManageReadyScenario),
             automaticStudy=tutorial.Started,
             canStartBreak=StationBreakReady,
             canSkipBreak=!IsBusy && (engine?.State==SessionState.Break || StationBreakReady),
@@ -161,7 +161,7 @@ namespace Elts.Operator
         public void StationSkipTest(string reason)
         {
             if(IsBusy || TestArmed || engine==null)throw new InvalidOperationException("Disarm and wait for saving before skipping a test.");
-            if(SeparateAdministrator && !tutorial.CanArm)throw new InvalidOperationException("Finish the walkthrough before managing scenario attempts.");
+            if(SeparateAdministrator && !tutorial.CanManageReadyScenario)throw new InvalidOperationException("Finish the walkthrough before managing scenario attempts.");
             engine.SkipDevelopmentTest(reason);
             if(engine.State==SessionState.Failed)throw new InvalidOperationException(engine.Failure);
         }

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif">
+  <title>A participant session: the guided walkthrough, then four scenarios with breaks, then the form</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10z" fill="#536879"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="430" rx="18" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+
+  <!-- Row 1: walkthrough -->
+  <text x="40" y="46" font-size="14" font-weight="700" fill="#96b3c9" letter-spacing="2">PART A · GUIDED WALKTHROUGH (narrated, operator-paced)</text>
+  <g font-size="16" font-weight="700" fill="#e6edf3" text-anchor="middle">
+    <!-- each chip: 140 wide, 16 gap; top bar colour = who acts -->
+    <g><rect x="40" y="64" width="140" height="84" rx="12" fill="#1c232c"/><rect x="40" y="64" width="140" height="6" rx="3" fill="#96b3c9"/><text x="110" y="104">Welcome</text><text x="110" y="128" font-size="13" font-weight="400" fill="#9aa6b2">ready? → operator</text></g>
+    <g><rect x="196" y="64" width="140" height="84" rx="12" fill="#1c232c"/><rect x="196" y="64" width="140" height="6" rx="3" fill="#96b3c9"/><text x="266" y="104">Equipment</text><text x="266" y="128" font-size="13" font-weight="400" fill="#9aa6b2">fit and check</text></g>
+    <g><rect x="352" y="64" width="140" height="84" rx="12" fill="#1c232c"/><rect x="352" y="64" width="140" height="6" rx="3" fill="#9bc8b1"/><text x="422" y="104">Calibration</text><text x="422" y="128" font-size="13" font-weight="400" fill="#9aa6b2">7 head dots + gun</text></g>
+    <g><rect x="508" y="64" width="140" height="84" rx="12" fill="#1c232c"/><rect x="508" y="64" width="140" height="6" rx="3" fill="#9bc8b1"/><text x="578" y="104">Controls</text><text x="578" y="128" font-size="13" font-weight="400" fill="#9aa6b2">aim · fire · reload</text></g>
+    <g><rect x="664" y="64" width="140" height="84" rx="12" fill="#1c232c"/><rect x="664" y="64" width="140" height="6" rx="3" fill="#9bc8b1"/><text x="734" y="104">Practice</text><text x="734" y="128" font-size="13" font-weight="400" fill="#9aa6b2">timed · not scored</text></g>
+    <g><rect x="820" y="64" width="140" height="84" rx="12" fill="#1c232c"/><rect x="820" y="64" width="140" height="6" rx="3" fill="#96b3c9"/><text x="890" y="104">ELTS demo</text><text x="890" y="128" font-size="13" font-weight="400" fill="#9aa6b2">simulated here</text></g>
+    <g><rect x="976" y="64" width="184" height="84" rx="12" fill="#1c232c"/><rect x="976" y="64" width="184" height="6" rx="3" fill="#7d8b97"/><text x="1068" y="104">Study overview</text><text x="1068" y="128" font-size="13" font-weight="400" fill="#9aa6b2">4 scenarios + breaks</text></g>
+  </g>
+
+  <!-- hand-off -->
+  <path d="M1068 156v34H600v24" fill="none" stroke="#536879" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="430" y="168" width="340" height="30" rx="15" fill="#1f3229" stroke="#9bc8b1" stroke-width="1.5"/>
+  <text x="600" y="188" font-size="14" font-weight="700" fill="#d4eee0" text-anchor="middle">Participant pulls the trigger once to start</text>
+
+  <!-- Row 2: study -->
+  <text x="40" y="246" font-size="14" font-weight="700" fill="#96b3c9" letter-spacing="2">PART B · STUDY (runs automatically)</text>
+  <g font-size="15" font-weight="700" fill="#e6edf3" text-anchor="middle">
+    <g fill="#e6edf3">
+      <rect x="40" y="264" width="112" height="70" rx="12" fill="#26313b" stroke="#4b5d6b"/><text x="96" y="306">Scenario 1</text>
+      <rect x="172" y="276" width="70" height="46" rx="23" fill="#1f2e30"/><text x="207" y="304" font-size="13" fill="#b9d6d8">Break</text>
+      <rect x="262" y="264" width="112" height="70" rx="12" fill="#26313b" stroke="#4b5d6b"/><text x="318" y="306">Scenario 2</text>
+      <rect x="394" y="276" width="70" height="46" rx="23" fill="#1f2e30"/><text x="429" y="304" font-size="13" fill="#b9d6d8">Break</text>
+      <rect x="484" y="264" width="112" height="70" rx="12" fill="#26313b" stroke="#4b5d6b"/><text x="540" y="306">Scenario 3</text>
+      <rect x="616" y="276" width="70" height="46" rx="23" fill="#1f2e30"/><text x="651" y="304" font-size="13" fill="#b9d6d8">Break</text>
+      <rect x="706" y="264" width="112" height="70" rx="12" fill="#26313b" stroke="#4b5d6b"/><text x="762" y="306">Scenario 4</text>
+      <rect x="838" y="276" width="96" height="46" rx="23" fill="#1f2e30"/><text x="886" y="304" font-size="13" fill="#b9d6d8">Final break</text>
+      <rect x="954" y="264" width="94" height="70" rx="12" fill="#1c232c" stroke="#96b3c9"/><text x="1001" y="306">Form</text>
+      <rect x="1068" y="264" width="92" height="70" rx="12" fill="#1c232c" stroke="#9bc8b1"/><text x="1114" y="306">Thank you</text>
+    </g>
+  </g>
+  <g stroke="#536879" stroke-width="2">
+    <path d="M152 299h18M242 299h18M374 299h18M464 299h18M596 299h18M686 299h18M818 299h18M934 299h18M1048 299h18"/>
+  </g>
+  <text x="40" y="364" font-size="14" fill="#9aa6b2">Scenario order is set per participant in Settings. Each scenario has its own time limit; every break uses the configured break length.</text>
+
+  <!-- legend -->
+  <g font-size="14" fill="#c9d4de">
+    <rect x="40" y="388" width="22" height="6" rx="3" fill="#96b3c9"/><text x="70" y="396">Operator confirms</text>
+    <rect x="230" y="388" width="22" height="6" rx="3" fill="#9bc8b1"/><text x="260" y="396">Participant acts</text>
+    <rect x="410" y="388" width="22" height="6" rx="3" fill="#7d8b97"/><text x="440" y="396">Plays automatically</text>
+  </g>
+</svg>

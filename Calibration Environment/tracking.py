@@ -102,7 +102,7 @@ class TrackingBridge:
                     except Exception:
                         pass
                 system = None
-                message = "Run SETUP-LIVE-TRACKING.cmd first." if isinstance(error, ImportError) else f"Start SteamVR and check paired devices. {type(error).__name__}: {error}"
+                message = "Restart START-CALIBRATION.cmd and answer Y to set up live tracking." if isinstance(error, ImportError) else f"Start SteamVR and check paired devices. {type(error).__name__}: {error}"
                 if self.enabled.is_set():
                     self._publish("unavailable", message, [])
                 self.closed.wait(2)

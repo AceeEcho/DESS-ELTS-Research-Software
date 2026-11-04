@@ -13,7 +13,7 @@ Claims below are taken from the current source, configs, schemas, and docs. Wher
 3. Keep the recording folder. Indexing, export, and analysis read it. They do not rewrite `samples.ndjson`, `events.ndjson`, `targets.ndjson`, or `session-summary.json`.
 4. Treat a green software check as a software check. `diagnostics/doctor-report.json` always includes the limitation `Development diagnostics only; no physical, safety or gate acceptance.`
 
-Commands assume the repository root on Windows x64, which is the only platform the player, `SETUP-DEV.cmd`, and `START-ELTS.cmd` target. Python tools also run anywhere the pinned interpreter range is available. From another directory, call the scripts by full path; they locate the repo from their own path.
+Commands assume the repository root on Windows x64, which is the only platform the player, `SETUP-DEV (Dev Only).cmd`, and `START-ELTS.cmd` target. Python tools also run anywhere the pinned interpreter range is available. From another directory, call the scripts by full path; they locate the repo from their own path.
 
 ## Quick symptom index
 
@@ -36,7 +36,7 @@ Commands assume the repository root on Windows x64, which is the only platform t
 
 The same startup always constructs `MockEltsLink` around `SimulatedEltsController`. That object has an in-memory `LedPermission` flag. [`jetson/`](../../jetson/README.md) has no listener, serial adapter, network adapter, GPIO, or systemd unit. Configuration accepts only `mock://elts` or `null://elts` (`config/local.example.json`, `schemas/config/local.schema.json`). Any other endpoint fails configuration load with `physical output is not enabled in development`. The desktop station does not read `EltsEndpoint` when it creates the link, so `null://elts` still runs the mock. `NullEltsLink` exists for the link checks; the player does not select it.
 
-`config/staging.json` allows only `"mode": "synthetic"`. `StudyReady` is forced false. `FIRST-RUN.cmd` and `scripts/start-study.ps1` call the driver action `start-study`, which fails closed with: `Study provisioning/packaging/startup is unavailable: approved study configuration, physical acceptance and release gates remain pending.`
+`config/staging.json` allows only `"mode": "synthetic"`. `StudyReady` is forced false. `scripts/setup-study-machine.ps1` and `scripts/start-study.ps1` call the driver actions `setup-study-machine` and `start-study`, which fail closed with: `Study provisioning/packaging/startup is unavailable: approved study configuration, physical acceptance and release gates remain pending.`
 
 The offline page [`elts-simulation/index.html`](../../elts-simulation/README.md) draws a briefing illustration. It does not open a session or a device. Its README lists the illustration's limits; those limits are repeated as gaps below.
 
@@ -48,10 +48,10 @@ Operator walkthrough: [setup on more than one computer](multi-machine-setup.md#i
 
 | Item | Where it is |
 | --- | --- |
-| One-time setup | `SETUP-DEV.cmd` → `scripts/setup-dev.ps1` |
+| One-time setup | `SETUP-DEV (Dev Only).cmd` → `scripts/setup-dev.ps1` |
 | Session launch | `START-ELTS.cmd` → `scripts/start-dev.ps1` → `scripts/start-dev-tools.ps1` |
-| Diagnostics only | `CHECK-SYSTEM.cmd` → `scripts/doctor.ps1` → `python -X utf8 tools/bootstrap/driver.py --action doctor` |
-| Study entry, fails closed | `FIRST-RUN.cmd`, `scripts/start-study.ps1` |
+| Diagnostics only | `CHECK-SYSTEM (Dev Only).cmd` → `scripts/doctor.ps1` → `python -X utf8 tools/bootstrap/driver.py --action doctor` |
+| Study entry, fails closed | `scripts/setup-study-machine.ps1`, `scripts/start-study.ps1` |
 | Tool paths for this machine | `%LOCALAPPDATA%\ELTS\Tools\` and ignored `config/local/development-tools.json` |
 | Machine overlay | ignored `config/local.json`, copied from `config/local.example.json` on first bootstrap if missing |
 | Setup result | `diagnostics/setup-report.json` (`result` must be `ready` and `toolchainSha256` must match `config/toolchain.json`), plus `diagnostics/setup-console.log` and `diagnostics/setup-unity-import.log` |
@@ -78,7 +78,7 @@ It waits up to 120 seconds for a line matching `ELTS_ADMINISTRATOR_READY http://
 Doctor, from the repo root:
 
 ```powershell
-.\CHECK-SYSTEM.cmd
+& '.\CHECK-SYSTEM (Dev Only).cmd'
 ```
 
 A custom interpreter or Editor:
@@ -111,7 +111,7 @@ python tools/ci/check.py --baseline
 
 **Check.** `diagnostics/setup-unity-import.log` for licensing. `unity/ProjectSettings/ProjectVersion.txt` must contain `m_EditorVersion: 6000.3.23f1`. Doctor fails with `Unity ProjectVersion.txt disagrees with toolchain manifest` when it does not.
 
-**Fix.** Use that guide's row for the exact text. Keep `config/local.json` and the recording folders. Rerun `SETUP-DEV.cmd` after the license or source fix. The Store alias `WindowsApps\python.exe` is skipped by `scripts/common.ps1`; set `-PythonExecutable` or `ELTS_PYTHON` to a real interpreter if discovery throws `Provide a supported Python executable`.
+**Fix.** Use that guide's row for the exact text. Keep `config/local.json` and the recording folders. Rerun `SETUP-DEV (Dev Only).cmd` after the license or source fix. The Store alias `WindowsApps\python.exe` is skipped by `scripts/common.ps1`; set `-PythonExecutable` or `ELTS_PYTHON` to a real interpreter if discovery throws `Provide a supported Python executable`.
 
 ### Saved build will not open
 
@@ -142,7 +142,7 @@ If the process is still running after the 120-second wait, the launcher leaves i
 
 ## Participant application
 
-Scene: `unity/Assets/Scenes/ELTSDesktop.unity`. Product name `ELTS-Synthetic`, company `ELTS Research`, bundle `0.1.0` (`unity/ProjectSettings/ProjectSettings.asset`). Editor play of that scene is the manual path in [desktop input](../modules/desktop-input.md). `OPEN-DESKTOP-TEST.cmd` expects a build in `build/desktop-pipeline`. The one-click launcher uses the `build/start-elts-*` player instead, and it does not open the Editor.
+Scene: `unity/Assets/Scenes/ELTSDesktop.unity`. Product name `ELTS-Synthetic`, company `ELTS Research`, bundle `0.1.0` (`unity/ProjectSettings/ProjectSettings.asset`). Editor play of that scene is the manual path in [desktop input](../modules/desktop-input.md). `START-ELTS.cmd` builds and runs the `build/start-elts-*` player instead, and it does not open the Editor.
 
 ### Two windows and where the picture comes from
 

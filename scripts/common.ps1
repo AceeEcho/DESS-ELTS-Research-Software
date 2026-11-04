@@ -8,7 +8,7 @@ function Initialize-EltsLocalTools {
     if (-not (Test-Path -LiteralPath $localTools -PathType Leaf)) { return }
     try { $paths = Get-Content -LiteralPath $localTools -Raw | ConvertFrom-Json }
     catch {
-        Write-Warning 'Local development tool paths could not be read. Run SETUP-DEV.cmd to rediscover them.'
+        Write-Warning 'Local development tool paths could not be read. Run START-ELTS.cmd (or SETUP-DEV (Dev Only).cmd) to rediscover them.'
         return
     }
     foreach ($name in @('git','python','dotnet','node','unityCli')) {

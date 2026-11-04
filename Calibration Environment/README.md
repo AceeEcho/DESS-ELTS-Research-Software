@@ -7,7 +7,8 @@ send apparatus commands.
 
 ## Start
 
-1. Double-click **START-CALIBRATION.cmd** in the project root or in this folder.
+1. Double-click **START-CALIBRATION.cmd** in the project root. The first time on a PC it
+   offers the one-time live-tracking setup below; answer **N** to use manual preview only.
 2. Keep the launcher window open. The dashboard opens at
    **http://127.0.0.1:8766**.
 3. The dashboard connects to live tracking automatically. For a hardware-free
@@ -70,9 +71,9 @@ changes the recovered object pose while retaining the observed tracker pose.
 
 ## Connect VIVE / SteamVR trackers
 
-1. Run **SETUP-TRACKING.cmd** in the project root on each new Windows x64 PC.
-   **SETUP-LIVE-TRACKING.cmd** in this folder runs the same complete setup.
-   Setup installs missing Python, creates this folder's `.venv`, installs the
+1. Start **START-CALIBRATION.cmd** on each new Windows x64 PC and answer **Y** when
+   it offers to set up live tracking (it asks whenever the tracking tools are not
+   ready). Setup installs missing Python, creates this folder's `.venv`, installs the
    pinned OpenVR reader, and installs Steam if missing. It opens the SteamVR
    installer if required; finish sign-in and the download, then press Enter in
    the setup window. Close SteamVR when asked so setup can apply its settings.
@@ -152,11 +153,13 @@ capture and gesture thresholds are in `web/head-calibration.js` (`DIRECTION_LIMI
 
 ### Tracking setup troubleshooting
 
-- **Check without installing or editing settings:** run `SETUP-TRACKING.cmd -Check`.
-- **Custom installations:** use `SETUP-TRACKING.cmd -SteamPath "D:\Steam"`
+- **Check without installing or editing settings:** from the project root run
+  `powershell -ExecutionPolicy Bypass -File scripts\setup-tracking.ps1 -Check`.
+- **Run setup again on purpose:** `START-CALIBRATION.cmd -SetupTracking`.
+- **Custom installations:** run `scripts\setup-tracking.ps1 -SteamPath "D:\Steam"` the same way
   or add `-SteamVRPath "E:\SteamLibrary\steamapps\common\SteamVR"`.
   Normal Steam library folders and OpenVR's registered paths are detected automatically.
-- **Setup interrupted:** rerun the same script. Missing dependencies are installed,
+- **Setup interrupted:** start START-CALIBRATION.cmd again and answer **Y**. Missing dependencies are installed,
   unrelated settings are preserved, and correct settings are not rewritten.
 - **Log:** `diagnostics/tracking-setup.log` in the project root records the latest
   installation attempt. The read-only check does not replace this log.
@@ -213,7 +216,7 @@ it is not a scored shot or a simulated physical projectile.
 
 ## Troubleshooting and checks
 
-- **Python missing:** run the project setup or install Python 3.10+ with its launcher.
+- **Python missing:** start START-CALIBRATION.cmd and answer **Y** (setup installs it), or install Python 3.10+ with its launcher.
 - **Port in use:** use `START-CALIBRATION.cmd -Port 8767`; stop it with
   `STOP-CALIBRATION.cmd -Port 8767`. A running copy in this folder is reused.
 - **Blank/paused 3D view:** enable browser graphics acceleration, refresh, or try

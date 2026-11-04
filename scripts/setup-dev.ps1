@@ -47,7 +47,7 @@ try {
     }
     if ($Check) {
         $missing = @('python','dotnet','node','unity') | Where-Object { -not $paths[$_] }
-        if ($missing) { throw ('Missing tools: ' + ($missing -join ', ') + '. Run SETUP-DEV.cmd to prepare this machine.') }
+        if ($missing) { throw ('Missing tools: ' + ($missing -join ', ') + '. Run START-ELTS.cmd or SETUP-DEV (Dev Only).cmd to prepare this machine.') }
         $report.result = 'tools-detected'; $report.message = 'Tools detected only. Import, tests and license operation were not checked.'
     } else {
         $report.phase = 'install'

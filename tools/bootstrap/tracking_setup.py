@@ -120,7 +120,7 @@ def configure(path: Path, *, check: bool = False, running=runtime_running) -> di
     if correct or check:
         return {"configured": correct, "changed": False, "backup": None}
     if running():
-        raise ValueError("Close SteamVR completely, then rerun SETUP-TRACKING.cmd. Settings were not changed.")
+        raise ValueError("Close SteamVR completely, then rerun START-CALIBRATION.cmd. Settings were not changed.")
     path.parent.mkdir(parents=True, exist_ok=True)
     backup = None
     if before is not None:

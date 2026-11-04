@@ -3,9 +3,9 @@
 Open `unity/Assets/Scenes/ELTSDesktop.unity` in Unity **6000.3.23f1 LTS** and press
 Play. The scene contains the runtime entry components; configured apparatus geometry,
 cameras and the dashboard are created at runtime. Use the Game tab to interact.
-The Windows shortcut is `OPEN-DESKTOP-TEST.cmd` after building with
-`./scripts/build.ps1 -Output build/desktop-pipeline`. Output must be empty for a new
-build. Prerequisites and local tool discovery follow the repository setup guide.
+To run it as a Windows app instead, double-click `START-ELTS.cmd` in the repository
+root; it builds the player when needed and opens it with the dashboard.
+Prerequisites and local tool discovery follow the repository setup guide.
 
 ## Run the pipeline
 

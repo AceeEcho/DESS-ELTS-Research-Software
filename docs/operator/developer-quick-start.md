@@ -1,11 +1,11 @@
 # Developer quick start
 
 For an illustrated beginner walkthrough, use [setup on multiple computers](multi-machine-setup.md).
-On Windows x64, clone the repository or extract the source ZIP, then run root `SETUP-DEV.cmd` to install
+On Windows x64, clone the repository or extract the source ZIP, then run root `SETUP-DEV (Dev Only).cmd` to install
 missing tools, import Unity packages, and run verification. Windows installation
 prompts and Unity account/license steps remain interactive when required.
 Then run `START-ELTS.cmd` to build and open ELTS. Git is optional for this workflow.
-`OPEN-DEV-SHELL.cmd` loads this clone's detected tool paths into PowerShell.
+`OPEN-DEV-SHELL (Dev Only).cmd` loads this clone's detected tool paths into PowerShell.
 Use the manual steps below when tools are already installed or in custom locations.
 
 `scripts/verify.ps1` runs doctor and the complete currently available test set,
@@ -69,7 +69,7 @@ Editor stays closed unless you open the project manually.
 It reuses an unchanged build and saves startup output in `diagnostics/start-console.log`.
 Close the project's editor first when setup or rebuilding is needed. Generated
 startup builds live in distinct `build/start-elts-*` folders; older builds and data
-are preserved. `FIRST-RUN.cmd` and `scripts/start-study.ps1` remain study entry-point
+are preserved. `scripts/setup-study-machine.ps1` and `scripts/start-study.ps1` remain study entry-point
 skeletons that fail closed while study configuration, physical acceptance and
-release approval are pending. `CHECK-SYSTEM.cmd` invokes development diagnostics; a pass
+release approval are pending. `CHECK-SYSTEM (Dev Only).cmd` invokes development diagnostics; a pass
 does not authorize a study session. Every entry resolves its own repository path.

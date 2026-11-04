@@ -11,7 +11,7 @@ validation require separate evidence. The `validation` entries in the manifest
 are baseline observations; live progress/evidence establishes subsequent results.
 No automatic license/account agreement is part of bootstrap.
 
-Python tools use the standard library. `SETUP-DEV.cmd` discovers a compatible
+Python tools use the standard library. `SETUP-DEV (Dev Only).cmd` discovers a compatible
 interpreter or installs the Windows version in `windowsSetup` in the manifest.
 The standalone C# test harness uses the pinned .NET SDK; Unity
 runtime builds use the Editor's own compiler/runtime. Source must remain within
@@ -33,7 +33,7 @@ Use `-PythonExecutable` / `-UnityEditor` for custom existing installations.
 
 Private installs use `%LOCALAPPDATA%/ELTS/Tools/`. Paths are recorded as JSON in
 ignored `config/local/development-tools.json` and consumed by the existing wrappers
-and `OPEN-DEV-SHELL.cmd`. The setup does not change Git identity, credentials,
+and `OPEN-DEV-SHELL (Dev Only).cmd`. The setup does not change Git identity, credentials,
 branches or the global PATH. It preserves `config/local.json`; fresh clones create
 that file from the existing synthetic template. Re-run setup after moving a clone
 or changing toolchain pins. Do not distribute the local paths file.

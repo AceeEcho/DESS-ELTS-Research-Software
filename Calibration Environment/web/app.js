@@ -225,7 +225,7 @@ function renderSettings() {
         html += section(
             "Input source",
             `<label for="source-select">Pose source</label><select id="source-select"><option value="manual">Manual preview · no hardware</option><option value="live">Live SteamVR trackers</option></select><button id="connect-tracking" class="wide" data-action="connect">Connect / retry SteamVR</button><button class="wide" data-action="disconnect">Disconnect live tracking</button><p class="help" id="bridge-message"></p>`,
-            "For VIVE trackers: pair devices in SteamVR, then run SETUP-LIVE-TRACKING.cmd once. Select each device by serial under Head and Weapon.",
+            "For VIVE trackers: pair devices in SteamVR, then restart START-CALIBRATION.cmd and answer Y to set up live tracking (once per PC). Select each device by serial under Head and Weapon.",
         );
         html += section(
             "Detected devices",

@@ -5,9 +5,8 @@
 On a Windows x64 computer, you can use a downloaded ZIP without installing Git:
 
 1. Open [the ELTS repository](https://github.com/AceeEcho/DESS-ELTS-Research-Software), select **main**, and choose **Code > Download ZIP**.
-2. Right-click the download and choose **Extract All**. Use a writable local folder outside OneDrive, such as a folder under your user account. Open the extracted folder that contains `README.md`, `SETUP-DEV.cmd`, and `START-ELTS.cmd`.
-3. Double-click **SETUP-DEV.cmd**. Let it install missing tools, import Unity, and verify the software. Complete any Windows approval and Unity account/license prompts. If Unity licensing stops setup, activate the eligible license in Unity Hub and rerun the same setup script.
-4. After setup reports success, double-click **START-ELTS.cmd**. Allow the first build to finish. The browser administrator dashboard and participant game open. For later runs, use **START-ELTS.cmd**.
+2. Right-click the download and choose **Extract All**. Use a writable local folder outside OneDrive, such as a folder under your user account. Open the extracted folder that contains `README.md` and `START-ELTS.cmd`. Files marked "(Dev Only)" are for developers; you can ignore them.
+3. Double-click **START-ELTS.cmd**. The first time, it installs missing tools, imports Unity, verifies the software and builds the app before opening it, so allow time. Complete any Windows approval and Unity account/license prompts. If Unity licensing stops setup, activate the eligible license in Unity Hub and run **START-ELTS.cmd** again. The browser administrator dashboard and participant game open. For later runs, use **START-ELTS.cmd**.
 
 A complete copied source folder works too. Git is optional for this workflow;
 without history, builds record hashes of their source files and explicitly mark
@@ -15,9 +14,9 @@ the revision as unversioned. Setup preserves existing local settings and recordi
 Internet access and permission to install the missing tools are needed on first use.
 The required Editor remains **Unity 6000.3.23f1 LTS**.
 
-For the separate VIVE tracker calibration workspace, run **SETUP-TRACKING.cmd**
-once on each new PC, then **START-CALIBRATION.cmd**. Tracking setup installs its
-own Python/OpenVR environment, helps install Steam/SteamVR, and configures the
+For the separate VIVE tracker calibration workspace, run **START-CALIBRATION.cmd**.
+On a new PC it offers the one-time live-tracking setup: it installs its own
+Python/OpenVR environment, helps install Steam/SteamVR, and configures the
 headset-free runtime automatically with settings backups. It does not require the
 Unity setup above. Complete Steam sign-in/install prompts and physical pairing;
 recheck alignment on the new machine. See the
@@ -28,7 +27,7 @@ and synchronizing source changes between computers.
 
 This guide gets a beginner from a new Windows computer to the same editable ELTS software repository on two or more machines. It covers the Unity project in `unity/`, the offline browser simulation in `elts-simulation/`, and the analysis and supporting folders in this repository.
 
-The recommended path uses GitHub Desktop. It keeps the repository in a normal local folder such as `C:\Users\YOUR-NAME\source\DESS-ELTS-Research-Software` and uses the included `SETUP-DEV.cmd` to prepare developer tools. The setup script detects what is already installed and downloads missing supported Python, the pinned .NET SDK, pinned Node.js for the browser build, and Unity Hub plus Unity `6000.3.23f1` LTS when needed. Downloads come from official sources and are checksum verified; `winget` is not required. Windows may ask for administrator approval, and Unity may ask you to sign in or accept a license. If a sign-in is required, finish it and run the setup script again.
+The recommended path uses GitHub Desktop. It keeps the repository in a normal local folder such as `C:\Users\YOUR-NAME\source\DESS-ELTS-Research-Software` and uses the included `SETUP-DEV (Dev Only).cmd` to prepare developer tools. The setup script detects what is already installed and downloads missing supported Python, the pinned .NET SDK, pinned Node.js for the browser build, and Unity Hub plus Unity `6000.3.23f1` LTS when needed. Downloads come from official sources and are checksum verified; `winget` is not required. Windows may ask for administrator approval, and Unity may ask you to sign in or accept a license. If a sign-in is required, finish it and run the setup script again.
 
 ![Illustration of the two machine workflow: clone, set up, edit, commit, and push; then fetch, pull, and edit on the second computer.](images/multi-machine-flow.svg)
 
@@ -76,9 +75,9 @@ There is no automatic sync. Before editing on a computer, pull the latest `main`
 ### 3. Run the developer setup
 
 1. In GitHub Desktop, use **Repository > Show in Explorer** to open the cloned folder. Close Unity if this project is open.
-2. Double-click `SETUP-DEV.cmd`.
+2. Double-click `SETUP-DEV (Dev Only).cmd`.
 3. Read each prompt. Allow UAC when you understand that Windows is installing the requested developer tools. The installer uses official checksum-verified direct downloads, so it does not depend on `winget`.
-4. If Unity Hub asks you to sign in or accept a license, do that in Unity Hub and rerun `SETUP-DEV.cmd`.
+4. If Unity Hub asks you to sign in or accept a license, do that in Unity Hub and rerun `SETUP-DEV (Dev Only).cmd`.
 5. Wait for the final verification message. The result is ready only after bootstrap, Unity import, and full verification complete. Setup writes diagnostics to `diagnostics/setup-report.json`, with console and Unity import details in `diagnostics/setup-console.log` and `diagnostics/setup-unity-import.log`. These are local diagnostics. `-Check` only detects tools; `-SkipVerification` deliberately leaves the result prepared but unverified.
 
 ![Illustration of the setup phases: prerequisites, pinned tools, local configuration, Unity import, and verification.](images/setup-phases.svg)
@@ -101,13 +100,13 @@ For Unity, open Unity Hub, choose **Add/Open existing project**, and select the 
 
 For the browser simulation, open `elts-simulation/README.md` and follow its current instructions. The source page is `elts-simulation/elts-environment.html`; `index.html` may be generated. Keep the simulation offline and do not treat its synthetic geometry as measured calibration.
 
-To open a development shell with the detected private tool paths, double-click `OPEN-DEV-SHELL.cmd` in the repository root. It opens PowerShell without making permanent `PATH` changes. From that shell, the browser build can run from the repository root:
+To open a development shell with the detected private tool paths, double-click `OPEN-DEV-SHELL (Dev Only).cmd` in the repository root. It opens PowerShell without making permanent `PATH` changes. From that shell, the browser build can run from the repository root:
 
 ```powershell
 node elts-simulation/build.mjs
 ```
 
-If you change the toolchain or a developer dependency, rerun `SETUP-DEV.cmd`. You do not need to rerun setup for every source edit.
+If you change the toolchain or a developer dependency, rerun `SETUP-DEV (Dev Only).cmd`. You do not need to rerun setup for every source edit.
 
 ### A small browser simulation edit
 
@@ -115,7 +114,7 @@ This is a complete beginner exercise that proves the source, build, and review l
 
 1. Close Unity before pulling or running setup. Open `elts-simulation/elts-environment.html` in a text editor. Windows Notepad works for this small exercise: choose **File > Open**, change the file type filter to **All files**, and select that file inside your clone. Opening it normally in a browser only shows the page; it does not edit its source.
 2. Near the start of the file, find the visible text `ELTS · testing environment` and add ` — local test` to that text. Keep the surrounding `<strong>` tags intact. If you have a later styled revision, change its visible heading instead.
-3. Save the file. Double-click `OPEN-DEV-SHELL.cmd`, run `node elts-simulation/build.mjs`, then open `elts-simulation/index.html` in a browser.
+3. Save the file. Double-click `OPEN-DEV-SHELL (Dev Only).cmd`, run `node elts-simulation/build.mjs`, then open `elts-simulation/index.html` in a browser.
 4. Confirm the new heading appears. Return to GitHub Desktop, review the changed source and generated files, and commit the intended result.
 5. Run `.\scripts\verify.ps1` in the development shell before pushing. Fix any reported issue or ask the maintainer before continuing.
 6. Push the commit with **Push origin**. Close the browser and Unity before the next pull; reopen Unity afterward.
@@ -137,7 +136,7 @@ A commit is your local checkpoint; it is not visible to collaborators until you 
 
 ## Second computer and later computers
 
-Repeat the installation and sign-in steps on each computer. Clone the same URL into that computer's own nonsynced folder, confirm `main`, close Unity if it is open, and run `SETUP-DEV.cmd`. Open `unity/` with Unity `6000.3.23f1` LTS and use the simulation README for `elts-simulation/`. Reopen Unity after setup has finished.
+Repeat the installation and sign-in steps on each computer. Clone the same URL into that computer's own nonsynced folder, confirm `main`, close Unity if it is open, and run `SETUP-DEV (Dev Only).cmd`. Open `unity/` with Unity `6000.3.23f1` LTS and use the simulation README for `elts-simulation/`. Reopen Unity after setup has finished.
 
 Before every editing session on the second computer, close Unity and click **Fetch origin**, then **Pull origin**. After editing, review, commit, and click **Push origin**. Repeat this same sequence on every additional computer. Reopen Unity after pulling. Never copy the `.git` folder by hand, merge two independent local copies by dragging files over one another, or rely on OneDrive to synchronise a working tree.
 
@@ -153,8 +152,8 @@ if no fresh log was produced, the message says so instead of showing an old erro
 
 | Error shown | What to do |
 | --- | --- |
-| Unity exit **198** / **No valid Unity Editor license found** | Open **Unity Hub**, sign in, then open **Settings > Licenses > Refresh**. Use **Add license** if needed. Activate the license appropriate for your account; an organization license may require its administrator to assign a seat. If activation fails, check network/proxy access. Close the Editor and rerun **SETUP-DEV.cmd**, then **START-ELTS.cmd**. See [Unity's license guide](https://docs.unity.com/en-us/hub/manage-license). |
-| **runtime-config** / **Editor saves at project root** | Older revisions incorrectly compared Windows path separators when a machine used `data/synthetic`. Update to the corrected source and rerun **SETUP-DEV.cmd**. Keep `config/local.json` and your recordings; changing or deleting the data folder is unnecessary. |
+| Unity exit **198** / **No valid Unity Editor license found** | Open **Unity Hub**, sign in, then open **Settings > Licenses > Refresh**. Use **Add license** if needed. Activate the license appropriate for your account; an organization license may require its administrator to assign a seat. If activation fails, check network/proxy access. Close the Editor and rerun **SETUP-DEV (Dev Only).cmd**, then **START-ELTS.cmd**. See [Unity's license guide](https://docs.unity.com/en-us/hub/manage-license). |
+| **runtime-config** / **Editor saves at project root** | Older revisions incorrectly compared Windows path separators when a machine used `data/synthetic`. Update to the corrected source and rerun **SETUP-DEV (Dev Only).cmd**. Keep `config/local.json` and your recordings; changing or deleting the data folder is unnecessary. |
 | **Development view unavailable: Development game settings are outside their safe synthetic ranges** | An older saved scene contains a patrol distance that the newer code rejects. Close the failed game, update the project, and run **START-ELTS.cmd** to rebuild with the corrected scene. Keep your configuration and recordings. This is a scene-settings error, not a Unity license failure. |
 | **error CS…** / compiler errors | The Unity log names the source file and compiler error. Update to a corrected revision or send that log to the maintainer. Rerun setup after the code is fixed. |
 | Another Unity instance / startup lock | Save your work and close this project in the Editor, or let the existing setup/startup window finish. Retry after it ends. Do not delete lock files while their processes are running. |
@@ -176,9 +175,9 @@ the maintainer, not participant recordings or license files.
 
 **Git is missing.** GitHub Desktop normally includes the Git it needs. Restart GitHub Desktop after installation. The command-line alternative below requires Git for Windows; install it from [git-scm.com](https://git-scm.com/download/win) only if you need that workflow.
 
-**Setup says the folder is not a Git clone.** You have an older setup script. Download the updated source ZIP and extract it to a new folder, then run **SETUP-DEV.cmd** followed by **START-ELTS.cmd**. Keep the previous folder if it contains recordings or customized settings. Updated setup accepts both source ZIPs and Git clones.
+**Setup says the folder is not a Git clone.** You have an older setup script. Download the updated source ZIP and extract it to a new folder, then run **SETUP-DEV (Dev Only).cmd** followed by **START-ELTS.cmd**. Keep the previous folder if it contains recordings or customized settings. Updated setup accepts both source ZIPs and Git clones.
 
-**Setup cannot download or verify a tool.** Check the network connection and the setup report. Do not replace a checksum-verified download with an untrusted mirror. Save the final error text for the project maintainer and rerun `SETUP-DEV.cmd` after the issue is fixed.
+**Setup cannot download or verify a tool.** Check the network connection and the setup report. Do not replace a checksum-verified download with an untrusted mirror. Save the final error text for the project maintainer and rerun `SETUP-DEV (Dev Only).cmd` after the issue is fixed.
 
 **UAC blocks installation.** Use an account allowed to install software or ask the computer administrator. Do not bypass UAC. Rerun setup after the administrator has completed the install.
 
@@ -196,7 +195,7 @@ New-Item -ItemType Directory -Force (Split-Path -Parent $repoPath) | Out-Null
 git clone https://github.com/AceeEcho/DESS-ELTS-Research-Software.git $repoPath
 Set-Location $repoPath
 git switch main
-.\SETUP-DEV.cmd
+& '.\SETUP-DEV (Dev Only).cmd'
 git pull --ff-only origin main
 # edit and review files
 git status

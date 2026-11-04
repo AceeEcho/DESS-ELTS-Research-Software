@@ -12,14 +12,14 @@
 </p>
 
 <p align="center">
-  <a href="#-quick-start">Quick start</a> ·
+  <a href="#-install-and-run">Install and run</a> ·
   <a href="#-run-a-session">Run a session</a> ·
   <a href="#-the-participant-walkthrough">Participant walkthrough</a> ·
   <a href="#-review-and-export-data">Data</a> ·
   <a href="#-calibration-workspace">Calibration workspace</a> ·
   <a href="#-troubleshooting">Troubleshooting</a> ·
   <a href="#-project-status">Status</a> ·
-  <a href="#-for-developers">Developers</a>
+  <a href="#-developer-setup">Developer setup</a>
 </p>
 
 ![How the parts of ELTS fit together: the calibration workspace, the ELTS application with its administrator dashboard and participant window, and the local data folder and data view.](docs/images/readme/system-overview.svg)
@@ -29,11 +29,26 @@
 
 ---
 
-## 🚀 Quick start
+<table>
+<tr>
+<th width="50%">🧑‍🔬 I run study sessions</th>
+<th width="50%">👩‍💻 I change the software</th>
+</tr>
+<tr>
+<td>Download a ZIP, double-click one file and use the dashboard. No Git, no coding, no Unity Editor window.<br><br><b>→ <a href="#-install-and-run">Install and run</a></b></td>
+<td>Clone with Git, open the Unity project, run the checks and push changes between computers.<br><br><b>→ <a href="#-developer-setup">Developer setup</a></b></td>
+</tr>
+</table>
 
-![Download the ZIP, extract it, run SETUP-DEV.cmd once, then run START-ELTS.cmd every time.](docs/images/readme/quick-start.svg)
+---
 
-You do **not** need Git or GitHub Desktop. Setup installs anything that is missing.
+## 🚀 Install and run
+
+*For operators running study sessions. Developers: use [Developer setup](#-developer-setup) instead.*
+
+![Download the ZIP, extract it, then double-click START-ELTS.cmd. The first start also installs everything ELTS needs.](docs/images/readme/quick-start.svg)
+
+You do **not** need Git, GitHub Desktop or any coding. You do need internet access and permission to install software the first time.
 
 <details open>
 <summary><b>Step 1 · Download the ZIP</b></summary>
@@ -46,25 +61,25 @@ At the top of [this GitHub page](https://github.com/AceeEcho/DESS-ELTS-Research-
 
 </details>
 
-**Step 2 · Extract it.** In **Downloads**, right-click **DESS-ELTS-Research-Software-main.zip** → **Extract All…** → **Extract**. Open the extracted folder; you should see **SETUP-DEV.cmd** and **START-ELTS.cmd**. Always run them from this folder, never from inside the ZIP.
+**Step 2 · Extract it.** Right-click **DESS-ELTS-Research-Software-main.zip** → **Extract All…**. Choose a normal local folder such as `C:\Users\YOUR-NAME\ELTS`, **not** OneDrive, Dropbox or another synced folder. Open the extracted folder and find **START-ELTS.cmd**. Always run it from this folder, never from inside the ZIP. Files marked **(Dev Only)** are for developers; you can ignore them.
 
-**Step 3 · Run SETUP-DEV.cmd once.** Leave the window open until it reports success. The first run downloads tools, imports Unity **6000.3.23f1 LTS** and checks the software, so give it time. Accept any Windows install prompts and sign in to Unity Hub if asked; if it stops for licensing, activate in Unity Hub and run it again.
-
-**Step 4 · Run START-ELTS.cmd.** This opens the **administrator dashboard** in your browser and the **participant window** as a separate app. The first launch builds the application, which can take several minutes. A small startup window shows progress and closes on its own; if something fails it stays open with an **Open startup log** button.
+**Step 3 · Double-click START-ELTS.cmd.** It opens the **administrator dashboard** in your browser and the **participant window** as a separate app. The **first start** on a computer also sets everything up: ELTS is built on your computer, so it installs Unity **6000.3.23f1 LTS** and the other tools, checks them and builds the app. That takes a while, so leave the window open. Accept Windows install prompts and sign in to Unity Hub if asked; if it stops for licensing, activate in Unity Hub and double-click **START-ELTS.cmd** again. A small startup window shows progress and closes on its own; if something fails it stays open with an **Open startup log** button.
 
 > [!TIP]
-> From now on, just double-click **START-ELTS.cmd**. Keep the whole extracted folder together. If a step fails, see [setup troubleshooting](docs/operator/multi-machine-setup.md#if-something-goes-wrong). To work across several computers with GitHub Desktop, see the [full setup guide](docs/operator/multi-machine-setup.md).
+> From now on, just double-click **START-ELTS.cmd**. Keep the whole extracted folder together: your recordings are saved inside it, in **collection data**. If a step fails, see [setup troubleshooting](docs/operator/multi-machine-setup.md#if-something-goes-wrong).
+
+**Tracking PC (optional).** To set up the room, screen and Vive trackers, double-click **START-CALIBRATION.cmd**. The first time, it offers to install the live-tracking tools (answer **Y**); manual preview works without them. This needs no Unity. See [Calibration workspace](#-calibration-workspace).
+
+**Getting a newer version.** Download and extract the new ZIP into a new folder, then double-click **START-ELTS.cmd** in it. Recordings are not carried over automatically, so keep your old folder and its **collection data** until you have exported what you need.
 
 ### Which file do I double-click?
 
 | File | When to use it |
 | --- | --- |
-| **START-ELTS.cmd** | Every session. Opens the dashboard and the participant window. |
-| **SETUP-DEV.cmd** | Once per computer, or again after a failed setup. Installs and checks everything without opening the app. |
-| **SETUP-TRACKING.cmd** | Once on a tracking PC. Installs the Python/OpenVR tracking tools and Steam/SteamVR (no Unity or Git needed). |
+| **START-ELTS.cmd** | Every session. Opens the dashboard and the participant window (and sets the computer up the first time). |
 | **START-CALIBRATION.cmd** | To set up the room, screen and trackers in the separate [calibration workspace](#-calibration-workspace). |
-| **CHECK-SYSTEM.cmd** | To print a readiness report for this computer (software only, never physical acceptance). |
-| **OPEN-DEV-SHELL.cmd** | Developers: a PowerShell window with the detected tool paths. |
+
+Everything marked **(Dev Only)** is for [developers](#-developer-setup).
 
 ---
 
@@ -244,8 +259,8 @@ A separate browser app for describing the room: screen size and position, base-s
 
 ![Calibration workspace in manual preview: setup tabs on the left, a 3D room with the screen, base station, trackers and person, and a screen-perspective preview.](docs/images/readme/calibration-workspace.png)
 
-1. On a new tracking PC, run **SETUP-TRACKING.cmd** once (Python, OpenVR, Steam and SteamVR; headset-free tracking with backups of existing settings).
-2. Run **START-CALIBRATION.cmd**. **Manual preview** works with no equipment; live mode reads SteamVR trackers.
+1. Double-click **START-CALIBRATION.cmd**. **Manual preview** works with no equipment.
+2. For live Vive trackers, answer **Y** when it offers the one-time setup on a new PC. It installs Python, the OpenVR reader, Steam and SteamVR, and configures headset-free tracking with backups of your existing settings. Live mode then reads the SteamVR trackers.
 
 See the [calibration workspace guide](Calibration%20Environment/README.md). Example values are not measurements; software checks do not establish physical calibration.
 
@@ -288,7 +303,70 @@ Full reference: [administrator dashboard](docs/modules/operator-dashboard.md).
 
 ---
 
-## 👩‍💻 For developers
+## 👩‍💻 Developer setup
+
+*For people who change the code, the tutorial content or the docs. To run sessions only, use [Install and run](#-install-and-run).*
+
+| | Operator | Developer |
+| --- | :---: | :---: |
+| Gets the code by | Download ZIP | **Cloning with Git** (GitHub Desktop or `git`) |
+| Runs `START-ELTS.cmd` | ✅ | ✅ |
+| Uses the **(Dev Only)** launchers | — | ✅ |
+| Opens the Unity project in the Editor | — | ✅ |
+| Runs checks before committing | — | ✅ |
+| Pushes and pulls between computers | — | ✅ |
+
+### 1 · Clone the repository
+
+You need a GitHub account with access to this repository. In [GitHub Desktop](https://desktop.github.com/), choose **File → Clone repository → URL**, enter `https://github.com/AceeEcho/DESS-ELTS-Research-Software.git`, and pick a **non-synced** local folder such as `C:\Users\YOUR-NAME\source\DESS-ELTS-Research-Software`. Never keep a working copy in OneDrive or Dropbox: Unity's caches and Git do not mix with folder sync.
+
+![GitHub Desktop clone form with the repository URL, local path and Clone button labelled.](docs/operator/images/github-desktop-clone-form.svg)
+
+Command-line alternative: `git clone https://github.com/AceeEcho/DESS-ELTS-Research-Software.git`
+
+### 2 · Run SETUP-DEV (Dev Only).cmd
+
+Setup without launching the app. It finds or installs pinned Python, .NET SDK, Node.js, Unity Hub and Unity **6000.3.23f1 LTS** (official, checksum-verified downloads), creates your local config, imports the Unity project and runs full verification. Close Unity first. Logs go to `diagnostics/setup-report.json` and `diagnostics/setup-console.log`. Run it again only when the toolchain changes, not after every edit.
+
+![Setup phases: prerequisites, pinned tools, local configuration, Unity import and verification.](docs/operator/images/setup-phases.svg)
+
+### 3 · Open the project and run the app
+
+- **Unity Editor:** in Unity Hub choose **Add / Open existing project** and select the `unity/` folder. Use exactly **6000.3.23f1**; if Hub offers another version, stop and install the pinned one.
+- **Run the app:** `START-ELTS.cmd` builds (or reuses an unchanged build) and launches it. **Close the Unity project first** when a rebuild is needed. Builds go to `build/start-elts-*`; the log is `diagnostics/start-console.log`.
+- **Dev shell:** `OPEN-DEV-SHELL (Dev Only).cmd` opens PowerShell with the detected tool paths, without changing your system `PATH`.
+- **Readiness report:** `CHECK-SYSTEM (Dev Only).cmd` checks tools, staging and versions (software only, never physical acceptance).
+
+### 4 · Daily loop
+
+![Fetch and pull, edit, review, commit, then push origin.](docs/operator/images/daily-commit-push.svg)
+
+Close Unity → **Pull** → edit → run checks → review every changed file → **Commit** → **Push**. There is no automatic sync: finish and push on one computer before pulling on another. Full illustrated guide: [setup on more than one computer](docs/operator/multi-machine-setup.md).
+
+### Checks
+
+| Command | What it covers |
+| --- | --- |
+| `python tools/ci/check.py --baseline` | Portable checks: paths, Unity `.meta` files, doc links, tutorial script sync, Python unit tests (Python 3.10+) |
+| `scripts/test.ps1 -Suite <name>` | One suite: `baseline`, `validation`, `config`, `geometry`, `runtime`, `unity-edit`, `unity-play` |
+| `scripts/verify.ps1` | Full development verification, including the available Unity and runtime tests |
+| `dotnet run --project tools/runtime-tests/TutorialChecks.csproj` | Walkthrough progression rules (fast, no Unity) |
+
+Run Unity Play Mode tests with `-noaudio`. Set `ELTS_TUTORIAL_CAPTURE_DIR` while running `ParticipantTutorialTests` to save a screenshot of every walkthrough screen.
+
+### Common tasks
+
+| Task | How |
+| --- | --- |
+| Change tutorial narration or on-screen steps | Edit [the tutorial script](docs/participant-tutorial-script.md), then `py -3 tools/build/export_participant_tutorial.py` (add `--check` to verify). Recordings follow the [audio workflow](docs/participant-tutorial-audio-workflow.md) |
+| Change tutorial visuals | `unity/Assets/ELTS/Operator/ParticipantTutorial*.cs` and `Resources/ELTS/ParticipantTutorial.uss/.uxml/Settings.json` ([walkthrough guide](docs/modules/participant-tutorial.md)) |
+| Rebuild the offline simulation | `node elts-simulation/build.mjs` from the dev shell |
+| Build a standalone player | `scripts/build.ps1 -Output build/<new-empty-folder>` ([build provenance](docs/modules/windows-build.md)) |
+| Refresh the dashboard screenshots | `node tools/browser-tests/capture-user-guide.cjs` (needs Playwright and Chrome) |
+
+Local, machine-specific settings live in `config/local.json` and `config/local/` and are never committed. Research recordings stay out of Git. `scripts/setup-study-machine.ps1` and `scripts/start-study.ps1` are the future study entry points; they deliberately refuse to run until study configuration, physical acceptance and release approval exist. A root study launcher will be added with an approved release.
+
+### Where things are
 
 | Folder | Contents |
 | --- | --- |
@@ -298,15 +376,5 @@ Full reference: [administrator dashboard](docs/modules/operator-dashboard.md).
 | `analysis/` | [Run ingestion and analysis](docs/modules/analysis.md) |
 | `config/`, `schemas/` | Editable settings and data contracts |
 | `scripts/`, `tools/` | Setup, build, validation, packaging and tests |
-| `docs/` | [Architecture](docs/architecture.md) · [developer commands](docs/operator/developer-quick-start.md) · [CI](docs/modules/ci.md) · [tutorial audio workflow](docs/participant-tutorial-audio-workflow.md) |
+| `docs/` | [Architecture](docs/architecture.md) · [developer commands](docs/operator/developer-quick-start.md) · [CI](docs/modules/ci.md) · [safety boundaries](docs/safety/README.md) |
 | `jetson/` | [Controller integration limits](jetson/README.md) |
-
-Portable software checks (Python 3.10+):
-
-```powershell
-python tools/ci/check.py --baseline
-```
-
-`scripts/test.ps1` runs selected suites; `scripts/verify.ps1` runs full development verification, including available Unity and runtime tests. Working on more than one PC: pull, edit, review, commit and push before switching.
-
-Configuration, geometry, tracker bindings and endpoints stay adjustable. Research recordings and machine-local settings stay out of Git.

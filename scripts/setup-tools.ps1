@@ -91,7 +91,7 @@ function Get-EltsProcessFailure {
 function Invoke-EltsSetupProcess {
     param([string]$File, [string[]]$Arguments = @(), [int]$TimeoutSeconds = 3600,
           [int[]]$SuccessCodes = @(0), [string]$Activity = 'Run prerequisite tool',
-          [string]$DiagnosticLog, [string[]]$ReportPaths = @(), [string]$RetryCommand = 'SETUP-DEV.cmd')
+          [string]$DiagnosticLog, [string[]]$ReportPaths = @(), [string]$RetryCommand = 'SETUP-DEV (Dev Only).cmd')
     $startedAt = [DateTime]::UtcNow
     $context = @{ Activity=$Activity; DiagnosticLog=$DiagnosticLog; ReportPaths=$ReportPaths;
         StartedAt=$startedAt; RetryCommand=$RetryCommand }
@@ -99,7 +99,7 @@ function Invoke-EltsSetupProcess {
     try { $process = Start-Process -FilePath $File -ArgumentList $argumentLine -NoNewWindow -PassThru }
     catch {
         throw (Get-EltsProcessFailure @context -Reason ("Could not start $File. " + $_.Exception.Message +
-            "`nHow to resolve: Check that this executable exists and your Windows account is allowed to run it. Run SETUP-DEV.cmd to detect missing tools; ask your administrator if Windows blocks execution."))
+            "`nHow to resolve: Check that this executable exists and your Windows account is allowed to run it. Run $RetryCommand to detect missing tools; ask your administrator if Windows blocks execution."))
     }
     # Windows PowerShell can lose the native exit code after a short-lived
     # process exits unless its handle is retained before WaitForExit.
@@ -113,7 +113,7 @@ function Invoke-EltsSetupProcess {
     if ($process.ExitCode -notin $SuccessCodes) {
         throw (Get-EltsProcessFailure @context -Reason "$File exited with code $($process.ExitCode).")
     }
-    if ($process.ExitCode -eq 3010) { throw 'Installation requires a Windows restart. Restart, then run SETUP-DEV.cmd again.' }
+    if ($process.ExitCode -eq 3010) { throw "Installation requires a Windows restart. Restart, then run $RetryCommand again." }
 }
 
 function Get-EltsCommandPath {
@@ -231,10 +231,10 @@ function Get-EltsVerifiedDownload {
     try { Invoke-WebRequest -Uri $Url -OutFile $partial -UseBasicParsing }
     catch {
         throw ("Could not download $Url. " + $_.Exception.Message +
-            "`nHow to resolve: Check your internet connection, available disk space, and access to the official download host. Ask your administrator about proxy/firewall restrictions if needed, then run SETUP-DEV.cmd again. The incomplete download will not be used.")
+            "`nHow to resolve: Check your internet connection, available disk space, and access to the official download host. Ask your administrator about proxy/firewall restrictions if needed, then run START-ELTS.cmd (or SETUP-DEV (Dev Only).cmd) again. The incomplete download will not be used.")
     }
     if ((Get-FileHash -LiteralPath $partial -Algorithm $Algorithm).Hash -ne $Hash) {
-        throw "Download checksum mismatch: $Url. The installer was not executed.`nHow to resolve: Run SETUP-DEV.cmd to download and verify it again. If the mismatch repeats, send this URL and diagnostics/setup-console.log to the maintainer to check the download and pinned checksum. Do not disable checksum verification."
+        throw "Download checksum mismatch: $Url. The installer was not executed.`nHow to resolve: Run START-ELTS.cmd (or SETUP-DEV (Dev Only).cmd) to download and verify it again. If the mismatch repeats, send this URL and diagnostics/setup-console.log to the maintainer to check the download and pinned checksum. Do not disable checksum verification."
     }
     Move-Item -LiteralPath $partial -Destination $Destination -Force
     return $Destination

@@ -148,17 +148,17 @@ def command_failure_message(identifier: str, reason: str, output: str, log: Path
         advice = ('Open Unity Hub and sign in. Go to Settings > Licenses > Refresh, or Add license to activate '
                   'your eligible license. For an organization license, ask its administrator to assign your account '
                   'a seat. If activation fails, check network/proxy access. Close the Editor, then rerun '
-                  'SETUP-DEV.cmd followed by START-ELTS.cmd. '
+                  'START-ELTS.cmd; it finishes setup before starting. '
                   'Help: https://docs.unity.com/en-us/hub/manage-license')
     elif re.search(r'another Unity instance|already open in another|multiple Unity instances', output, re.I):
         advice = 'Save your work and close this project in Unity, then retry. Do not delete active Unity lock files.'
     elif re.search(r'error CS\d+|compilation failed|scripts have compiler errors', output, re.I):
         advice = ('Fix the compiler errors listed in the log, or update to a corrected repository revision, then '
-                  'rerun SETUP-DEV.cmd. If you do not maintain the code, send this log to the project maintainer.')
+                  'rerun START-ELTS.cmd or SETUP-DEV (Dev Only).cmd. If you do not maintain the code, send this log to the project maintainer.')
     elif re.search(r'FAIL:|Assertion|test.*failed|Failed\s+\w+', output, re.I):
         advice = ('A software verification check failed. Send the failed assertion and this log to the project '
                   'maintainer, or update to a revision that fixes it. Keep your local configuration and recordings. '
-                  'Rerun SETUP-DEV.cmd after the fix; do not skip verification to mark setup ready.')
+                  'Rerun START-ELTS.cmd or SETUP-DEV (Dev Only).cmd after the fix; do not skip verification to mark setup ready.')
     else:
         advice = ('Review the error below and the full log. Correct the reported problem, then rerun the command. '
                   'If the cause is unclear, send this failed step, log, and diagnostic report to the project maintainer.')
@@ -353,7 +353,7 @@ def run(args) -> tuple[dict, Path]:
                             except ValueError as exc:
                                 raise ValueError(f'{exc}\nHow to resolve: Inspect the failed or missing test results, '
                                                  'then fix the reported test or send these files to the maintainer. '
-                                                 f'Rerun SETUP-DEV.cmd after the fix.\nResults: {result_file}\nLog: {log}') from exc
+                                                 f'Rerun START-ELTS.cmd or SETUP-DEV (Dev Only).cmd after the fix.\nResults: {result_file}\nLog: {log}') from exc
 
         elif args.action == "build":
             if not editor or not (ROOT / "unity/Assets/Editor/EltsBuild/BuildEntry.cs").is_file():

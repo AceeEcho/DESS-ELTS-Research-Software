@@ -201,6 +201,7 @@ namespace Elts.Config
             Display = new ScreenPlane(origin, horizontal, vertical, horizontal.Length, vertical.Length);
             // Four feet is the shared development-room assumption. Older configs
             // remain readable; new staged configs record the value explicitly.
+            // Preserve the floor used by older rig bundles that omitted this field.
             ScreenBottomHeightAboveFloorM = (double?)value["screenBottomHeightAboveFloorM"] ?? 1.2192;
             if (!Double.IsFinite(ScreenBottomHeightAboveFloorM) || ScreenBottomHeightAboveFloorM < .1 || ScreenBottomHeightAboveFloorM > 3)
                 JsonContract.Fail("screen bottom height must be between 0.1 and 3 metres");

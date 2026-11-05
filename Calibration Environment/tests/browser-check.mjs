@@ -93,7 +93,7 @@ try {
     await page.waitForFunction(() =>
         document
             .querySelector("#profile-result")
-            .textContent.startsWith("Saved in"),
+            .textContent.startsWith("Saved."),
     );
     await page
         .getByRole("button", { name: "Load selected profile", exact: true })
@@ -114,6 +114,17 @@ try {
             .textContent.includes("Eye-position perspective"),
     );
     checks.push("Separate screen window receives dashboard settings");
+    await popup.setViewportSize({ width: 900, height: 700 });
+    const canvasFillsViewport = () => {
+        const bounds = document.querySelector("#preview-canvas").getBoundingClientRect();
+        return bounds.left === 0 && bounds.top === 0 &&
+            bounds.right === innerWidth && bounds.bottom === innerHeight;
+    };
+    await popup.waitForFunction(canvasFillsViewport);
+    await popup.locator("#fullscreen").click();
+    await popup.waitForFunction(() => Boolean(document.fullscreenElement));
+    await popup.waitForFunction(canvasFillsViewport);
+    checks.push("Participant canvas fills a non-matching window and fullscreen viewport");
     await popup.screenshot({
         path: fileURLToPath(new URL("screen-verified.png", output)),
     });

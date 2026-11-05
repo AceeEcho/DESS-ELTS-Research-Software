@@ -245,7 +245,10 @@ namespace Elts.Operator
             if(fullscreen)
             {
                 if(!Screen.fullScreen){windowWidth=Screen.width;windowHeight=Screen.height;}
-                Screen.fullScreenMode=FullScreenMode.FullScreenWindow;
+                // Match the active display's pixel dimensions so Unity does not
+                // letterbox a window-sized render surface in borderless fullscreen.
+                var display = Screen.mainWindowDisplayInfo;
+                Screen.SetResolution(display.width, display.height, FullScreenMode.FullScreenWindow);
             }
             else if(Screen.fullScreen)Screen.SetResolution(windowWidth,windowHeight,FullScreenMode.Windowed);
         }

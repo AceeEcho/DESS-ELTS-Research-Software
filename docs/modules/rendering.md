@@ -32,16 +32,17 @@ Replay is a bounded development viewer, not primary analysis; see
 
 ## Window and floor perspective
 
-The development rig assumes the display's lower edge is **4 feet (1.2192 m)**
-above the floor. `screenBottomHeightAboveFloorM` in the rig configuration is the
-single source for this assumption. `RigConfiguration.VirtualFloorY` derives the
-horizontal floor from the configured screen-bottom midpoint; existing tracked
-poses and screen corners are not shifted or rescaled.
+The development rig defaults to a display lower edge **41 3/8 in (1.050925 m)**
+above the floor, configured by `screenBottomHeightAboveFloorM`.
+`RigConfiguration.VirtualFloorY` derives the horizontal floor from the configured
+screen-bottom midpoint.
 
 The participant camera still uses the physical screen rectangle and eye position
 to form an off-axis window. It does not widen a game-camera field of view to make
 targets look smaller. A ray through the lower screen edge continues to the same
 virtual floor plane, and moving the eye changes parallax around that window.
+The standalone participant window maps the four physical corners to the four
+viewport corners. Fullscreen uses the current display's desktop resolution.
 The room, bot feet, crouch interpretation, shot regions and cover bases all use
 the same floor height. This is a synthetic room assumption, not a measured
 registration of the physical room.

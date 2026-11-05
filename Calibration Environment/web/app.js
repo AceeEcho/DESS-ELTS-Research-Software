@@ -805,15 +805,10 @@ channel.onmessage = (event) => {
     }
 };
 function resizePreview() {
-    const ratio = config.screen.width / config.screen.height,
-        wrap = $("preview-wrap");
-    if (isScreen) {
-        const w = Math.min(innerWidth, innerHeight * ratio);
-        wrap.style.width = w + "px";
-        wrap.style.height = w / ratio + "px";
-    } else {
-        wrap.style.aspectRatio = String(ratio);
-    }
+    if (isScreen) return;
+    $("preview-wrap").style.aspectRatio = String(
+        config.screen.width / config.screen.height,
+    );
 }
 async function poll() {
     try {

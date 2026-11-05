@@ -38,7 +38,7 @@ namespace Elts.Operator.Tests
                 var rig=view.Configuration.Rig;
                 var screen=rig.Display;
                 double floorY=rig.VirtualFloorY;
-                Assert.That(screen.Origin.Y-floorY,Is.EqualTo(4*.3048).Within(1e-9),"Screen bottom is four feet above the shared floor");
+                Assert.That(screen.Origin.Y-floorY,Is.EqualTo(41.375*.0254).Within(1e-9),"Screen bottom is 41 3/8 inches above the shared floor");
                 var room=host.transform.Find("Library interior (virtual metres)");
                 var floor=room.Find("Library carpet").GetComponent<Renderer>();
                 Assert.That(floor.bounds.max.y,Is.EqualTo(floorY).Within(.0001));

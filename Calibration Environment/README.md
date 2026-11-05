@@ -25,9 +25,9 @@ SteamVR, internet connection, or build step. Three.js is bundled locally.
 ## Set up the room
 
 1. In **Room**, the Samsung QB65R-B defaults to a visible width of 56 1/4 in
-   and height of 31 5/8 in (1.42875 m by 0.803275 m). Measure and enter the
-   **bottom edge height from the floor** separately. For a different display,
-   enter its visible dimensions or use the diagonal/aspect-ratio calculator.
+   and height of 31 5/8 in (1.42875 m by 0.803275 m), with the **bottom edge
+   41 3/8 in (1.050925 m) above the floor**. For a different installation,
+   enter its visible dimensions and bottom-edge height.
 2. Set the screen's position and pitch/yaw/roll if needed. Its default position
    defines the room's X/Z reference. The bottom-edge measurement is the midpoint
    of the lower edge; screen tilt rotates the centre around that point.
@@ -189,9 +189,10 @@ parallax. Head direction is visible in the overview; it does not rotate the TV.
 
 Choose **Open screen**, move that window onto the TV, and choose **Fullscreen**.
 The window follows its originating dashboard's settings and input source. If the
-dashboard closes, it hides the view instead of retaining an old pose. Match the
-configured aspect ratio to the actual screen; a mismatch is letterboxed. Check
-for browser/OS overscan, scaling or borders before interpreting physical alignment.
+dashboard closes, it hides the view instead of retaining an old pose. The
+configured screen corners map to the window corners at any window size. For
+physical alignment, use fullscreen on the configured display and check for
+browser or OS overscan and scaling.
 The fullscreen toolbar appears on pointer hover at the bottom left; Escape exits.
 
 The preview is unavailable if the eye is behind/too close to the screen or the

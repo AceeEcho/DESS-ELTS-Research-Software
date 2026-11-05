@@ -667,12 +667,11 @@ dialog .primary {
     display: contents;
 }
 .screen-only .preview-wrap {
-    position: absolute;
+    position: fixed;
     inset: 0;
-    margin: auto;
+    width: auto;
+    aspect-ratio: auto;
     border-radius: 0;
-    max-width: 100vw;
-    max-height: 100vh;
 }
 .screen-only #screen-toolbar {
     display: flex;

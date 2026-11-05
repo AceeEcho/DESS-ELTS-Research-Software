@@ -27,8 +27,8 @@ explicitly `synthetic_only`, and all geometry is marked
 is limited to the local schema; it cannot override study, rig, safety, or
 calibration fields.
 
-The synthetic rig explicitly sets `screenBottomHeightAboveFloorM` to `1.2192`
-(four feet). Runtime derives the virtual floor from the display-bottom midpoint
+The synthetic rig explicitly sets `screenBottomHeightAboveFloorM` to `1.050925` m
+(41 3/8 in above the floor). Runtime derives the virtual floor from the display-bottom midpoint
 minus this clearance. The field is optional for older configurations, which use
 the same development default; values outside 0.1–3 m are rejected. This records
 an assumed room layout without changing the screen calibration or raw poses.

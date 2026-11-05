@@ -183,6 +183,22 @@ const server = http.createServer(async (req, res) => {
     await page.waitForFunction(()=>!document.getElementById('tutorialPrimary').disabled);
     await page.locator('#tutorialPrimary').click();await wait(()=>current.tutorial.stage==='Reload');
     assert.equal(commands.find(c=>c.action==='tutorialContinue').tutorialRevision,2,'Completed action uses the correct step revision');
+    assert.equal(await page.locator('#tutorialManual').isHidden(),true,'Manual mode is offered only before the walkthrough starts');
+    Object.assign(current.tutorial,{started:false,stage:'NotStarted',step:'',revision:4,primaryAction:'tutorialBegin',
+      primaryLabel:'Begin walkthrough',canPrimary:true,canManual:true});
+    await page.locator('#tutorialManual').waitFor({state:'visible'});
+    await page.locator('#tutorialManual').click();
+    await page.locator('#manualDialog').waitFor({state:'visible'});
+    await page.locator('#cancelManual').click();
+    assert.equal(commands.some(c=>c.action==='tutorialManual'),false,'Cancelling the confirmation sends nothing');
+    await page.locator('#tutorialManual').click();await page.locator('#confirmManual').click();
+    await wait(()=>commands.some(c=>c.action==='tutorialManual'));
+    assert.equal(commands.find(c=>c.action==='tutorialManual').tutorialRevision,4,'Manual mode carries the displayed revision');
+    await page.locator('#manualDialog').waitFor({state:'hidden'});
+    Object.assign(current.tutorial,{started:true,manual:true,stage:'FirstReady',step:'09',title:'Ready for the first scenario?',
+      primaryLabel:'',canPrimary:false,canManual:false,headAccepted:false,fired:false});
+    await page.waitForFunction(()=>document.getElementById('tutorialStep').textContent==='MANUAL MODE · 09');
+    assert.equal(await page.locator('#tutorialChecks').isHidden(),true,'Skipped walkthrough checks are not shown as outstanding');
     delete current.tutorial;
     Object.assign(current, { state: 'BlockEnded', participant: 'SYNTHETIC', runId: 'fixture-run', blockId: 'WE_FT-attempt-01',
       condition: 'WE_FT', canStartParticipant: false, remainingSeconds: 22 });

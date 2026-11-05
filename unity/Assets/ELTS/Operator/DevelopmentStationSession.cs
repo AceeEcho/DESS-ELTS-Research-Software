@@ -177,7 +177,8 @@ namespace Elts.Operator
 
         private void AdvanceAutomaticStudy()
         {
-            if (IsBusy || closing || engine == null || tutorial.Paused) return;
+            // Manual mode never arms, starts breaks or starts tests on its own.
+            if (IsBusy || closing || engine == null || tutorial.Paused || tutorial.Manual) return;
 
             // Allow the transition message to finish before moving on. The
             // session state and recording checkpoint still own the transition.

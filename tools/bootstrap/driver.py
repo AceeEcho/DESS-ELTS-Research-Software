@@ -22,7 +22,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from tools.config.stage import stage
+from tools.config.stage import check_staged, stage
 from tools.validation.schema import load_json, validate_file
 from tools.build.provenance import source_revision
 
@@ -263,8 +263,10 @@ def run(args) -> tuple[dict, Path]:
                 stage(ROOT)
                 check("staging", "pass", "Synthetic configuration validated and staged")
             else:
-                stage(ROOT, check=True)
-                check("staging", "pass", "Generated configuration matches source")
+                # START-ELTS may have staged the latest saved calibration profile.
+                with_profile = check_staged(ROOT)
+                check("staging", "pass", "Generated configuration matches source"
+                      + (" with the latest saved calibration profile" if with_profile else ""))
             if not editor:
                 raise ValueError("Install the exact selected Unity Editor through Unity Hub, then rerun; no license agreement was accepted here")
             if not (ROOT / "unity/ProjectSettings/ProjectVersion.txt").is_file():
@@ -277,7 +279,8 @@ def run(args) -> tuple[dict, Path]:
 
         elif args.action == "stage":
             output = Path(args.output) if args.output else None
-            stage(ROOT, output, check=args.check)
+            if args.check: check_staged(ROOT, output)
+            else: stage(ROOT, output, check=False)
             check("staging", "pass", "Source and generated configuration verified")
 
         elif args.action == "test":

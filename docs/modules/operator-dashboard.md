@@ -51,7 +51,7 @@ it is available before a participant or after the previous recording closes.
 ### Calibration, practice and readiness
 
 Creating a recording runs the existing two-second synthetic tracking preflight.
-Select **Begin tutorial / walkthrough** for guided setup, head and gun fixture
+Select **Begin walkthrough** for guided setup, head and gun fixture
 reviews, controls and practice. Capture and accept each review inside its tutorial
 step; **Redo** discards an unaccepted fixture. Acceptance saves the synthetic
 fixture and audit note; it does not change the startup rig calibration.
@@ -60,6 +60,11 @@ Practice is a timed movement/aim familiarization period with no scored shots.
 The administrator can restart it before the first test or finish it early.
 After the walkthrough, the first test arms following the readiness cue and the
 participant starts it with their trigger. Later scenarios start automatically.
+**Manual mode · skip walkthrough** (offered before the walkthrough starts, after a
+confirmation) captures and accepts the same synthetic fixture, skips practice and
+waits at the first test. The choice is recorded as `TutorialSkippedForManualMode`
+with an operator note. In manual mode the operator arms every test and starts every
+break; nothing arms or starts automatically.
 **Readiness & diagnostics** shows writer health, sample drops, fresh synthetic
 tracking and observed rate, setup-time disk space, configuration and fixture status.
 Controller/display/SteamVR substitutions remain explicitly labeled as emulated.

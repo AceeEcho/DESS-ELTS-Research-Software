@@ -234,6 +234,73 @@ namespace Elts.Operator.Tests
         }
 
         [UnityTest]
+        public IEnumerator ManualModeSkipsWalkthroughAndWaitsForEveryOperatorAction()
+        {
+            var host=new GameObject("Manual mode station fixture");
+            host.AddComponent<DevelopmentView>();var session=host.AddComponent<DevelopmentSessionPanel>();
+            var clock=new ManualSharedClock(DateTimeOffset.UtcNow);
+            typeof(DevelopmentSessionPanel).GetField("clock",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(session,clock);
+            var station=host.AddComponent<DevelopmentTestStation>();station.OpenAdministratorAutomatically=false;
+            var input=new Input();station.Controls=input;
+            try
+            {
+                for(int i=0;i<5;i++)yield return null;
+                station.ApplyCommand(new JObject { ["action"]="applySetup",["conditionOrder"]=new JArray("WE_FT","WE_MT","NE_FT","NE_MT"),
+                    ["durations"]=new JObject{["WE_FT"]=2,["WE_MT"]=2,["NE_FT"]=2,["NE_MT"]=2},["practiceSeconds"]=10,["breakSeconds"]=5 });
+                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="manual-test"});
+                float limit=Time.realtimeSinceStartup+20;
+                while(session.Engine?.State!=SessionState.Calibration && Time.realtimeSinceStartup<limit)
+                {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                Assert.That((bool)JObject.Parse(station.StateJson())["tutorial"]["canManual"],Is.True,"Manual mode is offered before the walkthrough");
+
+                ParticipantTutorialTests.Command(station,session,"tutorialManual");
+                string run=session.StationRecordingPath;
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),session.StationMessage);
+                Assert.That(session.Tutorial.Manual,Is.True);
+                Assert.That(session.Tutorial.Stage,Is.EqualTo(Elts.Session.TutorialStage.FirstReady));
+                Assert.That(Directory.GetFiles(run,"synthetic-calibration-*.json").Length,Is.EqualTo(1),"Manual mode keeps the saved fixture");
+                var state=JObject.Parse(station.StateJson());
+                Assert.That((bool)state["tutorial"]["canManual"],Is.False);
+                Assert.That((bool)state["tools"]["automaticStudy"],Is.False);
+
+                // Finished narration would auto-arm a walkthrough session; manual mode waits.
+                ParticipantTutorialTests.FinishInstruction(session);
+                for(int i=0;i<10;i++){clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                Assert.That(session.TestArmed,Is.False,"Manual mode never arms on its own");
+                Assert.That(session.StationCanArm,Is.True,session.StationMessage);
+                ParticipantTutorialTests.ArmAfterInstructions(session,station);yield return null;
+                Assert.That(session.TestArmed,Is.True);
+                input.Frame=new DesktopControlFrame(true,new Vector2(300,300),Vector3.zero,pressed:true);yield return null;
+                input.Frame=new DesktopControlFrame(true,new Vector2(300,300),Vector3.zero,released:true);yield return null;
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockRunning),session.StationMessage);
+
+                clock.Advance(TimeSpan.FromSeconds(3));yield return null;
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockEnded));
+                yield return WaitForSave(session);
+                ParticipantTutorialTests.FinishInstruction(session);
+                for(int i=0;i<10;i++){clock.Advance(TimeSpan.FromSeconds(1));yield return null;}
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockEnded),"Manual mode never starts a break on its own");
+                station.ApplyCommand(new JObject{["action"]="startBreak",["blockId"]=session.Engine.CurrentBlockId});
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.Break));
+                ParticipantTutorialTests.FinishInstruction(session);
+                clock.Advance(TimeSpan.FromSeconds(6));yield return null;
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady));
+                ParticipantTutorialTests.FinishInstruction(session);
+                for(int i=0;i<10;i++){clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),"Manual mode never starts the next test on its own");
+                Assert.That(session.TestArmed,Is.False);
+
+                session.StationAbort("Fixture complete");yield return null;
+                yield return WaitForSave(session);
+                string events=File.ReadAllText(Path.Combine(run,"events.ndjson"));
+                Assert.That(events,Does.Contain("TutorialSkippedForManualMode"));
+                Assert.That(events,Does.Contain("Manual mode: the operator skipped the participant walkthrough and practice."));
+                Assert.That(events,Does.Not.Contain("AutomaticScenarioStart"));
+            }
+            finally{UnityEngine.Object.DestroyImmediate(host);}
+        }
+
+        [UnityTest]
         public IEnumerator AdministratorPreparationExceptionsCheckpointsAndArchiveAreConnected()
         {
             var host=new GameObject("Administrator workflow integration fixture");
@@ -308,6 +375,11 @@ namespace Elts.Operator.Tests
                 Assert.That(session.Engine.CurrentBlockId,Is.EqualTo("NE_FT-attempt-03"));
                 Assert.That(session.StationRecordingPath,Is.Not.EqualTo(original));
                 Assert.That(File.ReadAllText(Path.Combine(original,"events.ndjson")),Is.EqualTo(originalEvents),"A finalized recording is never reopened for writes");
+                // The continuation builds a new scenario; it must still drive spark, flinch and fall.
+                var repeated=typeof(DevelopmentSessionPanel).GetField("scenario",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(session);
+                var feedback=(Delegate)typeof(DevelopmentSessionScenario).GetField("TargetHit",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(repeated);
+                Assert.That(feedback?.GetInvocationList().Select(handler=>handler.Method.Name),Has.Member("ShowTargetImpact"),
+                    "A repeated test lost its hit feedback");
                 session.StationAbort("Fixture complete");yield return null;
                 yield return WaitForSave(session);
             }

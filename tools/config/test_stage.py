@@ -6,7 +6,7 @@ import tempfile
 import unittest
 import uuid
 from pathlib import Path
-from tools.config.stage import build_bundle, sha256_bytes, stage
+from tools.config.stage import build_bundle, check_staged, sha256_bytes, stage
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -69,6 +69,27 @@ class StageTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Cannot apply calibration profile Latest save.json"):
                 stage(root, use_calibration_profile=True)
             self.assertEqual(output.read_bytes(), previous)
+
+    def test_check_accepts_source_or_saved_profile_staging_only(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = fixture_root(Path(temp))
+            stage(root)
+            self.assertFalse(check_staged(root))
+            profiles = root / "Calibration Environment/profiles"
+            profiles.mkdir(parents=True)
+            profile = json.loads((ROOT / "Calibration Environment/defaults.json").read_text())
+            profile["screen"].update(width=2, height=1, x=2, z=-3, bottom=1)
+            (profiles / "Saved.json").write_text(json.dumps(profile))
+            # START-ELTS stages the saved profile; CHECK-SYSTEM must not call that drift.
+            output, *_ = stage(root, use_calibration_profile=True)
+            with self.assertRaisesRegex(ValueError, "drift"): stage(root, check=True)
+            self.assertTrue(check_staged(root))
+            # Source-rig staging (as tests write it) remains valid with a saved profile.
+            stage(root)
+            self.assertFalse(check_staged(root))
+            # Anything else is still drift.
+            output.write_bytes(output.read_bytes() + b"x")
+            with self.assertRaisesRegex(ValueError, "drift"): check_staged(root)
 
     def test_display_orthogonality_matches_runtime_basis_tolerance(self):
         # Both sides use normalized edge dot <= 1e-10. These fixtures straddle

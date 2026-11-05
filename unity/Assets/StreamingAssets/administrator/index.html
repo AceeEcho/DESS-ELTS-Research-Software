@@ -37,24 +37,31 @@
     <aside class="control-pane pane">
       <div class="pane-head compact"><div><span class="eyebrow">OPERATOR CONTROL</span><h1>Test session</h1></div><span id="stateBadge" class="badge">IDLE</span></div>
       <div id="setupWelcome" class="setup-welcome"><strong>Prepare your test setup first</strong><p>Use ⚙ Settings to arrange tests, set durations and load a preset. Choose New participant when you’re ready.</p></div>
-      <section id="tutorialPanel" class="panel-section tutorial-panel" hidden aria-label="Participant walkthrough">
-        <div class="section-title"><span id="tutorialStep" class="eyebrow">PARTICIPANT WALKTHROUGH</span><span id="tutorialAudio" class="tutorial-silent"></span></div>
+      <section id="tutorialPanel" class="step-card" hidden aria-label="Participant walkthrough">
+        <div class="step-card-head"><span id="tutorialStep" class="eyebrow">PARTICIPANT WALKTHROUGH</span><span id="tutorialAudio" class="step-tag" hidden></span></div>
         <h2 id="tutorialTitle">Begin the participant walkthrough</h2>
-        <p id="tutorialInstruction" class="review-copy">Setup, calibration and practice are guided inside the game.</p>
-        <p id="tutorialStatus" class="subtle" role="status"></p>
-        <div id="tutorialChecks" class="tutorial-checks"></div>
-        <p id="tutorialCalibrationReview" class="review-copy" hidden></p>
-        <button id="tutorialPrimary" class="primary-btn tutorial-primary" disabled>Begin tutorial / walkthrough</button>
-        <div class="secondary-actions wrap tutorial-controls">
-          <button id="tutorialRedo" class="ghost-btn" hidden>Redo capture</button>
-          <button id="tutorialPause" class="ghost-btn" hidden>Pause instruction</button>
-          <button id="tutorialResume" class="primary-btn" hidden>Resume</button>
-          <button id="tutorialReplay" class="ghost-btn" hidden>Repeat instruction</button>
-          <button id="tutorialStopDemo" class="ghost-btn" hidden>Stop simulation</button>
-          <button id="tutorialRepeatDemo" class="ghost-btn" hidden>Repeat simulated demonstration</button>
+        <p id="tutorialInstruction" class="step-copy">Setup, calibration and practice are guided inside the game.</p>
+        <div id="tutorialChecks" class="step-checks" aria-label="Walkthrough checks"></div>
+        <p id="tutorialCalibrationReview" class="step-copy step-review" hidden></p>
+        <p id="tutorialStatus" class="step-status" role="status"></p>
+        <div class="step-actions">
+          <button id="tutorialPrimary" class="primary-btn step-primary" disabled>Begin walkthrough</button>
+          <button id="tutorialManual" class="ghost-btn step-primary" hidden>Manual mode · skip walkthrough</button>
+          <div class="step-controls">
+            <button id="tutorialRedo" class="ghost-btn" hidden>Redo capture</button>
+            <button id="tutorialPause" class="ghost-btn" hidden>Pause instruction</button>
+            <button id="tutorialResume" class="primary-btn" hidden>Resume</button>
+            <button id="tutorialReplay" class="ghost-btn" hidden>Repeat instruction</button>
+            <button id="tutorialStopDemo" class="ghost-btn" hidden>Stop simulation</button>
+            <button id="tutorialRepeatDemo" class="ghost-btn" hidden>Repeat simulated demonstration</button>
+          </div>
         </div>
       </section>
-      <section id="practicePanel" class="panel-section" hidden><div class="section-title"><h2>Practice</h2><strong id="practiceTimer" class="countdown">00:00</strong></div><p class="subtle">Aim, fire and reload. Practice events are saved separately from scored tests.</p><div class="secondary-actions"><button id="tutorialRestartPractice" class="ghost-btn">Restart practice</button><button id="tutorialFinishPractice" class="primary-btn">Finish practice</button></div></section>
+      <section id="practicePanel" class="step-card" hidden aria-label="Practice">
+        <div class="step-card-head"><span class="eyebrow">PRACTICE</span><strong id="practiceTimer" class="countdown">00:00</strong></div>
+        <p class="step-copy">Aim, fire and reload. Practice events are saved separately from scored tests.</p>
+        <div class="step-controls"><button id="tutorialRestartPractice" class="ghost-btn">Restart practice</button><button id="tutorialFinishPractice" class="primary-btn">Finish practice</button></div>
+      </section>
       <section id="breakPanel" class="break-panel" hidden><div><span class="eyebrow">BREAK</span><strong id="breakTimer" class="countdown">00:00</strong></div><p id="breakHelp">The next test will be ready when the timer ends.</p><div class="break-actions"><button id="startBreak" class="primary-btn">Start break</button><button id="skipBreak" class="ghost-btn">Skip break</button></div></section>
       <section class="task-card">
         <div class="task-card-head"><div><span class="eyebrow">CURRENT TASK</span><h2 id="condition">No condition selected</h2></div><span id="remaining" class="countdown">—</span></div>
@@ -105,6 +112,9 @@
   </div>
   <div id="stopTestDialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="stopTestTitle" hidden>
     <section class="modal"><h2 id="stopTestTitle">Finish this test early?</h2><p class="modal-sub">Results so far will be kept. This test will be marked “Stopped early” and cannot resume. The remaining tests stay available. Use Pause if you want to continue this test later.</p><p id="stopTestError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button id="cancelStopTest" class="ghost-btn">Keep test</button><button id="confirmStopTest" class="primary-btn">Stop this test</button></div></section>
+  </div>
+  <div id="manualDialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="manualTitle" hidden>
+    <section class="modal"><span class="eyebrow">MANUAL MODE</span><h2 id="manualTitle">Skip the walkthrough for this participant?</h2><p class="modal-sub">Calibration is saved automatically and practice is skipped. You arm each test, start each break and confirm the post-study form yourself; nothing advances on its own. The walkthrough can’t be resumed for this participant.</p><p id="manualError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button id="cancelManual" class="ghost-btn">Keep walkthrough</button><button id="confirmManual" class="primary-btn">Use manual mode</button></div></section>
   </div>
   <div id="abortDialog" class="overlay" hidden><form id="abortForm" class="modal" novalidate><button type="button" class="close-btn" id="closeAbort">×</button><span class="eyebrow">STOP SESSION</span><h2>Abort participant session?</h2><p class="modal-sub">The participant session will end with the reason below. Remaining tests will not run in this recording.</p><label class="field-label">Reason<textarea id="abortReason" rows="3" required placeholder="What caused the abort?"></textarea></label><div id="abortError" class="form-error" hidden></div><div class="modal-actions"><button type="button" class="ghost-btn" id="cancelAbort">Keep running</button><button class="danger-btn" type="submit">Abort session</button></div></form></div>
   <div id="exceptionDialog" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="exceptionTitle"><form id="exceptionForm" class="modal"><h2 id="exceptionTitle">Skip this test?</h2><p id="exceptionHelp" class="modal-sub"></p><label id="repeatChoice" class="field-label" hidden>Test to repeat<select id="repeatCondition"></select></label><label class="field-label">Reason<textarea id="exceptionReason" required maxlength="2000" rows="3"></textarea></label><p id="exceptionError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button type="button" id="cancelException" class="ghost-btn">Cancel</button><button id="confirmException" class="primary-btn">Confirm</button></div></form></div>

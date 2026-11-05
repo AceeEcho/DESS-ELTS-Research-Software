@@ -178,8 +178,7 @@ namespace Elts.Operator
                     stationSaveStatus="Recording continuously · first test not finished.";
                 }
                 if(engine.State == SessionState.Failed)throw new IOException(engine.Failure);
-                scenario=new DevelopmentSessionScenario(config,clock,engine,recording,sequence,view.GameSettings);
-                scenario.TargetHit+=view.ShowTargetImpact;
+                StartScenario();
                 RecordInputSource();
                 StartAcquisition(config);
                 firstValidAt=-1; setupPending=true; closing=false;
@@ -222,11 +221,18 @@ namespace Elts.Operator
             if(!await recording.ReserveAndStartAsync(runId)) throw new IOException("The rerun recording could not be started.");
             await SaveParticipantIdentityAsync();
             engine.RerunCurrentBlock();
-            scenario=new DevelopmentSessionScenario(view.Configuration,clock!,engine,recording,sequence!,view.GameSettings);
-            scenario.TargetHit+=view.ShowTargetImpact;
+            StartScenario();
             RecordInputSource();
             StartAcquisition(view.Configuration);
             closing=false;
+        }
+
+        /// <summary>Replaces the scenario for a new or continued recording. Every instance
+        /// must drive the view's hit feedback (spark, flinch, fall); create scenarios only here.</summary>
+        private void StartScenario()
+        {
+            scenario=new DevelopmentSessionScenario(view.Configuration,clock!,engine!,recording!,sequence!,view.GameSettings);
+            scenario.TargetHit+=view.ShowTargetImpact;
         }
 
         private async Task CloseRecordingAsync()

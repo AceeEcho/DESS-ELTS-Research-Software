@@ -127,7 +127,7 @@ Click **New participant**, enter the **Participant number / ID** (name and notes
 
 ### 4 · Begin the walkthrough
 
-Click **Begin tutorial / walkthrough**. The participant window guides the participant step by step ([see every screen below](#-the-participant-walkthrough)) while the dashboard tells you what to do next.
+Click **Begin walkthrough**. The participant window guides the participant step by step ([see every screen below](#-the-participant-walkthrough)) while the dashboard tells you what to do next.
 
 <img align="right" width="440" alt="Dashboard walkthrough panel during head calibration: step title, instruction, checklist, a large Capture direction 2 of 7 button, and Redo capture, Pause instruction and Repeat instruction." src="docs/images/readme/dashboard-walkthrough.png">
 
@@ -148,6 +148,8 @@ After the overview the first scenario arms by itself. The participant sees **Sho
 
 <br>
 
+Instead of **Begin walkthrough**, click **Manual mode · skip walkthrough** and confirm. The synthetic calibration fixture is saved automatically, practice is skipped, and the first test waits for you. Nothing arms, starts a break or starts a test on its own in manual mode. The choice can't be undone for that participant.
+
 Check the condition and duration in **Current task**, then click **ARM TEST** when the participant is ready. **DISARM TEST** cancels before they start.
 
 ![Ready test showing its condition, duration and the large ARM TEST button.](docs/operator/images/user-guide/texas-tech/07-arm.png)
@@ -158,7 +160,7 @@ After each test: wait for saving, click **Start break** (waiting beforehand uses
 | :---: | :---: |
 | ![Saved test with Start break and Skip break.](docs/operator/images/user-guide/texas-tech/10-start-break.png) | ![Running break countdown with Skip break.](docs/operator/images/user-guide/texas-tech/11-break-countdown.png) |
 
-After the final test, complete or skip its break to close the recording.
+After the final test, complete or skip its break to close the recording, then click **Confirm form completed** once the participant has filled in the post-study form.
 
 </details>
 

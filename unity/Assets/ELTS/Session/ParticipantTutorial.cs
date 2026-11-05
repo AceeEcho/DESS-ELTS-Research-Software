@@ -54,6 +54,9 @@ namespace Elts.Session
         public bool DemoFinished { get; private set; }
         public bool DemoFailed { get; private set; }
         public int DemoAttempt { get; private set; }
+        /// <summary>The operator chose manual mode: the guided walkthrough and practice were
+        /// skipped, and every arm, break and next test waits for an operator action.</summary>
+        public bool Manual { get; private set; }
         public bool Started => Stage != TutorialStage.NotStarted;
         public bool AllScenariosCompleted => completedConditions.Count == 4;
         public bool LastBreakSkipped => breakSkipped;
@@ -85,6 +88,16 @@ namespace Elts.Session
             ElapsedSeconds+=seconds;
             CueFinished=Step.Script.Length==0 || ElapsedSeconds>=explanationSeconds;
             if(Step.Automatic && CueFinished)Move(Next(Stage),"TutorialExplanationFinished");
+        }
+        /// <summary>Skips the guided walkthrough before it starts and waits at the first
+        /// scenario. The caller owns calibration and practice transitions; this only
+        /// records the choice and presents the ready screen.</summary>
+        public void StartManual(int revision)
+        {
+            RequireRevision(revision);
+            if(Started)throw new InvalidOperationException("Manual mode is available only before the walkthrough starts.");
+            Manual=true;
+            Move(TutorialStage.FirstReady,"TutorialSkippedForManualMode");
         }
         public bool CanContinue => !Paused && CueFinished && (Stage==TutorialStage.ReadyForSetup || Stage==TutorialStage.Equipment ||
             Stage==TutorialStage.EquipmentCheck || Stage==TutorialStage.Holding || Stage==TutorialStage.Aim ||

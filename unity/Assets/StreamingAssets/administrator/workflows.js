@@ -197,6 +197,18 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
     const tutorial = getState()?.tutorial;
     if (tutorial?.canPrimary) action(tutorial.primaryAction).catch(() => {});
   });
+  // Manual mode cannot be undone for this participant, so it is confirmed first.
+  $('tutorialManual').addEventListener('click', () => {
+    if (!getState()?.tutorial?.canManual) return;
+    $('manualError').hidden = true; $('manualDialog').hidden = false; $('cancelManual').focus();
+  });
+  $('cancelManual').addEventListener('click', () => { $('manualDialog').hidden = true; $('tutorialManual').focus(); });
+  $('confirmManual').addEventListener('click', async () => {
+    $('confirmManual').disabled = true;
+    try { await action('tutorialManual'); $('manualDialog').hidden = true; }
+    catch (e) { error('manualError', e); }
+    finally { $('confirmManual').disabled = false; }
+  });
   function openException(kind) {
     const state = getState();
     exceptionContext = { kind, runId: state.runId, blockId: state.blockId };
@@ -303,20 +315,26 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
   function offline() {
     finishDrag(true);
     $('conditionOrder').querySelectorAll('button').forEach(button => { button.disabled = true; });
-    ['tutorialPrimary', 'tutorialRedo', 'tutorialPause', 'tutorialResume', 'tutorialReplay', 'tutorialStopDemo', 'tutorialRepeatDemo',
+    ['tutorialPrimary', 'tutorialManual', 'confirmManual', 'tutorialRedo', 'tutorialPause', 'tutorialResume', 'tutorialReplay', 'tutorialStopDemo', 'tutorialRepeatDemo',
       'tutorialRestartPractice', 'tutorialFinishPractice', 'startBreak', 'skipBreak', 'skipTest', 'repeatTest', 'applyPhaseTiming', 'loadPreset', 'savePreset', 'exportRecording', 'refreshRecordings']
       .forEach(id => { $(id).disabled = true; });
   }
   function renderTutorial(state, tutorial) {
     $('tutorialPanel').hidden = !tutorial || !state.participant || ['Aborted', 'Failed'].includes(state.state);
     if (!tutorial) return;
-    $('tutorialStep').textContent = tutorial.step ? `WALKTHROUGH · ${tutorial.step.replaceAll('-', '.')}` : 'PARTICIPANT WALKTHROUGH';
+    const step = tutorial.step ? ` · ${tutorial.step.replaceAll('-', '.')}` : '';
+    $('tutorialStep').textContent = tutorial.manual ? `MANUAL MODE${step}` : tutorial.step ? `WALKTHROUGH${step}` : 'PARTICIPANT WALKTHROUGH';
     $('tutorialTitle').textContent = tutorial.started ? tutorial.title || 'Scenario running' : 'Begin the participant walkthrough';
-    $('tutorialInstruction').textContent = tutorial.started ? tutorial.instruction : 'Setup, calibration and practice are guided inside the game.';
-    $('tutorialStatus').textContent = tutorial.status;
+    $('tutorialInstruction').textContent = tutorial.started ? tutorial.instruction
+      : 'Setup, calibration and practice are guided inside the game. Manual mode skips straight to the tests.';
+    $('tutorialStatus').textContent = tutorial.status || '';
+    $('tutorialStatus').hidden = !tutorial.status;
     // Narration is optional per step; say which applies rather than a fixed label.
     $('tutorialAudio').textContent = !tutorial.started ? '' : tutorial.audioAvailable ? 'Narration on' :
       tutorial.audioEnabled ? 'No narration for this step' : 'Narration off';
+    $('tutorialAudio').hidden = !$('tutorialAudio').textContent;
+    $('tutorialManual').hidden = !tutorial.canManual;
+    $('tutorialManual').disabled = actionBusy || !tutorial.canManual;
     $('tutorialPrimary').textContent = tutorial.primaryLabel || 'Waiting for session event';
     $('tutorialPrimary').hidden = !tutorial.primaryLabel;
     $('tutorialPrimary').disabled = actionBusy || !tutorial.canPrimary;
@@ -328,8 +346,11 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
     $('tutorialCalibrationReview').textContent = tutorial.calibrationReview || '';
     const checks = [['Head review', tutorial.headAccepted], ['Gun review', tutorial.gunAccepted],
       ['Firing tried', tutorial.fired], ['Reload tried', tutorial.reloaded]];
-    html('tutorialChecks', tutorial.started ? checks.map(([label, complete]) =>
-      `<span class="tutorial-check ${complete ? 'is-complete' : ''}"><span aria-hidden="true">${complete ? '✓' : '○'}</span> ${label}</span>`).join('') : '');
+    // Manual mode skips these checks, so they are not shown as outstanding.
+    const showChecks = tutorial.started && !tutorial.manual;
+    $('tutorialChecks').hidden = !showChecks;
+    html('tutorialChecks', showChecks ? checks.map(([label, complete]) =>
+      `<span class="step-check ${complete ? 'is-complete' : ''}"><span aria-hidden="true">${complete ? '✓' : '○'}</span> ${label}</span>`).join('') : '');
   }
   renderPresets();
   return { render, renderOrder, offline };

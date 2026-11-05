@@ -62,7 +62,7 @@ These details are saved with the recording. Creating a recording does not start 
 
 ## 4. Begin the participant walkthrough
 
-Click **Begin tutorial / walkthrough**. Follow the setup checks, separate head and
+Click **Begin walkthrough**. Follow the setup checks, separate head and
 gun fixture reviews, and aiming/firing/reloading instructions. Each action waits
 for its actual input or operator confirmation. Calibration remains synthetic.
 

@@ -57,7 +57,7 @@ namespace Elts.Operator
             repeatable=engine?.FinishedConditions.ToArray()??Array.Empty<string>(),
             canRepeat=!IsBusy && !TestArmed && engine!=null && (engine.CanScheduleRepeat || (engine.CanReopenForRepeat && StationCanStartParticipant)),
             canSkipTest=!IsBusy && !closing && !TestArmed && engine?.State==SessionState.BlockReady && (!SeparateAdministrator || tutorial.CanManageReadyScenario),
-            automaticStudy=tutorial.Started,
+            automaticStudy=tutorial.Started && !tutorial.Manual,
             canStartBreak=StationBreakReady,
             canSkipBreak=!IsBusy && (engine?.State==SessionState.Break || StationBreakReady),
             canRestartPractice=!IsBusy && !TestArmed && engine!=null &&
@@ -193,7 +193,7 @@ namespace Elts.Operator
                 if(engine.State==SessionState.Failed)throw new IOException(engine.Failure);
                 closing=false;
                 StationNote("Continuation of "+Path.GetFileName(previous)+"; reason: "+reason);
-                scenario=new DevelopmentSessionScenario(view.Configuration,clock!,engine,recording,sequence!,view.GameSettings);
+                StartScenario();
                 RecordInputSource();StartAcquisition(view.Configuration);
                 stationSaveStatus="Recording repeated test in a new folder; earlier data retained.";
             }

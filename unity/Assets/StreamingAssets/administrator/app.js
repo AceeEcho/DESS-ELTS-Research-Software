@@ -316,7 +316,7 @@
   document.documentElement.style.setProperty('--pane', `${next * 100}%`);
   preference.set('elts-admin-pane', next); });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { closeDialog();
-  closeAbort(); $('stopTestDialog').hidden = true; $('settingsDialog').hidden = true; $('exceptionDialog').hidden = true; $('recordingsDialog').hidden = true; $('settingsButton').focus(); }
+  closeAbort(); $('stopTestDialog').hidden = true; $('manualDialog').hidden = true; $('settingsDialog').hidden = true; $('exceptionDialog').hidden = true; $('recordingsDialog').hidden = true; $('settingsButton').focus(); }
   // Keep keyboard navigation inside the topmost open modal.
   if (event.key === 'Tab') {
     const dialog = [...document.querySelectorAll('.overlay:not([hidden])')].at(-1);

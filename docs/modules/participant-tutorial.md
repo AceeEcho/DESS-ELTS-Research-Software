@@ -2,7 +2,7 @@
 
 The desktop participant game now includes the visual walkthrough described in
 [the working script](../participant-tutorial-script.md). Create a participant
-recording, then select **Begin tutorial / walkthrough** in the administrator
+recording, then select **Begin walkthrough** in the administrator
 dashboard. The participant screen contains no operator buttons.
 
 ## Operator flow

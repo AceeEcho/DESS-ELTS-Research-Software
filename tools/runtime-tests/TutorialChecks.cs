@@ -109,6 +109,18 @@ static class TutorialChecks
         Check(failedDemo.Stage==TutorialStage.Demonstration && !failedDemo.CanRequestDemo(0),"failed demonstration silently retried");
         failedDemo.RepeatDemonstration(failedDemo.Revision);Explain(failedDemo);
         Check(failedDemo.CanRequestDemo(7),"explicit repeat did not permit a fresh cue");
+        var manualEvents=new List<string>();
+        var manual=new ParticipantTutorial((name,_)=>manualEvents.Add(name));
+        Reject(()=>manual.StartManual(manual.Revision+1),"stale manual-mode request was accepted");
+        manual.StartManual(manual.Revision);
+        Check(manual.Manual && manual.Stage==TutorialStage.FirstReady,"manual mode did not wait at the first scenario");
+        Check(manualEvents.Contains("TutorialSkippedForManualMode"),"manual mode choice was not recorded");
+        Check(!manual.HeadAccepted && !manual.Fired,"manual mode claimed walkthrough checks it skipped");
+        Check(!manual.CanArm,"manual arm opened before the readiness cue finished");
+        Explain(manual);Check(manual.CanArm,"manual mode never opened the arm control");
+        Reject(()=>manual.StartManual(manual.Revision),"manual mode restarted a started session");
+        var guided=ThroughSetup();
+        Reject(()=>guided.StartManual(guided.Revision),"manual mode replaced a walkthrough in progress");
         var rejected=new ParticipantTutorial((_,__)=>throw new InvalidOperationException("sink failed"));
         Reject(()=>rejected.Begin(0),"recording failure was ignored");Check(!rejected.Started,"failed record advanced tutorial");
         Console.WriteLine("PASS: "+checks+" tutorial progression checks");

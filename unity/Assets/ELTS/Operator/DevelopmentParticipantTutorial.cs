@@ -87,7 +87,7 @@ namespace Elts.Operator
         private string TutorialPrimaryAction => !tutorial.Started?"tutorialBegin":TutorialCalibrationStep?
             (calibration.State==CalibrationWizardState.Idle?"tutorialCapture":"tutorialAccept"):
             tutorial.Stage==TutorialStage.PracticeReady?"tutorialPractice":tutorial.Stage==TutorialStage.Form?"tutorialForm":"tutorialContinue";
-        private string TutorialPrimaryLabel => !tutorial.Started?"Begin tutorial / walkthrough":TutorialCalibrationStep?
+        private string TutorialPrimaryLabel => !tutorial.Started?"Begin walkthrough":TutorialCalibrationStep?
             (calibration.State==CalibrationWizardState.Idle?(tutorial.Stage==TutorialStage.HeadCalibration?
                 "Capture direction "+(tutorial.HeadCalibrationIndex+1)+" of 7 · "+tutorial.Step.Title:"Capture synthetic gun fixture"):
                 "Accept review · continue"):tutorial.Step.OperatorAction;
@@ -110,6 +110,7 @@ namespace Elts.Operator
             canRestartPractice=!IsBusy && !tutorial.Paused && tutorial.CueFinished && (tutorial.Stage==TutorialStage.PracticeRunning || tutorial.Stage==TutorialStage.PracticeComplete),
             canFinishPractice=!IsBusy && tutorial.Stage==TutorialStage.PracticeRunning,
             practicePaused=engine?.PracticePaused==true,audioEnabled=tutorialNarration!=null,
+            manual=tutorial.Manual,canManual=TutorialCanBegin,
             audioAvailable=TutorialHasNarration,audioSlot=tutorial.Step.AudioSlot,
             status=TutorialOperatorStatus()
         };
@@ -118,6 +119,8 @@ namespace Elts.Operator
             if(!tutorial.Started)return "Start the walkthrough after the participant recording is ready.";
             if(tutorial.Paused)return engine?.State==SessionState.Practice?"Practice paused. Recording continues.":"Instruction paused. Resume when ready.";
             if(!tutorial.CueFinished)return "Let the current narration and diagram finish. The action will become available afterward.";
+            if(tutorial.Manual && tutorial.Stage!=TutorialStage.Form)
+                return "Manual mode: arm each test, start each break and arm the next test yourself.";
             if(TutorialCalibrationStep)return "Synthetic fixture review only; this does not calibrate physical equipment.";
             if(tutorial.Stage==TutorialStage.Fire)return tutorial.Fired?"Firing observed. Confirm understanding to continue.":"Waiting for a participant shot. A hit is not required.";
             if(tutorial.Stage==TutorialStage.Reload)return tutorial.Reloaded?"Reload observed. Confirm understanding to continue.":"Waiting for a reload. If the magazine is full, fire once first.";
@@ -141,6 +144,7 @@ namespace Elts.Operator
                 case "tutorialBegin":
                     if(!TutorialCanBegin)throw new InvalidOperationException("The participant recording is not ready for the walkthrough.");
                     tutorial.Begin(revision);break;
+                case "tutorialManual":StartManualMode(revision);break;
                 case "tutorialContinue":tutorial.Continue(revision);break;
                 case "tutorialCapture":
                     if(!TutorialCanCapture)throw new InvalidOperationException("Wait for the stationary dot, then capture this calibration fixture.");
@@ -187,6 +191,36 @@ namespace Elts.Operator
             }
             if(engine.State==SessionState.Failed)throw new IOException(engine.Failure);
             SynchronizeTutorial();
+        }
+        /// <summary>Manual mode: skip the guided walkthrough and practice and wait at the
+        /// first test. The same synthetic fixture is captured and saved as in the
+        /// walkthrough, so every recording carries identical calibration evidence.</summary>
+        private void StartManualMode(int revision)
+        {
+            if(!TutorialCanBegin)throw new InvalidOperationException("The participant recording is not ready for manual mode.");
+            CaptureCalibrationFixture();
+            if(!calibrationWithinLimits)
+            {
+                ResetCalibration();
+                throw new InvalidOperationException("The synthetic calibration fixture is outside the development limits. Use the walkthrough to review it.");
+            }
+            try
+            {
+                AcceptCalibrationFixture();
+                StationNote("Manual mode: the operator skipped the participant walkthrough and practice.");
+                AdvanceWithCalibration();
+                engine!.FinishDevelopmentPractice();
+                if(engine.State!=SessionState.BlockReady)throw new IOException(engine.Failure??"The first test could not be prepared.");
+                tutorial.StartManual(revision);
+                lastMessage="Manual mode. Arm the test when the participant is ready.";
+            }
+            catch
+            {
+                // A half-prepared session cannot return to the walkthrough; stop it visibly.
+                if(engine!=null && engine.State!=SessionState.Failed && engine.State!=SessionState.Aborted)
+                    engine.Abort("Manual mode setup failed.");
+                throw;
+            }
         }
         private void CaptureTutorialHeadDirection(int revision)
         {

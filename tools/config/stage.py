@@ -241,9 +241,31 @@ def stage(root: Path, output: Path | None = None, check: bool = False, *,
     return list(expected)
 
 
+def check_staged(root: Path, output: Path | None = None) -> bool:
+    """Check generated output without writing, accepting either legitimate staging.
+
+    START-ELTS stages the latest saved calibration profile, while tests and plain
+    staging use the source rig. Both are correct outputs of current source, so a
+    check matches either one. Returns True when the saved-profile staging matched.
+    """
+    try:
+        stage(root, output, check=True)
+        return False
+    except ValueError as source_drift:
+        try:
+            stage(root, output, check=True, use_calibration_profile=True)
+        except ValueError:
+            # Report the source-rig comparison; it names the files that differ.
+            raise source_drift from None
+        return True
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__); group = parser.add_mutually_exclusive_group(); group.add_argument("--write", action="store_true"); group.add_argument("--check", action="store_true"); parser.add_argument("--output")
-    args = parser.parse_args(); root = ROOT; output = (root / args.output) if args.output and not Path(args.output).is_absolute() else (Path(args.output) if args.output else None); stage(root, output, args.check); print("PASS: synthetic configuration validated and staged")
+    args = parser.parse_args(); root = ROOT; output = (root / args.output) if args.output and not Path(args.output).is_absolute() else (Path(args.output) if args.output else None)
+    if args.check: check_staged(root, output)
+    else: stage(root, output)
+    print("PASS: synthetic configuration validated and staged")
 
 
 if __name__ == "__main__": main()

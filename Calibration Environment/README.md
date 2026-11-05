@@ -31,9 +31,11 @@ SteamVR, internet connection, or build step. Three.js is bundled locally.
 2. Set the screen's position and pitch/yaw/roll if needed. Its default position
    defines the room's X/Z reference. The bottom-edge measurement is the midpoint
    of the lower edge; screen tilt rotates the centre around that point.
-3. Enter each base station's position and orientation. **Y is its centre height
-   above the floor.** A second station can be enabled. When SteamVR supplies a
-   valid station pose, **Copy current station pose** copies it through the current
+3. Enter each base station's position in feet and inches. **Y is the height of
+   the station centre above the floor.** Use X and Z to place it left or right
+   and in front of or behind the room origin. Orientation uses degrees and
+   profiles store positions in metres. When SteamVR supplies a valid station
+   pose, **Copy current station pose** converts it through the current
    tracking-origin registration.
 4. Set room dimensions and display aids. Drag the overview to orbit, right-drag
    to pan, and scroll to zoom. Room/front/side/top buttons reset the camera angle.

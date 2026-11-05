@@ -26,6 +26,21 @@ page.on("dialog", (dialog) => dialog.accept());
 const checks = [];
 try {
     await page.goto("http://127.0.0.1:8766");
+    const station = page.locator("section").filter({ has: page.getByRole("heading", { name: "Base station 1", exact: true }) });
+    const x = station.getByRole("group", { name: "X · left / right" });
+    await x.getByLabel("Feet").fill("0");
+    await x.getByLabel("Inches").fill("6.5");
+    await x.getByLabel("Inches").press("Tab");
+    assert.equal(await x.getByLabel("Direction").inputValue(), "-1");
+    const y = station.getByRole("group", { name: "Y · centre height from floor" });
+    await y.getByLabel("Feet").fill("7");
+    await y.getByLabel("Inches").fill("2.5");
+    await y.getByLabel("Inches").press("Tab");
+    const z = station.getByRole("group", { name: "Z · front / back" });
+    await z.getByLabel("Direction").selectOption({ label: "Front" });
+    await z.getByLabel("Feet").fill("2");
+    await z.getByLabel("Inches").fill("0");
+    await z.getByLabel("Inches").press("Tab");
     await page.getByRole("button", { name: "Tracking", exact: true }).click();
     await page.locator("#source-select").selectOption("manual");
     await page.waitForFunction(
@@ -108,7 +123,10 @@ try {
         new URL("/api/profile?name=Desktop%20verification", page.url()).href,
     );
     assert.equal(savedProfile.ok(), true);
-    assert.equal((await savedProfile.json()).person.height, 74.5 * 0.0254);
+    const savedConfig = await savedProfile.json();
+    assert.equal(savedConfig.person.height, 74.5 * 0.0254);
+    assert.deepEqual(savedConfig.baseStations[0].position, [-6.5, 86.5, -24].map(inches => inches * 0.0254));
+    checks.push("Base station height and signed offsets save in metres");
     await page.getByRole("button", { name: "Head", exact: true }).click();
     assert.equal(await page.getByLabel("Feet", { exact: true }).inputValue(), "6");
     assert.equal(await page.getByLabel("Inches", { exact: true }).inputValue(), "2.5");

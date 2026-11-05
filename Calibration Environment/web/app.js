@@ -117,15 +117,25 @@ function field(
 }
 const METRES_PER_INCH = 0.0254;
 
-function participantHeightFields() {
-    const totalInches = Math.round(config.person.height / METRES_PER_INCH * 100) / 100;
+function distanceFields(path, label, directions) {
+    const metres = get(path);
+    const totalInches = Math.round(Math.abs(metres) / METRES_PER_INCH * 100) / 100;
     const feet = Math.floor(totalInches / 12);
     const inches = Number((totalInches - feet * 12).toFixed(2));
-    return `<div class="field-title">Participant height</div>
-        <div class="single-row">
-            <div class="field"><label for="height-feet">Feet</label><input id="height-feet" type="number" min="0" max="8" step="1" value="${feet}" required></div>
-            <div class="field"><label for="height-inches">Inches</label><input id="height-inches" type="number" min="0" max="12" step="any" value="${inches}" required></div>
-        </div>`;
+    const direction = directions
+        ? `<label for="${path}-direction">Direction<select id="${path}-direction">
+            <option value="1" ${metres >= 0 ? "selected" : ""}>${directions[0]}</option>
+            <option value="-1" ${metres < 0 ? "selected" : ""}>${directions[1]}</option>
+        </select></label>`
+        : "";
+    return `<div data-distance-path="${path}" role="group" aria-label="${label}">
+        <div class="field-title">${label}</div>
+        <div class="vector">
+            <label for="${path}-feet">Feet<input id="${path}-feet" type="number" min="0" step="1" value="${feet}" required></label>
+            <label for="${path}-inches">Inches<input id="${path}-inches" type="number" min="0" max="12" step="any" value="${inches}" required></label>
+            ${direction}
+        </div>
+    </div>`;
 }
 
 function vector(path, label, angles = false) {
@@ -187,7 +197,9 @@ function renderSettings() {
             html += section(
                 `Base station ${i + 1}`,
                 check(`baseStations.${i}.enabled`, "Show this base station") +
-                    vector(`baseStations.${i}.position`, "Position in room") +
+                    distanceFields(`baseStations.${i}.position.0`, "X · left / right", ["Right", "Left"]) +
+                    distanceFields(`baseStations.${i}.position.1`, "Y · centre height from floor", ["Above", "Below"]) +
+                    distanceFields(`baseStations.${i}.position.2`, "Z · front / back", ["Back", "Front"]) +
                     vector(`baseStations.${i}.rotation`, "Orientation", true) +
                     `<label class="field" for="base-device-${i}">Copy a live base station pose</label><select id="base-device-${i}" class="base-device" data-index="${i}"></select><button class="wide" data-action="base-${i}">Copy current station pose</button>`,
                 "Y is the base station centre height above the floor. These values place the model; they do not recalibrate SteamVR.",
@@ -212,7 +224,7 @@ function renderSettings() {
         html += section(
             "Eye &amp; person",
             vector("head.eye", "Viewing eye from head centre") +
-                participantHeightFields() +
+                distanceFields("person.height", "Participant height") +
                 field("person.radius", "Body radius", { min: 0.05, max: 0.6 }),
             "Participant height sizes the body preview. Set the tracker mount and viewing-eye offsets separately for the actual headband fit.",
         );
@@ -531,18 +543,22 @@ $("settings").addEventListener("change", (event) => {
         changed(role + ".serial");
         return;
     }
-    if (input.id === "height-feet" || input.id === "height-inches") {
-        const feet = $("height-feet"), inches = $("height-inches");
+    const distance = input.closest("[data-distance-path]");
+    if (distance) {
+        const path = distance.dataset.distancePath;
+        const feet = $(path + "-feet"), inches = $(path + "-inches");
         if (!feet.reportValidity() || !inches.reportValidity()) return;
         if (inches.valueAsNumber === 12)
             return notice("Enter fewer than 12 inches and add any whole foot to Feet.");
-        const height = (feet.valueAsNumber * 12 + inches.valueAsNumber) * METRES_PER_INCH;
-        if (height < 0.5 || height > 2.7 || height < 2 * config.person.radius) {
-            notice("Height must be between 0.5 and 2.7 m and at least twice the body radius.");
-            return;
-        }
-        config.person.height = height;
-        changed("person.height");
+        const direction = Number($(path + "-direction")?.value ?? 1);
+        const metres = direction * (feet.valueAsNumber * 12 + inches.valueAsNumber) * METRES_PER_INCH;
+        if (path === "person.height" &&
+            (metres < 0.5 || metres > 2.7 || metres < 2 * config.person.radius))
+            return notice("Height must be between 0.5 and 2.7 m and at least twice the body radius.");
+        if (Math.abs(metres) > 100)
+            return notice("The distance must be within 100 metres of the origin.");
+        set(path, metres);
+        changed(path);
         return;
     }
     const path = input.dataset.path;

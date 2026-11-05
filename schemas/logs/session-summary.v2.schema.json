@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "elts.session-summary.v2.schema.json",
+  "title": "ELTS v2 session closure summary",
+  "description": "checksumsSha256 covers the three streams. supplementaryChecksumsSha256 covers every other regular file in the run folder when it closed (participant, calibration and checkpoint files); files written after closure are not covered.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "complete", "error", "provenance", "counts", "checksumsSha256", "supplementaryChecksumsSha256"],
+  "properties": {
+    "schemaVersion": {"const": "elts.session-summary.v2"}, "runId": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$", "maxLength": 80}, "complete": {"type": "boolean"}, "error": {"type": ["string", "null"]},
+    "provenance": {"type": "object", "additionalProperties": false, "required": ["applicationVersion", "sourceRevision", "configurationHash", "scenarioHash", "fixtureHash", "synthetic", "utcStartupAnchor"], "properties": {"applicationVersion": {"type": "string", "minLength": 1}, "sourceRevision": {"type": "string", "minLength": 1}, "configurationHash": {"$ref": "#/$defs/hash"}, "scenarioHash": {"$ref": "#/$defs/hash"}, "fixtureHash": {"$ref": "#/$defs/hash"}, "synthetic": {"type": "boolean"}, "utcStartupAnchor": {"type": "string", "format": "date-time"}}},
+    "counts": {"type": "object", "additionalProperties": false, "required": ["droppedSamples", "writtenSamples", "writtenEvents", "writtenTargets"], "properties": {"droppedSamples": {"type": "integer", "minimum": 0}, "writtenSamples": {"type": "integer", "minimum": 0}, "writtenEvents": {"type": "integer", "minimum": 0}, "writtenTargets": {"type": "integer", "minimum": 0}}},
+    "checksumsSha256": {"type": "object", "additionalProperties": false, "required": ["samples.ndjson", "events.ndjson", "targets.ndjson"], "properties": {"samples.ndjson": {"$ref": "#/$defs/hash"}, "events.ndjson": {"$ref": "#/$defs/hash"}, "targets.ndjson": {"$ref": "#/$defs/hash"}}},
+    "supplementaryChecksumsSha256": {"type": "object", "propertyNames": {"pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"}, "additionalProperties": {"$ref": "#/$defs/hash"}}
+  },
+  "$defs": {"hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

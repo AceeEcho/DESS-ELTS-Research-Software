@@ -1,7 +1,7 @@
 # Recorded replay reader
 
 `Elts.Rendering.RecordedReplay` is the bounded development viewer reader for a
-completed `elts.session-summary.v1` run. It reads the three v1 NDJSON products
+completed `elts.session-summary.v2` run. It reads the three NDJSON products
 (`samples.ndjson`, `events.ndjson`, and `targets.ndjson`) as UTF-8, verifies each
 raw product SHA-256 against the summary, and retains the summary hash and source
 provenance. A pending summary is never loadable because only the published

@@ -147,7 +147,8 @@ namespace Elts.Operator
             if (engine!.State != SessionState.Calibration || calibration.State != CalibrationWizardState.Review
                 || !calibrationWithinLimits || calibrationJson == null || recording?.RunDirectory == null)
                 throw new InvalidOperationException("A reviewed fixture within development limits is required.");
-            string path = Path.Combine(recording.RunDirectory, "synthetic-calibration-" + Guid.NewGuid().ToString("N") + ".json");
+            // A short unique suffix keeps run file paths within the Windows path limit.
+            string path = Path.Combine(recording.RunDirectory, "synthetic-calibration-" + Guid.NewGuid().ToString("N").Substring(0, 8) + ".json");
             // Create-new prevents redo or rerun from overwriting prior evidence.
             using (var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
             using (var writer = new StreamWriter(output, new UTF8Encoding(false))) writer.Write(calibrationJson);

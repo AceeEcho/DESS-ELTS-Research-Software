@@ -22,6 +22,8 @@ namespace Elts.Operator
         private string? stationAutomaticallyArmedBlock;
         private string stationParticipant = "";
         private string stationParticipantName = "", stationInitialNotes = "";
+        // One visit spans the first recording and every repeat or continuation folder.
+        private string stationVisitId = "";
         private double stationStartedAt;
         private readonly Dictionary<string,double> stationDurations = new Dictionary<string,double>(StringComparer.Ordinal) {
             ["WE_FT"]=300,["WE_MT"]=300,["NE_FT"]=300,["NE_MT"]=300
@@ -120,6 +122,7 @@ namespace Elts.Operator
             stationAutomaticallyArmedBlock=null;
             stationSaveStatus="Recording will start after setup.";
             stationParticipantName=participantName.Trim();stationInitialNotes=initialNotes.Trim();
+            stationVisitId=Guid.NewGuid().ToString("N");
             stationStartedAt=clock?.Now.Elapsed.TotalSeconds ?? 0;
             Field("participant").value=participant+"-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss")+"-"+Guid.NewGuid().ToString("N").Substring(0,6);
             Field("conditionOrder").value=String.Join(",",conditions);

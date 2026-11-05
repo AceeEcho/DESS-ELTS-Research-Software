@@ -27,6 +27,11 @@ public sealed class LoggingRunLease
 public static class LoggingRunDirectory
 {
     private const int MaxUniqueSuffix = 9999;
+    // Windows paths without long-path support hold at most 259 characters. The longest
+    // file ELTS writes in a run folder is under 48 characters, including ".pending"
+    // (for example "test-checkpoint-WE_FT-attempt-01.json.pending").
+    private const int MaximumWindowsPath = 259;
+    public const int MaximumRunFileNameLength = 48;
 
     public static LoggingRunLease ReserveUnique(string dataRoot, string requestedRunId)
     {
@@ -43,6 +48,9 @@ public static class LoggingRunDirectory
             string suffixedBase = baseId.Length > 74 ? baseId.Substring(0, 74) : baseId;
             string runId = suffix == 0 ? baseId : suffixedBase + "-r" + suffix.ToString("D4", CultureInfo.InvariantCulture);
             string directory = CombineChild(root, runId);
+            // Refuse now rather than fail while saving a file at the end of the session.
+            if (directory.Length + 1 + MaximumRunFileNameLength > MaximumWindowsPath)
+                throw new IOException("The data folder path is too long for Windows (" + directory.Length + " characters for this run folder). Choose a shorter data folder location.");
             // An existing directory is never adopted, even if it appears empty.
             if (Directory.Exists(directory) || File.Exists(directory)) continue;
             string reservation = CombineChild(root, "." + runId + ".reservation");
@@ -472,7 +480,25 @@ public sealed class SessionLogWriter : IDisposable
     {
         Exception? current; lock (faultLock) current = fault;
         return LogJson.Summary(lease, provenance, current == null, current?.Message, DroppedSampleCount, Interlocked.Read(ref writtenSamples),
-            Interlocked.Read(ref writtenEvents), Interlocked.Read(ref writtenTargets), checksums);
+            Interlocked.Read(ref writtenEvents), Interlocked.Read(ref writtenTargets), checksums, SupplementaryChecksums(lease.DirectoryPath));
+    }
+    /// <summary>SHA-256 of every other regular file in the run folder at closure, such as
+    /// participant, calibration and checkpoint files, so the summary covers the whole run.
+    /// Streams, summaries and unpublished ".pending" files are excluded; names sort ordinally.</summary>
+    private static IReadOnlyDictionary<string, string> SupplementaryChecksums(string directory)
+    {
+        var excluded = new HashSet<string>(StringComparer.Ordinal) { "samples.ndjson", "events.ndjson", "targets.ndjson", "session-summary.json", ".session-summary.pending.json" };
+        var result = new SortedDictionary<string, string>(StringComparer.Ordinal);
+        foreach (string path in Directory.GetFiles(directory))
+        {
+            string name = Path.GetFileName(path);
+            if (excluded.Contains(name) || name.EndsWith(".pending", StringComparison.Ordinal)) continue;
+            if ((File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0) throw new IOException("Run folders may not contain linked files: " + name);
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var sha = SHA256.Create())
+                result[name] = BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
+        }
+        return result;
     }
     private void SetFault(Exception error)
     {

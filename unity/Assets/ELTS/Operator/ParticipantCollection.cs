@@ -34,7 +34,9 @@ namespace Elts.Operator
         private static void Schema(CollectionSqlite db)
         {
             db.Execute("CREATE TABLE IF NOT EXISTS participants (id TEXT PRIMARY KEY, code TEXT NOT NULL UNIQUE COLLATE NOCASE, name TEXT NOT NULL, createdUtc TEXT NOT NULL)");
-            db.Execute("CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, participantId TEXT NOT NULL REFERENCES participants(id), directory TEXT NOT NULL UNIQUE, modifiedUtc TEXT NOT NULL, finalized INTEGER NOT NULL DEFAULT 0, review TEXT NOT NULL DEFAULT '{}')");
+            db.Execute("CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, participantId TEXT NOT NULL REFERENCES participants(id), directory TEXT NOT NULL UNIQUE, modifiedUtc TEXT NOT NULL, finalized INTEGER NOT NULL DEFAULT 0, review TEXT NOT NULL DEFAULT '{}', visitId TEXT NOT NULL DEFAULT '')");
+            // A visit groups a participant's first recording with its repeats and continuations.
+            if(db.Query("SELECT name FROM pragma_table_info('sessions') WHERE name='visitId'").Count==0)db.Execute("ALTER TABLE sessions ADD COLUMN visitId TEXT NOT NULL DEFAULT ''");
             db.Execute("CREATE INDEX IF NOT EXISTS sessions_participant ON sessions(participantId)");
             // Remember excluded source folders so Refresh cannot resurrect deleted runs.
             // Original recordings remain intact for logging integrity and recovery.
@@ -50,7 +52,7 @@ namespace Elts.Operator
             CreateMetricView(db,"task_results",TaskDataReview.SummaryColumns,"");
             CreateMetricView(db,"task_seconds",TaskDataReview.SecondColumns,"seconds");
             CreateMetricView(db,"task_shots",TaskDataReview.ShotColumns,"shotDetails");
-            db.Execute("PRAGMA user_version=4");
+            db.Execute("PRAGMA user_version=5");
         }
         private static void CreateMetricView(CollectionSqlite db,string name,string[] columns,string detail)
         {
@@ -59,7 +61,7 @@ namespace Elts.Operator
             string context=detail.Length==0?"":",json_extract(a.value,'$.blockId') AS blockId,json_extract(a.value,'$.condition') AS condition";
             // Recreate so a changed metric column list always reaches existing databases.
             db.Execute("DROP VIEW IF EXISTS "+name);
-            db.Execute("CREATE VIEW "+name+" AS SELECT p.code AS participantCode,p.name AS participantName,s.id AS sessionId,s.finalized AS recordingFinalized"+context+","+fields+
+            db.Execute("CREATE VIEW "+name+" AS SELECT p.code AS participantCode,p.name AS participantName,s.visitId AS visitId,s.id AS sessionId,s.finalized AS recordingFinalized"+context+","+fields+
                 " FROM sessions s JOIN participants p ON p.id=s.participantId,json_each(s.review,'$.attempts') a"+
                 (detail.Length==0?"":",json_each(a.value,'$."+detail+"') d"));
         }
@@ -82,11 +84,11 @@ namespace Elts.Operator
                 try
                 {
                     var sheets=new List<CollectionWorkbook.Sheet>();
-                    string[] context={"participantCode","sessionId","recordingFinalized"};
+                    string[] context={"participantCode","visitId","sessionId","recordingFinalized"};
                     foreach(var spec in new[]{("Results","task_results",TaskDataReview.SummaryColumns),("Shots","task_shots",new[]{"blockId","condition"}.Concat(TaskDataReview.ShotColumns).ToArray()),("Timeline","task_seconds",new[]{"blockId","condition"}.Concat(TaskDataReview.SecondColumns).ToArray())})
                     {
                         var columns=context.Concat(spec.Item3).ToArray();
-                        var rows=db.Query("SELECT * FROM "+spec.Item2+" ORDER BY participantCode COLLATE NOCASE,sessionId");
+                        var rows=db.Query("SELECT * FROM "+spec.Item2+" ORDER BY participantCode COLLATE NOCASE,visitId,sessionId");
                         sheets.Add(new CollectionWorkbook.Sheet(spec.Item1,columns,rows.Select(r=>columns.Select(c=>r[c]).ToArray()).ToArray()));
                     }
                     sheets.Add(new CollectionWorkbook.Sheet("Metric guide",new[]{"Metric","Unit","Definition"},TaskDataReview.Definitions));
@@ -107,8 +109,9 @@ namespace Elts.Operator
                 if(name.Length>0)db.Execute("UPDATE participants SET name=? WHERE code=?",name,code);
             }
         }
-        /// <summary>Index one recording folder and store its derived review. Raw files are only read.</summary>
-        public void Import(string directory,string code,string review)
+        /// <summary>Index one recording folder and store its derived review. Raw files are only read.
+        /// An empty visit ID makes the recording its own visit.</summary>
+        public void Import(string directory,string code,string visit,string review)
         {
             Initialize();directory=Path.GetFullPath(directory);
             if((File.GetAttributes(directory)&FileAttributes.ReparsePoint)!=0)throw new IOException("Recording folder cannot be a link.");
@@ -122,8 +125,8 @@ namespace Elts.Operator
                     string participant=db.Query("SELECT id FROM participants WHERE code=?",code)[0]["id"];
                     db.Execute("INSERT OR IGNORE INTO sessions(id,participantId,directory,modifiedUtc) VALUES(?,?,?,?)",Guid.NewGuid().ToString("N"),participant,directory,DateTime.UtcNow.ToString("O"));
                     var session=db.Query("SELECT id,participantId FROM sessions WHERE directory=?",directory)[0];
-                    db.Execute("UPDATE sessions SET participantId=?,modifiedUtc=?,finalized=?,review=? WHERE id=?",participant,Directory.GetLastWriteTimeUtc(directory).ToString("O"),
-                        File.Exists(Path.Combine(directory,"session-summary.json"))?"1":"0",review,session["id"]);
+                    db.Execute("UPDATE sessions SET participantId=?,modifiedUtc=?,finalized=?,review=?,visitId=? WHERE id=?",participant,Directory.GetLastWriteTimeUtc(directory).ToString("O"),
+                        File.Exists(Path.Combine(directory,"session-summary.json"))?"1":"0",review,visit.Length>0?visit:session["id"],session["id"]);
                     // Only a reassigned run can leave its previous profile empty. Profiles saved
                     // at intake but not yet imported must survive other recordings' refreshes.
                     if(session["participantId"]!=participant)

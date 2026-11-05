@@ -110,8 +110,11 @@ namespace Elts.Rendering
             byte[] summaryBytes=ReadBoundedBytes(summaryPath,MaximumSummaryBytes);
             string summaryText=new UTF8Encoding(false,true).GetString(summaryBytes);
             var summary=Parse(summaryText);
-            Fields(summary,"schemaVersion","runId","complete","error","provenance","counts","checksumsSha256");
-            Equal(summary,"schemaVersion","elts.session-summary.v1");
+            Fields(summary,"schemaVersion","runId","complete","error","provenance","counts","checksumsSha256","supplementaryChecksumsSha256");
+            Equal(summary,"schemaVersion","elts.session-summary.v2");
+            // Replay reads only the three streams; other run files are checked by verify_run.
+            foreach(var file in Object(summary,"supplementaryChecksumsSha256").Properties())
+                if(file.Value.Type!=JTokenType.String||!Regex.IsMatch((string)file.Value!,"^[a-f0-9]{64}$"))throw new InvalidDataException("Invalid supplementary checksum.");
             if(summary["complete"]?.Type!=JTokenType.Boolean || !(bool)summary["complete"]! || summary["error"]?.Type!=JTokenType.Null)
                 throw new InvalidDataException("Replay requires a complete successful run.");
             Identifier(summary,"runId",true);

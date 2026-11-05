@@ -60,6 +60,12 @@ function Invoke-EltsTool {
     if ($Report) { $arguments += @('--report', $Report) }
     if ($Check) { $arguments += '--check' }
     if ($UseCalibrationProfile) { $arguments += '--use-calibration-profile' }
-    & $python @arguments
+    # Windows PowerShell 5.1 turns a native tool's stderr into error records when the
+    # caller redirects output, so under 'Stop' a harmless warning (for example git's
+    # line-ending notice) would abort the run. Judge the tool by its exit code instead.
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { & $python @arguments }
+    finally { $ErrorActionPreference = $previousPreference }
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }

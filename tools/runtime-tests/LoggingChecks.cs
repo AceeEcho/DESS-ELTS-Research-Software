@@ -56,6 +56,10 @@ internal static class LoggingChecks
             RunStalledClose(root);
             RunCheckpoints(root);
             RunTrackerIds(root);
+            string deep = Path.Combine(root, new string('d', Math.Max(1, 230 - root.Length)));
+            bool refused = false;
+            try { LoggingRunDirectory.ReserveUnique(deep, "deep-run"); } catch (IOException error) { refused = error.Message.Contains("too long for Windows"); }
+            True(refused, "a data folder too deep for Windows paths is refused before recording starts");
         }
         finally { DeleteRoot(root); }
     }
@@ -134,6 +138,8 @@ internal static class LoggingChecks
         True(writer.TryLogSample(pair), "sample enqueue succeeds");
         True(writer.TryLogTarget(new TargetSnapshot(1, stamp.Timestamp, "target-1", "block-1", TargetLifecycle.Spawned, new Vector3d(3, 4, 5), new Vector3d(0, 0, 1), 12, "synthetic-v1")), "target enqueue succeeds");
         True(writer.TryLogEvent(new SessionEvent(1, stamp.Timestamp, "trigger-edge", new[] { LogField.Boolean("pressed", true), LogField.NumberValue("pressure", 0.5) })), "event enqueue succeeds");
+        // Another component's file in the run folder, written before closure.
+        File.WriteAllText(Path.Combine(lease.DirectoryPath, "participant.json"), "{\"participantId\":\"P-01\"}");
         LogCloseResult close = writer.Close(TimeSpan.FromSeconds(5));
         True(close.Completed && close.CompleteOutput, "normal close is complete");
     }
@@ -161,6 +167,9 @@ internal static class LoggingChecks
         string expiry = LogJson.Target(new TargetSnapshot(2, new MonotonicTimestamp(1), "target-1", "block-1", TargetLifecycle.Despawned, Vector3d.Zero, Vector3d.Zero, 12, "synthetic-v2"));
         True(expiry.Contains("\"schemaVersion\":\"elts.targets.v2\"") && expiry.Contains("\"lifecycle\":\"Despawned\""), "v2 expiry serializes explicitly");
         True(summary.RootElement.GetProperty("complete").GetBoolean(), "summary marks orderly session complete");
+        var supplementary = summary.RootElement.GetProperty("supplementaryChecksumsSha256");
+        True(supplementary.EnumerateObject().Count() == 1 && supplementary.GetProperty("participant.json").GetString() == Sha256(File.ReadAllBytes(Path.Combine(lease.DirectoryPath, "participant.json"))),
+            "summary checksums the other run files present at closure");
         foreach (string product in new[] { "samples.ndjson", "events.ndjson", "targets.ndjson" })
         {
             string expected = Sha256(File.ReadAllBytes(Path.Combine(lease.DirectoryPath, product)));

@@ -16,7 +16,9 @@ public static class LogSchemaVersions
     // Target expiry is a new observable lifecycle, so writers move to v2.
     // Readers retain v1 support for historical runs.
     public const string Targets = "elts.targets.v2";
-    public const string SessionSummary = "elts.session-summary.v1";
+    // v2 also checksums every other file in the run folder at closure (participant,
+    // calibration and checkpoint files), not only the three streams.
+    public const string SessionSummary = "elts.session-summary.v2";
 }
 
 /// <summary>Adjustable logging limits. Queue operations never wait on disk I/O.</summary>

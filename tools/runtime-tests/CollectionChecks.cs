@@ -20,6 +20,9 @@ internal static class CollectionChecks
             string legacyRoot=Path.Combine(root,"legacy collection");Directory.CreateDirectory(legacyRoot);
             using(var db=new CollectionSqlite(Path.Combine(legacyRoot,"collection.sqlite")))
             {
+                // A version-4 sessions table predates the visit column.
+                db.Execute("CREATE TABLE participants (id TEXT PRIMARY KEY, code TEXT NOT NULL UNIQUE COLLATE NOCASE, name TEXT NOT NULL, createdUtc TEXT NOT NULL)");
+                db.Execute("CREATE TABLE sessions (id TEXT PRIMARY KEY, participantId TEXT NOT NULL REFERENCES participants(id), directory TEXT NOT NULL UNIQUE, modifiedUtc TEXT NOT NULL, finalized INTEGER NOT NULL DEFAULT 0, review TEXT NOT NULL DEFAULT '{}')");
                 db.Execute("CREATE TABLE records (sessionId TEXT, stream TEXT, offset INTEGER, json TEXT)");db.Execute("CREATE TABLE stream_progress (sessionId TEXT, stream TEXT, offset INTEGER)");
                 db.Execute("PRAGMA user_version=3");
             }
@@ -27,7 +30,8 @@ internal static class CollectionChecks
             using(var db=new CollectionSqlite(Path.Combine(legacyRoot,"collection.sqlite")))
             {
                 Check(db.Query("SELECT name FROM sqlite_master WHERE name IN ('records','stream_progress')").Count==0,"Raw line copy removed from older databases");
-                Check(db.Query("PRAGMA user_version")[0]["user_version"]=="4","Database upgraded to version 4");
+                Check(db.Query("PRAGMA user_version")[0]["user_version"]=="5","Database upgraded to version 5");
+                Check(db.Query("SELECT name FROM pragma_table_info('sessions') WHERE name='visitId'").Count==1,"Older sessions table gains the visit column");
             }
 
             var collection=new ParticipantCollection(Path.Combine(root,"collection data"));collection.Initialize();
@@ -37,7 +41,7 @@ internal static class CollectionChecks
             foreach(string dir in new[]{first,second,third}){Directory.CreateDirectory(dir);File.WriteAllText(Path.Combine(dir,"events.ndjson"),line+"\n",new UTF8Encoding(false));}
             File.AppendAllText(Path.Combine(first,"events.ndjson"),"{\"partial\":");
             collection.SaveParticipant("P-01","Zoë '雪'");
-            collection.Import(first,"P-01","{}");collection.Import(second,"p-01","{}");collection.Import(third,"P-02","{}");
+            collection.Import(first,"P-01","","{}");collection.Import(second,"p-01","","{}");collection.Import(third,"P-02","","{}");
             collection.SaveParticipant("p-01","");
             string id,firstSession;
             using(var db=new CollectionSqlite(collection.DatabasePath))
@@ -80,7 +84,7 @@ internal static class CollectionChecks
             }
 
             // A profile saved at intake survives refreshes of other recordings.
-            collection.SaveParticipant("P-03","Not yet recorded");collection.Import(third,"P-02","{}");
+            collection.SaveParticipant("P-03","Not yet recorded");collection.Import(third,"P-02","","{}");
             using(var db=new CollectionSqlite(collection.DatabasePath))Check(db.Query("SELECT * FROM participants WHERE code='P-03'").Count==1,"Intake profile kept before its first import");
 
             string runId;
@@ -91,14 +95,14 @@ internal static class CollectionChecks
             Check(Throws<IOException>(()=>collection.Remove(runId,false,second)),"Individual active run deletion rejected");
             Check(Throws<IOException>(()=>collection.Remove(id,true,Path.Combine(root,"not indexed yet"),"p-01")),"Active participant protected before a new run's first import");
             collection.Remove(runId,false);
-            collection.Import(second,"p-01","{}");
+            collection.Import(second,"p-01","","{}");
             using(var db=new CollectionSqlite(collection.DatabasePath))
                 Check(db.Query("SELECT * FROM sessions WHERE participantId=?",id).Count==1,"Individual removal preserves participant's other run and survives refresh");
             collection.Remove(id,true);
             // Reopening the collection must still exclude the old source folders.
             collection=new ParticipantCollection(collection.Root);
-            collection.Import(first,"P-01","{}");
-            collection.Import(second,"P-01","{}");
+            collection.Import(first,"P-01","","{}");
+            collection.Import(second,"P-01","","{}");
             using(var db=new CollectionSqlite(collection.DatabasePath))
             {
                 Check(db.Query("SELECT * FROM participants WHERE code='P-01'").Count==0 && db.Query("SELECT * FROM sessions").Count==1,"Participant deletion persists after restart and preserves other participants");
@@ -109,7 +113,7 @@ internal static class CollectionChecks
             Check(File.Exists(Path.Combine(first,"events.ndjson")) && File.Exists(exported),"Original files and prior exports retained");
             string fresh=Path.Combine(root,"fresh run");Directory.CreateDirectory(fresh);
             File.WriteAllText(Path.Combine(fresh,"events.ndjson"),"{}\n");
-            collection.Import(fresh,"P-01","{}");
+            collection.Import(fresh,"P-01","","{}");
             using(var db=new CollectionSqlite(collection.DatabasePath))
                 Check(db.Query("SELECT * FROM participants WHERE code='P-01'").Count==1,"Removed participant code can be used for a new recording");
             string lastRun;

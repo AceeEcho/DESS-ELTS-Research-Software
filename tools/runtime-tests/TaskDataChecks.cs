@@ -71,14 +71,16 @@ internal static class TaskDataChecks
         Check((string)TaskDataReview.Read(folder)["attempts"][0]["status"]=="Started","Trailing valid JSON without newline is excluded");
         string exportRoot=Path.Combine(root,"metric-collection");var collection=new ParticipantCollection(exportRoot);
         collection.SaveParticipant("00123","Private Name");
-        collection.Import(folder,"00123",result.ToString());
+        collection.Import(folder,"00123","visit-A",result.ToString());
         string other=Path.Combine(root,"second-participant");Directory.CreateDirectory(other);File.WriteAllText(Path.Combine(other,"events.ndjson"),"");
-        collection.Import(other,"=SUM(1,2)",result.ToString());
+        collection.Import(other,"=SUM(1,2)","",result.ToString());
         using(var db=new CollectionSqlite(collection.DatabasePath))
         {
             Check(db.Query("SELECT * FROM task_results").Count==4,"SQL has one row per attempt");
             Check(db.Query("SELECT * FROM task_seconds").Count==6 && db.Query("SELECT * FROM task_shots").Count==4,"SQL detail views match shared review");
             Check(db.Query("SELECT typeof(shotsPerSecond) AS kind FROM task_results WHERE blockId='attempt-1'")[0]["kind"]=="real","SQL metrics are numeric");
+            Check(db.Query("SELECT DISTINCT visitId FROM task_results WHERE participantCode='00123'")[0]["visitId"]=="visit-A","Results carry the recording's visit ID");
+            Check(db.Query("SELECT visitId,sessionId FROM task_results WHERE participantCode='=SUM(1,2)'").All(r=>r["visitId"]==r["sessionId"]),"A recording without a visit ID is its own visit");
         }
         string workbook=collection.ExportResults();
         using(var zip=ZipFile.OpenRead(workbook))
@@ -92,6 +94,7 @@ internal static class TaskDataChecks
             Check(Sheet(2).Descendants(ns+"row").Count()==5 && Sheet(3).Descendants(ns+"row").Count()==7,"Shots and timeline cover every participant");
             Check(results.Descendants(ns+"f").Count()==0 && results.Descendants(ns+"t").Any(t=>t.Value=="=SUM(1,2)"),"Participant text never becomes an Excel formula");
             Check(results.Descendants(ns+"t").Any(t=>t.Value=="00123"),"Excel preserves leading-zero participant code");
+            Check(results.Descendants(ns+"t").Any(t=>t.Value=="Visit Id") && results.Descendants(ns+"t").Any(t=>t.Value=="visit-A"),"Results sheet has a visit column");
             Check(!zip.Entries.Any(e=>{using(var reader=new StreamReader(e.Open()))return reader.ReadToEnd().Contains("Private Name");}),"Results export identifies participants by code, never name");
             Check(results.Descendants(ns+"autoFilter").Count()==1 && results.Descendants(ns+"pane").Count()==1,"Workbook filters and frozen headers");
             foreach(var entry in zip.Entries.Where(e=>e.FullName.EndsWith(".xml") || e.FullName.EndsWith(".rels")))using(var input=entry.Open())XDocument.Load(input);

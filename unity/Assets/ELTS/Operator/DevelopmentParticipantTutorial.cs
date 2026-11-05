@@ -218,7 +218,8 @@ namespace Elts.Operator
                 recording=Path.GetFileName(recording!.RunDirectory),confirmedUtc=DateTimeOffset.UtcNow.ToString("O"),
                 formCompletionSource="operator-confirmed",synthetic=true,audioEnabled=tutorialNarration!=null,
                 allFourScenariosCompleted=tutorial.AllScenariosCompleted,history=tutorialHistory};
-            string path=Path.Combine(recording.RunDirectory!,"tutorial-completion-"+Guid.NewGuid().ToString("N")+".json");
+            // A short unique suffix keeps run file paths within the Windows path limit.
+            string path=Path.Combine(recording.RunDirectory!,"tutorial-completion-"+Guid.NewGuid().ToString("N").Substring(0,8)+".json");
             PublishReviewFile(path,JsonConvert.SerializeObject(receipt,Formatting.Indented));
             tutorial.ConfirmForm(revision);
         }

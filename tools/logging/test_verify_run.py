@@ -36,10 +36,11 @@ def _write_json(path: Path, value: dict, newline: bool = False) -> None:
 def _refresh_summary(directory: Path, *, complete: bool = True, counts: dict | None = None) -> None:
     checksums = {name: hashlib.sha256((directory / name).read_bytes()).hexdigest() for name in ("samples.ndjson", "events.ndjson", "targets.ndjson")}
     _write_json(directory / "session-summary.json", {
-        "schemaVersion": "elts.session-summary.v1", "runId": "synthetic-run", "complete": complete, "error": None,
+        "schemaVersion": "elts.session-summary.v2", "runId": "synthetic-run", "complete": complete, "error": None,
         "provenance": {"applicationVersion": "test", "sourceRevision": "test-revision", "configurationHash": HASH, "scenarioHash": HASH, "fixtureHash": HASH, "synthetic": True, "utcStartupAnchor": "2026-09-06T12:00:00+00:00"},
         "counts": counts or {"droppedSamples": 0, "writtenSamples": 1, "writtenEvents": 1, "writtenTargets": 1},
         "checksumsSha256": checksums,
+        "supplementaryChecksumsSha256": {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(directory.glob("*.json")) if path.name != "session-summary.json"},
     })
 
 
@@ -149,6 +150,17 @@ class VerifyRunTests(unittest.TestCase):
         (self.directory / "targets.ndjson").write_text(json.dumps(first, separators=(",", ":")) + "\n" + json.dumps(second, separators=(",", ":")) + "\n", encoding="utf-8")
         _refresh_summary(self.directory, counts={"droppedSamples": 0, "writtenSamples": 1, "writtenEvents": 1, "writtenTargets": 2})
         with self.assertRaisesRegex(VerificationError, "mixed target schema"):
+            verify_run(self.directory)
+
+    def test_supplementary_files_are_checksummed(self) -> None:
+        (self.directory / "participant.json").write_text('{"participantId":"P-01"}', encoding="utf-8")
+        _refresh_summary(self.directory)
+        self.assertTrue(verify_run(self.directory)["complete"])
+        (self.directory / "participant.json").write_text('{"participantId":"P-02"}', encoding="utf-8")
+        with self.assertRaisesRegex(VerificationError, "participant.json: SHA-256"):
+            verify_run(self.directory)
+        (self.directory / "participant.json").unlink()
+        with self.assertRaisesRegex(VerificationError, "Missing supplementary file"):
             verify_run(self.directory)
 
     def test_incomplete_summary_is_rejected(self) -> None:

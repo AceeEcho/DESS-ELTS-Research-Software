@@ -7,7 +7,7 @@
 | Samples | `samples.ndjson` | Paired head and weapon observations from one capture stamp (`elts.samples.v2`). Each tracker is either `{"pose":[x,y,z,qx,qy,qz,qw]}`, the raw converted pose in room metres with a unit quaternion, meaning `Connected` and `Valid`, or an explicit `connection` and `validity` with no pose. Each tracker's `trackerId` is written on the stream's first line and again whenever it changes; it holds until its next record. Numbers keep full round-trip precision. |
 | Targets | `targets.ndjson` | Target lifecycle records with canonical Unity room-frame world position and velocity in metres and metres/second. Screen coordinates are never stored. |
 | Events | `events.ndjson` | Typed session events with a flat, typed scalar payload. Callers cannot inject arbitrary JSON. |
-| Closure | `session-summary.json` | Completion state, errors, source/config/scenario/fixture hashes, counts, and SHA-256 checksums of all three data streams. |
+| Closure | `session-summary.json` | `elts.session-summary.v2`: completion state, errors, source/config/scenario/fixture hashes, counts, SHA-256 checksums of all three data streams, and `supplementaryChecksumsSha256` for every other file in the run folder at closure (participant, calibration and checkpoint files). A file written after closure is not listed. |
 
 Schemas live in `schemas/logs/`. A reader must reject an unsupported schema identity, a missing stream, or a checksum mismatch. Invalid tracking poses remain invalid; analysis must exclude them and must never interpolate them into a primary measure.
 
@@ -15,7 +15,7 @@ Schemas live in `schemas/logs/`. A reader must reject an unsupported schema iden
 
 `SessionLogWriter` is the only owner of open output files. Tracking calls use a bounded queue and never wait for disk I/O. A full sample queue increments `DroppedSampleCount`; callers should surface that count as an operator warning. Target and event records use a separate bounded critical queue. If it cannot accept one, the writer becomes unhealthy and the session must fail closed.
 
-`LoggingRunDirectory.ReserveUnique(dataRoot, runId)` validates a portable run ID, rejects reparse points in the path, creates a retained reservation file, and chooses `-r0001`, `-r0002`, and so on for reruns. Files use `FileMode.CreateNew`; existing raw data is never opened for writing. Managed .NET does not expose a portable atomic directory-create primitive, so the reservation serializes compliant ELTS writers; deployment storage must not be shared with arbitrary writers.
+`LoggingRunDirectory.ReserveUnique(dataRoot, runId)` refuses a run folder too deep for a 259-character Windows path plus the longest ELTS run file name (48 characters), so the problem appears before recording rather than when a file is saved at the end. It validates a portable run ID, rejects reparse points in the path, creates a retained reservation file, and chooses `-r0001`, `-r0002`, and so on for reruns. Files use `FileMode.CreateNew`; existing raw data is never opened for writing. Managed .NET does not expose a portable atomic directory-create primitive, so the reservation serializes compliant ELTS writers; deployment storage must not be shared with arbitrary writers.
 
 `Close()` drains both queues, performs a durable flush, closes the product files, and computes checksums. It writes and durably flushes `.session-summary.pending.json` before publishing `session-summary.json` with a same-directory move that cannot overwrite an existing final file. Readers ignore the pending file. A failure or close timeout before publication cancels publication, so partial output cannot become a completed run later.
 
@@ -31,7 +31,9 @@ acknowledging success. Later acquisition continues in the same recording. A queu
 write, durable-flush or timeout failure cannot acknowledge a successful checkpoint.
 
 The administrator then publishes a supplementary `test-checkpoint-<attempt>.json`
-through a durable pending-file write and no-overwrite move. Its `finalized:false`
+through a durable pending-file write and no-overwrite move. It records which test
+was saved, its status, timing, save time and dropped samples, and no result counts:
+results are calculated once, from the recording's events. Its `finalized:false`
 field distinguishes this recovery/review evidence from `session-summary.json`.
 Only ordinary session closure computes final stream checksums and enables the
 existing completed-run analysis path. Checkpoints never overwrite or truncate raw

@@ -29,7 +29,7 @@ PRODUCTS: tuple[tuple[str, str, str, str], ...] = (
     ("targets", "targets.ndjson", "", "writtenTargets"),
 )
 SUMMARY_FILE = "session-summary.json"
-SUMMARY_SCHEMA = "session-summary.v1.schema.json"
+SUMMARY_SCHEMA = "session-summary.v2.schema.json"
 
 
 @dataclass(frozen=True)
@@ -204,6 +204,19 @@ def verify_run(run_directory: Path | str) -> dict[str, Any]:
         if result.lines != expected_count:
             raise VerificationError(f"{file_name}: {result.lines} lines but summary reports {expected_count}")
         results.append(result)
+
+    # Every other file present at closure (participant, calibration, checkpoints) is
+    # covered by its own checksum. Files written after closure are not listed.
+    for file_name, expected_checksum in summary["supplementaryChecksumsSha256"].items():
+        path = directory / file_name
+        if path.parent != directory or not path.is_file():
+            raise VerificationError(f"Missing supplementary file named in session summary: {file_name}")
+        try:
+            actual_checksum = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError as exc:
+            raise VerificationError(f"Could not read {file_name}: {exc}") from exc
+        if actual_checksum != expected_checksum:
+            raise VerificationError(f"{file_name}: SHA-256 does not match session summary")
 
     return {
         "runId": summary["runId"],

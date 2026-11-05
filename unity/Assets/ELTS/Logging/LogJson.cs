@@ -47,15 +47,9 @@ internal static class LogJson
             ",\"monotonicTicks\":" + Integer(sessionEvent.Timestamp.Ticks) + ",\"eventType\":" + String(sessionEvent.EventType) + ",\"payload\":{" + fields + "}}";
     }
     public static string Summary(LoggingRunLease lease, SessionProvenance provenance, bool complete, string? error, long droppedSamples,
-        long writtenSamples, long writtenEvents, long writtenTargets, IReadOnlyDictionary<string, string> checksums)
+        long writtenSamples, long writtenEvents, long writtenTargets, IReadOnlyDictionary<string, string> checksums,
+        IReadOnlyDictionary<string, string> supplementaryChecksums)
     {
-        var products = new StringBuilder();
-        bool first = true;
-        foreach (var pair in checksums)
-        {
-            if (!first) products.Append(','); first = false;
-            products.Append(String(pair.Key)).Append(':').Append(String(pair.Value));
-        }
         return "{\"schemaVersion\":" + String(LogSchemaVersions.SessionSummary) + ",\"runId\":" + String(lease.RunId) +
             ",\"complete\":" + (complete ? "true" : "false") + ",\"error\":" + (error == null ? "null" : String(error)) +
             ",\"provenance\":{\"applicationVersion\":" + String(provenance.ApplicationVersion) + ",\"sourceRevision\":" + String(provenance.SourceRevision) +
@@ -63,7 +57,17 @@ internal static class LogJson
             ",\"fixtureHash\":" + String(provenance.FixtureHash) + ",\"synthetic\":" + (provenance.IsSynthetic ? "true" : "false") +
             ",\"utcStartupAnchor\":" + String(provenance.UtcStartupAnchor.ToString("o", CultureInfo.InvariantCulture)) + "},\"counts\":{\"droppedSamples\":" + Integer(droppedSamples) +
             ",\"writtenSamples\":" + Integer(writtenSamples) + ",\"writtenEvents\":" + Integer(writtenEvents) + ",\"writtenTargets\":" + Integer(writtenTargets) +
-            "},\"checksumsSha256\":{" + products + "}}";
+            "},\"checksumsSha256\":" + Hashes(checksums) + ",\"supplementaryChecksumsSha256\":" + Hashes(supplementaryChecksums) + "}";
+    }
+    private static string Hashes(IReadOnlyDictionary<string, string> hashes)
+    {
+        var builder = new StringBuilder("{");
+        foreach (var pair in hashes)
+        {
+            if (builder.Length > 1) builder.Append(',');
+            builder.Append(String(pair.Key)).Append(':').Append(String(pair.Value));
+        }
+        return builder.Append('}').ToString();
     }
     private static string Tracking(TrackingSample sample, bool includeId)
     {

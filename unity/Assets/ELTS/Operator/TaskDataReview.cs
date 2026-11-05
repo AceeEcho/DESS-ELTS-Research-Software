@@ -32,7 +32,7 @@ namespace Elts.Operator
             new[]{"aimSpeedVariabilityDegPerSecond","deg/s","Duration-weighted population standard deviation of successive bore angular speeds. Descriptive erraticness proxy; includes deliberate target transitions."},
             new[]{"aimPathDeg","deg","Total angular travel over accepted observation pairs; unavailable without a valid pair."},
             new[]{"aimCoveragePercent / aimObservedSeconds","% / s","Accepted observation-pair time / active task time. Low coverage limits motion statistics. Frame cadence differs from full raw tracker cadence."},
-            new[]{"meanAimErrorDeg","deg","Arithmetic mean target-center angular error over valid observations with a visible forward target."},
+            new[]{"meanAimErrorDeg","deg","Official ELTS aim error: arithmetic mean target-center angular error over valid observations with a visible forward target. The analysis tool's rawSampleMeanAimErrorDegrees is a cross-check with a different target policy, not a substitute."},
             new[]{"shotGeometryCount / validAimObservations / aimObservations","count","Coverage counts. Null/blank values are unavailable, never substituted with zero."},
             new[]{"metricsVersion / scoreStatus","provenance","elts.task-metrics.v1; descriptive synthetic review only, not integrity-verified analysis or a validated study score."}
         };

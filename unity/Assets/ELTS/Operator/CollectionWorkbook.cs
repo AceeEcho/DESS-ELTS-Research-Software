@@ -21,7 +21,7 @@ namespace Elts.Operator
             public Sheet(string name,string[] columns,string[][] rows){Name=name;Columns=columns;Rows=rows;}
         }
         private const string Main="http://schemas.openxmlformats.org/spreadsheetml/2006/main";
-        private static readonly HashSet<string> TextColumns=new HashSet<string>{"participantCode","participantName","sessionId","blockId","condition","status","reason","metricsVersion","scoreStatus","outcome","referenceTargetId","referencePolicy","Metric","Unit","Definition"};
+        private static readonly HashSet<string> TextColumns=new HashSet<string>{"participantCode","participantName","visitId","sessionId","blockId","condition","status","reason","metricsVersion","scoreStatus","outcome","referenceTargetId","referencePolicy","Metric","Unit","Definition"};
         public static void Write(string destination,IReadOnlyList<Sheet> sheets)
         {
             string pending=destination+".pending";

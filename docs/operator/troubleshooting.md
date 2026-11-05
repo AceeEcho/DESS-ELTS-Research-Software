@@ -278,15 +278,15 @@ Each run directory can contain:
 | `samples.ndjson` | Paired head and weapon samples, schema `elts.samples.v2` |
 | `targets.ndjson` | `elts.targets.v1` or `elts.targets.v2` for the whole file, never mixed |
 | `events.ndjson` | `elts.events.v1` |
-| `session-summary.json` | Closure. Readers require `complete: true` and `error: null` |
+| `session-summary.json` | Closure (`elts.session-summary.v2`), including checksums of the other run files. Readers require `complete: true` and `error: null` |
 | `.session-summary.pending.json` | In-progress closure. Readers ignore it |
-| `test-checkpoint-<attempt>.json` | Per-test durable checkpoint, `finalized: false` |
-| `participant.json` | Participant code only, written so a startup interruption still has it |
+| `test-checkpoint-<attempt>.json` | Per-test durable save marker (`elts.test-checkpoint.v2`), `finalized: false`; no result counts |
+| `participant.json` | Participant code and visit ID (`elts.participant.v3`), written so a startup interruption still has them |
 | `.<runId>.reservation` | Reservation file beside the run, under the data root |
 
 Run ids that collide gain `-r0001`, `-r0002`, and so on. Flush interval is `logFlushSeconds` **1**. The dashboard shows **Saved** only after both logging queues pass the checkpoint and the checkpoint file is published. `SAVE FAILED:` plus the exception aborts the session. The raw files already written stay on disk. A later collection failure is a second message: `Results need a refresh: `. **Refresh** indexes again. `Data action failed. Raw recordings are retained. Retry with Refresh.` is the collection-action wrapper.
 
-The run folder name is the hidden workbench field. The browser station sets it to the typed id, a hyphen, UTC `yyyyMMdd-HHmmss`, a hyphen, and six hex characters (`DevelopmentStationSession`). `participant.json` in that folder stores only the typed code as `participantId` (`elts.participant.v2`). Import uses that file, otherwise the folder name. The optional name is saved only in `collection.sqlite`, never in the recording. Participant codes match without ASCII case: `P-001` and `p-001` are one profile.
+The run folder name is the hidden workbench field. The browser station sets it to the typed id, a hyphen, UTC `yyyyMMdd-HHmmss`, a hyphen, and six hex characters (`DevelopmentStationSession`). `participant.json` in that folder stores the typed code as `participantId` and a `visitId` shared by every repeat or continuation folder of that participant start (`elts.participant.v3`). Import uses that file, otherwise the folder name. The optional name is saved only in `collection.sqlite`, never in the recording. Participant codes match without ASCII case: `P-001` and `p-001` are one profile.
 
 ### Export buttons
 

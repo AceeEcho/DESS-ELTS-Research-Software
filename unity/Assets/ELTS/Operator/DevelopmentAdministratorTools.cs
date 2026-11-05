@@ -37,14 +37,15 @@ namespace Elts.Operator
             public double seconds;
             public string text="";
         }
+        /// <summary>Durable save marker for one test. Results are calculated once, from the
+        /// recording's events, so the checkpoint deliberately stores no counts of its own.</summary>
         public sealed class StationTestCheckpoint
         {
-            public string schemaVersion="elts.test-checkpoint.v1";
+            public string schemaVersion="elts.test-checkpoint.v2";
             public bool synthetic=true, finalized=false;
             public string runId="", participantId="", condition="", blockId="", status="", savedUtc="";
             public string scoreStatus="unavailable", scoreExplanation="";
             public double activeSeconds, durationSeconds;
-            public int hits, shots, headHits, bodyHits, limbHits, coverHits, misses, targetKills, damageDealt, reloads, dryFires;
             public long droppedSamples;
         }
 
@@ -206,12 +207,6 @@ namespace Elts.Operator
         private StationTestCheckpoint CreateStationCheckpoint() => new StationTestCheckpoint {
             runId=runId,participantId=stationParticipant,condition=engine!.CurrentCondition!,blockId=engine.CurrentBlockId!,
             status=engine.CurrentBlockSkipped?"Skipped":engine.CurrentBlockStoppedEarly?"Stopped early":"Completed",
-            hits=engine.CurrentBlockSkipped?0:StationHits,shots=engine.CurrentBlockSkipped?0:StationShots,
-            headHits=engine.CurrentBlockSkipped?0:StationHeadHits,bodyHits=engine.CurrentBlockSkipped?0:StationBodyHits,
-            limbHits=engine.CurrentBlockSkipped?0:StationLimbHits,coverHits=engine.CurrentBlockSkipped?0:StationCoverHits,
-            misses=engine.CurrentBlockSkipped?0:StationMisses,targetKills=engine.CurrentBlockSkipped?0:StationTargetKills,
-            damageDealt=engine.CurrentBlockSkipped?0:StationDamageDealt,
-            reloads=engine.CurrentBlockSkipped?0:StationReloads,dryFires=engine.CurrentBlockSkipped?0:StationDryFires,
             activeSeconds=engine.CurrentActiveSeconds,durationSeconds=engine.CurrentDurationSeconds,
             scoreExplanation=engine.CurrentBlockSkipped?"Skipped; no scored attempt.":engine.CurrentBlockModifiedTiming?
                 "Flexible or interrupted timing; excluded from the uninterrupted 300-second score.":"Synthetic counts only; use validated analysis on the finalized raw recording.",

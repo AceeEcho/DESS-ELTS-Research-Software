@@ -23,13 +23,13 @@ class IngestTests(unittest.TestCase):
         targets=[{'schemaVersion':'elts.targets.v1','sequence':1,'monotonicTicks':0,'targetId':'t1','blockId':'b1','lifecycle':'Spawned','worldPositionMeters':{'x':0,'y':0,'z':1},'worldVelocityMetersPerSecond':{'x':0,'y':0,'z':0},'scenarioSeed':1,'scenarioVersion':'fixture'}]
         for name, rows in [('samples.ndjson',samples),('events.ndjson',events),('targets.ndjson',targets)]: (run/name).write_text(''.join(json.dumps(x,separators=(',',':'))+'\n' for x in rows),encoding='utf-8')
         sums={name:hashlib.sha256((run/name).read_bytes()).hexdigest() for name in ('samples.ndjson','events.ndjson','targets.ndjson')}
-        summary={'schemaVersion':'elts.session-summary.v1','runId':'fixture','complete':True,'error':None,'provenance':{'applicationVersion':'test','sourceRevision':'abc','configurationHash':'a'*64,'scenarioHash':'b'*64,'fixtureHash':'c'*64,'synthetic':True,'utcStartupAnchor':'2026-09-06T00:00:00+00:00'},'counts':{'droppedSamples':0,'writtenSamples':2,'writtenEvents':len(events),'writtenTargets':1},'checksumsSha256':sums}
+        summary={'schemaVersion':'elts.session-summary.v2','runId':'fixture','complete':True,'error':None,'provenance':{'applicationVersion':'test','sourceRevision':'abc','configurationHash':'a'*64,'scenarioHash':'b'*64,'fixtureHash':'c'*64,'synthetic':True,'utcStartupAnchor':'2026-09-06T00:00:00+00:00'},'counts':{'droppedSamples':0,'writtenSamples':2,'writtenEvents':len(events),'writtenTargets':1},'checksumsSha256':sums,'supplementaryChecksumsSha256':{}}
         (run/'session-summary.json').write_text(json.dumps(summary),encoding='utf-8')
         cal=root/'cal.json'; cal.write_text(json.dumps({'calibrationId':'synthetic-fixture','muzzleOffsetMeters':[0,0,0],'boreDirectionLocal':[0,0,1],'zeroCorrectionQuaternion':[0,0,0,1]}),encoding='utf-8')
         return root,run,cal
     def test_counts_and_invalid_exclusion(self):
         root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True)); result=ingest_run(run,cal)
-        self.assertEqual(result['counts']['invalidSamples'],1); self.assertEqual(result['blocks'][0]['targetsDestroyed'],1); self.assertEqual(result['blocks'][0]['shots'],1); self.assertEqual(result['blocks'][0]['validSamples'],1); self.assertEqual(result['blocks'][0]['meanAimErrorDegrees'],0.0); self.assertEqual(result['source']['rawInputs']['samples.ndjson']['sha256'],hashlib.sha256((run/'samples.ndjson').read_bytes()).hexdigest())
+        self.assertEqual(result['counts']['invalidSamples'],1); self.assertEqual(result['blocks'][0]['targetsDestroyed'],1); self.assertEqual(result['blocks'][0]['shots'],1); self.assertEqual(result['blocks'][0]['validSamples'],1); self.assertEqual(result['blocks'][0]['rawSampleMeanAimErrorDegrees'],0.0); self.assertEqual(result['source']['rawInputs']['samples.ndjson']['sha256'],hashlib.sha256((run/'samples.ndjson').read_bytes()).hexdigest())
 
     def test_flexible_synthetic_timing_is_retained_without_standard_score(self):
         root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
@@ -110,7 +110,7 @@ class IngestTests(unittest.TestCase):
         root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
         targets=[json.loads(line) for line in (run/'targets.ndjson').read_text().splitlines()]
         targets[0]['worldPositionMeters']={'x':1,'y':0,'z':0}; self.refresh(run,targets=targets)
-        result=ingest_run(run,cal); self.assertAlmostEqual(result['blocks'][0]['meanAimErrorDegrees'],90.0,places=6)
+        result=ingest_run(run,cal); self.assertAlmostEqual(result['blocks'][0]['rawSampleMeanAimErrorDegrees'],90.0,places=6)
 
     def test_zero_correction_and_muzzle_offset_are_in_metric(self):
         root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
@@ -118,7 +118,7 @@ class IngestTests(unittest.TestCase):
         cal.write_text(json.dumps({'calibrationId':'synthetic-offset','muzzleOffsetMeters':[0,0,0.5],'boreDirectionLocal':[0,0,1],'zeroCorrectionQuaternion':[0,0.7071067811865476,0,0.7071067811865476]}))
         targets=[json.loads(line) for line in (run/'targets.ndjson').read_text().splitlines()]
         targets[0]['worldPositionMeters']={'x':1,'y':0,'z':-0.5}; self.refresh(run,targets=targets)
-        result=ingest_run(run,cal); self.assertAlmostEqual(result['blocks'][0]['meanAimErrorDegrees'],45.0,places=6)
+        result=ingest_run(run,cal); self.assertAlmostEqual(result['blocks'][0]['rawSampleMeanAimErrorDegrees'],45.0,places=6)
 
     def test_aborted_block_cannot_complete_dv(self):
         root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
@@ -154,6 +154,6 @@ class IngestTests(unittest.TestCase):
         targets += [{**targets[0], 'sequence':2, 'monotonicTicks':2, 'worldPositionMeters':{'x':1,'y':0,'z':1}}, {**targets[0], 'sequence':3, 'monotonicTicks':3, 'lifecycle':'Destroyed'}]
         self.refresh(run,samples=samples,targets=targets)
         result=ingest_run(run,cal); block=result['blocks'][0]
-        self.assertAlmostEqual(block['meanAimErrorDegrees'],22.5,places=5)
+        self.assertAlmostEqual(block['rawSampleMeanAimErrorDegrees'],22.5,places=5)
 if __name__=='__main__': unittest.main()
 

@@ -11,10 +11,10 @@ def is_runtime_product(relative: str) -> bool:
     run_id = r"[A-Za-z0-9][A-Za-z0-9_-]{0,79}"
     reservation = re.fullmatch(r"\." + run_id + r"\.reservation", relative)
     product = re.fullmatch(run_id + r"/(samples\.ndjson|events\.ndjson|targets\.ndjson|session-summary\.json|"
-                          r"participant\.json(\.pending)?|\.session-summary\.pending\.json|synthetic-calibration-[0-9a-f]{32}\.json|tutorial-completion-[0-9a-f]{32}\.json(\.pending)?|"
+                          r"participant\.json(\.pending)?|\.session-summary\.pending\.json|synthetic-calibration-[0-9a-f]{8}\.json|tutorial-completion-[0-9a-f]{8}\.json(\.pending)?|"
                           r"test-checkpoint-(WE|NE)_(FT|MT)-attempt-[0-9]{2,}\.json(\.pending)?)", relative)
-    export = re.fullmatch(r"exports/" + run_id + r"-[0-9a-f]{32}\.zip(\.pending)?", relative)
-    database = re.fullmatch(r"collection\.sqlite(?:-wal|-shm|-journal)?|exports/(?:collection|participant-[0-9a-f]{32})-[0-9a-f]{32}\.sqlite(?:\.pending)?(?:-wal|-shm|-journal)?", relative)
+    export = re.fullmatch(r"exports/(?:raw-)?" + run_id + r"-[0-9a-f]{6,32}\.zip(\.pending)?|exports/elts-results-[0-9]{8}-[0-9]{6}-[0-9a-f]{6}\.xlsx(\.pending)?", relative)
+    database = re.fullmatch(r"collection\.sqlite(?:-wal|-shm|-journal)?", relative)
     return bool(reservation or product or export or database)
 
 

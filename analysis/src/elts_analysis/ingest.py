@@ -12,7 +12,7 @@ PRODUCTS = ("samples.ndjson", "events.ndjson", "targets.ndjson", "session-summar
 SAMPLE_SCHEMA = "elts.samples.v2"
 EVENT_SCHEMA = "elts.events.v1"
 TARGET_SCHEMAS = ("elts.targets.v1", "elts.targets.v2")
-SUMMARY_SCHEMA = "elts.session-summary.v1"
+SUMMARY_SCHEMA = "elts.session-summary.v2"
 BLOCK_TICKS = 300 * 10_000_000
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
@@ -278,7 +278,7 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
             if start_tick <= row["monotonicTicks"] < end_tick: blocks[block_id]["aimErrorsDegrees"].append(row["aimErrorDegrees"]); break
     block_reports=[]
     for block_id,b in blocks.items():
-        vals=b.pop("aimErrorsDegrees"); b["meanAimErrorDegrees"]=statistics.fmean(vals) if vals else None; b["medianAimErrorDegrees"]=statistics.median(vals) if vals else None; total=b["validSamples"]+b["invalidSamples"]; b["validSampleFraction"]=b["validSamples"]/total if total else None; block_reports.append(b)
+        vals=b.pop("aimErrorsDegrees"); b["rawSampleMeanAimErrorDegrees"]=statistics.fmean(vals) if vals else None; b["rawSampleMedianAimErrorDegrees"]=statistics.median(vals) if vals else None; total=b["validSamples"]+b["invalidSamples"]; b["validSampleFraction"]=b["validSamples"]/total if total else None; block_reports.append(b)
     block_reports.sort(key=lambda x:x["startTicks"])
     for block_id in sorted(development_blocks):
         item = markers.get(block_id, {})
@@ -295,7 +295,11 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
     expected_counts = {"writtenSamples": len(samples), "writtenEvents": len(events), "writtenTargets": len(targets)}
     for key, actual in expected_counts.items():
         if counts.get(key) != actual: raise IngestError(f"session summary {key} does not match input")
-    report={"analysisVersion":"elts.analysis.v1","targetSelectionPolicy":"latest-nondestroyed-snapshot-per-block-target; nearest-angular-candidate","source":{"runDirectory":str(directory.resolve()),"sessionSummary":provenance,"rawInputs":raw},"calibration":{**cal,"sha256":_sha(calibration_path)[0]},"counts":{"samples":len(samples),"validSamples":sum(1 for x in samples if _sample_valid(x)),"invalidSamples":invalid,"events":len(events),"targets":len(targets)},"blocks":block_reports}
+    # The official aim error is meanAimErrorDeg in the results export (elts.task-metrics.v1),
+    # calculated from AimObserved events with the visible-target policy used for shots.
+    # These raw 250 Hz sample figures are an independent cross-check with a different
+    # target policy, named so the two cannot be mistaken for each other.
+    report={"analysisVersion":"elts.analysis.v2","officialAimError":"results meanAimErrorDeg (elts.task-metrics.v1)","targetSelectionPolicy":"latest-nondestroyed-snapshot-per-block-target; nearest-angular-candidate","source":{"runDirectory":str(directory.resolve()),"sessionSummary":provenance,"rawInputs":raw},"calibration":{**cal,"sha256":_sha(calibration_path)[0]},"counts":{"samples":len(samples),"validSamples":sum(1 for x in samples if _sample_valid(x)),"invalidSamples":invalid,"events":len(events),"targets":len(targets)},"blocks":block_reports}
     if output_path is not None:
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)

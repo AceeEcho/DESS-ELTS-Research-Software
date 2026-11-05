@@ -26,8 +26,10 @@ without ASCII letter case distinctions, so `P-001` and `p-001` belong to one
 profile. Use a different code for a different person. The optional name is saved
 in the collection at intake and may be updated by a later session using that
 code. Each new recording and continuation also saves `participant.json`
-(`elts.participant.v2`, code only), so identity survives interruption during
-startup. A recording without that file uses its folder name as its code. Initial
+(`elts.participant.v3`: code and visit ID), so identity survives interruption during
+startup. A **visit** is one participant start: its first recording and every repeat or
+continuation folder share one `visitId`, which the database and the results export
+carry. A recording without that file uses its folder name as its code and forms its own visit. Initial
 observations entered at intake are recorded as an ordinary session note.
 
 The viewer groups each session into individual task attempts, including repeats,
@@ -114,7 +116,7 @@ code can still be collected normally.
 | `task_shots` (view) | One row per accepted shot; active time, source timestamp, outcome, reference target, angle and distance |
 
 Each import commits in one transaction. Foreign keys protect session/profile
-relationships. `PRAGMA user_version` is 4. Opening a version 3 or earlier
+relationships. `PRAGMA user_version` is 5 (version 5 adds `sessions.visitId`). Opening a version 3 or earlier
 collection drops its copy of raw lines (`records`, `stream_progress`) and
 reclaims the space; choose Refresh to recompute review JSON from retained events.
 No raw stream is rewritten. The Windows runtime uses the system SQLite library
@@ -134,6 +136,7 @@ path or integrity-verified analysis.
 | Shot error (degrees) | Angle between the corrected bore ray and target-center direction at the trigger observation. P95 uses nearest rank. |
 | Shot offset / miss distance (mm) | Perpendicular distance from reference target center to the forward bore ray. Miss distance averages only misses with geometry. This is not a screen-plane impact coordinate. |
 | Edge clearance (mm) | max(0, center offset − target radius). |
+| Mean aim error (deg), **official** | `meanAimErrorDeg`: mean target-center angular error over valid frame observations with a visible forward target, pauses excluded. This is ELTS's official aim error. The analysis tool's `rawSampleMeanAimErrorDegrees` is a 250 Hz cross-check with a different target policy, not a substitute. |
 | Aim error variance (deg²) | Sample variance, using n−1, of target-center angular error across valid frame observations. Includes target switching; it is not weapon-position variance. |
 | Mean aim speed (deg/s) | Total bore angular travel divided by accepted observation-pair time. |
 | Aim speed variability (deg/s) | Duration-weighted population standard deviation of successive angular speeds. A descriptive erraticness proxy; intentional target transitions also affect it. |

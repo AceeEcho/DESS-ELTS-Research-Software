@@ -114,11 +114,11 @@ namespace Elts.Operator
         {
             if(!SeparateAdministrator || recording?.RunDirectory==null)return;
             // The recording carries only the pseudonymous participant code, durable even
-            // if startup is interrupted. Every continuation gets its own copy so repeats
-            // share the same profile. The optional name is kept only in the collection,
-            // where removing the participant also removes it.
+            // if startup is interrupted. Every continuation gets its own copy with the same
+            // visit ID, so repeats share one profile and one visit. The optional name is kept
+            // only in the collection, where removing the participant also removes it.
             string path=Path.Combine(recording.RunDirectory,"participant.json");
-            string json=JsonConvert.SerializeObject(new {schemaVersion="elts.participant.v2",participantId=stationParticipant,synthetic=true},Formatting.Indented);
+            string json=JsonConvert.SerializeObject(new {schemaVersion="elts.participant.v3",participantId=stationParticipant,visitId=stationVisitId,synthetic=true},Formatting.Indented);
             await Task.Run(()=>PublishReviewFile(path,json));
             collection??=new ParticipantCollection(StationDataRoot);
             await collectionGate.WaitAsync();
@@ -136,16 +136,17 @@ namespace Elts.Operator
             // produce recurring import errors.
             if(collection!.IsRemoved(directory))return;
             string review=JsonConvert.SerializeObject(ReadRecordingReview(directory));
-            // Recordings made without the browser administrator have no identity file
-            // and use their folder name as the participant code.
-            string code=Path.GetFileName(directory);
+            // Recordings made without the browser administrator have no identity file:
+            // they use their folder name as the participant code and form their own visit.
+            string code=Path.GetFileName(directory),visit="";
             string identityPath=Path.Combine(directory,"participant.json");
             if(File.Exists(identityPath))
             {
                 if((File.GetAttributes(identityPath)&FileAttributes.ReparsePoint)!=0)throw new IOException("Participant identity cannot be a linked file.");
-                code=(string?)JObject.Parse(File.ReadAllText(identityPath))["participantId"]??code;
+                var identity=JObject.Parse(File.ReadAllText(identityPath));
+                code=(string?)identity["participantId"]??code;visit=(string?)identity["visitId"]??"";
             }
-            collection!.Import(directory,code,review);
+            collection!.Import(directory,code,visit,review);
         }
         private async Task SyncCollectionRecording()
         {

@@ -80,7 +80,9 @@ internal static class ConfigChecks
         finally { if (Directory.Exists(pathFixture)) Directory.Delete(pathFixture, true); }
         Assert(config.Mode == "synthetic" && !config.StudyReady, "synthetic mode is explicit");
         Assert(config.Rig.RigId == "synthetic-rig-001", "rig identity loaded without a fallback");
-        Assert(Math.Abs(config.Rig.Display.Width - 1.2) < 1e-12, "known display geometry");
+        // Samsung display from config/rig/templates/synthetic-rig.json (metres).
+        Assert(Math.Abs(config.Rig.Display.Width - 1.42875) < 1e-12, "known display width");
+        Assert(Math.Abs(config.Rig.Display.Height - 0.803275) < 1e-12, "known display height");
         Assert(Math.Abs(config.Rig.ScreenBottomHeightAboveFloorM - 1.050925) < 1e-12, "Samsung screen-bottom height is configured");
         Assert(Math.Abs(config.Rig.VirtualFloorY - (config.Rig.Display.Origin.Y - 1.050925)) < 1e-12, "virtual floor derives from the display instead of a separate scene offset");
         Assert(config.Runtime.SampleRateHz == 250, "configured sample frequency");
@@ -93,9 +95,12 @@ internal static class ConfigChecks
         try
         {
             string boundary = Path.Combine(temporary, "basis accepted"); Copy(source, boundary);
-            MutateEffective(boundary, v => v["rig"]["display"]["upperLeftM"][0] = -0.6 + 3.375e-11);
+            // Offsets straddle the normalized 1e-10 perpendicularity tolerance for this
+            // display height; they shift the configured corner rather than a fixed size.
+            double left = config.Rig.Display.Origin.X;
+            MutateEffective(boundary, v => v["rig"]["display"]["upperLeftM"][0] = left + 3.375e-11);
             Assert(DevelopmentConfiguration.LoadDirectory(boundary).Mode == "synthetic", "basis below tolerance accepted");
-            MutateEffective(boundary, v => v["rig"]["display"]["upperLeftM"][0] = -0.6 + 3.375e-10);
+            MutateEffective(boundary, v => v["rig"]["display"]["upperLeftM"][0] = left + 3.375e-10);
             Reject(() => DevelopmentConfiguration.LoadDirectory(boundary), "basis above tolerance rejected");
             Action<JObject>[] invalid = {
                 v => v["unexpected"] = true,

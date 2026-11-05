@@ -52,12 +52,26 @@ export function screenPose(config) {
     return { p: point(lower, [0, s.height / 2, 0]), q: lower.q };
 }
 // Move the tracking origin, not the raw samples or measured mounting offsets.
-// The current head becomes screen-centred, facing screen-local -Z.
-export function recenteredRegistration(config, currentHead, distance) {
+// Face screen-local -Z, with optional measured head height above the room floor.
+export function resetHeadPose(config, distance, headHeight) {
     if (!Number.isFinite(distance) || distance < 0.25 || distance > 10)
         throw new Error("Choose a reset distance between 0.25 and 10 metres.");
     const screen = screenPose(config);
     const target = { p: point(screen, [0, 0, distance]), q: screen.q };
+    if (headHeight !== undefined) {
+        if (!Number.isFinite(headHeight) || headHeight < 0 || headHeight > 10)
+            throw new Error("Enter a head-centre height from zero to approximately 32 feet 10 inches.");
+        // Slide along screen-up so measured height does not change the
+        // perpendicular distance to a pitched/rolled screen.
+        const up = vec([0, 1, 0]).applyQuaternion(screen.q);
+        if (Math.abs(up.y) < 1e-6)
+            throw new Error("This screen orientation cannot use a floor-based reset height.");
+        target.p.addScaledVector(up, (headHeight - target.p.y) / up.y);
+    }
+    return target;
+}
+export function recenteredRegistration(config, currentHead, distance, headHeight) {
+    const target = resetHeadPose(config, distance, headHeight);
     const registration = compose(
         compose(target, inverse(currentHead)),
         pose(config.registration),

@@ -1,7 +1,7 @@
 // Guided direction alignment for the independent preview. These editable limits
 // reject unclear gestures; they are not physical accuracy or acceptance criteria.
 import * as T from "./vendor/build/three.module.js";
-import { compose, degrees, inverse, point, screenPose, vec } from "./math.js";
+import { compose, degrees, inverse, screenPose, resetHeadPose, vec } from "./math.js";
 
 export const DIRECTION_LIMITS = Object.freeze({
     captureDelayMs: 3000,
@@ -61,7 +61,7 @@ export function averageStablePoses(samples, limits = DIRECTION_LIMITS) {
     return { p, q };
 }
 
-export function solveHeadDirections(config, samples, distance, limits = DIRECTION_LIMITS) {
+export function solveHeadDirections(config, samples, distance, limits = DIRECTION_LIMITS, headHeight) {
     for (const { key } of DIRECTION_STEPS)
         if (!samples[key]) throw new Error("Capture every step before applying directions.");
     if (!Number.isFinite(distance) || distance < 0.25 || distance > 10)
@@ -110,7 +110,7 @@ export function solveHeadDirections(config, samples, distance, limits = DIRECTIO
     const mountQ = screen.q.clone().invert().multiply(registrationQ).multiply(centre.q);
     const mount = { p: vec(config.head.mount.position), q: mountQ };
     const rawHead = compose(centre, inverse(mount));
-    const targetHead = { p: point(screen, [0, 0, distance]), q: screen.q };
+    const targetHead = resetHeadPose(config, distance, headHeight);
     const registration = compose(targetHead, inverse(rawHead));
     return {
         registration: { position: registration.p.toArray(), rotation: degrees(registration.q) },

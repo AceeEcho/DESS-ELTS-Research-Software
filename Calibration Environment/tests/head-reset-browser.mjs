@@ -15,10 +15,11 @@ try {
  assert.ok(enabled);
  const draft=await page.evaluate(()=>JSON.parse(localStorage.getItem('elts-calibration-v1-draft')).config);
  assert.equal(draft.head.serial,'test-head'); assert.equal(draft.weapon.serial,'');
+ const screenCentreY=(draft.screen.bottom+draft.screen.height/2).toFixed(3);
  await page.locator('#reset-head').click();
- await page.waitForFunction(()=>document.querySelector('#head-position').textContent==='XYZ 0.000 / 1.305 / 2.000 m');
+ await page.waitForFunction((expected)=>document.querySelector('#head-position').textContent===expected,`XYZ 0.000 / ${screenCentreY} / 2.000 m`);
  x=0.3;
- await page.waitForFunction(()=>document.querySelector('#head-position').textContent==='XYZ 0.300 / 1.305 / 2.000 m');
+ await page.waitForFunction((expected)=>document.querySelector('#head-position').textContent===expected,`XYZ 0.300 / ${screenCentreY} / 2.000 m`);
  await page.screenshot({path:fileURLToPath(new URL('../test-results/head-reset-desktop.png', import.meta.url)),fullPage:true});
  stale=true;
  await page.waitForFunction(()=>document.querySelector('#reset-head').disabled);

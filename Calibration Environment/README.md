@@ -47,7 +47,7 @@ change SteamVR's tracking solution or stand in for tracking-origin registration.
 ## Head and weapon offsets
 
 Each tracked object has independent three-axis position and three-axis rotation
-offsets, expressed in **metres and degrees**:
+offsets. Profiles store distances in **metres** and angles in **degrees**:
 
 | Setting | Meaning |
 | --- | --- |
@@ -55,7 +55,7 @@ offsets, expressed in **metres and degrees**:
 | Weapon object origin | Centre of the rifle receiver |
 | Tracker centre on object | Vector from the object origin to the tracker centre, in object-local axes |
 | Tracker orientation on object | Orientation of the tracker axes relative to the object axes |
-| Viewing eye | Vector from head centre to the selected eye or midpoint between eyes |
+| Viewing eye | Offset from head centre to the selected eye or midpoint between eyes. Enter each axis in feet and inches and select its direction. |
 | Muzzle | Vector from receiver centre to the muzzle |
 | Bore correction | Rotation applied to the weapon's local forward direction |
 | Participant height / model size | Visual dimensions. Enter standing height in feet and inches under **Head → Eye & person**. Profiles store metres. |
@@ -106,8 +106,8 @@ changes the recovered object pose while retaining the observed tracker pose.
    same tracker cannot be assigned to both. Bindings persist by serial, not by
    a device index that can change between launches.
    For a quick preview, face the screen and click **Reset head in front of screen**
-   in the Head pose card. This maps the current head pose to screen-centre height,
-   facing the screen, at the adjustable distance (2 m initially). It changes the
+   in the Head pose card. Enter **Head centre above floor at reset** in feet and inches. This maps the current head pose to that measured height,
+   facing the screen, at the distance entered in feet and inches (initially about 6 ft 6.74 in). It changes the
    shared tracking-origin registration and clears forward references; mounting
    offsets and raw poses are preserved. It requires a fresh valid live pose.
    This convenient preview reset is not a measured physical calibration.
@@ -140,7 +140,7 @@ Keep the tracker in its final head mounting throughout the guide:
 4. Move left, then right of the original centre while facing the same forward
    direction (do not turn to look at the screen centre).
 5. Return to centre and face forward.
-6. Review the captured movements, choose the preview distance, and **Apply directions**.
+6. Review the captured movements, choose the preview distance in feet and inches, and **Apply directions**.
 
 Each capture gives a three-second preparation countdown, then collects about one
 second of distinct live samples. Hold still during capture. Lost/stale tracking,
@@ -150,7 +150,7 @@ an earlier step; later samples are then discarded. Cancel leaves settings intact
 Sideways movement determines room yaw using SteamVR's standing-frame up axis.
 The forward pose determines the head tracker mounting rotation; left/right/up
 turns check that the resulting axes agree with the requested gestures. The final
-centre pose is placed at screen-centre height and the chosen preview distance.
+centre pose is placed at the entered head-centre height and chosen preview distance.
 Apply changes the shared room registration and head mounting rotation, clears
 dependent forward references, and updates the browser draft. It preserves measured
 mount translations, eye/muzzle offsets, raw tracking and weapon mounting settings.
@@ -194,7 +194,13 @@ hardware timing. SteamVR/driver filtering is outside this app's control.
 
 The lower preview shows a simple 3D scene behind the physical screen. It uses an
 off-axis frustum derived from the measured screen rectangle and configured eye
-position. Move the manual head position or a valid live head tracker to inspect
+position. The virtual floor uses **Room width** and **Room depth**, extends
+behind the screen, and stays at room Y=0. Floor-standing objects rest on that
+same plane. Screen bottom height and visible dimensions determine where the
+physical display cuts through this virtual room. Screen tilt does not tilt the floor.
+The reset distance and head-centre height are retained in the browser draft.
+Older drafts initially show screen-centre height, so enter the measured head height.
+Move the manual head position or a valid live head tracker to inspect
 parallax. Head direction is visible in the overview; it does not rotate the TV.
 
 Choose **Open screen**, move that window onto the TV, and choose **Fullscreen**.

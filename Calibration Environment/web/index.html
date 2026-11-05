@@ -105,10 +105,10 @@
                                 <button id="head-forward">
                                     Set looking forward
                                 </button>
-                                <label for="reset-distance">Reset distance from screen (m)</label>
-                                <input id="reset-distance" type="number" min="0.25" max="10" step="any" value="2" />
+                                <div id="reset-distance-fields"></div>
+                                <div id="reset-height-fields"></div>
                                 <button id="reset-head" class="primary" disabled>Reset head in front of screen</button>
-                                <p class="help">Face the screen, then reset. Centres the head at screen height for preview.</p>
+                                <p class="help">Enter the head centre’s distance from the screen and height above the floor. Face the screen, then reset.</p>
                                 <button id="calibrate-head" disabled>Calibrate head directions…</button>
                             </article>
                             <article class="pose-card weapon-card">
@@ -163,10 +163,7 @@
             <h2 id="direction-title">Face the screen</h2>
             <p id="direction-instruction"></p>
             <p id="direction-summary" hidden></p>
-            <div id="direction-distance-row" hidden>
-                <label for="direction-distance">Preview distance from screen (m)</label>
-                <input id="direction-distance" type="number" min="0.25" max="10" step="any" value="2" />
-            </div>
+            <div id="direction-distance-row" hidden></div>
             <p id="direction-status" role="status" aria-live="polite"></p>
             <div class="dialog-actions">
                 <button id="direction-back">Back</button>

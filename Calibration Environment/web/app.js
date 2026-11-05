@@ -1,3 +1,4 @@
+import { METRES_PER_INCH, distanceFields, readDistance } from "./distance-fields.js";
 import { CalibrationScene } from "./scene.js";
 import { installHeadCalibration } from "./head-calibration-ui.js";
 import {
@@ -18,6 +19,8 @@ const query = new URLSearchParams(location.search);
 const isScreen = query.has("screen");
 if (isScreen) document.body.classList.add("screen-only");
 const DRAFT_KEY = "elts-calibration-v1-draft";
+let resetHeight; // Undefined in older drafts, initially uses screen-centre height.
+let resetDistance = 2; // Metres, stored with the local draft for repeatable resets.
 let config,
     defaults,
     token,
@@ -81,7 +84,7 @@ function persistDraft() {
     try {
         localStorage.setItem(
             DRAFT_KEY,
-            JSON.stringify({ config, profileName }),
+            JSON.stringify({ config, profileName, resetDistance, resetHeight }),
         );
     } catch {
         notice(
@@ -115,27 +118,8 @@ function field(
 ) {
     return `<div class="field"><label for="f-${path}">${label}${unit ? " (" + unit + ")" : ""}</label><input id="f-${path}" data-path="${path}" type="number" min="${min}" max="${max}" step="any" value="${Number(get(path).toFixed(4))}"></div>`;
 }
-const METRES_PER_INCH = 0.0254;
-
-function distanceFields(path, label, directions) {
-    const metres = get(path);
-    const totalInches = Math.round(Math.abs(metres) / METRES_PER_INCH * 100) / 100;
-    const feet = Math.floor(totalInches / 12);
-    const inches = Number((totalInches - feet * 12).toFixed(2));
-    const direction = directions
-        ? `<label for="${path}-direction">Direction<select id="${path}-direction">
-            <option value="1" ${metres >= 0 ? "selected" : ""}>${directions[0]}</option>
-            <option value="-1" ${metres < 0 ? "selected" : ""}>${directions[1]}</option>
-        </select></label>`
-        : "";
-    return `<div data-distance-path="${path}" role="group" aria-label="${label}">
-        <div class="field-title">${label}</div>
-        <div class="vector">
-            <label for="${path}-feet">Feet<input id="${path}-feet" type="number" min="0" step="1" value="${feet}" required></label>
-            <label for="${path}-inches">Inches<input id="${path}-inches" type="number" min="0" max="12" step="any" value="${inches}" required></label>
-            ${direction}
-        </div>
-    </div>`;
+function profileDistance(path, label, directions) {
+    return distanceFields(path, label, get(path), directions);
 }
 
 function vector(path, label, angles = false) {
@@ -197,9 +181,9 @@ function renderSettings() {
             html += section(
                 `Base station ${i + 1}`,
                 check(`baseStations.${i}.enabled`, "Show this base station") +
-                    distanceFields(`baseStations.${i}.position.0`, "X · left / right", ["Right", "Left"]) +
-                    distanceFields(`baseStations.${i}.position.1`, "Y · centre height from floor", ["Above", "Below"]) +
-                    distanceFields(`baseStations.${i}.position.2`, "Z · front / back", ["Back", "Front"]) +
+                    profileDistance(`baseStations.${i}.position.0`, "X · left / right", ["Right", "Left"]) +
+                    profileDistance(`baseStations.${i}.position.1`, "Y · centre height from floor", ["Above", "Below"]) +
+                    profileDistance(`baseStations.${i}.position.2`, "Z · front / back", ["Back", "Front"]) +
                     vector(`baseStations.${i}.rotation`, "Orientation", true) +
                     `<label class="field" for="base-device-${i}">Copy a live base station pose</label><select id="base-device-${i}" class="base-device" data-index="${i}"></select><button class="wide" data-action="base-${i}">Copy current station pose</button>`,
                 "Y is the base station centre height above the floor. These values place the model; they do not recalibrate SteamVR.",
@@ -213,6 +197,7 @@ function renderSettings() {
                 check("view.rays", "Show head & weapon rays") +
                 check("view.frustum", "Show eye-to-screen perspective lines") +
                 check("view.labels", "Show object labels"),
+            "Width and depth also size the virtual floor extending behind the screen. Both floors use room height zero.",
         );
     } else if (tab === "head") {
         html += section(
@@ -223,8 +208,11 @@ function renderSettings() {
         html += mountSection("head");
         html += section(
             "Eye &amp; person",
-            vector("head.eye", "Viewing eye from head centre") +
-                distanceFields("person.height", "Participant height") +
+            `<div class="field-title">Viewing eye from head centre</div>` +
+                profileDistance("head.eye.0", "X · left / right", ["Right", "Left"]) +
+                profileDistance("head.eye.1", "Y · up / down", ["Up", "Down"]) +
+                profileDistance("head.eye.2", "Z · front / back", ["Back", "Front"]) +
+                profileDistance("person.height", "Participant height") +
                 field("person.radius", "Body radius", { min: 0.05, max: 0.6 }),
             "Participant height sizes the body preview. Set the tracker mount and viewing-eye offsets separately for the actual headband fit.",
         );
@@ -546,12 +534,12 @@ $("settings").addEventListener("change", (event) => {
     const distance = input.closest("[data-distance-path]");
     if (distance) {
         const path = distance.dataset.distancePath;
-        const feet = $(path + "-feet"), inches = $(path + "-inches");
-        if (!feet.reportValidity() || !inches.reportValidity()) return;
-        if (inches.valueAsNumber === 12)
-            return notice("Enter fewer than 12 inches and add any whole foot to Feet.");
-        const direction = Number($(path + "-direction")?.value ?? 1);
-        const metres = direction * (feet.valueAsNumber * 12 + inches.valueAsNumber) * METRES_PER_INCH;
+        let metres;
+        try {
+            metres = readDistance(path);
+        } catch (error) {
+            return notice(error.message);
+        }
         if (path === "person.height" &&
             (metres < 0.5 || metres > 2.7 || metres < 2 * config.person.radius))
             return notice("Height must be between 0.5 and 2.7 m and at least twice the body radius.");
@@ -652,6 +640,33 @@ document
     .forEach(
         (button) => (button.onclick = () => scene.setView(button.dataset.view)),
     );
+// Keep the measured distance across reloads, including guide Apply.
+function showResetDistance() {
+    $("reset-distance-fields").innerHTML = distanceFields(
+        "reset-distance", "Reset distance from screen", resetDistance,
+    );
+    $("reset-height-fields").innerHTML = distanceFields(
+        "reset-height", "Head centre above floor at reset",
+        resetHeight ?? screenPose(config).p.y,
+    );
+}
+$("reset-height-fields").addEventListener("change", () => {
+    try {
+        const height = readDistance("reset-height");
+        if (height > 10) throw new Error("Head height must be below approximately 32 feet 10 inches.");
+        resetHeight = height;
+        persistDraft();
+    } catch (error) { notice(error.message); }
+});
+$("reset-distance-fields").addEventListener("change", () => {
+    try {
+        const distance = readDistance("reset-distance");
+        if (distance < 0.25 || distance > 10)
+            throw new Error("Reset distance must be between approximately 10 inches and 32 feet 10 inches.");
+        resetDistance = distance;
+        persistDraft();
+    } catch (error) { notice(error.message); }
+});
 $("head-forward").onclick = () => captureForward("head");
 $("reset-head").onclick = () => {
     currentPoses();
@@ -659,17 +674,20 @@ $("reset-head").onclick = () => {
         return notice("Connect a head tracker with a current valid pose first.");
     try {
         config.registration = recenteredRegistration(
-            config, head.object, $("reset-distance").valueAsNumber,
+            config, head.object, readDistance("reset-distance"), readDistance("reset-height"),
         );
         changed("registration");
         renderSettings();
-        notice("Head reset in front of the screen, facing it. Live movement continues from here.");
+        notice("Head reset at the entered distance and floor height, facing the screen. Live movement continues from here.");
     } catch (error) { notice(error.message); }
 };
 $("weapon-forward").onclick = () => captureForward("weapon");
 installHeadCalibration({
     readState: () => ({ config, source, frame: currentFrame() }),
     applyResult: (result) => {
+        resetDistance = result.summary.distance;
+        resetHeight = readDistance("reset-height");
+        showResetDistance();
         config.head.mount.rotation = result.mountRotation;
         config.registration = result.registration;
         changed("registration");
@@ -894,6 +912,12 @@ async function start() {
             if (draft?.config) {
                 config = await api("validate", draft.config);
                 profileName = draft.profileName || "My calibration";
+                if (Number.isFinite(draft.resetDistance) &&
+                    draft.resetDistance >= 0.25 && draft.resetDistance <= 10)
+                    resetDistance = draft.resetDistance;
+                if (Number.isFinite(draft.resetHeight) &&
+                    draft.resetHeight >= 0 && draft.resetHeight <= 10)
+                    resetHeight = draft.resetHeight;
                 modified = true;
                 $("save-state").textContent = "Restored browser draft";
             }
@@ -902,6 +926,7 @@ async function start() {
                 "The previous browser draft could not be loaded. Example setup restored.",
             );
         }
+        showResetDistance();
         scene = new CalibrationScene(
             $("room-canvas"),
             $("preview-canvas"),

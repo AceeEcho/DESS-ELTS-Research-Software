@@ -62,9 +62,14 @@ try {
         fullPage: true,
     });
     await page.getByRole("button", { name: "Head", exact: true }).click();
-    await page.getByLabel("Feet", { exact: true }).fill("6");
-    await page.getByLabel("Inches", { exact: true }).fill("2.5");
-    await page.getByLabel("Inches", { exact: true }).press("Tab");
+    const height = page.getByRole("group", { name: "Participant height" });
+    const eyeDepth = page.getByRole("group", { name: "Z · front / back" });
+    await eyeDepth.getByLabel("Feet").fill("0");
+    await eyeDepth.getByLabel("Inches").fill("2.75");
+    await eyeDepth.getByLabel("Direction").selectOption("-1");
+    await height.getByLabel("Feet").fill("6");
+    await height.getByLabel("Inches").fill("2.5");
+    await height.getByLabel("Inches").press("Tab");
     await page.locator('[data-path="head.manual.rotation.1"]').fill("30");
     await page.locator('[data-path="head.manual.rotation.1"]').press("Tab");
     await page.waitForFunction(() =>
@@ -128,8 +133,12 @@ try {
     assert.deepEqual(savedConfig.baseStations[0].position, [-6.5, 86.5, -24].map(inches => inches * 0.0254));
     checks.push("Base station height and signed offsets save in metres");
     await page.getByRole("button", { name: "Head", exact: true }).click();
-    assert.equal(await page.getByLabel("Feet", { exact: true }).inputValue(), "6");
-    assert.equal(await page.getByLabel("Inches", { exact: true }).inputValue(), "2.5");
+    assert.equal(await height.getByLabel("Feet").inputValue(), "6");
+    assert.equal(await height.getByLabel("Inches").inputValue(), "2.5");
+    assert.equal(savedConfig.head.eye[2], -2.75 * 0.0254);
+    assert.equal(await eyeDepth.getByLabel("Inches").inputValue(), "2.75");
+    assert.equal(await eyeDepth.getByLabel("Direction").inputValue(), "-1");
+    checks.push("Signed viewing-eye depth round-trips through a metric profile");
     checks.push("Participant height round-trips from feet and inches through a metric profile");
     const popupPromise = page.waitForEvent("popup");
     await page

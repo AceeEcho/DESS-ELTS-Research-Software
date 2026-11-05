@@ -226,12 +226,17 @@ export class CalibrationScene {
         this.virtual.add(new T.HemisphereLight(0xeefaff, 0x3c4754, 3));
         this.virtualRoot = new T.Group();
         this.virtual.add(this.virtualRoot);
-        const grid = new T.GridHelper(16, 32, 0x668485, 0x3e555f);
-        grid.position.set(0, -1, -6);
-        this.virtualRoot.add(grid);
-        box(this.virtualRoot, [0.22, 2, 0.22], [-1.25, 0, -2], 0x6aa3a5);
-        box(this.virtualRoot, [0.5, 0.5, 0.5], [0.55, -0.5, -1.4], 0xc69c63);
-        box(this.virtualRoot, [0.7, 1.1, 0.7], [-0.6, -0.45, -3.7], 0x6e8eae);
+        // Room geometry rests on world Y=0. The target alone is screen-relative.
+        this.virtualRoom = new T.Group();
+        this.virtual.add(this.virtualRoom);
+        this.virtualFloor = new T.LineSegments(
+            new T.BufferGeometry(),
+            new T.LineBasicMaterial({ color: 0x668485 }),
+        );
+        this.virtualRoom.add(this.virtualFloor);
+        box(this.virtualRoom, [0.22, 2, 0.22], [-1.25, 1, -2], 0x6aa3a5);
+        box(this.virtualRoom, [0.5, 0.5, 0.5], [0.55, 0.25, -1.4], 0xc69c63);
+        box(this.virtualRoom, [0.7, 1.1, 0.7], [-0.6, 0.55, -3.7], 0x6e8eae);
         this.target = new T.Group();
         this.virtualRoot.add(this.target);
         for (let i = 0; i < 3; i++) {
@@ -323,6 +328,30 @@ export class CalibrationScene {
                 object.visible = config.view.axes;
         });
         place(this.virtualRoot, sp);
+        this.virtualRoom.position.set(s.x, 0, s.z);
+        const floorSize = `${config.room.width}:${config.room.depth}`;
+        if (this.virtualFloorSize !== floorSize) {
+            const halfWidth = config.room.width / 2;
+            const depth = config.room.depth;
+            const vertices = [];
+            // Half-metre squares, plus exact boundaries for fractional room sizes.
+            for (let x = -halfWidth; x < halfWidth; x += 0.5)
+                vertices.push(x, 0, 0, x, 0, -depth);
+            vertices.push(halfWidth, 0, 0, halfWidth, 0, -depth);
+            for (let z = 0; z > -depth; z -= 0.5)
+                vertices.push(-halfWidth, 0, z, halfWidth, 0, z);
+            vertices.push(-halfWidth, 0, -depth, halfWidth, 0, -depth);
+            this.virtualFloor.geometry.dispose();
+            this.virtualFloor.geometry = new T.BufferGeometry();
+            this.virtualFloor.geometry.setAttribute(
+                "position", new T.Float32BufferAttribute(vertices, 3),
+            );
+            this.virtualFloorSize = floorSize;
+        }
+        // Follow the screen's horizontal facing while keeping the floor level,
+        // even when the display itself is pitched or rolled.
+        const screenNormal = vec([0, 0, 1]).applyQuaternion(sp.q);
+        this.virtualRoom.rotation.y = Math.atan2(screenNormal.x, screenNormal.z);
         this.target.position.set(0, 0, -config.view.virtualDepth);
     }
 

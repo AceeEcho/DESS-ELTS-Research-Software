@@ -33,6 +33,12 @@ try {
     await page.goto("http://127.0.0.1:8766");
     await page.waitForFunction(() => document.querySelector("#head-quality").textContent === "Live");
     const before = await draft();
+    const screenCentreY = "1.676";
+    await page.locator("#reset-height-feet").fill("5");
+    await page.locator("#reset-height-inches").fill("6");
+    await page.locator("#reset-height-inches").press("Tab");
+    await page.locator("#reset-distance-feet").fill("5");
+    await page.locator("#reset-distance-inches").fill("6");
     await page.locator("#calibrate-head").click();
     await page.screenshot({ path: fileURLToPath(new URL("head-directions-desktop.png", output)) });
     await page.locator("#direction-cancel").click();
@@ -60,16 +66,21 @@ try {
     }
     assert.deepEqual(await draft(), before, "Review does not apply settings automatically");
     await page.screenshot({ path: fileURLToPath(new URL("head-directions-review-desktop.png", output)) });
+    assert.equal(await page.locator("#direction-distance-feet").inputValue(), "5");
+    assert.equal(await page.locator("#direction-distance-inches").inputValue(), "6");
+    await page.locator("#direction-distance-inches").fill("8");
     await page.locator("#direction-apply").click();
     await page.waitForFunction(() => !document.querySelector("#direction-dialog").open);
-    await page.waitForFunction(() => document.querySelector("#head-position").textContent.includes("1.305 / 2.000"));
+    await page.waitForFunction((expected) => document.querySelector("#head-position").textContent.includes(expected), `${screenCentreY} / 1.727`);
     const after = await draft();
     assert.notDeepEqual(after.head.mount.rotation, before.head.mount.rotation);
     assert.deepEqual(after.head.mount.position, before.head.mount.position);
     assert.equal(after.head.reference, null);
     matrix = trackerMatrix(0.4, [0, 30, 0]);
-    await page.waitForFunction(() => document.querySelector("#head-position").textContent.includes("0.400 / 1.305 / 2.000"));
+    await page.waitForFunction((expected) => document.querySelector("#head-position").textContent.includes(expected), `0.400 / ${screenCentreY} / 1.727`);
     await page.waitForFunction(() => document.querySelector("#head-angles").textContent.includes("30.0°"));
+    await page.locator("#reset-head").click();
+    await page.waitForFunction((expected) => document.querySelector("#head-position").textContent.includes(expected), `${screenCentreY} / 1.727`);
     assert.deepEqual(errors, []);
     console.log("PASS: cancel, stale capture, repeated sample rejection, seven guided captures, explicit Apply, preserved offsets, live movement and yaw after alignment, no page errors.");
 } finally { await browser.close(); }

@@ -1,3 +1,4 @@
+import { distanceFields, readDistance } from "./distance-fields.js";
 import { fromNative } from "./math.js";
 import { DIRECTION_LIMITS, DIRECTION_STEPS, averageStablePoses, solveHeadDirections } from "./head-calibration.js";
 
@@ -62,7 +63,11 @@ export function installHeadCalibration({ readState, applyResult, notify }) {
             samples = {};
             step = 0;
             solution = null;
-            $("direction-distance").value = $("reset-distance").value;
+            $("direction-distance-row").innerHTML = distanceFields(
+                "direction-distance", "Preview distance from screen", 2,
+            );
+            for (const unit of ["feet", "inches"])
+                $(`direction-distance-${unit}`).value = $(`reset-distance-${unit}`).value;
             render();
             dialog.showModal();
         } catch (error) { notify(error.message); }
@@ -92,7 +97,7 @@ export function installHeadCalibration({ readState, applyResult, notify }) {
                     stopCapture();
                     samples[DIRECTION_STEPS[step].key] = captured;
                     if (step === DIRECTION_STEPS.length - 1)
-                        solution = solveHeadDirections(original, samples, $("direction-distance").valueAsNumber);
+                        solution = solveHeadDirections(original, samples, readDistance("direction-distance"), undefined, readDistance("reset-height"));
                     step++;
                     render();
                 } else if (now - readyAt > DIRECTION_LIMITS.timeoutMs) {
@@ -113,7 +118,7 @@ export function installHeadCalibration({ readState, applyResult, notify }) {
     $("direction-apply").onclick = () => {
         try {
             liveSample();
-            const result = solveHeadDirections(original, samples, $("direction-distance").valueAsNumber);
+            const result = solveHeadDirections(original, samples, readDistance("direction-distance"), undefined, readDistance("reset-height"));
             applyResult(result);
             dialog.close();
             notify("Head directions applied. Move and turn to check the preview, then save your profile.");

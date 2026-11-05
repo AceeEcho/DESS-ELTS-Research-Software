@@ -5,18 +5,18 @@
   "coordinateFrame": "unity_left_handed_m",
   "display": {
     "lowerLeftM": [
-      -0.6,
+      -0.714375,
       -0.3375,
       1.5
     ],
     "lowerRightM": [
-      0.6,
+      0.714375,
       -0.3375,
       1.5
     ],
     "upperLeftM": [
-      -0.6,
-      0.3375,
+      -0.714375,
+      0.465775,
       1.5
     ]
   },

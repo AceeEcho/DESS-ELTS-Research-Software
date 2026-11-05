@@ -24,9 +24,10 @@ SteamVR, internet connection, or build step. Three.js is bundled locally.
 
 ## Set up the room
 
-1. In **Room**, enter the illuminated screen **width**, **height**, and **bottom
-   edge height from the floor**. A diagonal/aspect-ratio calculator is available;
-   measured visible dimensions are preferable.
+1. In **Room**, the Samsung QB65R-B defaults to a visible width of 56 1/4 in
+   and height of 31 5/8 in (1.42875 m by 0.803275 m). Measure and enter the
+   **bottom edge height from the floor** separately. For a different display,
+   enter its visible dimensions or use the diagonal/aspect-ratio calculator.
 2. Set the screen's position and pitch/yaw/roll if needed. Its default position
    defines the room's X/Z reference. The bottom-edge measurement is the midpoint
    of the lower edge; screen tilt rotates the centre around that point.

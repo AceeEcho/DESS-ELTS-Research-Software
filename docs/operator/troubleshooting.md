@@ -154,7 +154,7 @@ Fullscreen: F11 or Alt+Enter. Escape or F1 calls `SetFullscreen(false)` on the s
 
 **Moving the game to another screen.** The launcher does not apply `participantDisplayIndex` or `operatorDisplayIndex`. [The dashboard reference](../modules/operator-dashboard.md) says to connect a wireless TV with Win+K before launch, then move the window with Win+Shift+Left/Right in extended desktop. ELTS does not keep a Miracast link up. A disconnected wireless display has to be reconnected in Windows.
 
-> **GAP-HW-DISPLAY.** The repo does not record which physical panel or projector is the study screen, its resolution, or a measured corner map. `synthetic-rig.json` marks geometry `synthetic_unmeasured`. The display rectangle is 1.2 m wide and 0.675 m tall at z = 1.5 m. `screenBottomHeightAboveFloorM` is `1.2192` (the staging doc calls this four feet) and is an assumption, not a surveyed floor. Who can answer: the rig and calibration operator, and the tracking/display engineer, in [hardware follow-up](hardware-follow-up.md).
+> **GAP-HW-DISPLAY.** The configured visible screen is the Samsung QB65R-B. The installed resolution and measured corner map still need to be recorded. `synthetic-rig.json` marks geometry `synthetic_unmeasured`. The synthetic rig uses the configured visible size of 56 1/4 in wide by 31 5/8 in tall (1.42875 m by 0.803275 m) at z = 1.5 m. `screenBottomHeightAboveFloorM` is `1.2192` (the staging doc calls this four feet) and is an assumption, not a surveyed floor. Who can answer: the rig and calibration operator, and the tracking/display engineer, in [hardware follow-up](hardware-follow-up.md).
 
 ### Mouse and keyboard participant
 

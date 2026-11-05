@@ -2,8 +2,8 @@
   "version": 1,
   "coordinateSystem": "RH_X-right_Y-up_Z-toward-viewer_metres_YXZ-degrees",
   "screen": {
-    "width": 1.44,
-    "height": 0.81,
+    "width": 1.42875,
+    "height": 0.803275,
     "bottom": 0.9,
     "x": 0,
     "z": 0,

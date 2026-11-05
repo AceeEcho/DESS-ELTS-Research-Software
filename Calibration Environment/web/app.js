@@ -115,6 +115,19 @@ function field(
 ) {
     return `<div class="field"><label for="f-${path}">${label}${unit ? " (" + unit + ")" : ""}</label><input id="f-${path}" data-path="${path}" type="number" min="${min}" max="${max}" step="any" value="${Number(get(path).toFixed(4))}"></div>`;
 }
+const METRES_PER_INCH = 0.0254;
+
+function participantHeightFields() {
+    const totalInches = Math.round(config.person.height / METRES_PER_INCH * 100) / 100;
+    const feet = Math.floor(totalInches / 12);
+    const inches = Number((totalInches - feet * 12).toFixed(2));
+    return `<div class="field-title">Participant height</div>
+        <div class="single-row">
+            <div class="field"><label for="height-feet">Feet</label><input id="height-feet" type="number" min="0" max="8" step="1" value="${feet}" required></div>
+            <div class="field"><label for="height-inches">Inches</label><input id="height-inches" type="number" min="0" max="12" step="any" value="${inches}" required></div>
+        </div>`;
+}
+
 function vector(path, label, angles = false) {
     const names = angles
         ? ["Pitch X", "Yaw Y", "Roll Z"]
@@ -199,8 +212,9 @@ function renderSettings() {
         html += section(
             "Eye &amp; person",
             vector("head.eye", "Viewing eye from head centre") +
-                `<div class="single-row">${field("person.height", "Person height", { min: 0.5, max: 2.7 })}${field("person.radius", "Body radius", { min: 0.05, max: 0.6 })}</div>`,
-            "Use the selected eye or midpoint between eyes. The capsule is a schematic body inferred from head position, not a measured body pose.",
+                participantHeightFields() +
+                field("person.radius", "Body radius", { min: 0.05, max: 0.6 }),
+            "Participant height sizes the body preview. Set the tracker mount and viewing-eye offsets separately for the actual headband fit.",
         );
         html += manualSection("head");
     } else if (tab === "weapon") {
@@ -517,6 +531,20 @@ $("settings").addEventListener("change", (event) => {
         changed(role + ".serial");
         return;
     }
+    if (input.id === "height-feet" || input.id === "height-inches") {
+        const feet = $("height-feet"), inches = $("height-inches");
+        if (!feet.reportValidity() || !inches.reportValidity()) return;
+        if (inches.valueAsNumber === 12)
+            return notice("Enter fewer than 12 inches and add any whole foot to Feet.");
+        const height = (feet.valueAsNumber * 12 + inches.valueAsNumber) * METRES_PER_INCH;
+        if (height < 0.5 || height > 2.7 || height < 2 * config.person.radius) {
+            notice("Height must be between 0.5 and 2.7 m and at least twice the body radius.");
+            return;
+        }
+        config.person.height = height;
+        changed("person.height");
+        return;
+    }
     const path = input.dataset.path;
     if (!path) return;
     const value =
@@ -548,7 +576,7 @@ $("settings").addEventListener("click", async (event) => {
             if (!$("diagonal").checkValidity() || !Number.isFinite(diagonal))
                 return $("diagonal").reportValidity();
             const aspect = Number($("aspect").value),
-                height = (diagonal * 0.0254) / Math.sqrt(1 + aspect * aspect);
+                height = (diagonal * METRES_PER_INCH) / Math.sqrt(1 + aspect * aspect);
             config.screen.height = Number(height.toFixed(4));
             config.screen.width = Number((height * aspect).toFixed(4));
             changed("screen");

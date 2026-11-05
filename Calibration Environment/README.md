@@ -56,7 +56,15 @@ offsets, expressed in **metres and degrees**:
 | Viewing eye | Vector from head centre to the selected eye or midpoint between eyes |
 | Muzzle | Vector from receiver centre to the muzzle |
 | Bore correction | Rotation applied to the weapon's local forward direction |
-| Model length / person size | Visual dimensions; they do not rescale measured offsets |
+| Participant height / model size | Visual dimensions. Enter standing height in feet and inches under **Head → Eye & person**. Profiles store metres. |
+
+For a rear-mounted tracker, enter the measured offset from head centre to
+tracker centre under **Head → Tracker mounting offset**. In the head's local axes,
++Z points back, +Y points up, and +X points right. Enter the viewing-eye offset
+from that same head centre. A centred tracker behind the head has positive Z,
+while the eye midpoint in front of the head has negative Z. Measure both with
+the headband fitted. Standing height sizes the body preview and cannot determine
+the tracker-to-eye distance or the headband's mounting angle.
 
 The yellow tracker models and local XYZ axes help check mounting relationships.
 The teal ray shows head direction; the amber ray shows the configured bore.

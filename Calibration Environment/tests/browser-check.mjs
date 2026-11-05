@@ -47,6 +47,9 @@ try {
         fullPage: true,
     });
     await page.getByRole("button", { name: "Head", exact: true }).click();
+    await page.getByLabel("Feet", { exact: true }).fill("6");
+    await page.getByLabel("Inches", { exact: true }).fill("2.5");
+    await page.getByLabel("Inches", { exact: true }).press("Tab");
     await page.locator('[data-path="head.manual.rotation.1"]').fill("30");
     await page.locator('[data-path="head.manual.rotation.1"]').press("Tab");
     await page.waitForFunction(() =>
@@ -101,7 +104,15 @@ try {
     await page.waitForFunction(
         () => !document.querySelector("#profiles-dialog").open,
     );
-    checks.push("Named profile save and load succeeds");
+    const savedProfile = await page.request.get(
+        new URL("/api/profile?name=Desktop%20verification", page.url()).href,
+    );
+    assert.equal(savedProfile.ok(), true);
+    assert.equal((await savedProfile.json()).person.height, 74.5 * 0.0254);
+    await page.getByRole("button", { name: "Head", exact: true }).click();
+    assert.equal(await page.getByLabel("Feet", { exact: true }).inputValue(), "6");
+    assert.equal(await page.getByLabel("Inches", { exact: true }).inputValue(), "2.5");
+    checks.push("Participant height round-trips from feet and inches through a metric profile");
     const popupPromise = page.waitForEvent("popup");
     await page
         .getByRole("button", { name: "Open screen ↗", exact: true })

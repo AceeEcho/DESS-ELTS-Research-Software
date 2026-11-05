@@ -61,6 +61,11 @@ namespace Elts.Operator.Tests
                 controls.Frame=new DesktopControlFrame(true,panel.Desktop.PlayImageBounds.center,new Vector3(1,0,0));
                 for(int i=0;i<3;i++)yield return null;
                 Assert.That(panel.Desktop.Model.Head.Position,Is.Not.EqualTo(originalHead));
+                // Stop moving and let the participant camera catch up with the head. Aiming
+                // through a view rendered one frame earlier misses distant heads (~13 m)
+                // by roughly 0.2 m, which lands on cover behind the target.
+                controls.Frame=new DesktopControlFrame(true,panel.Desktop.PlayImageBounds.center,Vector3.zero);
+                for(int i=0;i<3;i++)yield return null;
 
                 for(int block=0;block<4;block++)
                 {

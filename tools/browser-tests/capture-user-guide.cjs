@@ -131,7 +131,7 @@ const server = http.createServer(async (req, res) => {
     await settle(); await shot('11-break-countdown', '#breakPanel');
     await page.locator('#recordingsButton').click();
     await page.locator('[data-profile-id="demo-profile"]').click();
-    await page.locator('#dataExportParticipant').waitFor();
+    await page.locator('#dataRemoveParticipant').waitFor();
     // A tall viewport keeps the scrollable collection visible during element
     // captures, avoiding clipped panels or blank space around offscreen content.
     await page.setViewportSize({ width: 1440, height: 2600 });

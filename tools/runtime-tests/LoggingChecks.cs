@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -54,8 +55,31 @@ internal static class LoggingChecks
             RunCriticalOverflow(root);
             RunStalledClose(root);
             RunCheckpoints(root);
+            RunTrackerIds(root);
         }
         finally { DeleteRoot(root); }
+    }
+
+    // Samples v2 writes a tracker ID on the first line and again only when it changes.
+    private static void RunTrackerIds(string root)
+    {
+        var clock = new ManualSharedClock(new DateTimeOffset(2026, 9, 6, 12, 0, 0, TimeSpan.Zero));
+        var lease = LoggingRunDirectory.ReserveUnique(root, "tracker-ids");
+        var writer = new SessionLogWriter(lease, Provenance(clock));
+        writer.Start();
+        string[] weapons = { "WEAPON-A", "WEAPON-A", "WEAPON-B" };
+        for (int i = 0; i < weapons.Length; i++)
+        {
+            var stamp = TrackingAcquisitionStamp.Capture(clock, i + 1);
+            True(writer.TryLogSample(new TrackingSamplePair(TrackingSample.Valid(stamp, new TrackerId("HEAD-A"), new RigidPose(new Vector3d(i, 0, 0), Quaterniond.Identity)),
+                TrackingSample.Valid(stamp, new TrackerId(weapons[i]), new RigidPose(Vector3d.Zero, Quaterniond.Identity)))), "tracker ID sample enqueues");
+        }
+        True(writer.Close(TimeSpan.FromSeconds(5)).CompleteOutput, "tracker ID session closes");
+        var lines = File.ReadAllLines(Path.Combine(lease.DirectoryPath, "samples.ndjson")).Select(line => JsonDocument.Parse(line).RootElement).ToArray();
+        bool Named(JsonElement line, string role, string id) => line.GetProperty(role).TryGetProperty("trackerId", out var value) && value.GetString() == id;
+        True(Named(lines[0], "head", "HEAD-A") && Named(lines[0], "weapon", "WEAPON-A"), "first sample names both trackers");
+        True(!lines[1].GetProperty("head").TryGetProperty("trackerId", out _) && !lines[1].GetProperty("weapon").TryGetProperty("trackerId", out _), "unchanged tracker IDs are not repeated");
+        True(!lines[2].GetProperty("head").TryGetProperty("trackerId", out _) && Named(lines[2], "weapon", "WEAPON-B"), "a changed tracker ID is written");
     }
 
     private static void RunCheckpoints(string root)
@@ -124,7 +148,13 @@ internal static class LoggingChecks
         using JsonDocument target = JsonDocument.Parse(targets);
         using JsonDocument summary = JsonDocument.Parse(File.ReadAllText(Path.Combine(lease.DirectoryPath, "session-summary.json"), Encoding.UTF8));
         True(sample.RootElement.GetProperty("schemaVersion").GetString() == LogSchemaVersions.Samples, "sample schema identity is serialized");
-        True(sample.RootElement.GetProperty("head").GetProperty("pose").ValueKind == JsonValueKind.Object && sample.RootElement.GetProperty("weapon").GetProperty("pose").ValueKind == JsonValueKind.Null, "raw valid and invalid poses retain their explicit state");
+        var headRecord = sample.RootElement.GetProperty("head");
+        var weaponRecord = sample.RootElement.GetProperty("weapon");
+        True(headRecord.GetProperty("pose").GetArrayLength() == 7 && headRecord.GetProperty("pose")[2].GetDouble() == 3 && headRecord.GetProperty("pose")[6].GetDouble() == 1,
+            "valid pose is a seven-number array at full value");
+        True(!weaponRecord.TryGetProperty("pose", out _) && weaponRecord.GetProperty("connection").GetString() == "Reconnecting" && weaponRecord.GetProperty("validity").GetString() == "OutOfRange",
+            "invalid tracking keeps its explicit state and has no pose");
+        True(headRecord.TryGetProperty("trackerId", out _) && weaponRecord.TryGetProperty("trackerId", out _), "the first sample names both trackers");
         True(evt.RootElement.GetProperty("payload").GetProperty("pressed").GetBoolean(), "event typed payload round trips");
         True(target.RootElement.GetProperty("worldPositionMeters").GetProperty("z").GetDouble() == 5, "target world position remains canonical");
         True(target.RootElement.GetProperty("schemaVersion").GetString() == "elts.targets.v2", "new target writer emits v2");

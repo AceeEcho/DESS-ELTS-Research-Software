@@ -131,7 +131,7 @@ namespace Elts.Rendering
                 using(var stream=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.Read))
                 {
                     using(var sha=SHA256.Create())if(Hex(sha.ComputeHash(stream))!=HashText(hashes,filename))throw new InvalidDataException("Replay checksum mismatch: "+filename);
-                    stream.Position=0;long previousSequence=0,previousTicks=-1;int count=0;
+                    stream.Position=0;long previousSequence=0,previousTicks=-1;int count=0;string? headTracker=null,weaponTracker=null;
                     using(var reader=new BoundedLines(stream))
                     {
                         string? line;
@@ -145,13 +145,13 @@ namespace Elts.Rendering
                                 if(version!="elts.targets.v1"&&version!="elts.targets.v2")throw new InvalidDataException("Unsupported target schema version.");
                                 if(targetSchemaVersion==null)targetSchemaVersion=version;else if(targetSchemaVersion!=version)throw new InvalidDataException("Mixed target schema versions in replay stream.");
                             }
-                            else Equal(row,"schemaVersion","elts."+product.Item1+".v1");
+                            else Equal(row,"schemaVersion",product.Item1=="samples"?"elts.samples.v2":"elts.events.v1");
                             long sequence=Integer(row,"sequence"),ticks=Integer(row,"monotonicTicks");
                             if(sequence<=previousSequence||ticks<previousTicks)throw new InvalidDataException("Nonmonotonic replay stream.");previousSequence=sequence;previousTicks=ticks;
                             if(product.Item1=="samples")
                             {
                                 Fields(row,"schemaVersion","sequence","monotonicTicks","head","weapon");
-                                var head=Pose(Object(row,"head"),out var hs);var weapon=Pose(Object(row,"weapon"),out var ws);
+                                var head=Pose(Object(row,"head"),ref headTracker,out var hs);var weapon=Pose(Object(row,"weapon"),ref weaponTracker,out var ws);
                                 frames.Add(new ReplayFrame(ticks,head,weapon,hs,ws));
                             }
                             else if(product.Item1=="targets")
@@ -189,17 +189,27 @@ namespace Elts.Rendering
                 if(reader.Read())throw new InvalidDataException("Trailing replay JSON content.");return result;
             }
         }
-        private static RigidPose? Pose(JObject value,out string status)
+        /// <summary>One v2 tracker: a pose [x,y,z,qx,qy,qz,qw] means Connected and Valid; any other
+        /// state is explicit and has no pose. A tracker ID holds until it changes, so the stream's
+        /// first line must name it.</summary>
+        private static RigidPose? Pose(JObject value,ref string? tracker,out string status)
         {
-            Fields(value,"trackerId","connection","validity","pose");Identifier(value,"trackerId");
-            string connection=Choice(value,"connection","Connected","Disconnected","Reconnecting"),validity=Choice(value,"validity","Unavailable","Valid","OutOfRange","DriverFault","RejectedNativePose");
-            status=connection+" / "+validity;
-            if(validity!="Valid"){if(value["pose"]?.Type!=JTokenType.Null)throw new InvalidDataException("Invalid tracking must have null pose.");return null;}
-            if(connection!="Connected")throw new InvalidDataException("Valid tracking must be connected.");
-            var pose=Object(value,"pose");Fields(pose,"positionMeters","orientation");var q=Object(pose,"orientation");Fields(q,"x","y","z","w");
-            double x=Number(q,"x"),y=Number(q,"y"),z=Number(q,"z"),w=Number(q,"w");
-            if(Math.Abs(x*x+y*y+z*z+w*w-1)>1e-8)throw new InvalidDataException("Replay quaternion must be unit length.");
-            return new RigidPose(Vector(Object(pose,"positionMeters")),new Quaterniond(x,y,z,w));
+            if(value["trackerId"]!=null)tracker=Identifier(value,"trackerId");
+            if(tracker==null)throw new InvalidDataException("The first sample must name its tracker.");
+            int fields=value.Properties().Count(p=>p.Name!="trackerId");
+            if(value["pose"]==null)
+            {
+                if(fields!=2)throw new InvalidDataException("Unknown or missing replay fields.");
+                string connection=Choice(value,"connection","Connected","Disconnected","Reconnecting"),validity=Choice(value,"validity","Unavailable","OutOfRange","DriverFault","RejectedNativePose");
+                status=connection+" / "+validity;return null;
+            }
+            if(fields!=1)throw new InvalidDataException("Invalid tracking must not carry a pose.");
+            if(!(value["pose"] is JArray pose)||pose.Count!=7)throw new InvalidDataException("A replay pose needs seven numbers.");
+            var n=pose.Select(item=>item.Type==JTokenType.Integer||item.Type==JTokenType.Float?(double)item:throw new InvalidDataException("Expected number: pose")).ToArray();
+            if(!n.All(RenderNumbers.Finite))throw new InvalidDataException("Nonfinite number.");
+            if(Math.Abs(n[3]*n[3]+n[4]*n[4]+n[5]*n[5]+n[6]*n[6]-1)>1e-8)throw new InvalidDataException("Replay quaternion must be unit length.");
+            status="Connected / Valid";
+            return new RigidPose(new Vector3d(n[0],n[1],n[2]),new Quaterniond(n[3],n[4],n[5],n[6]));
         }
         private static Vector3d Vector(JObject value){Fields(value,"x","y","z");return new Vector3d(Number(value,"x"),Number(value,"y"),Number(value,"z"));}
         private static double Number(JObject value,string key){if(value[key]?.Type!=JTokenType.Integer&&value[key]?.Type!=JTokenType.Float)throw new InvalidDataException("Expected number: "+key);double number=(double)value[key]!;if(!RenderNumbers.Finite(number))throw new InvalidDataException("Nonfinite number.");return number;}

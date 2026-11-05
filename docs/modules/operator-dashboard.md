@@ -127,19 +127,19 @@ running. Search by participant ID or name, select a session, inspect its tests a
 notes, or page through original JSON records.
 
 The collection folder and SQLite database are initialized on dashboard startup.
-Raw streams are retained and indexed into SQLite after each checkpoint and final
-closure. **Refresh** imports existing recordings and retries secondary-copy errors.
-The viewer displays the actual configured folder and persistent errors. Optional
-browser preference storage is never required for the controls to initialize.
+Raw streams stay in their recording folders; after each checkpoint and final
+closure the database stores each recording's derived task results. **Refresh**
+indexes existing recordings and retries a failed update. The viewer displays the
+actual configured folder and persistent errors. Optional browser preference
+storage is never required for the controls to initialize.
 
-**Export database** creates a whole-collection SQLite snapshot; **Export participant**
-creates a fresh database containing only the selected participant. **Download export**
-saves it through the browser. **Export original files** retains finalized raw files
-in a ZIP, and **Download review CSV** saves the descriptive test table. Exports are
-also retained in the configured folder's `exports` subdirectory.
+**Export results** creates one workbook of every participant's results, shots and
+timeline. **Raw archive** keeps one finalized recording's original files in a ZIP.
+**Download export** saves either through the browser. Exports are also retained in
+the configured folder's `exports` subdirectory.
 
-The default folder is **collection data** at the project root. Existing custom or
-older machine overlays retain their configured path, which **Open folder** opens.
+The default folder is **collection data** at the project root. Custom machine
+overlays retain their configured path, which **Open folder** opens.
 A standalone copy outside a project saves alongside its executable. Automated
 Unity test recordings use a separate temporary test directory.
 

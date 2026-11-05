@@ -12,13 +12,6 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
   const html = (id, value) => { if ($(id).innerHTML !== value) $(id).innerHTML = value; };
   function readableNote(value) {
     const text = String(value || '');
-    if (text.startsWith('Participant details: ')) {
-      try {
-        const details = JSON.parse(text.slice('Participant details: '.length));
-        return [`Participant: ${details.participantId}`, details.participantName ? `Name / alias: ${details.participantName}` : '',
-          details.initialNotes ? `Initial observations: ${details.initialNotes}` : ''].filter(Boolean).join('\n');
-      } catch { return text; }
-    }
     if (text.startsWith('Synthetic calibration fixture accepted: ')) return 'Synthetic calibration fixture reviewed, accepted and saved.';
     return text;
   }

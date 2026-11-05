@@ -16,8 +16,8 @@ class IngestTests(unittest.TestCase):
     def make_run(self, bad_schema=False, duplicate=False):
         root=Path(tempfile.mkdtemp()); run=root/'run'; run.mkdir()
         def sample(seq,tick,valid=True):
-            tracker=lambda ident: {'trackerId':ident,'connection':'Connected','validity':'Valid','pose':{'positionMeters':{'x':0,'y':0,'z':0},'orientation':{'x':0,'y':0,'z':0,'w':1}}} if valid else {'trackerId':ident,'connection':'Disconnected','validity':'Unavailable','pose':None}
-            return {'schemaVersion':'bad.v9' if bad_schema else 'elts.samples.v1','sequence':seq,'monotonicTicks':tick,'head':tracker('HEAD'),'weapon':tracker('WEAPON')}
+            tracker=lambda ident: {'trackerId':ident,'pose':[0,0,0,0,0,0,1]} if valid else {'trackerId':ident,'connection':'Disconnected','validity':'Unavailable'}
+            return {'schemaVersion':'bad.v9' if bad_schema else 'elts.samples.v2','sequence':seq,'monotonicTicks':tick,'head':tracker('HEAD'),'weapon':tracker('WEAPON')}
         samples=[sample(1,1),sample(2,2,False)]
         events=[{'schemaVersion':'elts.events.v1','sequence':1,'monotonicTicks':0,'eventType':'BlockStarted','payload':{'blockId':'b1'}},{'schemaVersion':'elts.events.v1','sequence':2,'monotonicTicks':3,'eventType':'TargetDestroyed','payload':{'blockId':'b1','targetId':'t1'}},{'schemaVersion':'elts.events.v1','sequence':3,'monotonicTicks':4,'eventType':'TargetDestroyed','payload':{'blockId':'b1','targetId':'t1'}},{'schemaVersion':'elts.events.v1','sequence':4,'monotonicTicks':BLOCK_TICKS,'eventType':'BlockEnded','payload':{'blockId':'b1'}}] if duplicate else [{'schemaVersion':'elts.events.v1','sequence':1,'monotonicTicks':0,'eventType':'BlockStarted','payload':{'blockId':'b1'}},{'schemaVersion':'elts.events.v1','sequence':2,'monotonicTicks':3,'eventType':'ShotFired','payload':{}},{'schemaVersion':'elts.events.v1','sequence':3,'monotonicTicks':4,'eventType':'TargetDestroyed','payload':{'blockId':'b1','targetId':'t1'}},{'schemaVersion':'elts.events.v1','sequence':4,'monotonicTicks':BLOCK_TICKS,'eventType':'BlockEnded','payload':{'blockId':'b1'}}]
         targets=[{'schemaVersion':'elts.targets.v1','sequence':1,'monotonicTicks':0,'targetId':'t1','blockId':'b1','lifecycle':'Spawned','worldPositionMeters':{'x':0,'y':0,'z':1},'worldVelocityMetersPerSecond':{'x':0,'y':0,'z':0},'scenarioSeed':1,'scenarioVersion':'fixture'}]
@@ -87,9 +87,9 @@ class IngestTests(unittest.TestCase):
         original=(run/'samples.ndjson').read_text(); (run/'samples.ndjson').write_text(original.replace('"sequence":1','"sequence":1,"sequence":1',1))
         with self.assertRaisesRegex(IngestError,'Duplicate JSON key|verification'):
             ingest_run(run,cal)
-        (run/'samples.ndjson').write_text(original.replace('"x":0','"x":NaN',1)); self.refresh(run, samples=[json.loads(line) for line in original.splitlines()])
+        (run/'samples.ndjson').write_text(original.replace('"pose":[0','"pose":[NaN',1)); self.refresh(run, samples=[json.loads(line) for line in original.splitlines()])
         # Restore the actual non-finite text after refresh, then refresh only its checksum.
-        (run/'samples.ndjson').write_text(original.replace('"x":0','"x":NaN',1)); summary=json.loads((run/'session-summary.json').read_text()); summary['checksumsSha256']['samples.ndjson']=hashlib.sha256((run/'samples.ndjson').read_bytes()).hexdigest(); (run/'session-summary.json').write_text(json.dumps(summary))
+        (run/'samples.ndjson').write_text(original.replace('"pose":[0','"pose":[NaN',1)); summary=json.loads((run/'session-summary.json').read_text()); summary['checksumsSha256']['samples.ndjson']=hashlib.sha256((run/'samples.ndjson').read_bytes()).hexdigest(); (run/'session-summary.json').write_text(json.dumps(summary))
         with self.assertRaisesRegex(IngestError,'Non-finite|verification'):
             ingest_run(run,cal)
 
@@ -137,10 +137,10 @@ class IngestTests(unittest.TestCase):
     def test_nonunit_raw_quaternion_and_missing_calibration_id_are_rejected(self):
         root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))
         samples=[json.loads(line) for line in (run/'samples.ndjson').read_text().splitlines()]
-        samples[0]['weapon']['pose']['orientation']['w']=2; self.refresh(run,samples=samples)
+        samples[0]['weapon']['pose'][6]=2; self.refresh(run,samples=samples)
         with self.assertRaisesRegex(IngestError,'unit length'):
             ingest_run(run,cal)
-        samples[0]['weapon']['pose']['orientation']['w']=1; self.refresh(run,samples=samples)
+        samples[0]['weapon']['pose'][6]=1; self.refresh(run,samples=samples)
         cal.write_text(json.dumps({'muzzleOffsetMeters':[0,0,0],'boreDirectionLocal':[0,0,1],'zeroCorrectionQuaternion':[0,0,0,1]}))
         with self.assertRaisesRegex(IngestError,'calibrationId'):
             ingest_run(run,cal)

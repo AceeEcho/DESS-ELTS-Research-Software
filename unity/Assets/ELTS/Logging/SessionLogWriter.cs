@@ -233,6 +233,8 @@ public sealed class SessionLogWriter : IDisposable
     private long writtenSamples;
     private long writtenEvents;
     private long writtenTargets;
+    // Tracker IDs already written to samples.ndjson. Only the writer thread uses these.
+    private string? loggedHeadTracker, loggedWeaponTracker;
 
     public SessionLogWriter(LoggingRunLease lease, SessionProvenance provenance, LoggingConfiguration? configuration = null, ILogSinkFactory? sinkFactory = null, ISessionSummaryPublisher? summaryPublisher = null)
     {
@@ -440,7 +442,12 @@ public sealed class SessionLogWriter : IDisposable
                     request.Completion.TrySetResult(Health.IsHealthy);
                 }
                 break;
-            case WriterItemKind.Sample: sink.Write("samples.ndjson", LogJson.Sample(item.Sample)); Interlocked.Increment(ref writtenSamples); break;
+            case WriterItemKind.Sample:
+                // A tracker ID holds until it changes, so write it only on the first line and on a change.
+                var sample = item.Sample;
+                sink.Write("samples.ndjson", LogJson.Sample(sample, sample.Head.Tracker.Value != loggedHeadTracker, sample.Weapon.Tracker.Value != loggedWeaponTracker));
+                loggedHeadTracker = sample.Head.Tracker.Value; loggedWeaponTracker = sample.Weapon.Tracker.Value;
+                Interlocked.Increment(ref writtenSamples); break;
             case WriterItemKind.Event: sink.Write("events.ndjson", LogJson.Event(item.Event!)); Interlocked.Increment(ref writtenEvents); break;
             case WriterItemKind.Target: sink.Write("targets.ndjson", LogJson.Target(item.Target!)); Interlocked.Increment(ref writtenTargets); break;
             default: throw new InvalidOperationException("Unknown log item.");

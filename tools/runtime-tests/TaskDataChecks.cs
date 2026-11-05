@@ -39,10 +39,10 @@ internal static class TaskDataChecks
         Check(a["seconds"].Count()==3 && (double)a["seconds"][2]["exposureSeconds"]==0.5 && (int)a["seconds"][2]["shots"]==0,"Partial final second and quiet bins retained");
         Check((double)a["shotDetails"][1]["activeSeconds"]==1.25,"Shot time excludes pause");
         Check(result["attempts"][1]["shots"].Type==JTokenType.Null,"Skipped attempt is unavailable, never zero performance");
-        var legacy=TaskDataReview.Build(new[]{Event("BlockMetadata",0),Event("BlockStarted",0),Event("ShotFired",0.5),Event("TargetHit",0.5),Event("ShotFired",1),Event("BlockEnded",2)})["attempts"][0];
-        Check((int)legacy["hits"]==1 && (int)legacy["misses"]==1,"Legacy hit matching works");
-        Check(legacy["meanShotErrorDeg"].Type==JTokenType.Null && legacy["aimCoveragePercent"].Type==JTokenType.Null,"Legacy geometry remains unavailable");
-        Check(legacy["headHits"].Type==JTokenType.Null,"Old hits without a region remain unavailable rather than becoming body hits");
+        var sparse=TaskDataReview.Build(new[]{Event("BlockMetadata",0),Event("BlockStarted",0),Event("ShotFired",0.5,new JObject{["outcome"]="Hit"}),Event("ShotFired",1),Event("BlockEnded",2)})["attempts"][0];
+        Check((int)sparse["hits"]==1 && sparse["misses"].Type==JTokenType.Null && (string)sparse["shotDetails"][1]["outcome"]=="Unknown","A shot without a recorded outcome stays unknown, never a miss");
+        Check(sparse["meanShotErrorDeg"].Type==JTokenType.Null && sparse["aimCoveragePercent"].Type==JTokenType.Null,"Missing geometry remains unavailable");
+        Check(sparse["headHits"].Type==JTokenType.Null,"Hits without a region remain unavailable rather than becoming body hits");
         var regional=TaskDataReview.Build(new[]{
             Event("BlockMetadata",0,new JObject{["condition"]="WE_MT"}),Event("BlockStarted",0),
             Event("WeaponConfigured",0,new JObject{["magazineCapacity"]=20}),
@@ -58,7 +58,7 @@ internal static class TaskDataChecks
         Check(Math.Abs((double)regional["accuracyPercent"]-200.0/3)<1e-8,"Cover still reduces shot accuracy");
         Check((int)regional["magazineCapacity"]==20 && (int)regional["shotDetails"][0]["magazineAfter"]==19,"Review preserves magazine capacity and shot ammunition state");
         var live=TaskDataReview.Build(new[]{Event("BlockMetadata",0),Event("BlockStarted",0),Event("ShotFired",0.5)})["attempts"][0];
-        Check(live["misses"].Type==JTokenType.Null,"Incomplete legacy shot cannot be claimed as miss");
+        Check(live["misses"].Type==JTokenType.Null,"Shot without an outcome cannot be claimed as miss");
         var gapEvents=new List<JObject>{Event("BlockMetadata",0),Event("BlockStarted",0)};
         foreach(var point in new[]{(0.0,0.0,true),(.1,1.0,true),(.2,0.0,false),(.3,90.0,true),(1.0,180.0,true),(1.1,181.0,true)})
             gapEvents.Add(Event("AimObserved",point.Item1,new JObject{["valid"]=point.Item3,["observationTicks"]=point.Item1*TimeSpan.TicksPerSecond,["maximumGapSeconds"]=.25,["directionX"]=Math.Sin(point.Item2*Math.PI/180),["directionY"]=0,["directionZ"]=Math.Cos(point.Item2*Math.PI/180)}));
@@ -70,25 +70,30 @@ internal static class TaskDataChecks
         File.WriteAllText(Path.Combine(folder,"events.ndjson"),Event("BlockMetadata",0).ToString(Newtonsoft.Json.Formatting.None)+"\n"+Event("BlockSkipped",1).ToString(Newtonsoft.Json.Formatting.None));
         Check((string)TaskDataReview.Read(folder)["attempts"][0]["status"]=="Started","Trailing valid JSON without newline is excluded");
         string exportRoot=Path.Combine(root,"metric-collection");var collection=new ParticipantCollection(exportRoot);
-        collection.Import(folder,"00123","=SUM(1,2)",result.ToString());
-        string id;
+        collection.SaveParticipant("00123","Private Name");
+        collection.Import(folder,"00123",result.ToString());
+        string other=Path.Combine(root,"second-participant");Directory.CreateDirectory(other);File.WriteAllText(Path.Combine(other,"events.ndjson"),"");
+        collection.Import(other,"=SUM(1,2)",result.ToString());
         using(var db=new CollectionSqlite(collection.DatabasePath))
         {
-            id=db.Query("SELECT id FROM participants")[0]["id"];
-            Check(db.Query("SELECT * FROM task_results").Count==2,"SQL has one row per attempt");
-            Check(db.Query("SELECT * FROM task_seconds").Count==3 && db.Query("SELECT * FROM task_shots").Count==2,"SQL detail views match shared review");
+            Check(db.Query("SELECT * FROM task_results").Count==4,"SQL has one row per attempt");
+            Check(db.Query("SELECT * FROM task_seconds").Count==6 && db.Query("SELECT * FROM task_shots").Count==4,"SQL detail views match shared review");
             Check(db.Query("SELECT typeof(shotsPerSecond) AS kind FROM task_results WHERE blockId='attempt-1'")[0]["kind"]=="real","SQL metrics are numeric");
         }
-        using(var db=new CollectionSqlite(collection.Export(id)))Check(db.Query("SELECT * FROM task_shots").Count==2,"Participant SQL export retains metric views");
-        string workbook=collection.ExportWorkbook(id);
+        string workbook=collection.ExportResults();
         using(var zip=ZipFile.OpenRead(workbook))
         {
             XNamespace ns="http://schemas.openxmlformats.org/spreadsheetml/2006/main";
-            XDocument sheet;using(var input=zip.GetEntry("xl/worksheets/sheet1.xml").Open())sheet=XDocument.Load(input);
-            Check(sheet.Descendants(ns+"row").Count()==3,"XLSX preserves summary rows");
-            Check(sheet.Descendants(ns+"f").Count()==0 && sheet.Descendants(ns+"t").Any(t=>t.Value=="=SUM(1,2)"),"Participant text never becomes an Excel formula");
-            Check(sheet.Descendants(ns+"t").Any(t=>t.Value=="00123"),"Excel preserves leading-zero participant code");
-            Check(sheet.Descendants(ns+"autoFilter").Count()==1 && sheet.Descendants(ns+"pane").Count()==1,"Workbook filters and frozen headers");
+            XDocument Sheet(int number){using(var input=zip.GetEntry("xl/worksheets/sheet"+number+".xml").Open())return XDocument.Load(input);}
+            XDocument book;using(var input=zip.GetEntry("xl/workbook.xml").Open())book=XDocument.Load(input);
+            Check(String.Join(",",book.Descendants(ns+"sheet").Select(s=>(string)s.Attribute("name")))=="Results,Shots,Timeline,Metric guide","Results workbook sheets");
+            var results=Sheet(1);
+            Check(results.Descendants(ns+"row").Count()==5,"Results has every participant's attempts in one sheet");
+            Check(Sheet(2).Descendants(ns+"row").Count()==5 && Sheet(3).Descendants(ns+"row").Count()==7,"Shots and timeline cover every participant");
+            Check(results.Descendants(ns+"f").Count()==0 && results.Descendants(ns+"t").Any(t=>t.Value=="=SUM(1,2)"),"Participant text never becomes an Excel formula");
+            Check(results.Descendants(ns+"t").Any(t=>t.Value=="00123"),"Excel preserves leading-zero participant code");
+            Check(!zip.Entries.Any(e=>{using(var reader=new StreamReader(e.Open()))return reader.ReadToEnd().Contains("Private Name");}),"Results export identifies participants by code, never name");
+            Check(results.Descendants(ns+"autoFilter").Count()==1 && results.Descendants(ns+"pane").Count()==1,"Workbook filters and frozen headers");
             foreach(var entry in zip.Entries.Where(e=>e.FullName.EndsWith(".xml") || e.FullName.EndsWith(".rels")))using(var input=entry.Open())XDocument.Load(input);
         }
         // Keep a fictional example for independent spreadsheet-reader inspection.

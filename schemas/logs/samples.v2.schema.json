@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "elts.samples.v2.schema.json",
+  "title": "ELTS v2 tracking sample line",
+  "description": "Each tracker is either a pose [x, y, z, qx, qy, qz, qw] in Unity room metres with a unit quaternion, meaning Connected and Valid, or an explicit connection and validity without a pose. trackerId appears on the stream's first line and whenever that role's tracker changes; it holds until its next record.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sequence", "monotonicTicks", "head", "weapon"],
+  "properties": {
+    "schemaVersion": {"const": "elts.samples.v2"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "monotonicTicks": {"type": "integer", "minimum": 0},
+    "head": {"$ref": "#/$defs/tracker"},
+    "weapon": {"$ref": "#/$defs/tracker"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+$", "maxLength": 256},
+    "tracker": {"oneOf": [
+      {"type": "object", "additionalProperties": false, "required": ["pose"],
+       "properties": {"trackerId": {"$ref": "#/$defs/id"}, "pose": {"$ref": "#/$defs/pose"}}},
+      {"type": "object", "additionalProperties": false, "required": ["connection", "validity"],
+       "properties": {"trackerId": {"$ref": "#/$defs/id"}, "connection": {"enum": ["Disconnected", "Connected", "Reconnecting"]},
+                      "validity": {"enum": ["Unavailable", "OutOfRange", "DriverFault", "RejectedNativePose"]}}}
+    ]},
+    "pose": {"type": "array", "minItems": 7, "maxItems": 7, "items": {"type": "number"}}
+  }
+}

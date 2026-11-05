@@ -64,14 +64,14 @@ const server = http.createServer(async (req, res) => {
       current.data.profiles = current.data.profiles.filter(p => p.id !== command.id);
       current.data.profile = null; current.data.rows = []; current.downloadId = '';
     }
-    if (command.action === 'exportParticipant' || command.action === 'exportDatabase' || command.action === 'exportWorkbook') current.downloadId=command.action==='exportWorkbook'?'fixture-workbook':'fixture-export';
+    if (command.action === 'exportResults' || command.action === 'exportSessionRaw') current.downloadId=command.action==='exportResults'?'fixture-workbook':'fixture-raw';
     if (command.action === 'listRecordings') current.tools.recordings = [{ id: 'synthetic-browser-test', finalized: true }];
     if (command.action === 'reviewRecording') current.tools.review = { id: command.id, finalized: true,
       attempts: [{ blockId: 'WE_FT-attempt-01', condition: 'WE_FT', status: 'Completed', hits: 2, shots: 3, activeSeconds: 300, scoreStatus: 'unavailable' }],
       notes: [{ text: '<script>must remain text</script>' }], limitation: 'Synthetic browser fixture.' };
     res.setHeader('Content-Type', 'application/json'); res.end('{"ok":true}'); return;
   }
-  if(req.url.startsWith('/api/download/')){res.setHeader('Content-Disposition','attachment; filename="'+(req.url.includes('workbook')?'fixture.xlsx':'fixture.sqlite')+'"');res.end('fixture bytes');return;}
+  if(req.url.startsWith('/api/download/')){res.setHeader('Content-Disposition','attachment; filename="'+(req.url.includes('workbook')?'fixture.xlsx':'fixture.zip')+'"');res.end('fixture bytes');return;}
   const name = req.url === '/' ? 'index.html' : req.url.slice(1);
   if (!['index.html', 'app.js', 'workflows.js', 'data-viewer.js', 'styles.css'].includes(name)) { res.writeHead(404); res.end(); return; }
   res.setHeader('Content-Type', name.endsWith('.js') ? 'text/javascript' : name.endsWith('.css') ? 'text/css' : 'text/html');
@@ -203,7 +203,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(commands.find(c => c.action === 'skipBreak').blockId, 'WE_FT-attempt-01', 'Skip break carries the displayed attempt identity');
     await page.locator('#recordingsButton').click();
     await page.locator('[data-profile-id="profile1"]').click();
-    await page.locator('#dataExportParticipant').waitFor();
+    await page.locator('#dataRemoveParticipant').waitFor();
     assert.equal(await page.locator('#workspace').isVisible(), false);
     assert.equal(current.state, 'BlockReady', 'Data mode preserves test administration state');
     assert.equal(await page.locator('#dataProfile script').count(), 0, 'Stored notes cannot execute markup');
@@ -211,18 +211,16 @@ const server = http.createServer(async (req, res) => {
     await page.locator('#dataLoadRows').click();
     await page.waitForFunction(() => document.getElementById('dataRawRows').textContent.includes('OperatorNote'));
     assert.equal(await page.locator('#dataRawRows img').count(),0,'Raw JSON is escaped');
-    await page.locator('#dataExportParticipant').click();
+    assert.equal(await page.locator('#dataExportWorkbook, #dataExportParticipant, #dataReviewCsv').count(), 0, 'Only the results and raw archive exports remain');
+    await page.locator('#dataExportRaw').click();
     await page.locator('#dataDownload').waitFor({state:'visible'});
     const downloaded = page.waitForEvent('download'); await page.locator('#dataDownload').click();
-    assert.match((await downloaded).suggestedFilename(), /sqlite$/);
-    await page.locator('#dataExportAll').click(); await wait(()=>commands.some(c=>c.action==='exportDatabase'));
+    assert.match((await downloaded).suggestedFilename(), /zip$/);
     await page.locator('#dataFolder').click(); await wait(()=>commands.some(c=>c.action==='openDataFolder'));
     rejectFolder = true; await page.locator('#dataFolder').click();
     await page.waitForTimeout(500);
     assert.match(await page.locator('#dataError').textContent(), /Explorer/, 'Command errors survive state polling');
     rejectFolder = false; await page.locator('#dataFolder').click();
-    const csvDownload = page.waitForEvent('download'); await page.locator('#dataReviewCsv').click();
-    assert.match((await csvDownload).suggestedFilename(), /review.csv$/);
     current.data.profile.sessions[0].review = JSON.stringify(taskReview);
     await page.waitForFunction(()=>document.querySelectorAll('[data-task-id]').length===2);
     // A real press can span several live polls. Keep the actual node alive until
@@ -299,8 +297,8 @@ const server = http.createServer(async (req, res) => {
     assert.match(await page.locator('.metric-card').first().innerText(),/0 hit/,'Measured zero is visible');
     assert.match(await page.locator('#taskExplorer').innerText(),/—/,'Missing geometry is not zero');
     await page.locator('[data-task-id="WE_FT-attempt-01"]').click();
-    await page.locator('#dataExportWorkbook').click();
-    await wait(()=>commands.some(c=>c.action==='exportWorkbook'));
+    await page.locator('#dataExportAll').click();
+    await wait(()=>commands.some(c=>c.action==='exportResults'));
     const workbookDownload = page.waitForEvent('download'); await page.locator('#dataDownload').click();
     assert.match((await workbookDownload).suggestedFilename(),/xlsx$/);
     await page.locator('#dataSearch').fill('missing');

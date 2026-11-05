@@ -15,10 +15,9 @@ HASH = "a" * 64
 
 def _sample() -> dict:
     return {
-        "schemaVersion": "elts.samples.v1", "sequence": 1, "monotonicTicks": 4,
-        "head": {"trackerId": "HEAD-001", "connection": "Connected", "validity": "Valid",
-                 "pose": {"positionMeters": {"x": 1, "y": 2, "z": 3}, "orientation": {"x": 0, "y": 0, "z": 0, "w": 1}}},
-        "weapon": {"trackerId": "WEAPON-001", "connection": "Connected", "validity": "OutOfRange", "pose": None},
+        "schemaVersion": "elts.samples.v2", "sequence": 1, "monotonicTicks": 4,
+        "head": {"trackerId": "HEAD-001", "pose": [1, 2, 3, 0, 0, 0, 1]},
+        "weapon": {"trackerId": "WEAPON-001", "connection": "Connected", "validity": "OutOfRange"},
     }
 
 
@@ -79,11 +78,20 @@ class VerifyRunTests(unittest.TestCase):
 
     def test_checksum_count_order_and_pose_tampering_are_rejected(self) -> None:
         sample = _sample()
-        sample["weapon"]["pose"] = {"positionMeters": {"x": 0, "y": 0, "z": 0}, "orientation": {"x": 0, "y": 0, "z": 0, "w": 1}}
+        sample["weapon"]["pose"] = [0, 0, 0, 0, 0, 0, 1]
         _write_json(self.directory / "samples.ndjson", sample, newline=True)
         _refresh_summary(self.directory)
-        with self.assertRaisesRegex(VerificationError, "invalid tracking|failed allOf"):
+        with self.assertRaisesRegex(VerificationError, "invalid tracking|failed oneOf"):
             verify_run(self.directory)
+
+        for bad in ({"trackerId": "HEAD-001", "pose": [0, 0, 0, 1]}, {"trackerId": "HEAD-001", "connection": "Connected", "validity": "Valid"}):
+            with self.subTest(head=bad):
+                sample = _sample()
+                sample["head"] = bad
+                _write_json(self.directory / "samples.ndjson", sample, newline=True)
+                _refresh_summary(self.directory)
+                with self.assertRaisesRegex(VerificationError, "failed oneOf"):
+                    verify_run(self.directory)
 
         _valid_run(self.directory)
         target_path = self.directory / "targets.ndjson"
@@ -94,6 +102,20 @@ class VerifyRunTests(unittest.TestCase):
         _valid_run(self.directory)
         _refresh_summary(self.directory, counts={"droppedSamples": 0, "writtenSamples": 2, "writtenEvents": 1, "writtenTargets": 1})
         with self.assertRaisesRegex(VerificationError, "lines but summary reports"):
+            verify_run(self.directory)
+
+    def test_tracker_ids_hold_until_changed(self) -> None:
+        first = _sample()
+        second = {"schemaVersion": "elts.samples.v2", "sequence": 2, "monotonicTicks": 5,
+                  "head": {"pose": [1, 2, 3, 0, 0, 0, 1]}, "weapon": {"connection": "Reconnecting", "validity": "Unavailable"}}
+        (self.directory / "samples.ndjson").write_text(json.dumps(first, separators=(",", ":")) + "\n" + json.dumps(second, separators=(",", ":")) + "\n", encoding="utf-8")
+        _refresh_summary(self.directory, counts={"droppedSamples": 0, "writtenSamples": 2, "writtenEvents": 1, "writtenTargets": 1})
+        self.assertTrue(verify_run(self.directory)["complete"])
+
+        del first["head"]["trackerId"]
+        _write_json(self.directory / "samples.ndjson", first, newline=True)
+        _refresh_summary(self.directory)
+        with self.assertRaisesRegex(VerificationError, "first sample must name its tracker"):
             verify_run(self.directory)
 
     def test_per_stream_sequence_and_timestamp_must_remain_monotonic(self) -> None:

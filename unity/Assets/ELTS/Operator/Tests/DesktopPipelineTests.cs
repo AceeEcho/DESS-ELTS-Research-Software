@@ -131,8 +131,9 @@ namespace Elts.Operator.Tests
                     long sequence=(long)trigger["payload"]["acquisitionSequence"];
                     var sample=samples.Single(s=>(long)s["sequence"]==sequence);
                     Assert.That((long)sample["monotonicTicks"],Is.EqualTo((long)trigger["monotonicTicks"]));
-                    Assert.That((string)sample["head"]["validity"],Is.EqualTo("Valid"));
-                    Assert.That((string)sample["weapon"]["validity"],Is.EqualTo("Valid"));
+                    // Samples v2: a pose array means Connected and Valid.
+                    Assert.That(sample["head"]["pose"],Is.InstanceOf<JArray>());
+                    Assert.That(sample["weapon"]["pose"],Is.InstanceOf<JArray>());
                     Assert.That(events.Any(e=>(string)e["eventType"]=="ShotFired" && (long)e["monotonicTicks"]==(long)trigger["monotonicTicks"]),Is.True);
                 }
                 for(int i=1;i<events.Length;i++)Assert.That((long)events[i]["monotonicTicks"],Is.GreaterThanOrEqualTo((long)events[i-1]["monotonicTicks"]));

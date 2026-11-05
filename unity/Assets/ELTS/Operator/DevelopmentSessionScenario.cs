@@ -36,6 +36,10 @@ namespace Elts.Operator
         private int seed;
         private long targetSequence;
         private readonly Dictionary<string,TargetState> recordedStates = new Dictionary<string,TargetState>();
+        // Last recorded world position and velocity per target. Updated rows are
+        // written only when either value changes, so the stream stays lossless:
+        // a target's state holds until its next row.
+        private readonly Dictionary<string,(Vector3d Position,Vector3d Velocity)> recordedMotion = new Dictionary<string,(Vector3d,Vector3d)>();
         private readonly Dictionary<string,Vector3d> positions = new Dictionary<string,Vector3d>();
         private readonly HashSet<string> recordedEntries = new HashSet<string>();
         public IReadOnlyDictionary<string,Vector3d> Positions => positions;
@@ -105,7 +109,9 @@ namespace Elts.Operator
                             LogField.NumberValue("routeStartActiveSeconds",population.StartedAt(target)!.Value)})))
                             throw new InvalidOperationException("Route entry recording failed.");
                     }
-                    Record(target,known?TargetLifecycle.Updated:TargetLifecycle.Spawned);
+                    if(!known)Record(target,TargetLifecycle.Spawned);
+                    else if(!recordedMotion.TryGetValue(target.Id,out var last) || !last.Position.Equals(target.Position) || !last.Velocity.Equals(target.Velocity))
+                        Record(target,TargetLifecycle.Updated);
                     positions.Add(target.Id,target.Position);
                     if(!movingBlock)fixedPoses.Add(target.Id,DevelopmentScenarioLayout.FixedPose(
                         population.Slot(target),DevelopmentScenarioLayout.Ordinal(target),gameSettings));
@@ -249,7 +255,7 @@ namespace Elts.Operator
                 LogField.String("blockId",blockId!),LogField.NumberValue("magazineCapacity",MagazineCapacity),
                 LogField.Boolean("automaticReload",false),LogField.String("reloadAction","desktop-controls.reload")})))
                 throw new InvalidOperationException("Weapon configuration recording failed.");
-            recordedStates.Clear();
+            recordedStates.Clear();recordedMotion.Clear();
         }
 
         private void RecordRoute(TargetEntity target)
@@ -306,6 +312,7 @@ namespace Elts.Operator
             if(!recording.TryLogTarget(new TargetSnapshot(++targetSequence,clock.Now,target.Id,blockId!,lifecycle,
                 target.Position,target.Velocity,seed,config.Scenario.ScenarioId)))
                 throw new InvalidOperationException("Critical target recording failed.");
+            recordedMotion[target.Id]=(target.Position,target.Velocity);
         }
         private void RemoveRemainingTargets()
         {

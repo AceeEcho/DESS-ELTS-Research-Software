@@ -138,10 +138,9 @@ namespace Elts.Operator
                     if(engine?.State==SessionState.SessionSetup)
                     {
                         StationNote("Participant ID: "+stationParticipant+"; desktop synthetic rehearsal.");
-                        // Use the existing timestamped writer; identity never enters
-                        // filenames or browser preferences beyond the participant ID.
-                        StationNote("Participant details: "+Newtonsoft.Json.JsonConvert.SerializeObject(new {
-                            participantId=stationParticipant,participantName=stationParticipantName,initialNotes=stationInitialNotes }));
+                        // The name never enters the immutable recording; it is kept only
+                        // in the local collection, where removal can delete it.
+                        if(stationInitialNotes.Length>0)StationNote("Initial observations: "+stationInitialNotes);
                         AdvanceWithCalibration();
                         stationPreparing=false;
                         lastMessage="Participant ready. Begin the tutorial / walkthrough.";

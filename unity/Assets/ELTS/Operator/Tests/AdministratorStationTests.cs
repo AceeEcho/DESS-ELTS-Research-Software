@@ -208,13 +208,13 @@ namespace Elts.Operator.Tests
                 limit=Time.realtimeSinceStartup+15;
                 while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
                 Assert.That(session.IsBusy,Is.False);
-                var events=File.ReadAllLines(Path.Combine(run,"events.ndjson")).Select(JObject.Parse).ToArray();
+                string eventText=File.ReadAllText(Path.Combine(run,"events.ndjson"));
+                var events=eventText.Split(new[]{'\n'},StringSplitOptions.RemoveEmptyEntries).Select(JObject.Parse).ToArray();
+                // The name stays out of the immutable recording; only the code and notes are recorded.
+                Assert.That(eventText+File.ReadAllText(Path.Combine(run,"participant.json")),Does.Not.Contain("Synthetic Test Alias"));
+                Assert.That((string)JObject.Parse(File.ReadAllText(Path.Combine(run,"participant.json")))["participantId"],Is.EqualTo("station-test"));
                 var details=events.Single(e=>(string)e["eventType"]=="OperatorNote" &&
-                    ((string)e["payload"]["text"]).StartsWith("Participant details: "));
-                var intake=JObject.Parse(((string)details["payload"]["text"]).Substring("Participant details: ".Length));
-                Assert.That((string)intake["participantName"],Is.EqualTo("Synthetic Test Alias"));
-                Assert.That((string)intake["participantId"],Is.EqualTo("station-test"));
-                Assert.That((string)intake["initialNotes"],Is.EqualTo("Initial fixture observation"));
+                    (string)e["payload"]["text"]=="Initial observations: Initial fixture observation");
                 Assert.That((long)details["sequence"],Is.LessThan((long)events.First(e=>(string)e["eventType"]=="TestArmed")["sequence"]));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="TestArmed"),Is.EqualTo(4));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="ParticipantStartTrigger"),Is.EqualTo(4));

@@ -125,18 +125,16 @@ Click the small **Data** button at the top. It switches the dashboard to the par
 2. Choose a saved session to see its test results and notes. Expand **Explore original records** to page through events, tracking samples or target records.
 3. Click **Refresh** to index existing recordings or pick up newly flushed data.
 
-- **Export database:** creates a standalone SQLite snapshot of the whole indexed collection.
-- **Export participant:** creates a standalone SQLite database containing only the selected participant and their sessions and records.
+- **Export results:** creates one Excel workbook for every participant. **Results** has one row per participant per task attempt (each scenario, including repeats), **Shots** has one row per shot, and **Timeline** has one row per active second. Participants are listed by code, not name.
+- **Raw archive:** creates a ZIP of the selected finalized session's original tracker, target and event files with their checksums.
 - **Download export:** downloads the prepared file through your browser. Export copies also remain in the data folder's **exports** directory.
-- **Export original files:** creates a ZIP of the selected finalized session, preserving the original streams and checksums.
-- **Download review CSV:** downloads the displayed test table.
-- **Open folder:** opens the actual data folder shown in the viewer. The default is **collection data** beside the README and Start button; an older or customized machine configuration may select another folder.
+- **Open folder:** opens the actual data folder shown in the viewer. The default is **collection data** beside the README and Start button; a customized machine configuration may select another folder.
 
-The data folder and **collection.sqlite** are created when the administrator starts, even before the first participant. Raw data is written continuously. Each finished or skipped test saves a checkpoint and updates its SQL copy; the final recording closure updates SQL again. Exports contain the data indexed through the latest save or refresh. Wait for saving to finish before closing ELTS.
+The data folder and **collection.sqlite** are created when the administrator starts, even before the first participant. Raw data is written continuously. Each finished or skipped test saves a checkpoint and updates its results; the final recording closure updates them again. Exports contain the results through the latest save or refresh. Wait for saving to finish before closing ELTS.
 
-Storage and export failures appear in the Data view and flag its button. If a SQL copy fails, the original raw files remain available; **Refresh** retries indexing. Browser privacy settings that block saved layout preferences do not disable the controls.
+Storage and export failures appear in the Data view and flag its button. If updating results fails, the original raw files remain available; **Refresh** retries. Browser privacy settings that block saved layout preferences do not disable the controls.
 
-The collection is local to this machine and excluded from Git. Pushing the project does not back up recordings or synchronize databases. Older recordings remain in their original folders; the viewer also checks the previous default **data/synthetic** location beside the current default folder. A standalone player copied outside the project saves beside its executable. See [data storage and recovery](../modules/data-collection.md) for the database layout and limits.
+The collection is local to this machine and excluded from Git. Pushing the project does not back up recordings or synchronize databases. A standalone player copied outside the project saves beside its executable. See [data storage and recovery](../modules/data-collection.md) for the database layout and limits.
 
 ## If something does not look right
 

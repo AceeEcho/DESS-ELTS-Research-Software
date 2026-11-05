@@ -240,11 +240,8 @@ A **—** means a value is unavailable, not zero. Active time excludes pauses.
 
 | Export | What you get |
 | --- | --- |
-| **Export Excel** | The participant's sessions as `.xlsx` (Tasks, Timeline, Shots, Metric guide). Excel isn't needed to create it |
-| **Export participant SQL** | One participant as a standalone `.sqlite` database |
-| **Export database** | The whole collection as `.sqlite` (with `task_results`, `task_seconds`, `task_shots` views) |
-| **Export original files** | A ZIP of one finished session's raw streams and checksums |
-| **Download review CSV** | Task summaries for the selected session |
+| **Export results** | One `.xlsx` workbook for **every participant**: **Results** (one row per participant per task attempt, labelled by condition), **Shots** (one row per shot), **Timeline** (one row per active second) and **Metric guide**. Participants appear by code, not name. Excel isn't needed to create it |
+| **Raw archive** | A ZIP of one finished session's original tracker, target and event files with their checksums |
 
 Click **Download export** to save a prepared export; copies also stay in the data folder's **exports** directory. **Open folder** shows the data folder itself.
 

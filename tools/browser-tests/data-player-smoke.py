@@ -154,32 +154,29 @@ def main():
         with closing(sqlite3.connect(collection / 'collection.sqlite')) as db:
             assert db.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
             assert not db.execute('PRAGMA foreign_key_check').fetchall()
-            for session_id, directory in db.execute('SELECT id,directory FROM sessions'):
-                for stream in ['events.ndjson', 'samples.ndjson', 'targets.ndjson']:
-                    lines = len((Path(directory) / stream).read_text(encoding='utf-8').splitlines())
-                    saved = db.execute('SELECT count(*) FROM records WHERE sessionId=? AND stream=?', (session_id, stream)).fetchone()[0]
-                    assert saved == lines, (directory, stream, saved, lines)
-        assertions.append('Every finalized raw event, sample and target line is also present in SQLite')
+            assert not db.execute("SELECT name FROM sqlite_master WHERE name IN ('records','stream_progress')").fetchall()
+            directories = [Path(row[0]) for row in db.execute('SELECT directory FROM sessions')]
+            assert db.execute("SELECT count(*) FROM participants WHERE name=?", ("Fictional Zoë '雪'",)).fetchone()[0] == 1
+        for directory in directories:
+            for name in ['events.ndjson', 'participant.json']:
+                assert 'Fictional Zoë' not in (directory / name).read_text(encoding='utf-8'), (directory, name)
+        assertions.append('SQLite holds no copy of raw lines; the participant name is saved only in the collection, never in the recording')
         command('viewParticipant', id=profile['id'])
         selected = data_idle()['data']['profile']
         assert len(selected['sessions']) == 3
         assert sorted(len(json.loads(session['review'])['attempts']) for session in selected['sessions']) == [1,4,4]
         command('viewDataRows', session=selected['sessions'][0]['id'], stream='events.ndjson', page=0)
-        assert data_idle()['data']['rows']
-        for action, expected in [('exportParticipant', 1), ('exportDatabase', 2)]:
-            command(action, id=profile['id'])
-            exported = data_idle()
-            path = output / (action + '.sqlite')
-            urllib.request.urlretrieve(origin + '/api/download/' + exported['downloadId'] + '?token=' + token, path)
-            with closing(sqlite3.connect(path)) as db:
-                assert db.execute('SELECT count(*) FROM participants').fetchone()[0] == expected
-                assert db.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
-                assert not db.execute('PRAGMA foreign_key_check').fetchall()
-                assert db.execute('SELECT count(*) FROM task_results').fetchone()[0] > 0
-                assert db.execute('SELECT count(*) FROM task_results WHERE shots IS NOT NULL').fetchone()[0] == 0, 'Skipped attempts are not zero-score tests'
-        command('exportWorkbook', id=profile['id'])
+        rows = data_idle()['data']['rows']
+        with closing(sqlite3.connect(collection / 'collection.sqlite')) as db:
+            directory = Path(db.execute('SELECT directory FROM sessions WHERE id=?', (selected['sessions'][0]['id'],)).fetchone()[0])
+        raw_lines = (directory / 'events.ndjson').read_text(encoding='utf-8').splitlines()
+        assert [row['json'] for row in rows] == raw_lines[:50], 'Viewer pages read the original lines in place'
+        assertions.append('The original-records viewer reads complete lines directly from the recording')
+        with closing(sqlite3.connect(collection / 'collection.sqlite')) as db:
+            assert db.execute('SELECT count(*) FROM task_results WHERE shots IS NOT NULL').fetchone()[0] == 0, 'Skipped attempts are not zero-score tests'
+        command('exportResults')
         exported = data_idle()
-        workbook = output / 'participant.xlsx'
+        workbook = output / 'results.xlsx'
         request = urllib.request.Request(origin + '/api/download/' + exported['downloadId'] + '?token=' + token)
         with urllib.request.urlopen(request) as response:
             assert response.headers['Content-Type'] == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -188,12 +185,15 @@ def main():
         import xml.etree.ElementTree as ET
         with zipfile.ZipFile(workbook) as bundle:
             ns = {'s': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
+            names = [node.get('name') for node in ET.fromstring(bundle.read('xl/workbook.xml')).findall('.//s:sheet', ns)]
+            assert names == ['Results', 'Shots', 'Timeline', 'Metric guide'], names
             sheet = ET.fromstring(bundle.read('xl/worksheets/sheet1.xml'))
             text = [node.text for node in sheet.findall('.//s:t', ns)]
-            assert 'SQL-SMOKE-01' in text and 'SQL-SMOKE-02' not in text
+            assert 'SQL-SMOKE-01' in text
             assert len(sheet.findall('.//s:row', ns)) == 10, 'Eight skipped tasks plus continuation plus header'
+            assert not any('Fictional Zo' in bundle.read(name).decode('utf-8') for name in bundle.namelist())
             assert bundle.testzip() is None
-        assertions.append('Excel download has typed task sheets and includes only the selected participant; skipped metrics remain blank')
+        assertions.append('Results workbook covers every participant by code, without names; skipped metrics remain blank')
         command('exportSessionRaw', id=selected['sessions'][0]['id'])
         exported = data_idle()
         archive = output / 'raw.zip'
@@ -202,9 +202,9 @@ def main():
         with zipfile.ZipFile(archive) as bundle:
             assert 'session-summary.json' in bundle.namelist()
             assert bundle.testzip() is None
-        assertions.append('Real player SQL, participant-only SQL and original-file ZIP exports download and open independently')
+        assertions.append('Real player results workbook and raw archive downloads open independently')
         (output / 'result.json').write_text(json.dumps({'result':'pass','checks':assertions,'physicalValidation':False},indent=2)+'\n',encoding='utf-8')
-        print('PASS: copied-player storage, checkpoint indexing, profile grouping, downloads and export isolation')
+        print('PASS: copied-player storage, checkpoint indexing, profile grouping, in-place records and exports')
     except Exception as error:
         (output / 'result.json').write_text(json.dumps({'result':'fail','checks':assertions,
             'error':str(error),'physicalValidation':False},indent=2)+'\n',encoding='utf-8')

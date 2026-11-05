@@ -10,7 +10,8 @@ namespace Elts.Logging
 /// <summary>Schema identities are part of the recorded data contract. Bump a product version before changing its shape.</summary>
 public static class LogSchemaVersions
 {
-    public const string Samples = "elts.samples.v1";
+    // v2 stores poses as arrays and writes tracker IDs only when they change, about half the size of v1.
+    public const string Samples = "elts.samples.v2";
     public const string Events = "elts.events.v1";
     // Target expiry is a new observable lifecycle, so writers move to v2.
     // Readers retain v1 support for historical runs.

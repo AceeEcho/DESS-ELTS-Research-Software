@@ -5,16 +5,18 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Newtonsoft.Json.Linq;
 
 namespace Elts.Operator
 {
-    /// <summary>Rebuildable SQL copy of original recordings. Only complete NDJSON lines
-    /// enter a transaction; offsets commit together with rows so retries are idempotent.</summary>
+    /// <summary>Small local index of participants, recordings and their derived task
+    /// results. Raw recording files stay authoritative and are read in place; the
+    /// database never copies their lines. Participant names live only here.</summary>
     internal sealed class ParticipantCollection
     {
         public readonly string Root;
         public string DatabasePath=>Path.Combine(Root,"collection.sqlite");
+        public const int RecordsPerPage=50;
+        private const int MaximumRecordBytes=16777216;
         private static readonly string[] Streams={"events.ndjson","samples.ndjson","targets.ndjson"};
         public ParticipantCollection(string root){Root=Path.GetFullPath(root);}
         private CollectionSqlite Open()=>new CollectionSqlite(DatabasePath);
@@ -33,46 +35,58 @@ namespace Elts.Operator
         {
             db.Execute("CREATE TABLE IF NOT EXISTS participants (id TEXT PRIMARY KEY, code TEXT NOT NULL UNIQUE COLLATE NOCASE, name TEXT NOT NULL, createdUtc TEXT NOT NULL)");
             db.Execute("CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, participantId TEXT NOT NULL REFERENCES participants(id), directory TEXT NOT NULL UNIQUE, modifiedUtc TEXT NOT NULL, finalized INTEGER NOT NULL DEFAULT 0, review TEXT NOT NULL DEFAULT '{}')");
-            db.Execute("CREATE TABLE IF NOT EXISTS records (sessionId TEXT NOT NULL REFERENCES sessions(id), stream TEXT NOT NULL, offset INTEGER NOT NULL, json TEXT NOT NULL, PRIMARY KEY(sessionId,stream,offset))");
-            db.Execute("CREATE TABLE IF NOT EXISTS stream_progress (sessionId TEXT NOT NULL REFERENCES sessions(id), stream TEXT NOT NULL, offset INTEGER NOT NULL, PRIMARY KEY(sessionId,stream))");
             db.Execute("CREATE INDEX IF NOT EXISTS sessions_participant ON sessions(participantId)");
             // Remember excluded source folders so Refresh cannot resurrect deleted runs.
             // Original recordings remain intact for logging integrity and recovery.
             db.Execute("CREATE TABLE IF NOT EXISTS removed_recordings (directory TEXT PRIMARY KEY COLLATE NOCASE)");
+            // Version 3 and earlier copied every raw line into the database, making it
+            // larger than the recordings themselves. Drop that copy and reclaim the space.
+            if(db.Query("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('records','stream_progress')").Count>0)
+            {
+                db.Execute("DROP TABLE IF EXISTS records");db.Execute("DROP TABLE IF EXISTS stream_progress");db.Execute("VACUUM");
+            }
             // Named, typed columns expose the shared derived review without
             // requiring researchers to navigate JSON or duplicate calculations.
             CreateMetricView(db,"task_results",TaskDataReview.SummaryColumns,"");
             CreateMetricView(db,"task_seconds",TaskDataReview.SecondColumns,"seconds");
             CreateMetricView(db,"task_shots",TaskDataReview.ShotColumns,"shotDetails");
-            db.Execute("PRAGMA user_version=3");
+            db.Execute("PRAGMA user_version=4");
         }
         private static void CreateMetricView(CollectionSqlite db,string name,string[] columns,string detail)
         {
             string source=detail.Length==0?"a":"d";
             string fields=String.Join(",",columns.Select(c=>"json_extract("+source+".value,'$."+c+"') AS "+c));
             string context=detail.Length==0?"":",json_extract(a.value,'$.blockId') AS blockId,json_extract(a.value,'$.condition') AS condition";
-            db.Execute("CREATE VIEW IF NOT EXISTS "+name+" AS SELECT p.code AS participantCode,p.name AS participantName,s.id AS sessionId,s.finalized AS recordingFinalized"+context+","+fields+
+            // Recreate so a changed metric column list always reaches existing databases.
+            db.Execute("DROP VIEW IF EXISTS "+name);
+            db.Execute("CREATE VIEW "+name+" AS SELECT p.code AS participantCode,p.name AS participantName,s.id AS sessionId,s.finalized AS recordingFinalized"+context+","+fields+
                 " FROM sessions s JOIN participants p ON p.id=s.participantId,json_each(s.review,'$.attempts') a"+
                 (detail.Length==0?"":",json_each(a.value,'$."+detail+"') d"));
         }
-        public string ExportWorkbook(string participant)
+        public string ExportsFolder()
         {
-            Guid.ParseExact(participant,"N");
             string exports=Path.Combine(Root,"exports");Directory.CreateDirectory(exports);
             if((File.GetAttributes(exports)&FileAttributes.ReparsePoint)!=0)throw new IOException("Export folder cannot be a link.");
-            string destination=Path.Combine(exports,"participant-"+participant+"-"+Guid.NewGuid().ToString("N")+".xlsx");
+            return exports;
+        }
+        /// <summary>One workbook for every participant: one Results row per task attempt,
+        /// one Shots row per accepted shot, per-second Timeline rows and the metric guide.
+        /// Participant codes identify rows; names stay in the local collection.</summary>
+        public string ExportResults()
+        {
+            string destination=Path.Combine(ExportsFolder(),"elts-results-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss",CultureInfo.InvariantCulture)+"-"+Guid.NewGuid().ToString("N").Substring(0,6)+".xlsx");
             using(var db=Open())
             {
-                if(db.Query("SELECT id FROM participants WHERE id=?",participant).Count!=1)throw new IOException("Choose an existing participant.");
+                // One read transaction keeps every sheet from the same snapshot.
                 db.Execute("BEGIN");
                 try
                 {
                     var sheets=new List<CollectionWorkbook.Sheet>();
-                    string[] context={"participantCode","participantName","sessionId","recordingFinalized"};
-                    foreach(var spec in new[]{("Tasks","task_results",TaskDataReview.SummaryColumns),("Timeline","task_seconds",new[]{"blockId","condition"}.Concat(TaskDataReview.SecondColumns).ToArray()),("Shots","task_shots",new[]{"blockId","condition"}.Concat(TaskDataReview.ShotColumns).ToArray())})
+                    string[] context={"participantCode","sessionId","recordingFinalized"};
+                    foreach(var spec in new[]{("Results","task_results",TaskDataReview.SummaryColumns),("Shots","task_shots",new[]{"blockId","condition"}.Concat(TaskDataReview.ShotColumns).ToArray()),("Timeline","task_seconds",new[]{"blockId","condition"}.Concat(TaskDataReview.SecondColumns).ToArray())})
                     {
                         var columns=context.Concat(spec.Item3).ToArray();
-                        var rows=db.Query("SELECT * FROM "+spec.Item2+" WHERE sessionId IN (SELECT id FROM sessions WHERE participantId=?)",participant);
+                        var rows=db.Query("SELECT * FROM "+spec.Item2+" ORDER BY participantCode COLLATE NOCASE,sessionId");
                         sheets.Add(new CollectionWorkbook.Sheet(spec.Item1,columns,rows.Select(r=>columns.Select(c=>r[c]).ToArray()).ToArray()));
                     }
                     sheets.Add(new CollectionWorkbook.Sheet("Metric guide",new[]{"Metric","Unit","Definition"},TaskDataReview.Definitions));
@@ -83,66 +97,44 @@ namespace Elts.Operator
             }
             return destination;
         }
-        public void Import(string directory,string code,string name,string review)
+        /// <summary>Create or update a profile at intake. A blank name keeps an earlier one.</summary>
+        public void SaveParticipant(string code,string name)
+        {
+            Initialize();
+            using(var db=Open())
+            {
+                db.Execute("INSERT OR IGNORE INTO participants VALUES (?,?,?,?)",Guid.NewGuid().ToString("N"),code,"",DateTime.UtcNow.ToString("O"));
+                if(name.Length>0)db.Execute("UPDATE participants SET name=? WHERE code=?",name,code);
+            }
+        }
+        /// <summary>Index one recording folder and store its derived review. Raw files are only read.</summary>
+        public void Import(string directory,string code,string review)
         {
             Initialize();directory=Path.GetFullPath(directory);
             if((File.GetAttributes(directory)&FileAttributes.ReparsePoint)!=0)throw new IOException("Recording folder cannot be a link.");
             using(var db=Open())
             {
                 if(db.Query("SELECT directory FROM removed_recordings WHERE directory=?",directory).Count>0)return;
-                db.Execute("INSERT OR IGNORE INTO participants VALUES (?,?,?,?)",Guid.NewGuid().ToString("N"),code,name,DateTime.UtcNow.ToString("O"));
-                string participant=db.Query("SELECT id FROM participants WHERE code=?",code)[0]["id"];
-                if(name.Length>0)db.Execute("UPDATE participants SET name=? WHERE id=?",name,participant);
-                db.Execute("INSERT OR IGNORE INTO sessions(id,participantId,directory,modifiedUtc) VALUES(?,?,?,?)",Guid.NewGuid().ToString("N"),participant,directory,DateTime.UtcNow.ToString("O"));
-                string session=db.Query("SELECT id FROM sessions WHERE directory=?",directory)[0]["id"];
-                db.Execute("UPDATE sessions SET participantId=? WHERE id=?",participant,session);
-                db.Execute("DELETE FROM participants WHERE NOT EXISTS (SELECT 1 FROM sessions WHERE participantId=participants.id)");
-                foreach(string stream in Streams)ImportStream(db,session,directory,stream);
-                // Supplemental files retain complete provenance/checkpoint/summary JSON too.
-                foreach(string path in Directory.GetFiles(directory,"*.json"))
-                {
-                    if(Path.GetFileName(path).Contains(".pending"))continue;
-                    CheckFile(path);string json=File.ReadAllText(path);JToken.Parse(json);
-                    db.Execute("INSERT OR REPLACE INTO records VALUES(?,?,0,?)",session,Path.GetFileName(path),json);
-                }
-                db.Execute("UPDATE sessions SET modifiedUtc=?,finalized=?,review=? WHERE id=?",Directory.GetLastWriteTimeUtc(directory).ToString("O"),File.Exists(Path.Combine(directory,"session-summary.json"))?"1":"0",review,session);
-            }
-        }
-        private static void CheckFile(string path)
-        {if((File.GetAttributes(path)&FileAttributes.ReparsePoint)!=0)throw new IOException("Data import cannot follow linked files.");}
-        private static void ImportStream(CollectionSqlite db,string session,string directory,string name)
-        {
-            string path=Path.Combine(directory,name);if(!File.Exists(path))return;CheckFile(path);
-            var progress=db.Query("SELECT offset FROM stream_progress WHERE sessionId=? AND stream=?",session,name);
-            long offset=progress.Count==0?0:long.Parse(progress[0]["offset"],CultureInfo.InvariantCulture);
-            using(var input=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.ReadWrite))
-            {
-                long limit=input.Length;if(limit<offset)throw new IOException("A previously imported raw stream was shortened: "+name);
-                input.Position=offset;var bytes=new List<byte>();int count=0;
                 db.Execute("BEGIN IMMEDIATE");
                 try
                 {
-                    // File size is captured once. A trailing partial line is retried next sync.
-                    while(input.Position<limit)
-                    {
-                        int next=input.ReadByte();if(next<0)break;
-                        if(next!=10){bytes.Add((byte)next);if(bytes.Count>16777216)throw new IOException("Raw record exceeds 16 MB.");continue;}
-                        string json=new UTF8Encoding(false,true).GetString(bytes.ToArray()).TrimEnd('\r');bytes.Clear();
-                        JToken.Parse(json);
-                        db.Execute("INSERT INTO records VALUES(?,?,?,?)",session,name,offset.ToString(CultureInfo.InvariantCulture),json);
-                        offset=input.Position;count++;
-                        if(count%500==0)
-                        {
-                            SaveOffset(db,session,name,offset);db.Execute("COMMIT");db.Execute("BEGIN IMMEDIATE");
-                        }
-                    }
-                    SaveOffset(db,session,name,offset);db.Execute("COMMIT");
+                    db.Execute("INSERT OR IGNORE INTO participants VALUES (?,?,?,?)",Guid.NewGuid().ToString("N"),code,"",DateTime.UtcNow.ToString("O"));
+                    string participant=db.Query("SELECT id FROM participants WHERE code=?",code)[0]["id"];
+                    db.Execute("INSERT OR IGNORE INTO sessions(id,participantId,directory,modifiedUtc) VALUES(?,?,?,?)",Guid.NewGuid().ToString("N"),participant,directory,DateTime.UtcNow.ToString("O"));
+                    var session=db.Query("SELECT id,participantId FROM sessions WHERE directory=?",directory)[0];
+                    db.Execute("UPDATE sessions SET participantId=?,modifiedUtc=?,finalized=?,review=? WHERE id=?",participant,Directory.GetLastWriteTimeUtc(directory).ToString("O"),
+                        File.Exists(Path.Combine(directory,"session-summary.json"))?"1":"0",review,session["id"]);
+                    // Only a reassigned run can leave its previous profile empty. Profiles saved
+                    // at intake but not yet imported must survive other recordings' refreshes.
+                    if(session["participantId"]!=participant)
+                        db.Execute("DELETE FROM participants WHERE id=? AND NOT EXISTS (SELECT 1 FROM sessions WHERE participantId=participants.id)",session["participantId"]);
+                    db.Execute("COMMIT");
                 }
                 catch {db.Execute("ROLLBACK");throw;}
             }
         }
-        private static void SaveOffset(CollectionSqlite db,string session,string stream,long offset)=>
-            db.Execute("INSERT OR REPLACE INTO stream_progress VALUES(?,?,?)",session,stream,offset.ToString(CultureInfo.InvariantCulture));
+        private static void CheckFile(string path)
+        {if((File.GetAttributes(path)&FileAttributes.ReparsePoint)!=0)throw new IOException("Data import cannot follow linked files.");}
         public object Profiles()
         {
             using(var db=Open())return db.Query("SELECT p.id,p.code,p.name,COUNT(s.id) AS sessions,MAX(s.modifiedUtc) AS modifiedUtc FROM participants p LEFT JOIN sessions s ON s.participantId=p.id GROUP BY p.id ORDER BY modifiedUtc DESC");
@@ -160,8 +152,8 @@ namespace Elts.Operator
         {
             using(var db=Open())return db.Query("SELECT directory FROM removed_recordings WHERE directory=?",Path.GetFullPath(directory)).Count>0;
         }
-        /// <summary>Remove a participant or one whole run from the SQL collection.
-        /// Child rows and import exclusions commit together; raw files are not rewritten.</summary>
+        /// <summary>Remove a participant (including their name) or one whole run from the
+        /// collection. Import exclusions commit together; raw files are not rewritten.</summary>
         public void Remove(string id,bool participant,string activeDirectory="",string activeParticipantCode="")
         {
             Guid.ParseExact(id,"N");
@@ -182,8 +174,6 @@ namespace Elts.Operator
                     foreach(var run in runs)
                     {
                         db.Execute("INSERT OR IGNORE INTO removed_recordings VALUES(?)",run["directory"]);
-                        db.Execute("DELETE FROM records WHERE sessionId=?",run["id"]);
-                        db.Execute("DELETE FROM stream_progress WHERE sessionId=?",run["id"]);
                         db.Execute("DELETE FROM sessions WHERE id=?",run["id"]);
                     }
                     string owner=participant?id:runs[0]["participantId"];
@@ -193,42 +183,50 @@ namespace Elts.Operator
                 catch {db.Execute("ROLLBACK");throw;}
             }
         }
-        public object Records(string session,string stream,int page)
+        /// <summary>One page of original records, read directly from the recording.
+        /// NDJSON pages contain complete lines only, keyed by byte offset; a JSON file
+        /// is one record at offset zero. Only files directly inside the run are readable.</summary>
+        public List<Dictionary<string,string>> Records(string session,string file,int page)
         {
-            using(var db=Open())return db.Query("SELECT offset,json FROM records WHERE sessionId=? AND stream=? ORDER BY offset LIMIT 50 OFFSET ?",session,stream,(Math.Max(0,page)*50L).ToString(CultureInfo.InvariantCulture));
-        }
-        public string Export(string participant="")
-        {
-            string exports=Path.Combine(Root,"exports");Directory.CreateDirectory(exports);
-            if((File.GetAttributes(exports)&FileAttributes.ReparsePoint)!=0)throw new IOException("Export folder cannot be a link.");
-            string destination=Path.Combine(exports,(participant.Length==0?"collection":"participant-"+Guid.ParseExact(participant,"N").ToString("N"))+"-"+Guid.NewGuid().ToString("N")+".sqlite");
-            string pending=destination+".pending";
-            try
+            string directory=SessionDirectory(session);
+            if(file.Length==0 || Path.GetFileName(file)!=file || file.Contains(".pending") || !(Streams.Contains(file) || file.EndsWith(".json",StringComparison.Ordinal)))
+                throw new IOException("Choose a file from this recording.");
+            string path=Path.Combine(directory,file);
+            var rows=new List<Dictionary<string,string>>();
+            if(!File.Exists(path))return rows;
+            CheckFile(path);
+            var utf8=new UTF8Encoding(false,true);
+            if(!file.EndsWith(".ndjson",StringComparison.Ordinal))
             {
-                using(var db=Open())
-                {
-                    if(participant.Length==0)db.Backup(pending);
-                    else
-                    {
-                        if(db.Query("SELECT id FROM participants WHERE id=?",participant).Count!=1)throw new IOException("Choose an existing participant.");
-                        using(var output=new CollectionSqlite(pending))Schema(output);
-                        db.Execute("ATTACH DATABASE ? AS exported",pending);
-                        try
-                        {
-                            db.Execute("BEGIN");
-                            db.Execute("INSERT INTO exported.participants SELECT * FROM main.participants WHERE id=?",participant);
-                            db.Execute("INSERT INTO exported.sessions SELECT * FROM main.sessions WHERE participantId=?",participant);
-                            db.Execute("INSERT INTO exported.records SELECT r.* FROM main.records r JOIN main.sessions s ON s.id=r.sessionId WHERE s.participantId=?",participant);
-                            db.Execute("INSERT INTO exported.stream_progress SELECT r.* FROM main.stream_progress r JOIN main.sessions s ON s.id=r.sessionId WHERE s.participantId=?",participant);
-                            db.Execute("COMMIT");
-                        }
-                        catch {db.Execute("ROLLBACK");throw;}
-                        finally {db.Execute("DETACH DATABASE exported");}
-                    }
-                }
-                File.Move(pending,destination);return destination;
+                if(page<=0)rows.Add(new Dictionary<string,string>{["offset"]="0",["json"]=File.ReadAllText(path,utf8)});
+                return rows;
             }
-            catch {if(File.Exists(pending))File.Delete(pending);throw;}
+            long skip=Math.Max(0,page)*(long)RecordsPerPage,index=0,lineStart=0,position=0;
+            using(var input=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.ReadWrite))
+            {
+                // Snapshot the length once. A trailing partial line is still being written.
+                long limit=input.Length;var chunk=new byte[65536];var line=new MemoryStream();
+                while(position<limit && rows.Count<RecordsPerPage)
+                {
+                    int count=input.Read(chunk,0,(int)Math.Min(chunk.Length,limit-position));if(count<=0)break;
+                    for(int i=0;i<count && rows.Count<RecordsPerPage;i++)
+                    {
+                        if(chunk[i]!=10)
+                        {
+                            if(index>=skip){line.WriteByte(chunk[i]);if(line.Length>MaximumRecordBytes)throw new IOException("Raw record exceeds 16 MB.");}
+                            continue;
+                        }
+                        if(index>=skip)
+                        {
+                            rows.Add(new Dictionary<string,string>{["offset"]=lineStart.ToString(CultureInfo.InvariantCulture),["json"]=utf8.GetString(line.ToArray()).TrimEnd('\r')});
+                            line.SetLength(0);
+                        }
+                        index++;lineStart=position+i+1;
+                    }
+                    position+=count;
+                }
+            }
+            return rows;
         }
     }
 }

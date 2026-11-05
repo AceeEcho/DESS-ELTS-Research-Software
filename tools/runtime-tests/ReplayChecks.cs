@@ -15,7 +15,7 @@ internal static class ReplayChecks
     private static string Sha(byte[] bytes){using(var sha=SHA256.Create())return Convert.ToHexString(sha.ComputeHash(bytes)).ToLowerInvariant();}
     private static string Summary(string sample,string events,string targets,string config="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",bool complete=true)
     {
-        return "{\"schemaVersion\":\"elts.session-summary.v1\",\"runId\":\"replay-check\",\"complete\":"+(complete?"true":"false")+",\"error\":null,\"provenance\":{\"applicationVersion\":\"test\",\"sourceRevision\":\"rev\",\"configurationHash\":\""+config+"\",\"scenarioHash\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"fixtureHash\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"synthetic\":true,\"utcStartupAnchor\":\"2026-09-08T00:00:00Z\"},\"counts\":{\"droppedSamples\":0,\"writtenSamples\":1,\"writtenEvents\":1,\"writtenTargets\":3},\"checksumsSha256\":{\"samples.ndjson\":\""+Sha(Encoding.UTF8.GetBytes(sample))+"\",\"events.ndjson\":\""+Sha(Encoding.UTF8.GetBytes(events))+"\",\"targets.ndjson\":\""+Sha(Encoding.UTF8.GetBytes(targets))+"\"}}";
+        return "{\"schemaVersion\":\"elts.session-summary.v1\",\"runId\":\"replay-check\",\"complete\":"+(complete?"true":"false")+",\"error\":null,\"provenance\":{\"applicationVersion\":\"test\",\"sourceRevision\":\"rev\",\"configurationHash\":\""+config+"\",\"scenarioHash\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"fixtureHash\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"synthetic\":true,\"utcStartupAnchor\":\"2026-09-08T00:00:00Z\"},\"counts\":{\"droppedSamples\":0,\"writtenSamples\":"+sample.Split(new[]{'\n'},StringSplitOptions.RemoveEmptyEntries).Length+",\"writtenEvents\":1,\"writtenTargets\":3},\"checksumsSha256\":{\"samples.ndjson\":\""+Sha(Encoding.UTF8.GetBytes(sample))+"\",\"events.ndjson\":\""+Sha(Encoding.UTF8.GetBytes(events))+"\",\"targets.ndjson\":\""+Sha(Encoding.UTF8.GetBytes(targets))+"\"}}";
     }
     private static string Make(string sample,string events,string targets,string? summaryOverride=null)
     {
@@ -23,7 +23,7 @@ internal static class ReplayChecks
         File.WriteAllText(Path.Combine(dir,"samples.ndjson"),sample,new UTF8Encoding(false));File.WriteAllText(Path.Combine(dir,"events.ndjson"),events,new UTF8Encoding(false));File.WriteAllText(Path.Combine(dir,"targets.ndjson"),targets,new UTF8Encoding(false));
         File.WriteAllText(Path.Combine(dir,"session-summary.json"),summaryOverride??Summary(sample,events,targets),new UTF8Encoding(false));return dir;
     }
-    private static string Sample(string? head=null){head=head??"{\"trackerId\":\"head\",\"connection\":\"Disconnected\",\"validity\":\"Unavailable\",\"pose\":null}";return "{\"schemaVersion\":\"elts.samples.v1\",\"sequence\":1,\"monotonicTicks\":0,\"head\":"+head+",\"weapon\":{\"trackerId\":\"weapon\",\"connection\":\"Connected\",\"validity\":\"Valid\",\"pose\":{\"positionMeters\":{\"x\":0,\"y\":0,\"z\":0},\"orientation\":{\"x\":0,\"y\":0,\"z\":0,\"w\":1}}}}\n";}
+    private static string Sample(string? head=null,long sequence=1,string weapon="{\"trackerId\":\"weapon\",\"pose\":[0,0,0,0,0,0,1]}"){head=head??"{\"trackerId\":\"head\",\"connection\":\"Disconnected\",\"validity\":\"Unavailable\"}";return "{\"schemaVersion\":\"elts.samples.v2\",\"sequence\":"+sequence+",\"monotonicTicks\":"+(sequence-1)+",\"head\":"+head+",\"weapon\":"+weapon+"}\n";}
     private static readonly string Events="{\"schemaVersion\":\"elts.events.v1\",\"sequence\":1,\"monotonicTicks\":0,\"eventType\":\"RunStarted\",\"payload\":{\"mode\":\"synthetic\"}}\n";
     private static readonly string Targets="{\"schemaVersion\":\"elts.targets.v1\",\"sequence\":1,\"monotonicTicks\":0,\"targetId\":\"one\",\"blockId\":\"block\",\"lifecycle\":\"Spawned\",\"worldPositionMeters\":{\"x\":1,\"y\":2,\"z\":3},\"worldVelocityMetersPerSecond\":{\"x\":0,\"y\":0,\"z\":0},\"scenarioSeed\":1,\"scenarioVersion\":\"v1\"}\n"+
         "{\"schemaVersion\":\"elts.targets.v1\",\"sequence\":2,\"monotonicTicks\":50000000,\"targetId\":\"one\",\"blockId\":\"block\",\"lifecycle\":\"Updated\",\"worldPositionMeters\":{\"x\":4,\"y\":5,\"z\":6},\"worldVelocityMetersPerSecond\":{\"x\":0,\"y\":0,\"z\":0},\"scenarioSeed\":1,\"scenarioVersion\":\"v1\"}\n"+
@@ -37,7 +37,13 @@ internal static class ReplayChecks
         Reject(Make(Sample(),Events,Targets+TargetsV2.Split('\n')[0]+"\n"),"mixed target versions were accepted");
         Check(RecordedReplay.Load(Make(Sample(),Events.Replace("\"mode\"","\"1.foo\""),Targets)).FrameCount==1,"schema payload key was rejected");
         string key256=new string('k',256);Check(RecordedReplay.Load(Make(Sample(),Events.Replace("\"mode\"","\""+key256+"\""),Targets)).FrameCount==1,"maximum schema payload key was rejected");
-        string invalid=Make(Sample("{\"trackerId\":\"head\",\"connection\":\"Connected\",\"validity\":\"Invalid\",\"pose\":{}}"),Events,Targets);Reject(invalid,"invalid pose was accepted");
+        string invalid=Make(Sample("{\"trackerId\":\"head\",\"connection\":\"Connected\",\"validity\":\"OutOfRange\",\"pose\":[0,0,0,0,0,0,1]}"),Events,Targets);Reject(invalid,"invalid tracking with a pose was accepted");
+        Reject(Make(Sample("{\"trackerId\":\"head\",\"pose\":[0,0,0,1]}"),Events,Targets),"short pose was accepted");
+        Reject(Make(Sample("{\"trackerId\":\"head\",\"pose\":[0,0,0,0,0,0,2]}"),Events,Targets),"nonunit pose quaternion was accepted");
+        Reject(Make(Sample("{\"pose\":[0,0,0,0,0,0,1]}"),Events,Targets),"first sample without a tracker ID was accepted");
+        // Tracker IDs hold until they change, so later lines may omit them.
+        var carried=RecordedReplay.Load(Make(Sample()+Sample("{\"pose\":[1,2,3,0,0,0,1]}",2,"{\"connection\":\"Reconnecting\",\"validity\":\"Unavailable\"}"),Events,Targets));
+        Check(carried.FrameCount==2,"tracker IDs did not carry forward");
         Reject(Make(Sample(),Events.Replace("RunStarted","Unknown!"),Targets),"unsupported event was accepted");
         Reject(Make(Sample(),Events.Replace("\"mode\":\"synthetic\"","\"mode\":\"synthetic\",\"mode\":\"duplicate\""),Targets),"duplicate field was accepted");
         Reject(Make(Sample(),Events.Replace("\"synthetic\"","1e9999"),Targets),"nonfinite payload was accepted");

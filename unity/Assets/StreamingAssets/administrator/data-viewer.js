@@ -10,7 +10,6 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
   let chart = null, chartPosition = {key: '', index: 0};
   const number = (value, digits = 2) => typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString(undefined, {maximumFractionDigits: digits}) : '—';
   const conditions = {WE_FT:'WE · Fixed targets', WE_MT:'WE · Moving targets', NE_FT:'NE · Fixed targets', NE_MT:'NE · Moving targets'};
-  const summaryColumns = ['blockId','condition','status','activeSeconds','hits','shots','misses','headHits','bodyHits','limbHits','coverHits','targetKills','damageDealt','magazineCapacity','reloads','dryFires','hitsPerSecond','shotsPerSecond','missesPerSecond','accuracyPercent','meanShotErrorDeg','p95ShotErrorDeg','meanShotOffsetMm','meanMissOffsetMm','aimErrorVarianceDeg2','meanAimErrorDeg','meanAimSpeedDegPerSecond','aimSpeedVariabilityDegPerSecond','aimPathDeg','aimObservedSeconds','aimCoveragePercent','aimObservations','validAimObservations','shotGeometryCount','reason','metricsVersion','scoreStatus'];
   // The same saved review arrives with every live poll. Parse it only when its
   // source changes, and let task rendering use the stable parsed object identity.
   const reviewOf = record => {
@@ -49,7 +48,7 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
   $('dataSearch').addEventListener('input', () => { listSignature = ''; render(state); });
   $('dataRefresh').addEventListener('click', () => { profileSignature = ''; act('refreshData', {id:selected}); });
   $('dataFolder').addEventListener('click', () => act('openDataFolder'));
-  $('dataExportAll').addEventListener('click', () => act('exportDatabase'));
+  $('dataExportAll').addEventListener('click', () => act('exportResults'));
   $('dataProfiles').addEventListener('click', event => {
     const button = event.target.closest('[data-profile-id]'); if (!button || requestBusy) return;
     selected = button.dataset.profileId; profileSignature = ''; session = ''; taskId = ''; listSignature = '';
@@ -63,7 +62,7 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
     const record = profile?.sessions?.find(s => s.id === session);
     if (!profile?.participant || (!participant && !record)) return;
     const subject = participant ? `participant ${profile.participant.code} and all ${profile.sessions.length} saved runs` : `the selected run (${date(record.modifiedUtc)}) for participant ${profile.participant.code}`;
-    if (!window.confirm(`Remove ${subject} from the data viewer and SQL database?\n\nThis removes all associated SQL records and results. Refresh will not restore them. Original recording files and existing exports remain on disk. Active recordings cannot be removed.`)) return;
+    if (!window.confirm(`Remove ${subject} from the data viewer?\n\nThis removes their results${participant ? ' and saved name' : ''}. Refresh will not restore them. Original recording files and existing exports remain on disk. Active recordings cannot be removed.`)) return;
     act(participant ? 'removeParticipant' : 'removeRun', {id: participant ? selected : session, participant:selected, confirmed:true});
   }
   $('dataProfile').addEventListener('click', event => {
@@ -73,10 +72,7 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
     if (button.dataset.taskId) {taskId = button.dataset.taskId; detailPage = 0; renderTasks(currentReview());}
     if (button.dataset.detailTab) {detailTab = button.dataset.detailTab; detailPage = 0; renderTasks(currentReview());}
     if (button.id === 'detailPrevious' || button.id === 'detailNext') {detailPage = Math.max(0, detailPage + (button.id === 'detailNext' ? 1 : -1)); renderTasks(currentReview());}
-    if (button.id === 'dataExportWorkbook') act('exportWorkbook', {id:selected});
-    if (button.id === 'dataReviewCsv') downloadReview();
     if (button.id === 'dataExportRaw') act('exportSessionRaw', {id:session});
-    if (button.id === 'dataExportParticipant') act('exportParticipant', {id: selected});
     if (button.id === 'dataLoadRows') {page = 0; loadRows();}
     if (button.id === 'dataPrevious') {page = Math.max(0, page - 1); loadRows();}
     if (button.id === 'dataNext') {page++; loadRows();}
@@ -113,21 +109,6 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
     event.preventDefault();
     inspectChart(chartPosition.index + Math.sign(delta));
   }, {passive:false});
-  function downloadReview() {
-    const saved = state?.data?.profile?.sessions?.find(s => s.id === session);
-    const attempts = reviewOf(saved).attempts || [];
-    const columns = ['participantCode','sessionId', ...summaryColumns];
-    const cell = value => '"' + String(value ?? '').replace(/^(\s*[=+@-])/, "'$1").replaceAll('"', '""') + '"';
-    const rows = [columns, ...attempts.map(a => [state.data.profile.participant.code,session,...summaryColumns.map(c => a[c])])];
-    const url = URL.createObjectURL(new Blob(['\uFEFF' + rows.map(r => r.map(cell).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'}));
-    const link = document.createElement('a'); link.href = url; link.download = 'test-review.csv'; link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-  function noteText(note) {
-    if (!note.text?.startsWith('Participant details: ')) return note.text;
-    try { const details = JSON.parse(note.text.slice('Participant details: '.length)); return details.initialNotes ? `Initial observations: ${details.initialNotes}` : ''; }
-    catch { return note.text; }
-  }
   const metric = (label, value, unit, note = '') => `<div class="metric-card"><span>${esc(label)}</span><strong>${number(value)} <small>${esc(unit)}</small></strong>${note ? `<p>${esc(note)}</p>` : ''}</div>`;
   function rateChart(rows) {
     if (!rows.length) return '<p class="subtle">The timeline appears once active task time has been saved.</p>';
@@ -233,7 +214,7 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
     if (detailTab === 'overview') body += `<h4>Hit regions & weapon</h4><div class="metric-grid">${metric('Head hits',a.headHits,'','3 damage each')}${metric('Body hits',a.bodyHits,'','2 damage each')}${metric('Limb hits',a.limbHits,'','1 damage each')}${metric('Cover hits',a.coverHits,'','Blocked shots')}${metric('Targets down',a.targetKills,'','Health reached zero')}${metric('Damage dealt',a.damageDealt,'','Synthetic damage')}${metric('Reloads',a.reloads,'','Manual reloads')}${metric('Dry fires',a.dryFires,'','Empty magazine attempts')}</div>`;
     if (detailTab === 'timeline') body = `<p class="subtle">One row per active second, including seconds with no shots. Pauses are excluded; a partial final second uses its actual duration.</p>${rateChart(a.seconds || [])}${detailTable(a.seconds || [], [['second','Active second'],['exposureSeconds','Duration (s)'],['hitsPerSecond','Hits/s'],['shotsPerSecond','Shots/s'],['missesPerSecond','Misses/s'],['coverHits','Cover hits'],['meanAimErrorDeg','Aim error (°)']])}`;
     if (detailTab === 'shots') body = `<label for="shotOutcome">Shot outcome</label><select id="shotOutcome">${['All','Hit','Cover','Miss','Unknown'].map(value => `<option ${outcome === value ? 'selected' : ''}>${value}</option>`).join('')}</select><p class="subtle">Each accepted shot keeps its ammunition, target, region, damage and remaining health when applicable. Error is relative to the hit target or nearest visible forward target.</p>${detailTable((a.shotDetails || []).filter(s => outcome === 'All' || s.outcome === outcome), [['shotNumber','Shot'],['activeSeconds','Active time (s)'],['outcome','Outcome'],['magazineBefore','Ammo before'],['magazineAfter','Ammo after'],['targetId','Target'],['hitRegion','Region'],['damage','Damage'],['remainingHealth','Health left'],['coverId','Cover'],['angularErrorDeg','Error (°)'],['centerOffsetMm','Center offset (mm)'],['edgeClearanceMm','Edge clearance (mm)'],['referenceTargetId','Reference target']])}`;
-    if (detailTab === 'guide') body = `<dl class="metric-guide"><dt>Rates & accuracy</dt><dd>Rates divide accepted shots, hit shots or misses by active task seconds. Accuracy is hit shots ÷ shots. Trigger lockout and invalid tracking are excluded.</dd><dt>Shot error & distance</dt><dd>Angular error measures the angle to the target center. Center offset is the perpendicular distance from the center to the forward bore ray, in millimetres. Edge clearance subtracts target radius, with a minimum of zero.</dd><dt>Aim variance</dt><dd>Sample variance (n−1) of target angular error, in squared degrees. Includes target switching. At least two valid observations with a reference target are needed.</dd><dt>Erratic aim</dt><dd>Aim speed variability is the duration-weighted standard deviation of angular speed. Together with mean speed and variance, it describes movement without assigning an arbitrary good/bad score. Deliberate target transitions can also increase it.</dd><dt>Coverage & gaps</dt><dd>Aim telemetry uses a configured frame cadence. Motion metrics never bridge pauses, invalid observations or excessive gaps. Low coverage limits interpretation; full raw tracking remains available.</dd><dt>Unavailable values</dt><dd>A dash means unavailable, including older recordings without geometry, tasks with no shots, skipped tasks and insufficient observations. Excel leaves these cells blank and SQL uses NULL.</dd></dl>`;
+    if (detailTab === 'guide') body = `<dl class="metric-guide"><dt>Rates & accuracy</dt><dd>Rates divide accepted shots, hit shots or misses by active task seconds. Accuracy is hit shots ÷ shots. Trigger lockout and invalid tracking are excluded.</dd><dt>Shot error & distance</dt><dd>Angular error measures the angle to the target center. Center offset is the perpendicular distance from the center to the forward bore ray, in millimetres. Edge clearance subtracts target radius, with a minimum of zero.</dd><dt>Aim variance</dt><dd>Sample variance (n−1) of target angular error, in squared degrees. Includes target switching. At least two valid observations with a reference target are needed.</dd><dt>Erratic aim</dt><dd>Aim speed variability is the duration-weighted standard deviation of angular speed. Together with mean speed and variance, it describes movement without assigning an arbitrary good/bad score. Deliberate target transitions can also increase it.</dd><dt>Coverage & gaps</dt><dd>Aim telemetry uses a configured frame cadence. Motion metrics never bridge pauses, invalid observations or excessive gaps. Low coverage limits interpretation; full raw tracking remains available.</dd><dt>Unavailable values</dt><dd>A dash means unavailable, including shots without geometry, tasks with no shots, skipped tasks and insufficient observations. Excel leaves these cells blank and SQL uses NULL.</dd></dl>`;
     // Keep navigation nodes in place even when a local selection changes. This
     // preserves keyboard focus and makes repeated/held presses reliable.
     html('taskExplorer', '<div id="taskChoices" class="task-choices" aria-label="Choose a task attempt"></div><div id="taskHeading"></div><nav id="detailTabs" class="detail-tabs" aria-label="Task data sections"></nav><div id="taskDetailBody" class="task-detail-body"></div>');
@@ -244,7 +225,7 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
       button.classList.toggle('selected', active);
       button.setAttribute('aria-pressed', String(active));
     }
-    html('taskHeading', `<div class="task-detail-heading"><div><span class="eyebrow">SELECTED TASK</span><h3>${esc(conditions[a.condition] || a.condition)}</h3><small>${esc(a.blockId)}</small></div><span class="task-status">${esc(a.status)} · ${number(a.activeSeconds)} active s</span></div>${a.reason ? `<p class="task-reason">${esc(a.reason)}</p>` : ''}${!a.metricsVersion ? '<p class="task-notice">Legacy review. Refresh to calculate available rates; aim geometry requires a new recording.</p>' : ''}`);
+    html('taskHeading', `<div class="task-detail-heading"><div><span class="eyebrow">SELECTED TASK</span><h3>${esc(conditions[a.condition] || a.condition)}</h3><small>${esc(a.blockId)}</small></div><span class="task-status">${esc(a.status)} · ${number(a.activeSeconds)} active s</span></div>${a.reason ? `<p class="task-reason">${esc(a.reason)}</p>` : ''}`);
     html('taskDetailBody', body);
     mountChart(a.seconds || []);
     lastTaskRender = {element, review, taskId, tab:detailTab, page:detailPage, outcome};
@@ -294,11 +275,9 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
       profileSignature = signature; rowsSignature = '';
       renderedReviewText = reviewText;
       const review = reviewOf(record);
-      html('dataProfile', `<div class="data-heading"><div><span class="eyebrow">PARTICIPANT PROFILE</span><h2>${esc(profile.participant.code)}</h2><p>${esc(profile.participant.name || 'Name not supplied')}</p></div><div class="data-actions"><button id="dataExportWorkbook" class="primary-btn">Export Excel</button><button id="dataExportParticipant" class="ghost-btn">Export participant SQL</button><button id="dataRemoveParticipant" class="danger-btn">Remove participant data</button></div></div><label for="dataSession">Saved session</label><select id="dataSession">${sessions.map(s => `<option value="${esc(s.id)}" ${s.id === session ? 'selected' : ''}>${esc(date(s.modifiedUtc))} · ${s.finalized === '1' ? 'Finalized' : 'Open / incomplete'}</option>`).join('')}</select><div class="data-actions"><button id="dataExportRaw" class="ghost-btn" ${record?.finalized === '1' ? '' : 'disabled'}>Export original files</button><button id="dataReviewCsv" class="ghost-btn">Download review CSV</button><button id="dataRemoveRun" class="danger-btn">Remove selected run</button></div><p class="subtle">Descriptive synthetic observations · pauses excluded · — means unavailable.</p><section id="taskExplorer" aria-label="Task results"></section><h3>Session notes</h3><ul class="data-notes">${(review.notes || []).map(noteText).filter(Boolean).map(text => `<li>${esc(text)}</li>`).join('') || '<li>No session notes.</li>'}</ul><details><summary>Explore original records</summary><p>SQL copy of complete saved records. Refresh after a test finishes to see its checkpoint.</p><label for="dataStream">Record stream</label><select id="dataStream">${['events.ndjson','samples.ndjson','targets.ndjson','session-summary.json'].map(s => `<option ${s === stream ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select><button id="dataLoadRows" class="ghost-btn">Load records</button><pre id="dataRawRows">Choose Load records.</pre><div class="data-actions"><button id="dataPrevious" class="ghost-btn" disabled>Previous</button><span id="dataPage">Page 1</span><button id="dataNext" class="ghost-btn" disabled>Next</button></div></details>`);
+      html('dataProfile', `<div class="data-heading"><div><span class="eyebrow">PARTICIPANT PROFILE</span><h2>${esc(profile.participant.code)}</h2><p>${esc(profile.participant.name || 'Name not supplied')}</p></div><div class="data-actions"><button id="dataRemoveParticipant" class="danger-btn">Remove participant data</button></div></div><label for="dataSession">Saved session</label><select id="dataSession">${sessions.map(s => `<option value="${esc(s.id)}" ${s.id === session ? 'selected' : ''}>${esc(date(s.modifiedUtc))} · ${s.finalized === '1' ? 'Finalized' : 'Open / incomplete'}</option>`).join('')}</select><div class="data-actions"><button id="dataExportRaw" class="ghost-btn" ${record?.finalized === '1' ? '' : 'disabled'}>Raw archive</button><button id="dataRemoveRun" class="danger-btn">Remove selected run</button></div><p class="subtle">Descriptive synthetic observations · pauses excluded · — means unavailable.</p><section id="taskExplorer" aria-label="Task results"></section><h3>Session notes</h3><ul class="data-notes">${(review.notes || []).map(note => note.text).filter(Boolean).map(text => `<li>${esc(text)}</li>`).join('') || '<li>No session notes.</li>'}</ul><details><summary>Explore original records</summary><p>Read directly from this recording's original files. Only complete records are shown.</p><label for="dataStream">Record stream</label><select id="dataStream">${['events.ndjson','samples.ndjson','targets.ndjson','session-summary.json'].map(s => `<option ${s === stream ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select><button id="dataLoadRows" class="ghost-btn">Load records</button><pre id="dataRawRows">Choose Load records.</pre><div class="data-actions"><button id="dataPrevious" class="ghost-btn" disabled>Previous</button><span id="dataPage">Page 1</span><button id="dataNext" class="ghost-btn" disabled>Next</button></div></details>`);
     }
     renderTasks(currentReview());
-    $('dataExportWorkbook').disabled = data.busy || requestBusy;
-    $('dataExportParticipant').disabled = data.busy || requestBusy;
     $('dataRemoveParticipant').disabled = data.busy || requestBusy;
     $('dataRemoveRun').disabled = data.busy || requestBusy || !session;
     $('dataExportRaw').disabled = data.busy || requestBusy || sessions.find(s => s.id === session)?.finalized !== '1';

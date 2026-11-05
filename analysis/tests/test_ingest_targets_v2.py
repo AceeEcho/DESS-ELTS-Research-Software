@@ -14,8 +14,8 @@ class TargetV2IngestTests(unittest.TestCase):
     def test_despawned_target_is_not_an_aim_candidate_or_score(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            pose = {"positionMeters":{"x":0,"y":0,"z":0},"orientation":{"x":0,"y":0,"z":0,"w":1}}
-            sample = line({"schemaVersion":"elts.samples.v1","sequence":1,"monotonicTicks":2,"head":{"trackerId":"head","connection":"Connected","validity":"Valid","pose":pose},"weapon":{"trackerId":"weapon","connection":"Connected","validity":"Valid","pose":pose}})
+            pose = [0, 0, 0, 0, 0, 0, 1]
+            sample = line({"schemaVersion":"elts.samples.v2","sequence":1,"monotonicTicks":2,"head":{"trackerId":"head","pose":pose},"weapon":{"trackerId":"weapon","pose":pose}})
             events = line({"schemaVersion":"elts.events.v1","sequence":1,"monotonicTicks":0,"eventType":"BlockStarted","payload":{"blockId":"block"}}) + line({"schemaVersion":"elts.events.v1","sequence":2,"monotonicTicks":3000000000,"eventType":"BlockEnded","payload":{"blockId":"block"}})
             targets = line({"schemaVersion":"elts.targets.v2","sequence":1,"monotonicTicks":0,"targetId":"target","blockId":"block","lifecycle":"Spawned","worldPositionMeters":{"x":0,"y":0,"z":1},"worldVelocityMetersPerSecond":{"x":0,"y":0,"z":0},"scenarioSeed":1,"scenarioVersion":"v2"}) + line({"schemaVersion":"elts.targets.v2","sequence":2,"monotonicTicks":1,"targetId":"target","blockId":"block","lifecycle":"Despawned","worldPositionMeters":{"x":0,"y":0,"z":1},"worldVelocityMetersPerSecond":{"x":0,"y":0,"z":0},"scenarioSeed":1,"scenarioVersion":"v2"})
             for name, value in (("samples.ndjson", sample), ("events.ndjson", events), ("targets.ndjson", targets)): (root / name).write_text(value, encoding="utf-8")

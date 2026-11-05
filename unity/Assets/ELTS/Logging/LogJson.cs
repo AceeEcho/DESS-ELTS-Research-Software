@@ -11,10 +11,16 @@ namespace Elts.Logging
 /// <summary>Small deterministic serializer for the fixed v1 contracts. It never accepts raw JSON from callers.</summary>
 internal static class LogJson
 {
-    public static string Sample(TrackingSamplePair pair)
+    /// <summary>
+    /// One v2 sample line. Each tracker is either {"pose":[x,y,z,qx,qy,qz,qw]} (room metres and a unit
+    /// quaternion, meaning Connected and Valid) or an explicit connection and validity without a pose.
+    /// The caller includes a tracker ID on a stream's first line and whenever that role's ID changes.
+    /// </summary>
+    public static string Sample(TrackingSamplePair pair, bool includeHeadId, bool includeWeaponId)
     {
         return "{\"schemaVersion\":" + String(LogSchemaVersions.Samples) + ",\"sequence\":" + Integer(pair.Sequence) +
-            ",\"monotonicTicks\":" + Integer(pair.Timestamp.Ticks) + ",\"head\":" + Tracking(pair.Head) + ",\"weapon\":" + Tracking(pair.Weapon) + "}";
+            ",\"monotonicTicks\":" + Integer(pair.Timestamp.Ticks) + ",\"head\":" + Tracking(pair.Head, includeHeadId) +
+            ",\"weapon\":" + Tracking(pair.Weapon, includeWeaponId) + "}";
     }
     public static string Target(TargetSnapshot target)
     {
@@ -59,13 +65,15 @@ internal static class LogJson
             ",\"writtenSamples\":" + Integer(writtenSamples) + ",\"writtenEvents\":" + Integer(writtenEvents) + ",\"writtenTargets\":" + Integer(writtenTargets) +
             "},\"checksumsSha256\":{" + products + "}}";
     }
-    private static string Tracking(TrackingSample sample)
+    private static string Tracking(TrackingSample sample, bool includeId)
     {
-        string pose = sample.Pose.HasValue ? Pose(sample.Pose.Value) : "null";
-        return "{\"trackerId\":" + String(sample.Tracker.Value) + ",\"connection\":" + String(sample.Connection.ToString()) +
-            ",\"validity\":" + String(sample.Validity.ToString()) + ",\"pose\":" + pose + "}";
+        // TrackingSamplePair guarantees a pose exactly when the tracker is Connected and Valid.
+        string state = sample.Pose.HasValue ? "\"pose\":" + Pose(sample.Pose.Value)
+            : "\"connection\":" + String(sample.Connection.ToString()) + ",\"validity\":" + String(sample.Validity.ToString());
+        return "{" + (includeId ? "\"trackerId\":" + String(sample.Tracker.Value) + "," : "") + state + "}";
     }
-    private static string Pose(RigidPose pose) => "{\"positionMeters\":" + Vector(pose.Position) + ",\"orientation\":{\"x\":" + Number(pose.Orientation.X) + ",\"y\":" + Number(pose.Orientation.Y) + ",\"z\":" + Number(pose.Orientation.Z) + ",\"w\":" + Number(pose.Orientation.W) + "}}";
+    private static string Pose(RigidPose pose) => "[" + Number(pose.Position.X) + "," + Number(pose.Position.Y) + "," + Number(pose.Position.Z) + "," +
+        Number(pose.Orientation.X) + "," + Number(pose.Orientation.Y) + "," + Number(pose.Orientation.Z) + "," + Number(pose.Orientation.W) + "]";
     private static string Vector(Vector3d vector) => "{\"x\":" + Number(vector.X) + ",\"y\":" + Number(vector.Y) + ",\"z\":" + Number(vector.Z) + "}";
     private static string Integer(long value) => value.ToString(CultureInfo.InvariantCulture);
     private static string Number(double value) { LoggingValidation.Finite(value, nameof(value)); return value.ToString("R", CultureInfo.InvariantCulture); }

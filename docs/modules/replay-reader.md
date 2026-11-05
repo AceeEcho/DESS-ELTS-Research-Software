@@ -11,7 +11,7 @@ The reader is strict: unknown or missing fields, duplicate JSON properties,
 unsupported schema values, malformed identifiers, non-finite numbers, count or
 hash mismatches, non-monotonic sequence/timestamp data, and invalid pose
 payloads reject the complete load. Tracking status is preserved on each frame;
-invalid or disconnected poses remain null and are never interpolated. The
+invalid or disconnected trackers have no pose and are never interpolated. The
 reader does not apply prediction, so the logged weapon pose remains raw (SCI-006
 and SCI-008).
 

@@ -9,7 +9,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from tools.logging.verify_run import VerificationError, strict_json, verify_run
 PRODUCTS = ("samples.ndjson", "events.ndjson", "targets.ndjson", "session-summary.json")
-SAMPLE_SCHEMA = "elts.samples.v1"
+SAMPLE_SCHEMA = "elts.samples.v2"
 EVENT_SCHEMA = "elts.events.v1"
 TARGET_SCHEMAS = ("elts.targets.v1", "elts.targets.v2")
 SUMMARY_SCHEMA = "elts.session-summary.v1"
@@ -134,17 +134,16 @@ def _output_path(directory: Path, calibration: Path, output: str | Path | None) 
     return destination
 
 def _sample_valid(sample: dict[str, Any]) -> bool:
-    """Return true only when both paired trackers have usable valid poses."""
-    for role in ("head", "weapon"):
-        tracker=sample.get(role, {}); pose=tracker.get("pose")
-        if tracker.get("validity") != "Valid" or tracker.get("connection") != "Connected" or not isinstance(pose, dict): return False
-    return True
+    """Return true only when both paired trackers have usable valid poses.
+
+    In samples v2 a pose array is present exactly when a tracker is Connected and Valid."""
+    return all(isinstance(sample.get(role, {}).get("pose"), list) for role in ("head", "weapon"))
 
 def _validate_pose(tracker: dict[str, Any], role: str) -> tuple[tuple[float, float, float], tuple[float, float, float, float]]:
+    """Split a v2 pose [x, y, z, qx, qy, qz, qw] into room-metre position and unit quaternion."""
     pose = tracker["pose"]
-    position = pose["positionMeters"]
-    return (_finite_vector([position[k] for k in ("x", "y", "z")], f"{role}.positionMeters"),
-            _finite_quat([pose["orientation"][k] for k in ("x", "y", "z", "w")], f"{role}.orientation"))
+    if len(pose) != 7: raise IngestError(f"{role}.pose must contain seven numbers")
+    return (_finite_vector(pose[:3], f"{role}.pose position"), _finite_quat(pose[3:], f"{role}.pose orientation"))
 
 def ingest_run(run_directory: str | Path, calibration: str | Path, output: str | Path | None = None) -> dict[str, Any]:
     """Read a complete v1 run and write only a derived report when output is given."""

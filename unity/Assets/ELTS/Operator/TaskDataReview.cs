@@ -17,8 +17,8 @@ namespace Elts.Operator
         public static readonly string[] ShotColumns={"shotNumber","activeSeconds","monotonicTicks","outcome","magazineBefore","magazineAfter","targetId","hitRegion","damage","remainingHealth","coverId","referenceTargetId","referencePolicy","angularErrorDeg","centerOffsetMm","edgeClearanceMm","targetRadiusMm"};
         public static readonly string[][] Definitions={
             new[]{"hitsPerSecond / shotsPerSecond / missesPerSecond","1/s","Accepted count / active seconds. Pauses excluded; partial final bins use actual exposure."},
-            new[]{"hits / shots / misses","count","Hits are region hits; misses are shots that hit neither target nor cover. Cover impacts are separate. Trigger lockout and invalid tracking are not accepted shots. Old completed recordings use matching TargetHit events."},
-            new[]{"headHits / bodyHits / limbHits","count","Confirmed hits by visible humanoid region. Older hits without a region leave these totals unavailable."},
+            new[]{"hits / shots / misses","count","Hits are region hits; misses are shots that hit neither target nor cover. Cover impacts are separate. Trigger lockout and invalid tracking are not accepted shots."},
+            new[]{"headHits / bodyHits / limbHits","count","Confirmed hits by visible humanoid region. Hits recorded without a region leave these totals unavailable."},
             new[]{"coverHits / targetKills / damageDealt","count","Cover impacts, health-zero target removals, and summed hit damage in the synthetic scenario."},
             new[]{"reloads / dryFires","count","Manual magazine reloads and empty-magazine trigger attempts. Neither counts as a scored shot."},
             new[]{"magazineBefore / magazineAfter / magazineCapacity","rounds","Recorded ammunition state around each accepted shot and the configured magazine size for that block."},
@@ -33,7 +33,7 @@ namespace Elts.Operator
             new[]{"aimPathDeg","deg","Total angular travel over accepted observation pairs; unavailable without a valid pair."},
             new[]{"aimCoveragePercent / aimObservedSeconds","% / s","Accepted observation-pair time / active task time. Low coverage limits motion statistics. Frame cadence differs from full raw tracker cadence."},
             new[]{"meanAimErrorDeg","deg","Arithmetic mean target-center angular error over valid observations with a visible forward target."},
-            new[]{"shotGeometryCount / validAimObservations / aimObservations","count","Coverage counts. Old recordings can lack geometry; null/blank values are unavailable, never substituted with zero."},
+            new[]{"shotGeometryCount / validAimObservations / aimObservations","count","Coverage counts. Null/blank values are unavailable, never substituted with zero."},
             new[]{"metricsVersion / scoreStatus","provenance","elts.task-metrics.v1; descriptive synthetic review only, not integrity-verified analysis or a validated study score."}
         };
 
@@ -124,10 +124,6 @@ namespace Elts.Operator
                     var shot=(JObject)p.DeepClone();shot["shotNumber"]=shots.Count+1;shot["activeSeconds"]=active;shot["monotonicTicks"]=ticks;
                     shots.Add(shot);
                 }
-                // Legacy shots had no explicit outcome. Match the event at the
-                // exact trigger timestamp; never match a different shot or attempt.
-                if(type=="TargetHit" && shots.Last is JObject last && (long?)last["monotonicTicks"]==ticks)
-                {last["outcome"]="Hit";}
                 if(type=="TargetDestroyed")targetKills++;
                 if(type=="WeaponReloaded")reloads++;
                 if(type=="WeaponDryFire")dryFires++;
@@ -166,8 +162,8 @@ namespace Elts.Operator
             {
                 bool skipped=(string?)Result["status"]=="Skipped";
                 double duration=lastActive;
-                // An unfinished legacy last shot may still be awaiting TargetHit.
-                foreach(JObject shot in shots)if(shot["outcome"]==null)shot["outcome"]=closed?"Miss":"Unknown";
+                // Every ShotFired records its outcome. A missing one stays unknown, never a miss.
+                foreach(JObject shot in shots)if(shot["outcome"]==null)shot["outcome"]="Unknown";
                 int hits=shots.Count(s=>(string?)s["outcome"]=="Hit"),misses=shots.Count(s=>(string?)s["outcome"]=="Miss"),covers=shots.Count(s=>(string?)s["outcome"]=="Cover");
                 bool outcomesKnown=hits+misses+covers==shots.Count;
                 bool regionsKnown=shots.Where(s=>(string?)s["outcome"]=="Hit").All(s=>s["hitRegion"]!=null);

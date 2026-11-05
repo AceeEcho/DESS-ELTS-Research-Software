@@ -4,33 +4,44 @@ The administrator's **Data** button opens a searchable participant viewer. The
 Windows player initializes its local folder and `collection.sqlite` at startup;
 no SQL server, Python installation or separate database setup is required.
 
+## Where each kind of data lives
+
+| What | Where | Notes |
+| --- | --- | --- |
+| Raw recording: tracker samples, targets, events, checksums | One run folder per recording (`samples.ndjson`, `targets.ndjson`, `events.ndjson`, `session-summary.json`) | Authoritative and never modified. Read in place by the viewer, replay and analysis |
+| Results: one row per task attempt | `collection.sqlite` (`task_results`) and **Export results** → **Results** sheet | Derived from each recording's events |
+| Individual shots | `task_shots` and the **Shots** sheet | One row per accepted shot |
+| Participant code | `participant.json` in each run folder, and the collection | Pseudonymous; the only identity in a recording |
+| Participant name (optional) | `collection.sqlite` only | Never written to a recording or an export, so removal deletes it |
+
 ## Saving and identity
 
-Original NDJSON streams remain authoritative and retain their existing logging,
-checkpoint and final-summary behavior. The SQL database is a second copy. It is
-updated after each test checkpoint, when a recording closes, and when the operator
-chooses **Refresh**. Opening Data refreshes the collection too. A partial final
-NDJSON line waits for the next refresh; malformed complete lines produce a visible
-error. Raw files are never modified by indexing.
+The database stores participants, recordings and each recording's derived task
+results. It never copies raw lines. Results update after each test checkpoint,
+when a recording closes, and when the operator chooses **Refresh**; opening Data
+refreshes too. Raw files are never modified by indexing.
 
 A generated profile ID identifies each participant. Participant codes are unique
 without ASCII letter case distinctions, so `P-001` and `p-001` belong to one
-profile. Use a different code for a different person. Names are optional and may
-be updated by a later session using that code. Each new recording and continuation
-also saves `participant.json`, so identity survives interruption during startup. Old recordings without participant
-metadata use their original folder name as their identifying code.
+profile. Use a different code for a different person. The optional name is saved
+in the collection at intake and may be updated by a later session using that
+code. Each new recording and continuation also saves `participant.json`
+(`elts.participant.v2`, code only), so identity survives interruption during
+startup. A recording without that file uses its folder name as its code. Initial
+observations entered at intake are recorded as an ordinary session note.
 
 The viewer groups each session into individual task attempts, including repeats,
 stops and skips. Choose an attempt, then **Overview**, **Timeline**, **Shots** or
 **Metric guide**. Overview shows firing rates, accuracy, shot precision, aim
 stability and measurement coverage. Timeline includes quiet seconds and partial
 final seconds. Shots can be filtered by hit, miss or unknown outcome. Both tables
-page through 25 rows at a time. Original JSON remains under **Explore original
-records**, away from the normal review flow. An open or
-incomplete session is labeled accordingly. A final summary indicates a closed
-recording, not successful physical validation. Synthetic counts remain synthetic;
-scoring and study readiness are unavailable here. Integrity-verified analysis
-still uses the retained original recording and existing analysis tools.
+page through 25 rows at a time. **Explore original records** pages through the
+recording's own files, 50 complete records at a time, away from the normal review
+flow. An open or incomplete session is labeled accordingly. A final summary
+indicates a closed recording, not successful physical validation. Synthetic
+counts remain synthetic; scoring and study readiness are unavailable here.
+Integrity-verified analysis still uses the retained original recording and
+existing analysis tools.
 
 On the Overview and Timeline graphs, hover or drag to inspect a time interval.
 The cursor highlights that interval and shows its **hit, shot and miss counts**,
@@ -50,31 +61,24 @@ changing sections so held clicks and keyboard focus are preserved.
 The actual folder appears below the Data status message. The default is
 `collection data` at the clone root. Existing machine overlays retain their
 configured relative `machine.dataRoot`; they are not silently rewritten. A player
-outside a clone uses its installation directory. The previous default
-`data/synthetic` adjacent to the current default folder is also checked for old
-recordings. Older nested build directories are not searched recursively.
+outside a clone uses its installation directory.
 
-**Export database** and **Export participant** prepare standalone `.sqlite` files.
-Click **Download export** to download the result; another copy remains under
-`exports`. A participant export is built in a new empty database with only that
-participant's rows; other participants are never copied into that file. A whole
-export uses SQLite's backup API for a consistent snapshot, including committed
-WAL data. Neither export needs the source database's sidecar files.
+There are two exports. Click **Download export** to download the result; another
+copy remains under `exports`.
 
-**Export Excel** creates a native `.xlsx` workbook for the selected participant,
-including all their indexed sessions. Its **Tasks**, **Timeline**, **Shots** and
-**Metric guide** sheets use the same calculation as the dashboard and SQL views.
-Headers are frozen, filters are enabled, identifiers retain leading zeroes, and
-measurement columns are numeric. Missing measurements are blank. Participant text
-and notes cannot become formulas. No Excel installation is needed to export.
-**Download review CSV** contains the selected session's task summary, with
-participant/session identifiers, metric names and units in the column names.
+- **Export results** creates one native `.xlsx` workbook covering every
+  participant: **Results** (one row per task attempt, with its condition),
+  **Shots** (one row per accepted shot), **Timeline** (one row per active second)
+  and **Metric guide**. Rows identify participants by code; names are not
+  exported. Sheets use the same calculation as the dashboard and SQL views.
+  Headers are frozen, filters are enabled, identifiers retain leading zeroes, and
+  measurement columns are numeric. Missing measurements are blank. Participant
+  text and notes cannot become formulas. No Excel installation is needed.
+- **Raw archive** is available for finalized, inactive sessions and keeps the
+  original JSON, NDJSON and checksums in a ZIP.
 
-Exports represent the most recent indexed data. Finish a test or choose Refresh
+Results represent the most recent indexed save. Finish a test or choose Refresh
 before exporting its latest records. Exporting does not pause a running test.
-**Export original files** is available for finalized, inactive sessions and keeps
-the original JSON, NDJSON and checksums in a ZIP. Review CSV is a descriptive table,
-not a replacement for the raw data or SQL export.
 
 Data is machine-local and ignored by Git. Export files must be backed up separately.
 There is no database synchronization, database import or profile merge
@@ -82,21 +86,21 @@ interface in this version.
 
 ## Removing collected data
 
-Select a participant and choose **Remove participant data** to remove their profile
-and all indexed runs, or select a saved session and choose **Remove selected run**
-to remove that whole recording. Confirm the removal in the browser; Cancel leaves
-everything intact. A run here is one recording session, including its task attempts.
-Removing the last run also removes the empty participant profile.
+Select a participant and choose **Remove participant data** to remove their profile,
+saved name and all indexed runs, or select a saved session and choose **Remove
+selected run** to remove that whole recording. Confirm the removal in the browser;
+Cancel leaves everything intact. A run here is one recording session, including its
+task attempts. Removing the last run also removes the empty participant profile.
 
-Removal deletes the associated SQL records, import offsets, session results and
-derived metric rows. It commits in one transaction and refuses any selection that
-includes the currently open recording. Finish or abort that session first.
-The viewer clears removed data and invalidates its current download link.
+Removal commits in one transaction and refuses any selection that includes the
+currently open recording. Finish or abort that session first. The viewer clears
+removed data and invalidates its current download link.
 
-Original recording files and previously created exports remain on disk. This is
-collection removal, not erasure of every stored copy. The database remembers the
-excluded recording directories so Refresh and restart cannot import them again.
-A new recording using the same participant code can still be collected normally.
+Original recording files and previously created exports remain on disk. Because a
+recording holds only the participant code, removing the profile removes the name
+from ELTS. The database remembers the excluded recording directories so Refresh
+and restart cannot import them again. A new recording using the same participant
+code can still be collected normally.
 
 ## SQL layout
 
@@ -104,21 +108,18 @@ A new recording using the same participant code can still be collected normally.
 | --- | --- |
 | `participants` | Unique profile ID, participant code, optional name, creation time |
 | `sessions` | Unique session ID, participant relationship, original directory, modification time, finalized flag, descriptive review JSON |
-| `records` | Complete original record JSON, keyed by session, stream filename and original byte offset; supplemental JSON uses offset zero |
-| `stream_progress` | Last complete imported byte offset for each NDJSON stream |
 | `removed_recordings` | Excluded original directories that Refresh must not import again |
 | `task_results` (view) | One row per task attempt, participant/session identifiers, status, active duration, counts, rates, shot precision, aim metrics and coverage |
 | `task_seconds` (view) | One row per active second per task; actual exposure, counts, rates and mean aim error |
 | `task_shots` (view) | One row per accepted shot; active time, source timestamp, outcome, reference target, angle and distance |
 
-Each imported line and its progress offset commit together. Imports use bounded
-transactions, so retries retain earlier committed batches without duplicating
-rows. Foreign keys protect session/profile relationships. `PRAGMA user_version`
-is 3. Existing collections gain the metric views and removal exclusions on initialization; choose Refresh
-to recompute older review JSON from retained events. No raw stream is rewritten.
-The Windows runtime uses the system SQLite library with a five-second busy
-timeout and full synchronous durability. Raw record size is limited to 16 MB per
-line during indexing; the viewer returns 50 records per page.
+Each import commits in one transaction. Foreign keys protect session/profile
+relationships. `PRAGMA user_version` is 4. Opening a version 3 or earlier
+collection drops its copy of raw lines (`records`, `stream_progress`) and
+reclaims the space; choose Refresh to recompute review JSON from retained events.
+No raw stream is rewritten. The Windows runtime uses the system SQLite library
+with a five-second busy timeout and full synchronous durability. Raw record size
+is limited to 16 MB per line in the records viewer.
 
 ## Metric definitions and missing data
 
@@ -143,7 +144,7 @@ nearest angular visible forward target. This explicit policy does not determine
 participant intent. If no candidate exists, target error is unavailable; valid
 bore motion can still contribute to speed metrics.
 
-New `ShotFired` payloads retain outcome and geometry before targets are destroyed
+`ShotFired` payloads retain outcome and geometry before targets are destroyed
 or replaced. `AimObserved` events use the current unpredicted paired pose and the
 visible target state on the Unity frame. The default observation interval is
 0.05 s (at most 20 Hz), with a maximum accepted motion gap of 0.25 s. Configure
@@ -155,33 +156,33 @@ a recording failure retains the existing stop behavior.
 
 Motion calculations do not connect across pauses, invalid poses, duplicate or
 backward observation timestamps, or excessive gaps. Missing measurements display
-as **—** in the dashboard, SQL **NULL**, and blank Excel/CSV cells. Older completed
-recordings can recover rates and hit outcomes from events, but cannot recover
-new geometry that was never captured. Unfinished legacy shots without a hit event
-remain **Unknown** until closure; skipped attempts are not zero-performance tests.
+as **—** in the dashboard, SQL **NULL**, and blank Excel cells. A shot without a
+recorded outcome stays **Unknown** and is never counted as a miss; skipped
+attempts are not zero-performance tests.
 
 ## If storage fails
 
 Read the persistent error in Data and the folder shown above it. If startup cannot
 create the folder/database, use a writable clone or installation location and
-restart ELTS. For SQL-copy errors after a raw save, retain the raw files and choose
-Refresh. A malformed complete line or shortened previously imported file needs
-inspection; do not edit original files to force an import to pass. SQL errors do
-not silently discard raw recordings or mark a synthetic test as physically valid.
+restart ELTS. For collection errors after a raw save, retain the raw files and
+choose Refresh. A malformed complete event line needs inspection; do not edit
+original files to force an import to pass. Collection errors do not silently
+discard raw recordings or mark a synthetic test as physically valid.
 
-Raw writer failures retain their existing session-stop behavior. A secondary SQL
-failure is reported separately; its raw checkpoint can still be intact. Linked
-recording/export folders and linked files are rejected. Downloads require this
-player session's administrator token and an export ID registered by the server;
-the browser cannot request arbitrary filesystem paths.
+Raw writer failures retain their existing session-stop behavior. A secondary
+collection failure is reported separately; its raw checkpoint can still be intact.
+Linked recording/export folders and linked files are rejected. Downloads require
+this player session's administrator token and an export ID registered by the
+server; the browser cannot request arbitrary filesystem paths.
 
 ## Software verification
 
-- `tools/runtime-tests/CollectionChecks.csproj`: SQLite creation, incremental
-  recovery, malformed-line rollback, Unicode identity, export isolation and the
-  real authenticated download server. `TaskDataChecks` also verifies known rates,
-  pause exclusion, variance, invalid observations/gaps, partial seconds, legacy
-  unavailable values, numeric SQL views and native Excel contents.
+- `tools/runtime-tests/CollectionChecks.csproj`: SQLite creation, upgrade of older
+  databases, in-place record paging, Unicode identity, intake profiles, removal
+  of names and the real authenticated download server. `TaskDataChecks` also
+  verifies known rates, pause exclusion, variance, invalid observations/gaps,
+  partial seconds, unknown outcomes, numeric SQL views and the all-participant
+  results workbook without names.
 - `tools/browser-tests/administrator.cjs`: dashboard controls, profile search,
   exports, raw viewing, persistent errors, blocked browser preference storage,
   keyboard interactions, task selection, timeline pagination, shot filtering,
@@ -190,8 +191,8 @@ the browser cannot request arbitrary filesystem paths.
   counts, rates, missing values and partial intervals with pointer and keyboard.
 - `tools/browser-tests/data-player-smoke.py --build <verified-build-directory>`:
   copies a Windows player into an isolated temporary directory, exercises real
-  synthetic recording checkpoints and SQL/ZIP/XLSX downloads, and checks raw/SQL
-  row counts using Python's independent SQLite reader.
+  synthetic recording checkpoints and XLSX/ZIP downloads, and checks with
+  Python's independent SQLite reader that no raw lines or names are duplicated.
 
 These are software checks. Another physical machine, hardware measurements and
 study acceptance are not established by a local copied-player test.

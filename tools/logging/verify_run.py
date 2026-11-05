@@ -24,7 +24,7 @@ class VerificationError(ValueError):
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_DIRECTORY = REPOSITORY_ROOT / "schemas" / "logs"
 PRODUCTS: tuple[tuple[str, str, str, str], ...] = (
-    ("samples", "samples.ndjson", "samples.v1.schema.json", "writtenSamples"),
+    ("samples", "samples.ndjson", "samples.v2.schema.json", "writtenSamples"),
     ("events", "events.ndjson", "events.v1.schema.json", "writtenEvents"),
     ("targets", "targets.ndjson", "", "writtenTargets"),
 )
@@ -70,7 +70,7 @@ def _schemas() -> dict[str, Mapping[str, Any]]:
     """Load each committed schema exactly once; per-line validation reuses these documents."""
     try:
         return {
-            "samples": load_json(SCHEMA_DIRECTORY / "samples.v1.schema.json"),
+            "samples": load_json(SCHEMA_DIRECTORY / "samples.v2.schema.json"),
             "events": load_json(SCHEMA_DIRECTORY / "events.v1.schema.json"),
             "targets.v1": load_json(SCHEMA_DIRECTORY / "targets.v1.schema.json"),
             "targets.v2": load_json(SCHEMA_DIRECTORY / "targets.v2.schema.json"),
@@ -88,17 +88,25 @@ def _validate(value: Any, schema: Mapping[str, Any], location: str) -> None:
         raise VerificationError(str(exc)) from exc
 
 
-def _require_safe_sample(sample: Mapping[str, Any], location: str) -> None:
-    """Defend the no-interpolation boundary even if a future schema is loosened."""
-    for role in ("head", "weapon"):
-        tracker = sample[role]
-        validity = tracker["validity"]
-        pose = tracker["pose"]
-        if validity == "Valid":
-            if tracker["connection"] != "Connected" or not isinstance(pose, dict):
-                raise VerificationError(f"{location}.{role}: valid tracking requires connected raw pose")
-        elif pose is not None:
-            raise VerificationError(f"{location}.{role}: invalid tracking must have null pose")
+class _SampleRules:
+    """Sample rules beyond the schema, checked line by line in stream order.
+
+    A tracker ID holds until it changes, so the first line must name both trackers.
+    A pose means Connected and Valid; it never accompanies an explicit invalid state,
+    which defends the no-interpolation boundary even if a future schema is loosened.
+    """
+
+    def __init__(self) -> None:
+        self.first = True
+
+    def __call__(self, sample: Mapping[str, Any], location: str) -> None:
+        for role in ("head", "weapon"):
+            tracker = sample[role]
+            if self.first and "trackerId" not in tracker:
+                raise VerificationError(f"{location}.{role}: the first sample must name its tracker")
+            if "pose" in tracker and ("connection" in tracker or "validity" in tracker):
+                raise VerificationError(f"{location}.{role}: invalid tracking must not carry a pose")
+        self.first = False
 
 
 def _stream_product(run_directory: Path, product: str, file_name: str, schema: Mapping[str, Any] | None,
@@ -187,7 +195,7 @@ def verify_run(run_directory: Path | str) -> dict[str, Any]:
 
     results: list[ProductResult] = []
     for product, file_name, _schema_name, count_name in PRODUCTS:
-        semantic = _require_safe_sample if product == "samples" else None
+        semantic = _SampleRules() if product == "samples" else None
         result = _stream_product(directory, product, file_name, schemas.get(product), semantic, target_schemas)
         expected_checksum = summary["checksumsSha256"].get(file_name)
         if result.checksum_sha256 != expected_checksum:

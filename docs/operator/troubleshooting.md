@@ -171,7 +171,7 @@ This is the input the browser station records. It is a stand-in for a later `ITr
 
 A shot is refused when the pointer is outside the image, the block is not armed or running, or the click was held across an arm/disarm or a resize (`GeometryChangedEvent` cancels the click). Empty-magazine clicks are dry fires, not shots. Head, body, and limb damage are 3, 2, and 1 against 3 health ([scenario](../modules/scenario.md)).
 
-`DesktopTrackingSource` marks a sample invalid (`Disconnected` / `Unavailable`, null pose) when nothing has been published or the last publish is older than `MaximumSampleAgeSeconds` (0.25 s). Invalid samples are logged as invalid. Analysis drops them from aim error and does not interpolate them.
+`DesktopTrackingSource` marks a sample invalid (`Disconnected` / `Unavailable`, no pose) when nothing has been published or the last publish is older than `MaximumSampleAgeSeconds` (0.25 s). Invalid samples are logged as invalid. Analysis drops them from aim error and does not interpolate them.
 
 The acquisition thread is named `ELTS synthetic acquisition` even for mouse input. Configured cadence is `sampleRateHz` **250** in [`config/defaults/runtime.json`](../../config/defaults/runtime.json). Open **Readiness & diagnostics** on the dashboard. **Synthetic tracking** shows `Fresh paired observations; <n> Hz observed.` or `Waiting for fresh virtual poses; keep the participant app open.` A lower number means the thread is not completing polls at that cadence. It is not a tracker radio reading. **Recording** shows `Writer active; dropped samples: <n>` or `Writer failed. Retain this recording and start a new attempt.` Sample queue capacity is **8192**. A full sample queue increments `DroppedSampleCount`. Event queue capacity is **1024**. If the critical queue cannot accept a record, the writer goes unhealthy and the session must stop ([logging](../modules/logging.md)).
 
@@ -267,41 +267,38 @@ Reference: [local participant collection](../modules/data-collection.md) and [lo
 
 The Data view prints the folder it is using. **Open folder** starts `explorer.exe` on that directory. Git ignores `/collection data/`, `/data/`, `/diagnostics/`, and `/config/local.json`. Pushing the repo does not back up recordings.
 
-Beside the root, the indexer also looks at a sibling `data/synthetic` (the previous default). It does not recurse into nested build folders. It skips reparse points (directory links).
+The indexer looks only at run folders directly under the data root. It does not recurse into nested build folders. It skips reparse points (directory links).
 
-On startup the player creates the folder and `collection.sqlite` even before the first participant. Windows uses the system library `winsqlite3` (editor/standalone Win). Busy timeout is **5000** ms. `PRAGMA user_version` is 3. A raw line over **16 MB** fails indexing with `Raw record exceeds 16 MB.` The viewer pages **50** records. `Cannot open collection database: ` plus the SQLite error means the file could not be opened.
+On startup the player creates the folder and `collection.sqlite` even before the first participant. Windows uses the system library `winsqlite3` (editor/standalone Win). Busy timeout is **5000** ms. `PRAGMA user_version` is 4; an older database's copy of raw lines is dropped on startup. The records viewer reads the run's own files and pages **50** records; a raw line over **16 MB** shows `Raw record exceeds 16 MB.` `Cannot open collection database: ` plus the SQLite error means the file could not be opened.
 
 Each run directory can contain:
 
 | File | Role |
 | --- | --- |
-| `samples.ndjson` | Paired head and weapon samples, schema `elts.samples.v1` |
+| `samples.ndjson` | Paired head and weapon samples, schema `elts.samples.v2` |
 | `targets.ndjson` | `elts.targets.v1` or `elts.targets.v2` for the whole file, never mixed |
 | `events.ndjson` | `elts.events.v1` |
 | `session-summary.json` | Closure. Readers require `complete: true` and `error: null` |
 | `.session-summary.pending.json` | In-progress closure. Readers ignore it |
 | `test-checkpoint-<attempt>.json` | Per-test durable checkpoint, `finalized: false` |
-| `participant.json` | Identity, written so a startup interruption still has the code |
+| `participant.json` | Participant code only, written so a startup interruption still has it |
 | `.<runId>.reservation` | Reservation file beside the run, under the data root |
 
-Run ids that collide gain `-r0001`, `-r0002`, and so on. Flush interval is `logFlushSeconds` **1**. The dashboard shows **Saved** only after both logging queues pass the checkpoint and the checkpoint file is published. `SAVE FAILED:` plus the exception aborts the session. The raw files already written stay on disk. A later SQL failure is a second message: `SQL copy needs retry: `. **Refresh** imports again. `Data action failed. Raw recordings are retained. Retry with Refresh.` is the collection-action wrapper.
+Run ids that collide gain `-r0001`, `-r0002`, and so on. Flush interval is `logFlushSeconds` **1**. The dashboard shows **Saved** only after both logging queues pass the checkpoint and the checkpoint file is published. `SAVE FAILED:` plus the exception aborts the session. The raw files already written stay on disk. A later collection failure is a second message: `Results need a refresh: `. **Refresh** indexes again. `Data action failed. Raw recordings are retained. Retry with Refresh.` is the collection-action wrapper.
 
-The run folder name is the hidden workbench field. The browser station sets it to the typed id, a hyphen, UTC `yyyyMMdd-HHmmss`, a hyphen, and six hex characters (`DevelopmentStationSession`). `participant.json` in that folder stores the typed code as `participantId` (`elts.participant.v1`). Import prefers that file, then a `Participant details:` note, then the folder name. Participant codes match without ASCII case: `P-001` and `p-001` are one profile. Names are optional.
+The run folder name is the hidden workbench field. The browser station sets it to the typed id, a hyphen, UTC `yyyyMMdd-HHmmss`, a hyphen, and six hex characters (`DevelopmentStationSession`). `participant.json` in that folder stores only the typed code as `participantId` (`elts.participant.v2`). Import uses that file, otherwise the folder name. The optional name is saved only in `collection.sqlite`, never in the recording. Participant codes match without ASCII case: `P-001` and `p-001` are one profile.
 
 ### Export buttons
 
 | Control | Result |
 | --- | --- |
-| **Export Excel** | `.xlsx` for the selected participant. Sheets Tasks, Timeline, Shots, Metric guide. No Excel install. Row cap in code is 1,048,575 data rows (`Excel row limit exceeded...`). Cell text cap 32,767. |
-| **Export participant SQL** | New `.sqlite` with that participant only |
-| **Export database** | SQLite backup snapshot of the whole collection |
-| **Export original files** | ZIP of one finalized, inactive run, original streams and checksums |
-| **Download review CSV** | Task summary for the selected session, from the browser |
+| **Export results** | One `.xlsx` for every participant. Sheets Results, Shots, Timeline, Metric guide; rows identify participants by code. No Excel install. Row cap in code is 1,048,575 data rows per sheet (`Excel row limit exceeded...`). Cell text cap 32,767. |
+| **Raw archive** | ZIP of one finalized, inactive run, original streams and checksums |
 | **Download export** | Browser download of the prepared file. Another copy stays in `<data root>/exports/` |
 
-Download route: `GET /api/download/<id>?token=`. Content types are zip, xlsx, or `application/vnd.sqlite3`. A missing id or file returns 404 `Export no longer available. Create a new export.` The server will not read an arbitrary path. Exports describe the last indexed copy. Finish the test or press **Refresh** before exporting it. Export does not pause a running test.
+Download route: `GET /api/download/<id>?token=`. Content types are zip or xlsx. A missing id or file returns 404 `Export no longer available. Create a new export.` The server will not read an arbitrary path. Results describe the last indexed save. Finish the test or press **Refresh** before exporting it. Export does not pause a running test.
 
-**Remove participant data** / **Remove selected run** delete SQL rows and remember the directory in `removed_recordings` so Refresh will not import it. Original files and older export copies remain. An open recording cannot be removed (`collection.Remove` refuses the active directory).
+**Remove participant data** / **Remove selected run** delete the collection rows (including a removed participant's name) and remember the directory in `removed_recordings` so Refresh will not import it. Original files and older export copies remain. An open recording cannot be removed (`collection.Remove` refuses the active directory).
 
 ### Disk and sync folders
 
@@ -331,7 +328,7 @@ Ingest prints the report JSON and exits 0, or prints `INGEST FAILED: ...` to std
 
 ### What the tools reject
 
-`verify_run` and ingest both require the four products, UTF-8, no blank lines, strictly increasing `sequence`, nondecreasing `monotonicTicks`, checksums equal to `session-summary.json` `checksumsSha256`, and counts equal to `counts.writtenSamples` / `writtenEvents` / `writtenTargets`. A missing file is `Missing required product` or `missing required product`. A bad checksum is `SHA-256 does not match session summary` or `<file> checksum does not match summary`. An unfinished summary is `session-summary.json does not represent a complete successful run` or `session summary is not complete`. Duplicate JSON keys, non-finite numbers, and a mixed v1/v2 target stream are rejected. Valid tracking must be `Connected` with a pose; any other validity must have `"pose": null`.
+`verify_run` and ingest both require the four products, UTF-8, no blank lines, strictly increasing `sequence`, nondecreasing `monotonicTicks`, checksums equal to `session-summary.json` `checksumsSha256`, and counts equal to `counts.writtenSamples` / `writtenEvents` / `writtenTargets`. A missing file is `Missing required product` or `missing required product`. A bad checksum is `SHA-256 does not match session summary` or `<file> checksum does not match summary`. An unfinished summary is `session-summary.json does not represent a complete successful run` or `session summary is not complete`. Duplicate JSON keys, non-finite numbers, and a mixed v1/v2 target stream are rejected. A pose array means `Connected` and `Valid`; any other state is an explicit `connection` and `validity` with no pose. The first sample line must name both trackers.
 
 The output path must be a new file. Ingest refuses to overwrite, and it refuses to place the report inside the run directory or on top of the calibration file (`derived output must not replace a raw product or calibration`, `derived output already exists; refusing overwrite`).
 
@@ -427,7 +424,7 @@ Nothing in this section establishes physical validation of the equipment recorde
 
 - Two logical trackers, roles `head` and `weapon`, serial strings in `trackerSerials`. The synthetic template uses `SYNTHETIC-HEAD` and `SYNTHETIC-WEAPON`. They must be distinct non-empty strings. The desktop source stamps those strings onto mouse poses. It does not enumerate USB devices.
 - Readiness text, if the flags were actually false, would be `Both bound trackers must be valid for at least 2 seconds.` The player sets the flag true after two seconds of valid *software* poses (`ValidTrackingSeconds` is 2).
-- Sample fields: `connection` `Disconnected` | `Connected` | `Reconnecting`; `validity` `Unavailable` | `Valid` | `OutOfRange` | `DriverFault` | `RejectedNativePose`. `Valid` requires `Connected` and a pose. Every other validity requires a null pose (`schemas/logs/samples.v1.schema.json`).
+- Sample fields (`schemas/logs/samples.v2.schema.json`): a `Connected` and `Valid` tracker is just `"pose":[x,y,z,qx,qy,qz,qw]`. Any other state is written as `connection` (`Disconnected` | `Connected` | `Reconnecting`) and `validity` (`Unavailable` | `OutOfRange` | `DriverFault` | `RejectedNativePose`) with no pose. `trackerId` appears on the first line and whenever it changes.
 - `TrackingCoordinateConverter.Convert` is the only OpenVR-to-Unity conversion: reflect native Z, meters, +X right, +Y up, +Z forward. No player calls it, because no player calls OpenVR.
 - Vendored SDK: Valve OpenVR **2.12.14**, commit `91825305130f446f82054c1ec3d416321ace0072`, Windows x64 DLL under `unity/Assets/ThirdParty/OpenVR/`. Preload is off. `python tools/dependencies/verify_openvr.py` checks bytes and does not load the DLL ([OpenVR dependency](../modules/openvr-dependency.md)).
 - The illustration in [elts-simulation](../../elts-simulation/README.md) says "a forehead tracker and a mock-weapon tracker" from the briefing. It also says room dimensions and placement are demonstration values.
@@ -442,7 +439,7 @@ Nothing in this section establishes physical validation of the equipment recorde
 python tools/dependencies/verify_openvr.py
 ```
 
-Open one `samples.ndjson` line and read `head.trackerId`, `weapon.trackerId`, `connection`, and `validity`. On the browser station those poses follow the mouse, and validity stays `Valid` while the publisher is fresh. Dashboard **Readiness & diagnostics** has a row **Devices and displays** with status `Emulated` and the detail `Display and SteamVR readiness are emulated`. The hidden Unity workbench uses the same word (`OperatorDashboardLists`).
+Open the first `samples.ndjson` line and read `head.trackerId` and `weapon.trackerId`; later lines repeat an ID only when it changes. A `pose` array means the tracker was valid; otherwise the line shows `connection` and `validity`. On the browser station those poses follow the mouse, and validity stays `Valid` while the publisher is fresh. Dashboard **Readiness & diagnostics** has a row **Devices and displays** with status `Emulated` and the detail `Display and SteamVR readiness are emulated`. The hidden Unity workbench uses the same word (`OperatorDashboardLists`).
 
 **Fix.** Keep using the synthetic serials for rehearsal. Binding real serials is the follow-up item "Bind actual trackers; measure positions...". After a real adapter exists, invalid rows must stay invalid; do not hand-edit NDJSON to force `Valid`, or checksums and ingest will fail.
 

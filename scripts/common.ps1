@@ -50,7 +50,8 @@ function Resolve-EltsPython {
 
 function Invoke-EltsTool {
     param([string]$Action, [string]$PythonExecutable, [string]$UnityEditor,
-          [string]$Suite = 'all', [string]$Output, [string]$Report, [switch]$Check)
+          [string]$Suite = 'all', [string]$Output, [string]$Report, [switch]$Check,
+          [switch]$UseCalibrationProfile)
     $python = Resolve-EltsPython -PythonExecutable $PythonExecutable
     $arguments = @('-X', 'utf8', (Join-Path $script:EltsRepositoryRoot 'tools/bootstrap/driver.py'), '--action', $Action)
     if ($UnityEditor) { $arguments += @('--unity-editor', $UnityEditor) }
@@ -58,6 +59,7 @@ function Invoke-EltsTool {
     if ($Output) { $arguments += @('--output', $Output) }
     if ($Report) { $arguments += @('--report', $Report) }
     if ($Check) { $arguments += '--check' }
+    if ($UseCalibrationProfile) { $arguments += '--use-calibration-profile' }
     & $python @arguments
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }

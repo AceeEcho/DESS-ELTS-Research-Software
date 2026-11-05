@@ -690,7 +690,7 @@ $("save-profile").onclick = async () => {
         persistDraft();
         $("save-state").textContent = "Saved · " + name;
         $("profile-result").textContent =
-            "Saved in Calibration Environment / profiles.";
+            "Saved. The next START-ELTS launch will use the latest saved profile for synthetic rig geometry.";
         await refreshProfiles();
     } catch (error) {
         $("profile-result").textContent = error.message;

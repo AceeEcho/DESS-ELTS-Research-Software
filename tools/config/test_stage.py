@@ -1,11 +1,12 @@
 from __future__ import annotations
 import json
+import os
 import shutil
 import tempfile
 import unittest
 import uuid
 from pathlib import Path
-from tools.config.stage import stage
+from tools.config.stage import build_bundle, sha256_bytes, stage
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -21,6 +22,54 @@ def fixture_root(parent: Path) -> Path:
     return root.resolve()
 
 class StageTests(unittest.TestCase):
+    def test_latest_calibration_profile_stages_converted_synthetic_geometry(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = fixture_root(Path(temp))
+            baseline, _ = build_bundle(root)
+            self.assertEqual(build_bundle(root, use_calibration_profile=True)[0], baseline)
+            profiles = root / "Calibration Environment/profiles"
+            profiles.mkdir(parents=True)
+            profile = json.loads((ROOT / "Calibration Environment/defaults.json").read_text())
+            old = profiles / "Old.json"
+            old.write_text(json.dumps(profile))
+            os.utime(old, (1_700_000_000, 1_700_000_000))
+            profile["screen"].update(width=2, height=1, x=2, z=-3, bottom=1, rotation=[0, 90, 0])
+            profile["head"].update(eye=[1, 2, 3], mount={"position": [1, 1, 1], "rotation": [0, 0, 90]})
+            profile["weapon"].update(
+                muzzle=[0, 1, -2], bore=[0, 90, 0],
+                mount={"position": [0, 1, 0], "rotation": [0, 90, 0]},
+            )
+            latest = profiles / "Latest save.json"
+            latest.write_text(json.dumps(profile))
+            output, *_ = stage(root, use_calibration_profile=True)
+            effective = json.loads(output.read_bytes())
+            rig = effective["rig"]
+            for key, expected in {
+                "lowerLeftM": [2, 1, 2], "lowerRightM": [2, 1, 4], "upperLeftM": [2, 2, 2],
+            }.items():
+                for actual, component in zip(rig["display"][key], expected, strict=True):
+                    self.assertAlmostEqual(actual, component)
+            for key, expected in {
+                "headEyeOffsetM": [1, 0, -2],
+                "weaponMuzzleOffsetM": [2, 0, 0],
+                "weaponBoreLocalDirection": [0, 0, 1],
+            }.items():
+                for actual, component in zip(rig[key], expected, strict=True):
+                    self.assertAlmostEqual(actual, component)
+            self.assertEqual(rig["screenBottomHeightAboveFloorM"], 1)
+            self.assertEqual(rig["calibration"]["calibrationId"],
+                             "synthetic-profile-" + sha256_bytes(latest.read_bytes()))
+            self.assertEqual(rig["trackerSerials"], baseline["rig"]["trackerSerials"])
+            self.assertFalse(effective["studyReady"])
+            self.assertEqual(build_bundle(root)[0], baseline)
+
+            # A bad latest save should stop startup and preserve the prior bundle.
+            previous = output.read_bytes()
+            latest.write_text("{}")
+            with self.assertRaisesRegex(ValueError, "Cannot apply calibration profile Latest save.json"):
+                stage(root, use_calibration_profile=True)
+            self.assertEqual(output.read_bytes(), previous)
+
     def test_display_orthogonality_matches_runtime_basis_tolerance(self):
         # Both sides use normalized edge dot <= 1e-10. These fixtures straddle
         # that engineering threshold without relying on floating-point equality.

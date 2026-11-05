@@ -14,13 +14,23 @@ function Get-EltsStartupFingerprint {
     # Bind the cached build to source/configuration content, including local edits.
     # Unity caches, recordings and other generated outputs are deliberately omitted.
     $entries = foreach ($relative in @('unity/Assets','unity/Packages','unity/ProjectSettings',
-            'config','tools/build','tools/bootstrap','scripts')) {
+            'config','schemas','tools/config','tools/build','tools/bootstrap','scripts')) {
         Get-ChildItem -LiteralPath (Join-Path $script:EltsRepositoryRoot $relative) -File -Recurse |
-            Where-Object { $_.FullName -notmatch '[\\/](__pycache__|local)[\\/]' } |
+            Where-Object { $_.FullName -notmatch '[\\/](__pycache__|local|config-generated)[\\/]|[\\/]config-generated\.meta$' } |
             ForEach-Object {
                 $_.FullName.Substring($script:EltsRepositoryRoot.Length) + ':' +
                     (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
             }
+    }
+    $profiles = Join-Path $script:EltsRepositoryRoot 'Calibration Environment/profiles'
+    if (Test-Path -LiteralPath $profiles -PathType Container) {
+        # Modification times participate because staging uses them to select the latest save.
+        $entries += @(Get-ChildItem -LiteralPath $profiles -File | Where-Object {
+            $_.Name -cmatch '^[A-Za-z0-9][A-Za-z0-9 _-]{0,63}\.json$'
+        } | ForEach-Object {
+            $_.Name + ':' + $_.LastWriteTimeUtc.Ticks + ':' +
+                (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+        })
     }
     $sha = [Security.Cryptography.SHA256]::Create()
     try {
@@ -126,13 +136,16 @@ function Invoke-EltsDevelopmentStart {
         Set-EltsStartupStatus 'Building ELTS' 'Unity is building the dashboard and participant game. This can take several minutes. The console shows build output; leave startup running.'
         Invoke-EltsSetupProcess $shell @('-NoProfile','-ExecutionPolicy','Bypass','-File',
             (Join-Path $root 'scripts/build.ps1'), '-Output', $output,
-            '-PythonExecutable', $paths.python, '-UnityEditor', $paths.unity) -TimeoutSeconds 3600 `
+            '-PythonExecutable', $paths.python, '-UnityEditor', $paths.unity, '-UseCalibrationProfile') -TimeoutSeconds 3600 `
             -Activity 'Build dashboard and participant game' -ReportPaths (Join-Path $root 'diagnostics/build-report.json') -RetryCommand 'START-ELTS.cmd'
         $player = Join-Path $root ($output + '/ELTS-Synthetic.exe')
         if (-not (Test-Path -LiteralPath $player -PathType Leaf)) { throw 'Build finished without a dashboard executable.' }
-        # Staging during the build can change generated Assets, so hash afterwards.
+        # A profile saved during the build must not get credited to an older player.
+        if ((Get-EltsStartupFingerprint) -ne $fingerprint) {
+            throw 'Source or calibration profiles changed during the build. Run START-ELTS.cmd again to build with the latest inputs.'
+        }
         Set-EltsStartupStatus 'Saving build information' 'Recording the source fingerprint so later launches can reuse this build.'
-        $cache = @{ fingerprint = Get-EltsStartupFingerprint; output = $output }
+        $cache = @{ fingerprint = $fingerprint; output = $output }
         [IO.File]::WriteAllText($cachePath, ($cache | ConvertTo-Json), (New-Object Text.UTF8Encoding $false))
     }
     # Unity runs headlessly only when setup/build requires it. Open the Editor

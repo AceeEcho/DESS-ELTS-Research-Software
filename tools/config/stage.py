@@ -1,6 +1,7 @@
 """Validate and stage the synthetic configuration bundle.
 
-Only files named by config/staging.json are read. Outputs are generated under
+Development startup may overlay geometry from the latest saved dashboard profile.
+Outputs are generated under
 Unity's StreamingAssets directory and are written atomically. No live/local
 file is modified; config/local.json is an optional machine overlay constrained
 by the strict local schema.
@@ -12,6 +13,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import stat
 import sys
 from pathlib import Path
@@ -20,6 +22,7 @@ from tempfile import NamedTemporaryFile
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from tools.validation.schema import ValidationError, validate_file  # noqa: E402
+from tools.config.calibration_profile import apply_profile  # noqa: E402
 
 SCHEMAS = {"runtime": "runtime.schema.json", "rig": "rig.schema.json", "scenario": "scenario.schema.json", "session": "session.schema.json", "local": "local.schema.json"}
 STAGED_SCHEMAS = ("effective.schema.json", *SCHEMAS.values())
@@ -136,7 +139,27 @@ def _validate_local(local: dict) -> None:
         raise ValueError("Participant and operator displays must differ")
 
 
-def build_bundle(root: Path) -> tuple[dict, dict]:
+def _apply_latest_profile(root: Path, rig: dict) -> None:
+    directory = _safe_path(root, "Calibration Environment/profiles")
+    profiles = [
+        _safe_path(root, path.relative_to(root).as_posix())
+        for path in directory.glob("*.json")
+        if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9 _-]{0,63}\.json", path.name) and path.is_file()
+    ]
+    if not profiles:
+        return
+    path = max(profiles, key=lambda item: (item.stat().st_mtime_ns, item.name))
+    try:
+        profile, raw = _load_json(path)
+        apply_profile(rig, profile, sha256_bytes(raw))
+        validate_file(rig, _safe_path(root, "schemas/config/rig.schema.json"))
+        _validate_rig(rig)
+    except (KeyError, TypeError, ValueError, OverflowError, OSError) as error:
+        raise ValueError(f"Cannot apply calibration profile {path.name}: {error}") from error
+    print(f"Using calibration profile for synthetic ELTS: {path.name}")
+
+
+def build_bundle(root: Path, *, use_calibration_profile: bool = False) -> tuple[dict, dict]:
     root = root.resolve()
     staging_path = _safe_source(root, "config/staging.json")
     staging, staging_raw = _load_json(staging_path)
@@ -156,6 +179,8 @@ def build_bundle(root: Path) -> tuple[dict, dict]:
         values[key] = value
         raw_hashes[key] = sha256_bytes(raw)
     _validate_rig(values["rig"]); _validate_local(values["local"])
+    if use_calibration_profile:
+        _apply_latest_profile(root, values["rig"])
     effective = {"schemaVersion": 1, "mode": "synthetic", "studyReady": False, "runtime": values["runtime"], "rig": values["rig"], "scenario": values["scenario"], "session": values["session"], "machine": values["local"]}
     schema_bytes = {name: _safe_path(root, "schemas/config/" + name).read_bytes() for name in STAGED_SCHEMAS}
     validate_file(effective, root / "schemas/config/effective.schema.json")
@@ -178,7 +203,8 @@ def _atomic_write(path: Path, data: bytes) -> None:
         raise
 
 
-def stage(root: Path, output: Path | None = None, check: bool = False) -> list[Path]:
+def stage(root: Path, output: Path | None = None, check: bool = False, *,
+          use_calibration_profile: bool = False) -> list[Path]:
     root = root.resolve()
     output = output or Path("unity/Assets/StreamingAssets/config-generated")
     if not output.is_absolute():
@@ -191,7 +217,7 @@ def stage(root: Path, output: Path | None = None, check: bool = False) -> list[P
     if not rel.parts or not allowed:
         raise ValueError("Output must be a generated subdirectory inside the repository")
     output = _safe_path(root, rel.as_posix())
-    effective, manifest = build_bundle(root)
+    effective, manifest = build_bundle(root, use_calibration_profile=use_calibration_profile)
     expected = {output / OUTPUT_NAMES["effective"]: canonical(effective), output / OUTPUT_NAMES["manifest"]: canonical(manifest)}
     for name in STAGED_SCHEMAS:
         data = _safe_path(root, "schemas/config/" + name).read_bytes()

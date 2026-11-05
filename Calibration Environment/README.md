@@ -197,7 +197,7 @@ The preview is unavailable if the eye is behind/too close to the screen or the
 head pose is invalid. The amber dot marks the bore/screen-plane intersection;
 it is not a scored shot or a simulated physical projectile.
 
-## Profiles and isolation
+## Profiles and ELTS startup
 
 - **Save profile** writes an atomic JSON file in this folder's `profiles/`. Saving
   over an existing name asks for confirmation. Profiles are ignored by Git.
@@ -206,13 +206,21 @@ it is not a scored shot or a simulated physical projectile.
   choose Manual preview explicitly for hardware-free use.
 - Import validates structure, dimensions, finite values, reference quaternions,
   distinct tracker bindings and the coordinate-system identifier before applying.
-- No ELTS configuration, logs, raw NDJSON, participant data, study flags or
-  hardware controls are changed. Profiles are not automatically applied to ELTS.
+- On the next **START-ELTS.cmd**, the most recently modified saved profile
+  supplies screen geometry and tracker-local eye, muzzle and bore settings to
+  the synthetic development build. Save the profile you want to use, then
+  restart ELTS. With no saved profiles, the launcher uses the default synthetic rig.
+- Browser drafts and exported JSON outside `profiles/` stay local to their
+  respective workflows. Live tracking registration, device bindings, forward
+  references and preview settings are dashboard-only. ELTS retains synthetic
+  inputs and development calibration status.
+- If startup reports a profile error, correct and save that profile, or move it
+  out of `profiles/` to let the launcher select the next most recent save.
 - This app uses **right-handed X-right, Y-up, Z-toward-viewer** coordinates, with
   **−Z forward**. Angles are pitch X, yaw Y, roll Z in **YXZ** Euler order.
   Positive yaw turns left; positive pitch looks up. Euler readouts become
-  ambiguous near ±90° pitch. ELTS Unity configuration uses a different handedness;
-  these files must not be copied directly into its rig configuration.
+  ambiguous near ±90° pitch. Startup reflects Z and converts object-space
+  offsets through the saved mounts before staging the Unity configuration.
 
 ## Troubleshooting and checks
 

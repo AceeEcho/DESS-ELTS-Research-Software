@@ -1,12 +1,16 @@
 # Synthetic configuration staging
 
-`tools/config/stage.py` is the configuration boundary. It reads only
-the explicit paths in `config/staging.json`, validates each object against its
+`tools/config/stage.py` is the configuration boundary. It reads the explicit
+paths in `config/staging.json` and the optional machine overlay, validates each object against its
 strict schema, applies cross-field geometry and machine-path checks, and emits
 `unity/Assets/StreamingAssets/config-generated/effective-config.json` and
 `manifest.json`. The effective document has the stable root shape
 `schemaVersion`, `mode`, `studyReady`, `runtime`, `rig`, `scenario`, `session`,
 and `machine`.
+
+`START-ELTS.cmd` enables the optional
+[dashboard profile handoff](../../Calibration%20Environment/README.md#profiles-and-elts-startup).
+The staged rig's calibration ID records the saved profile's SHA-256.
 
 The effective JSON is canonical UTF-8 with sorted keys, compact separators, and
 one LF newline. Its SHA-256 is recorded in the manifest along with raw source

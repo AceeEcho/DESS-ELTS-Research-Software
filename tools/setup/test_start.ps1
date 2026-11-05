@@ -52,6 +52,7 @@ function Invoke-EltsSetupProcess {
         @{result='ready';toolchainSha256=(Get-FileHash (Join-Path $fixture 'config/toolchain.json')).Hash} |
             ConvertTo-Json | Set-Content (Join-Path $fixture 'diagnostics/setup-report.json')
     } elseif (($Arguments -join ' ') -match 'build.ps1') {
+        Assert ($Arguments -contains '-UseCalibrationProfile') 'The launcher build must enable the profile handoff'
         Assert ($ReportPaths -eq (Join-Path $fixture 'diagnostics/build-report.json') -and $Activity -match 'Build') 'Startup must preserve build diagnostics and failed step'
         $script:calls.Add('build')
         if ($script:failBuild) { throw 'fixture build failed' }

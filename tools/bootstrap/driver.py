@@ -358,7 +358,7 @@ def run(args) -> tuple[dict, Path]:
         elif args.action == "build":
             if not editor or not (ROOT / "unity/Assets/Editor/EltsBuild/BuildEntry.cs").is_file():
                 raise ValueError("Explicit Unity Windows build entry is not ready; complete BOOT.S023")
-            stage(ROOT)
+            stage(ROOT, use_calibration_profile=args.use_calibration_profile)
             output = relative_output(args.output, "build/windows-synthetic")
             output.mkdir(parents=True, exist_ok=True)
             from tools.build.provenance import prepare, finalize
@@ -390,6 +390,7 @@ def main():
     parser.add_argument("--output")
     parser.add_argument("--report")
     parser.add_argument("--check", action="store_true")
+    parser.add_argument("--use-calibration-profile", action="store_true")
     report, path = run(parser.parse_args())
     print("Report: " + str(path.relative_to(ROOT)))
     raise SystemExit(0 if report["result"] == "pass" else 1)

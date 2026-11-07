@@ -1,0 +1,114 @@
+{
+ "_readme": [
+  "Editable inputs for build_connector.py. All lengths in millimetres.",
+  "Frame: X/Y are HTC's tracker-model X/Y (socket axis at 0,0; stabilizing recess on +Y; pins on -Y).",
+  "Z is 'seat Z': 0 = the connector top face = the tracker's broad flat underside (HTC CAD z = -2.50). +Z points into the tracker.",
+  "Categories: sourced_htc_guide = numbers printed in HTC's guide; tracker CAD measurements live in tracker_interface.json (generated);",
+  "hardware_nominal = nominal values you supplied (NOT measured, NOT verified against a manufacturer drawing);",
+  "design = choices made for this connector; print_allowance = fit clearances and printing aids.",
+  "Calculated values are NOT stored here: the build derives them and writes output/derived_dimensions.json with formulas."
+ ],
+ "revision": "E",
+ "name": "ELTS_VIVE_Tracker_3_Trigger_Connector_Rev_E",
+
+ "sourced_htc_guide": {
+  "_source": "HTC VIVE Tracker (3.0) Developer Guidelines v1.1 (2021-05-27), printed pages 13-17 (PDF pages 16-20)",
+  "pin_pitch": 3.5,
+  "pad_height_above_datum_a": 2.595,
+  "pad_size_x": 2.0,
+  "pad_size_y": 4.1,
+  "pad_center_from_socket_axis": 16.969,
+  "stabilizing_pin_diameter": 4.2,
+  "stabilizing_pin_diameter_tolerance": 0.1,
+  "stabilizing_pin_height_above_datum_a": 4.7,
+  "stabilizing_pin_from_socket_axis": 14.001,
+  "mount_thread": "1/4 in, 1.27 mm pitch (1/4-20 UNC)",
+  "gpio_abs_max_input_v": 4.0,
+  "pins": {
+   "1": "digital output (not connected)",
+   "2": "GND -> switch COM",
+   "3": "grip input / power input (not connected)",
+   "4": "trigger input, internal pull-up, active low -> switch NO",
+   "5": "trackpad input (not connected)",
+   "6": "menu input (not connected)"
+  },
+  "connected_pins": [2, 4]
+ },
+
+ "hardware_nominal": {
+  "_status": "User-supplied nominal values. Manufacturer listings could not be retrieved (Amazon returned HTTP 503 on 2026-11-06). Tolerances unknown.",
+  "pogo_contact": {"product": "Treedix B0BFD27HSR, 6 mm variant", "overall_length": 6.0, "base_diameter": 2.0, "base_thickness": 0.5,
+                   "barrel_diameter": 1.5, "barrel_length": 3.5, "tip_diameter": 0.9, "tip_exposed_length": 2.0},
+  "m3_screw": {"product": "Senyard SYD-511 M3 x 16 socket head", "diameter": 3.0, "length": 16.0, "head_diameter": 5.5, "head_height": 3.0, "hex_key": 2.5},
+  "m3_nut": {"across_flats": 5.5, "thickness": 2.4},
+  "mount_screw": {"product": "SGTZH B0B82124YW 1/4-20 UNC x 5/8 in button head", "major_diameter": 6.35, "pitch": 1.27,
+                  "length_under_head": 15.875, "head_diameter": 10.8, "head_height": 3.2, "hex_key": 3.97},
+  "cable_tie": {"width": 2.5, "thickness": null, "head_size": null}
+ },
+
+ "design": {
+  "footprint_inset_from_tracker_flat": 1.5,
+  "footprint_clip_x": 17.0,
+  "footprint_clip_y_min": -27.0,
+  "footprint_clip_y_max": 20.5,
+  "footprint_corner_radius": 3.0,
+  "outer_edge_chamfer": 0.4,
+
+  "base_thickness": 12.0,
+  "cover_thickness": 8.0,
+  "top_skin_thickness": 2.0,
+
+  "mount_screw_tip_above_datum_a": 4.5,
+
+  "stabilizing_pin_tip_chamfer": 0.6,
+
+  "friction_pad_relief_depth": 1.2,
+  "friction_pad_relief_margin": 0.5,
+
+  "plate_half_width_y": 2.175,
+  "nose_end_margin_x": 2.05,
+  "plate_bottom_z": 1.2,
+  "back_wall": 0.8,
+  "unconnected_pin_relief_diameter": 2.4,
+  "collar_overhang_x": 2.3,
+  "collar_overhang_plus_y": 1.5,
+  "collar_thickness": 1.5,
+  "collar_plus_y_bar": 1.2,
+  "insulation_envelope_diameter": 3.0,
+  "label_text_size": 4.0,
+  "label_depth": 0.4,
+
+  "m3_axes_xy": [[-12.5, -4.0], [12.5, -4.0]],
+  "m3_tip_z": -0.7,
+  "m3_tip_past_nut": 1.1,
+
+  "wire_bay_depth": 5.0,
+  "wire_bay_inset_from_legs": 0.2,
+  "cable_channel_width": 7.0,
+  "tie_anchor_y": -24.0,
+  "tie_pocket_half_width_x": 7.5,
+  "tie_slot_center_x": 4.8
+ },
+
+ "print_allowance": {
+  "carrier_channel_clearance": 0.3,
+  "nose_window_clearance": 0.25,
+  "carrier_vertical_float": 0.1,
+  "barrel_hole_diameter": 1.6,
+  "barrel_hole_note": "Printed undersize is normal; open to a snug 1.5 mm slip fit with a 1.5 mm drill by hand.",
+  "mount_screw_hole_diameter": 6.8,
+  "mount_head_counterbore_diameter": 11.8,
+  "mount_head_cover_pocket_diameter": 12.4,
+  "mount_head_drop_gap": 0.4,
+  "allen_access_diameter": 6.2,
+  "m3_clearance_diameter": 3.4,
+  "m3_head_counterbore_diameter": 6.0,
+  "m3_blind_hole_skin": 0.6,
+  "nut_slot_width": 5.8,
+  "nut_slot_height": 2.7,
+  "sacrificial_bridge_layer": 0.2,
+  "tie_slot_x": 2.0,
+  "tie_slot_y": 3.2,
+  "tie_groove_depth": 1.8
+ }
+}

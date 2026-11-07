@@ -1,0 +1,130 @@
+{
+ "datum_a_z": {
+  "value": 0.5,
+  "formula": "HTC CAD Datum A ring z - base plane z"
+ },
+ "contact_face_z": {
+  "value": 3.095,
+  "formula": "datum_a_z + HTC pad height 2.595"
+ },
+ "contact_base_seat_z": {
+  "value": 2.595,
+  "formula": "contact_face_z - Treedix base thickness"
+ },
+ "contact_barrel_bottom_z": {
+  "value": -0.905,
+  "formula": "contact_base_seat_z - barrel length"
+ },
+ "contact_tip_bottom_z": {
+  "value": -2.905,
+  "formula": "barrel bottom - exposed tip length"
+ },
+ "tracker_pin_tip_z_as_modelled": {
+  "value": 1.914,
+  "formula": "HTC CAD pin sphere lowest point"
+ },
+ "tracker_pin_compression_nominal": {
+  "value": 1.181,
+  "formula": "contact_face_z - tracker pin tip as modelled"
+ },
+ "mount_screw_tip_z": {
+  "value": 5.0,
+  "formula": "datum_a_z + chosen tip height above Datum A"
+ },
+ "mount_screw_bearing_face_z": {
+  "value": -10.875,
+  "formula": "screw tip - 15.875 under-head length"
+ },
+ "mount_screw_head_bottom_z": {
+  "value": -14.075,
+  "formula": "bearing face - head height"
+ },
+ "tracker_thread_start_z": {
+  "value": 0.51,
+  "formula": "HTC CAD socket bore start"
+ },
+ "tracker_socket_bottom_z": {
+  "value": 8.25,
+  "formula": "HTC CAD socket bore bottom"
+ },
+ "mount_screw_engagement": {
+  "value": 4.49,
+  "formula": "tip - thread start"
+ },
+ "mount_screw_bottoming_margin": {
+  "value": 3.25,
+  "formula": "socket bottom - tip"
+ },
+ "mount_screw_bearing_stack": {
+  "value": 10.875,
+  "formula": "printed base material between head and tracker face"
+ },
+ "stabilizing_pin_top_z": {
+  "value": 5.2,
+  "formula": "datum_a_z + HTC 4.700"
+ },
+ "stabilizing_recess_floor_z": {
+  "value": 6.5,
+  "formula": "HTC CAD recess floor"
+ },
+ "base_bottom_z": {
+  "value": -12.0,
+  "formula": "-base_thickness"
+ },
+ "cover_bottom_z": {
+  "value": -20.0,
+  "formula": "base bottom - cover thickness"
+ },
+ "m3_head_bearing_z": {
+  "value": -16.7,
+  "formula": "m3_tip_z - 16"
+ },
+ "m3_head_recess_below_cover": {
+  "value": 0.3,
+  "formula": "head bottom - cover bottom (>= 0 means recessed)"
+ },
+ "m3_nut_top_z": {
+  "value": -1.8,
+  "formula": "tip - required protrusion past nut"
+ },
+ "m3_nut_bearing_z": {
+  "value": -4.2,
+  "formula": "nut top - nut thickness"
+ },
+ "m3_nut_slot_top_z": {
+  "value": -1.5,
+  "formula": "nut bearing + slot height"
+ },
+ "m3_blind_hole_top_z": {
+  "value": -0.6,
+  "formula": "-skin above screw tip"
+ },
+ "m3_clamp_grip": {
+  "value": 12.5,
+  "formula": "nut bearing - head bearing"
+ },
+ "plate_x_min": {
+  "value": -7.3,
+  "formula": "min contact x - end margin"
+ },
+ "plate_x_max": {
+  "value": 3.8,
+  "formula": "max contact x + end margin"
+ },
+ "carrier_back_face_y": {
+  "value": -19.409,
+  "formula": "pogo pocket centre y - plate half width"
+ },
+ "plate_top_z": {
+  "value": 2.595,
+  "formula": "= contact_base_seat_z"
+ },
+ "barrel_exposed_length": {
+  "value": 2.105,
+  "formula": "plate bottom - barrel bottom (solder zone)"
+ },
+ "carrier_collar_top_z": {
+  "value": -2.1,
+  "formula": "-top skin - float"
+ }
+}

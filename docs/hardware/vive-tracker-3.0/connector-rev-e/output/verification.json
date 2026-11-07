@@ -1,0 +1,440 @@
+{
+ "scope": "Digital CAD/mesh checks against nominal hardware dimensions and HTC's tracker STEP. No part has been printed, fitted, or electrically tested.",
+ "passed": 47,
+ "failed": 0,
+ "not_performed_physical": [
+  "print dimensional accuracy, hole sizes and fit of carrier/nose/pin on a real tracker",
+  "actual tracker pogo-pin free length, stroke and force (compression above uses the CAD state)",
+  "Treedix contact, screw, nut and cable-tie dimensions on the received parts",
+  "1/4-20 thread engagement, tightening torque and printed-plastic creep under the screw head",
+  "contact resistance, continuity, isolation between contacts, switch press/release recognition in SteamVR",
+  "strain relief holding force; cable/sleeve fit in the 7 x 5 mm channel"
+ ],
+ "checks": [
+  {
+   "check": "valid solid: bottom_cover",
+   "category": "solid",
+   "result": "PASS",
+   "solids": 1,
+   "volume_mm3": 10456.36
+  },
+  {
+   "check": "valid solid: contact_carrier",
+   "category": "solid",
+   "result": "PASS",
+   "solids": 1,
+   "volume_mm3": 382.77
+  },
+  {
+   "check": "valid solid: mount_base",
+   "category": "solid",
+   "result": "PASS",
+   "solids": 1,
+   "volume_mm3": 15797.62
+  },
+  {
+   "check": "valid solid: m3_nut_minusX",
+   "category": "solid",
+   "result": "PASS",
+   "solids": 1,
+   "volume_mm3": 45.91
+  },
+  {
+   "check": "valid solid: m3_nut_plusX",
+   "category": "solid",
+   "result": "PASS",
+   "solids": 1,
+   "volume_mm3": 45.91
+  },
+  {
+   "check": "valid solid: m3x16_screw_minusX",
+   "category": "solid",
+   "result": "PASS",
+   "solids": 1,
+   "volume_mm3": 176.25
+  },
+  {
+   "check": "valid solid: m3x16_screw_plusX",
+   "category": "solid",
+   "result": "PASS",
+   "solids": 1,
+   "volume_mm3": 176.25
+  },
+  {
+   "check": "valid solid: mount_screw_1_4_20x5_8",
+   "category": "solid",
+   "result": "PASS",
+   "solids": 1,
+   "volume_mm3": 641.66
+  },
+  {
+   "check": "valid solid: pogo_contact_pin2_GND_to_COM",
+   "category": "solid",
+   "result": "PASS",
+   "solids": 1,
+   "volume_mm3": 9.03
+  },
+  {
+   "check": "valid solid: pogo_contact_pin4_TRIGGER_to_NO",
+   "category": "solid",
+   "result": "PASS",
+   "solids": 1,
+   "volume_mm3": 9.03
+  },
+  {
+   "check": "mesh: bottom_cover.stl",
+   "category": "mesh",
+   "result": "PASS",
+   "watertight": true,
+   "winding_consistent": true,
+   "bodies": 1,
+   "mesh_volume": 10424.1,
+   "cad_volume": 10456.4,
+   "sits_on_bed": true,
+   "size_xyz": [
+    34.0,
+    47.5,
+    8.0
+   ],
+   "fits_180x180_bed": true
+  },
+  {
+   "check": "mesh: bottom_cover.3mf",
+   "category": "mesh",
+   "result": "PASS",
+   "watertight": true,
+   "winding_consistent": true,
+   "bodies": 1,
+   "mesh_volume": 10424.1,
+   "cad_volume": 10456.4,
+   "sits_on_bed": true,
+   "size_xyz": [
+    34.0,
+    47.5,
+    8.0
+   ],
+   "fits_180x180_bed": true
+  },
+  {
+   "check": "mesh: contact_carrier.stl",
+   "category": "mesh",
+   "result": "PASS",
+   "watertight": true,
+   "winding_consistent": true,
+   "bodies": 1,
+   "mesh_volume": 382.8,
+   "cad_volume": 382.8,
+   "sits_on_bed": true,
+   "size_xyz": [
+    15.7,
+    14.6,
+    5.8
+   ],
+   "fits_180x180_bed": true
+  },
+  {
+   "check": "mesh: contact_carrier.3mf",
+   "category": "mesh",
+   "result": "PASS",
+   "watertight": true,
+   "winding_consistent": true,
+   "bodies": 1,
+   "mesh_volume": 382.8,
+   "cad_volume": 382.8,
+   "sits_on_bed": true,
+   "size_xyz": [
+    15.7,
+    14.6,
+    5.8
+   ],
+   "fits_180x180_bed": true
+  },
+  {
+   "check": "mesh: mount_base.stl",
+   "category": "mesh",
+   "result": "PASS",
+   "watertight": true,
+   "winding_consistent": true,
+   "bodies": 1,
+   "mesh_volume": 15891.5,
+   "cad_volume": 15797.6,
+   "sits_on_bed": true,
+   "size_xyz": [
+    34.0,
+    47.5,
+    17.2
+   ],
+   "fits_180x180_bed": true
+  },
+  {
+   "check": "mesh: mount_base.3mf",
+   "category": "mesh",
+   "result": "PASS",
+   "watertight": true,
+   "winding_consistent": true,
+   "bodies": 1,
+   "mesh_volume": 15891.5,
+   "cad_volume": 15797.6,
+   "sits_on_bed": true,
+   "size_xyz": [
+    34.0,
+    47.5,
+    17.2
+   ],
+   "fits_180x180_bed": true
+  },
+  {
+   "check": "component interference (all pairs, assembled)",
+   "category": "interference",
+   "result": "PASS",
+   "pairs": 45,
+   "overlapping": [],
+   "max_unexpected_common_volume_mm3": 0.0,
+   "sacrificial_bridges_to_pierce": [
+    [
+     "HW_m3x16_screw_minusX",
+     "PRINT_bottom_cover",
+     1.414
+    ],
+    [
+     "HW_m3x16_screw_plusX",
+     "PRINT_bottom_cover",
+     1.414
+    ],
+    [
+     "HW_mount_screw_1_4_20x5_8",
+     "PRINT_mount_base",
+     6.334
+    ]
+   ]
+  },
+  {
+   "check": "tracker interference: bottom_cover",
+   "category": "interference",
+   "result": "PASS",
+   "common_volume_mm3": 0.0
+  },
+  {
+   "check": "tracker interference: contact_carrier",
+   "category": "interference",
+   "result": "PASS",
+   "common_volume_mm3": 0.0
+  },
+  {
+   "check": "tracker interference: mount_base",
+   "category": "interference",
+   "result": "PASS",
+   "common_volume_mm3": 0.0
+  },
+  {
+   "check": "min clearance carrier to tracker (excl. pins 2/4 bodies)",
+   "category": "interference",
+   "result": "PASS",
+   "min_distance_mm": 0.55
+  },
+  {
+   "check": "stabilizing pin clearance in recess",
+   "category": "interference",
+   "result": "PASS",
+   "min_distance_mm": 0.352,
+   "pin_top_z": 5.2,
+   "recess_floor_z": 6.5
+  },
+  {
+   "check": "base top seats on tracker flat underside",
+   "category": "interference",
+   "result": "PASS",
+   "min_distance_mm": 0.0
+  },
+  {
+   "check": "pin numbering orientation",
+   "category": "contact",
+   "result": "PASS",
+   "rule": "HTC p.13/14: viewed from below, pin 1 is on the friction-pad side; friction pad is at -X in HTC CAD",
+   "pin1_x": -8.75,
+   "pin2_x": -5.25,
+   "pin4_x": 1.75
+  },
+  {
+   "check": "contact pin 2 alignment",
+   "category": "contact",
+   "result": "PASS",
+   "lateral_offset_mm": 0.0,
+   "lateral_acceptance_mm": 1.0,
+   "contact_face_z": 3.095,
+   "htc_pad_plane_z": 3.095,
+   "modelled_pin_compression_mm": 1.181,
+   "overlap_is_this_pin_tip_only": true
+  },
+  {
+   "check": "contact pin 4 alignment",
+   "category": "contact",
+   "result": "PASS",
+   "lateral_offset_mm": 0.0,
+   "lateral_acceptance_mm": 1.0,
+   "contact_face_z": 3.095,
+   "htc_pad_plane_z": 3.095,
+   "modelled_pin_compression_mm": 1.181,
+   "overlap_is_this_pin_tip_only": true
+  },
+  {
+   "check": "contact-to-contact separation",
+   "category": "contact",
+   "result": "PASS",
+   "min_metal_gap_mm": 5.0
+  },
+  {
+   "check": "unconnected pin 1 untouched",
+   "category": "contact",
+   "result": "PASS",
+   "nearest_contact_mm": 1.85,
+   "nearest_plastic_mm": 0.8
+  },
+  {
+   "check": "unconnected pin 3 untouched",
+   "category": "contact",
+   "result": "PASS",
+   "nearest_contact_mm": 1.85,
+   "nearest_plastic_mm": 0.55
+  },
+  {
+   "check": "unconnected pin 5 untouched",
+   "category": "contact",
+   "result": "PASS",
+   "nearest_contact_mm": 1.85,
+   "nearest_plastic_mm": 0.8
+  },
+  {
+   "check": "unconnected pin 6 untouched",
+   "category": "contact",
+   "result": "PASS",
+   "nearest_contact_mm": 5.35,
+   "nearest_plastic_mm": 4.3
+  },
+  {
+   "check": "1/4-20 thread engagement",
+   "category": "fastener",
+   "result": "PASS",
+   "engagement_mm": 4.49,
+   "threads": 3.54,
+   "bottoming_margin_mm": 3.25,
+   "note": "tracker thread depth taken from HTC CAD bore (thread form not modelled)"
+  },
+  {
+   "check": "1/4-20 bottoming margin",
+   "category": "fastener",
+   "result": "PASS",
+   "margin_mm": 3.25
+  },
+  {
+   "check": "1/4-20 head bears on base",
+   "category": "fastener",
+   "result": "PASS",
+   "bearing_stack_mm": 10.875,
+   "stack": "screw head -> printed base -> tracker flat underside"
+  },
+  {
+   "check": "1/4-20 screw captive by cover",
+   "category": "fastener",
+   "result": "PASS",
+   "axial_play_mm": 0.4,
+   "access_hole_mm": 6.2,
+   "head_mm": 10.8
+  },
+  {
+   "check": "M3 engagement m3x16_screw_minusX",
+   "category": "fastener",
+   "result": "PASS",
+   "tip_past_nut_mm": 1.1,
+   "full_nut_engaged": true,
+   "tip_z": -0.7,
+   "skin_above_tip_mm": 0.6,
+   "head_recess_below_cover_mm": 0.3
+  },
+  {
+   "check": "M3 engagement m3x16_screw_plusX",
+   "category": "fastener",
+   "result": "PASS",
+   "tip_past_nut_mm": 1.1,
+   "full_nut_engaged": true,
+   "tip_z": -0.7,
+   "skin_above_tip_mm": 0.6,
+   "head_recess_below_cover_mm": 0.3
+  },
+  {
+   "check": "5/32 in hex key reaches 1/4-20 screw from below",
+   "category": "tool access",
+   "result": "PASS",
+   "key_envelope_dia_mm": 4.684
+  },
+  {
+   "check": "M3 key and head path at x=-12.5",
+   "category": "tool access",
+   "result": "PASS",
+   "key_overlap": 0.0,
+   "head_path_overlap": 0.0
+  },
+  {
+   "check": "M3 nut slides in from side at x=-12.5",
+   "category": "tool access",
+   "result": "PASS"
+  },
+  {
+   "check": "M3 key and head path at x=12.5",
+   "category": "tool access",
+   "result": "PASS",
+   "key_overlap": 0.0,
+   "head_path_overlap": 0.0
+  },
+  {
+   "check": "M3 nut slides in from side at x=12.5",
+   "category": "tool access",
+   "result": "PASS"
+  },
+  {
+   "check": "carrier inserts into base from below",
+   "category": "tool access",
+   "result": "PASS",
+   "max_overlap_along_path": 0.0
+  },
+  {
+   "check": "solder and insulation room, pin 2",
+   "category": "tool access",
+   "result": "PASS",
+   "exposed_barrel_mm": 2.105,
+   "iron_approach": "+Y side and both X ends, 2 mm wide",
+   "insulation_envelope_dia_mm": 3.0,
+   "sleeves_kept_apart": true,
+   "note": "envelope is a design allowance; sleeve size not established"
+  },
+  {
+   "check": "solder and insulation room, pin 4",
+   "category": "tool access",
+   "result": "PASS",
+   "exposed_barrel_mm": 2.105,
+   "iron_approach": "+Y side and both X ends, 2 mm wide",
+   "insulation_envelope_dia_mm": 3.0,
+   "sleeves_kept_apart": true,
+   "note": "envelope is a design allowance; sleeve size not established"
+  },
+  {
+   "check": "footprint inside tracker flat underside",
+   "category": "sensors",
+   "result": "PASS",
+   "inset_mm": 1.5
+  },
+  {
+   "check": "everything above the seat plane is inside tracker recesses",
+   "category": "sensors",
+   "result": "PASS",
+   "volumes_above_seat_mm3": {
+    "contact_carrier": 66.09,
+    "mount_base": 69.89,
+    "mount_screw_1_4_20x5_8": 158.35,
+    "pogo_contact_pin2_GND_to_COM": 6.16,
+    "pogo_contact_pin4_TRIGGER_to_NO": 6.16
+   },
+   "note": "nothing rises beside the tracker; the connector stays below its flat underside"
+  }
+ ]
+}

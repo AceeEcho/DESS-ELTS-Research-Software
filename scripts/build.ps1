@@ -1,7 +1,6 @@
+# Build the synthetic Windows player into -Output (default build/windows-synthetic).
 [CmdletBinding()]
-param([string]$PythonExecutable, [string]$UnityEditor,
-      [ValidateSet('all','baseline','plan','progress','config','geometry','runtime','unity-edit','unity-play')]
-      [string]$Suite = 'all', [string]$Output, [string]$Report, [switch]$Check,
+param([string]$PythonExecutable, [string]$UnityEditor, [string]$Output, [string]$Report,
       [switch]$UseCalibrationProfile)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common.ps1')

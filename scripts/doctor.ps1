@@ -1,7 +1,6 @@
+# Report development readiness only, never physical acceptance.
 [CmdletBinding()]
-param([string]$PythonExecutable, [string]$UnityEditor,
-      [ValidateSet('all','baseline','plan','progress','config','geometry','runtime','unity-edit','unity-play')]
-      [string]$Suite = 'all', [string]$Output, [string]$Report, [switch]$Check)
+param([string]$PythonExecutable, [string]$UnityEditor, [string]$Report)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common.ps1')
 Invoke-EltsTool -Action 'doctor' @PSBoundParameters

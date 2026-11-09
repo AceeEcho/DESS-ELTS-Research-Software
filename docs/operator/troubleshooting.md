@@ -34,7 +34,7 @@ Commands assume the repository root on Windows x64, which is the only platform t
 
 `START-ELTS.cmd` builds or reuses `ELTS-Synthetic.exe`, then opens two windows: the participant game and a loopback browser dashboard. The browser path forces the input source **Mouse and keyboard** (`DevelopmentStationSession` sets `DesktopInputOption`). Poses come from `DesktopTrackingSource` with identity `desktop-mouse-keyboard-room-v1`. The staged tracker serials are the literals `SYNTHETIC-HEAD` and `SYNTHETIC-WEAPON` in [`config/rig/templates/synthetic-rig.json`](../../config/rig/templates/synthetic-rig.json). The station then marks displays, SteamVR, and both trackers ready in code (`SteamVrRunning=true`, `TrackersBoundAndValidForTwoSeconds=true` in `DevelopmentSessionPanel`). The workbench label states the substitution: `Emulated: displays and SteamVR. In-process mock controller; no device connection.`
 
-The same startup always constructs `MockEltsLink` around `SimulatedEltsController`. That object has an in-memory `LedPermission` flag. [`jetson/`](../../jetson/README.md) has no listener, serial adapter, network adapter, GPIO, or systemd unit. Configuration accepts only `mock://elts` or `null://elts` (`config/local.example.json`, `schemas/config/local.schema.json`). Any other endpoint fails configuration load with `physical output is not enabled in development`. The desktop station does not read `EltsEndpoint` when it creates the link, so `null://elts` still runs the mock. `NullEltsLink` exists for the link checks; the player does not select it.
+The same startup always constructs `MockEltsLink` around `SimulatedEltsController`. That object has an in-memory `LedPermission` flag. The repository has no Jetson listener, serial adapter, network adapter, GPIO, or systemd unit ([controller boundary](../modules/elts-link.md#controller-jetson-boundary)). Configuration accepts only `mock://elts` or `null://elts` (`config/local.example.json`, `schemas/config/local.schema.json`). Any other endpoint fails configuration load with `physical output is not enabled in development`. The desktop station does not read `EltsEndpoint` when it creates the link, so `null://elts` still runs the mock. `NullEltsLink` exists for the link checks; the player does not select it.
 
 `config/staging.json` allows only `"mode": "synthetic"`. `StudyReady` is forced false. `scripts/setup-study-machine.ps1` and `scripts/start-study.ps1` call the driver actions `setup-study-machine` and `start-study`, which fail closed with: `Study provisioning/packaging/startup is unavailable: approved study configuration, physical acceptance and release gates remain pending.`
 
@@ -361,7 +361,7 @@ Replay in the player (`RecordedReplay`) is a viewer. It also requires the publis
 
 ## Simulated Jetson controller
 
-References: [link module](../modules/elts-link.md), [session adapter](../modules/elts-session.md), [Jetson directory](../../jetson/README.md), schema [`schemas/protocol/elts-development-synthetic-v1.schema.json`](../../schemas/protocol/elts-development-synthetic-v1.schema.json).
+References: [link module](../modules/elts-link.md), [session adapter](../modules/elts-session.md), [controller boundary](../modules/elts-link.md#controller-jetson-boundary), schema [`schemas/protocol/elts-development-synthetic-v1.schema.json`](../../schemas/protocol/elts-development-synthetic-v1.schema.json).
 
 ### What you can exercise today
 
@@ -511,9 +511,9 @@ The calibration "eye" is a different thing: `Eye` input is Left or Right plus a 
 
 - The apparatus is described as built. The safety and follow-up docs record one base station, two Vive trackers, mounting posts, and a headband with mounts as available. Other required test/metrology equipment must still be confirmed. Availability is not physical validation.
 - Unity may send lifecycle commands only. It must not send poses, world targets, turret angles, or per-LED commands. A normally closed physical E-stop and device-owned safeguards stay independent of Unity ([safety](../safety/README.md)).
-- The in-repo controller is the simulated one in [the previous section](#simulated-jetson-controller). `jetson/README.md` states the directory has no listener, wrapper, GPIO, network, serial, LED, or E-stop code, and no copy of the existing controller. `jetson/config/`, `jetson/scripts/`, `jetson/src/elts_link/`, `jetson/systemd/`, and `jetson/tests/` are empty placeholders.
+- The in-repo controller is the simulated one in [the previous section](#simulated-jetson-controller). The [controller boundary](../modules/elts-link.md#controller-jetson-boundary) states the repository has no listener, wrapper, GPIO, network, serial, LED, or E-stop code, and no copy of the existing controller.
 - The fixture schema is explicitly not compatible with the built controller. Field names and tick units are development conventions.
-- Before a real wrapper: the ELTS code owner must supply controller source or a reviewed wire contract, the LED-permission feedback point, and the selected D-03 transport. D-10 must choose NE behavior. D-13 must decide exposure and maximum-on time. Link timing, shutdown, E-stop, and light behavior need bench evidence (`jetson/README.md`).
+- Before a real wrapper: the ELTS code owner must supply controller source or a reviewed wire contract, the LED-permission feedback point, and the selected D-03 transport. D-10 must choose NE behavior. D-13 must decide exposure and maximum-on time. Link timing, shutdown, E-stop, and light behavior need bench evidence ([controller boundary](../modules/elts-link.md#controller-jetson-boundary)).
 - The simulation, from the briefing, draws three turrets (two outer LED units and a central Brio) and says that drawing does not implement the Brio/Jetson vision pipeline. Light lines are symbolic, not an exposure calculation.
 - `toolchain.json` `validation.jetsonBaseline` is `pending device inspection`.
 
@@ -525,7 +525,7 @@ The calibration "eye" is a different thing: `Eye` input is Left or Right plus a 
 
 1. `config/local.json` `eltsEndpoint` is `mock://elts` or `null://elts`.
 2. `events.ndjson` contains `EltsCommand` / `EltsAck` / `EltsState` produced locally. `EltsOffset` ticks are the in-process clocks.
-3. `jetson/` has no service file to start. There is no port to scan in this repo.
+3. The repository has no Jetson service file to start. There is no port to scan in this repo.
 4. `python tools/config/stage.py --check` succeeds only for the synthetic bundle.
 
 **Fix.** Use the simulated link for software rehearsal and read NACK codes if a WE block fails immediately. Hardware control waits on the code owner and on D-03, D-10, and D-13. The shipped package "does not install device software, open a controller endpoint, energize hardware, or authorize physical work" ([hardware follow-up](hardware-follow-up.md)).
@@ -601,5 +601,5 @@ Related decisions the code does name, because they change link and timing sympto
 - [Developer commands](developer-quick-start.md)
 - [Data collection](../modules/data-collection.md), [logging](../modules/logging.md), [analysis](../modules/analysis.md)
 - [Dashboard](../modules/operator-dashboard.md), [desktop input](../modules/desktop-input.md), [sessions](../modules/session.md), [scenarios](../modules/scenario.md)
-- [Link](../modules/elts-link.md), [session link](../modules/elts-session.md), [Jetson boundary](../../jetson/README.md)
+- [Link](../modules/elts-link.md), [session link](../modules/elts-session.md), [Jetson boundary](../modules/elts-link.md#controller-jetson-boundary)
 - [Hardware follow-up](hardware-follow-up.md), [safety](../safety/README.md)

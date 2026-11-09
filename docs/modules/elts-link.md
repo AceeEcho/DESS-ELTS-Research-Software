@@ -17,3 +17,21 @@ dotnet run --project tools/runtime-tests/EltsLinkChecks.csproj -p:NewtonsoftPath
 ```
 
 The checks validate codec strictness, lifecycle and ACK semantics, duplicate replay/conflict handling, reconnect behavior, heartbeat and maximum-duration fixture exits, simulated E-stop latching, prohibited command fields, the null-link boundary, and raw clock-offset math. They cannot prove controller compatibility, a transport, safety behavior, physical E-stop operation, actual stimulus onset, or hardware timing. Those remain deferred to D-03, D-10, D-13, the ELTS code owner, and bench testing.
+
+## Controller (Jetson) boundary
+
+`DEV-10` supplies only this C# fixture protocol and the simulated controller. The
+repository contains no Jetson listener, process wrapper, GPIO access, network or
+serial adapter, LED control, E-stop control, or copy of the existing ELTS controller.
+
+The fixture schema is [`elts-development-synthetic-v1.schema.json`](../../schemas/protocol/elts-development-synthetic-v1.schema.json).
+It follows the concepts in specification section 11, but its explicit field names,
+`development-synthetic-v1` version, and TimeSpan-tick representation are development
+conventions. It is **not** asserted compatible with the built controller.
+
+Before a real wrapper can be built, the ELTS code owner must provide the controller
+source or reviewed wire contract, the actual LED-permission feedback point, and the
+selected D-03 transport. D-10 must select study behavior for NE blocks, and
+investigators must decide D-13 before a real exposure/max-on-time implementation.
+Physical link timing, shutdown, E-stop, and light behavior require the unavailable
+test equipment and bench evidence.

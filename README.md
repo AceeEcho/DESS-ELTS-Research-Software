@@ -298,7 +298,7 @@ Full reference: [administrator dashboard](docs/modules/operator-dashboard.md).
 | Practice room (separate, unscored, timed) | ✅ In the development build |
 | Procedure briefing and automatic scenario → break → form flow | ✅ In the development build |
 | ELTS introduction and demonstration | 🟡 Simulated only; real apparatus not connected |
-| ELTS integration and synchronization | 🟡 Protocol fixture and [simulated controller](jetson/README.md) only; needs the controller's wire contract |
+| ELTS integration and synchronization | 🟡 Protocol fixture and [simulated controller](docs/modules/elts-link.md#controller-jetson-boundary) only; needs the controller's wire contract |
 | Physical participant controller (mock replica input) | ⬜ Not started |
 | Heart-rate, eye-tracker and NASA-TLX data alignment | ⬜ Not started |
 | Room survey: screen size and 5 / 6 / 7 ft floor marks | ⬜ Measurements pending ([checklist](docs/operator/hardware-follow-up.md#current-inventory-and-starter-room-survey)) |
@@ -381,4 +381,3 @@ Local, machine-specific settings live in `config/local.json` and `config/local/`
 | `config/`, `schemas/` | Editable settings and data contracts |
 | `scripts/`, `tools/` | Setup, build, validation, packaging and tests |
 | `docs/` | [Architecture](docs/architecture.md) · [developer commands](docs/operator/developer-quick-start.md) · [CI](docs/modules/ci.md) · [safety boundaries](docs/safety/README.md) |
-| `jetson/` | [Controller integration limits](jetson/README.md) |

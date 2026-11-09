@@ -1,3 +1,4 @@
+# Study entry point. Fails closed until an approved study release exists.
 [CmdletBinding()]
 param([string]$PythonExecutable, [string]$UnityEditor, [string]$Report)
 $ErrorActionPreference = 'Stop'

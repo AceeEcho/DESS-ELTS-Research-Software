@@ -5,8 +5,6 @@
 unity/Assets/ThirdParty/OpenVR/openvr_api.cs -text
 unity/Assets/ThirdParty/OpenVR/LICENSE -text
 unity/Assets/ThirdParty/OpenVR/UPSTREAM-README.md -text
-docs/plan/amendment-rules.json -text
-docs/plan/approved-plan.json -text
 *.docx -text
 *.xlsx -text
 *.pdf -text

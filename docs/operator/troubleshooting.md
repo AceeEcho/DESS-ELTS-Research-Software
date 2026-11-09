@@ -1,4 +1,4 @@
-# Session troubleshooting
+# Troubleshooting
 
 Use this when a study session stalls and you need the next check, not a tour of the software. It covers the Unity participant window, the browser administrator dashboard, local export, install and startup, the Python analysis tools, and the simulated Jetson controller. The hardware section covers only what this repository establishes about the trigger, Vive trackers, the SteamVR base station, a wearable eye tracker, a heart-rate monitor, and the ELTS apparatus.
 
@@ -28,13 +28,13 @@ Commands assume the repository root on Windows x64, which is the only platform t
 | `INGEST FAILED` or `scoreStatus: unavailable` | [Python analysis](#python-analysis) |
 | Lights, Jetson, or E-stop do not respond | [Simulated controller](#simulated-jetson-controller) and [ELTS apparatus and Jetson](#elts-apparatus-and-jetson) |
 | Trackers, base station, SteamVR, eye tracker, or heart rate never appear | [Hardware](#hardware) — expect this on the current build |
-| Targets move in a way you did not configure, or there is no hit flash or shot sound | [Open decisions](#open-investigator-decisions) |
+| Targets move in a way you did not configure, or there is no hit flash or shot sound | [Open decisions](../decisions.md) |
 
 ## What the running session actually is
 
 `START-ELTS.cmd` builds or reuses `ELTS-Synthetic.exe`, then opens two windows: the participant game and a loopback browser dashboard. The browser path forces the input source **Mouse and keyboard** (`DevelopmentStationSession` sets `DesktopInputOption`). Poses come from `DesktopTrackingSource` with identity `desktop-mouse-keyboard-room-v1`. The staged tracker serials are the literals `SYNTHETIC-HEAD` and `SYNTHETIC-WEAPON` in [`config/rig/templates/synthetic-rig.json`](../../config/rig/templates/synthetic-rig.json). The station then marks displays, SteamVR, and both trackers ready in code (`SteamVrRunning=true`, `TrackersBoundAndValidForTwoSeconds=true` in `DevelopmentSessionPanel`). The workbench label states the substitution: `Emulated: displays and SteamVR. In-process mock controller; no device connection.`
 
-The same startup always constructs `MockEltsLink` around `SimulatedEltsController`. That object has an in-memory `LedPermission` flag. The repository has no Jetson listener, serial adapter, network adapter, GPIO, or systemd unit ([controller boundary](../modules/elts-link.md#controller-jetson-boundary)). Configuration accepts only `mock://elts` or `null://elts` (`config/local.example.json`, `schemas/config/local.schema.json`). Any other endpoint fails configuration load with `physical output is not enabled in development`. The desktop station does not read `EltsEndpoint` when it creates the link, so `null://elts` still runs the mock. `NullEltsLink` exists for the link checks; the player does not select it.
+The same startup always constructs `MockEltsLink` around `SimulatedEltsController`. That object has an in-memory `LedPermission` flag. The repository has no Jetson listener, serial adapter, network adapter, GPIO, or systemd unit ([controller boundary](../developer/modules/elts-link.md#controller-jetson-boundary)). Configuration accepts only `mock://elts` or `null://elts` (`config/local.example.json`, `schemas/config/local.schema.json`). Any other endpoint fails configuration load with `physical output is not enabled in development`. The desktop station does not read `EltsEndpoint` when it creates the link, so `null://elts` still runs the mock. `NullEltsLink` exists for the link checks; the player does not select it.
 
 `config/staging.json` allows only `"mode": "synthetic"`. `StudyReady` is forced false. `scripts/setup-study-machine.ps1` and `scripts/start-study.ps1` call the driver actions `setup-study-machine` and `start-study`, which fail closed with: `Study provisioning/packaging/startup is unavailable: approved study configuration, physical acceptance and release gates remain pending.`
 
@@ -42,7 +42,50 @@ The offline page [`elts-simulation/index.html`](../../elts-simulation/README.md)
 
 ## Install and startup
 
-Operator walkthrough: [setup on more than one computer](multi-machine-setup.md#if-something-goes-wrong). Tool pins: [`config/toolchain.json`](../../config/toolchain.json) and [toolchain notes](toolchain.md). This section is the command and file map behind that guide.
+First-time install steps: [setup on more than one computer](multi-machine-setup.md). Tool pins: [`config/toolchain.json`](../../config/toolchain.json) and [toolchain notes](../developer/toolchain.md). This section is the command and file map behind that guide.
+
+### Setup and first-launch errors
+
+**Start with the last error window.** Setup and startup now show the failed step,
+the underlying tool error, **How to resolve** instructions, and the full paths to
+the relevant logs/reports. A PowerShell exit code is a wrapper failure; read the
+underlying Unity or verification error below it. Logs are from the current attempt;
+if no fresh log was produced, the message says so instead of showing an old error.
+
+| Error shown | What to do |
+| --- | --- |
+| Unity exit **198** / **No valid Unity Editor license found** | Open **Unity Hub**, sign in, then open **Settings > Licenses > Refresh**. Use **Add license** if needed. Activate the license appropriate for your account; an organization license may require its administrator to assign a seat. If activation fails, check network/proxy access. Close the Editor and rerun **SETUP-DEV (Dev Only).cmd**, then **START-ELTS.cmd**. See [Unity's license guide](https://docs.unity.com/en-us/hub/manage-license). |
+| **runtime-config** / **Editor saves at project root** | Older revisions incorrectly compared Windows path separators when a machine used `data/synthetic`. Update to the corrected source and rerun **SETUP-DEV (Dev Only).cmd**. Keep `config/local.json` and your recordings; changing or deleting the data folder is unnecessary. |
+| **Development view unavailable: Development game settings are outside their safe synthetic ranges** | An older saved scene contains a patrol distance that the newer code rejects. Close the failed game, update the project, and run **START-ELTS.cmd** to rebuild with the corrected scene. Keep your configuration and recordings. This is a scene-settings error, not a Unity license failure. |
+| **error CS…** / compiler errors | The Unity log names the source file and compiler error. Update to a corrected revision or send that log to the maintainer. Rerun setup after the code is fixed. |
+| Another Unity instance / startup lock | Save your work and close this project in the Editor, or let the existing setup/startup window finish. Retry after it ends. Do not delete lock files while their processes are running. |
+| A verification assertion failed | Keep the error, failed-check log, and `diagnostics/test-report.json`. Send them to the maintainer or update to the revision that fixes the check, then rerun setup. Do not bypass verification or delete recordings to clear an assertion. |
+| Timed out | Read the log for progress or a prompt. The PowerShell launcher leaves a timed-out process running to avoid interrupting installers. Check for remaining setup/Unity processes and let them finish or close them normally before retrying. |
+
+**Where to find details:** `diagnostics/start-console.log` records startup;
+each `diagnostics/player-start-*.log` records one participant launch, including scene initialization failures;
+`diagnostics/setup-console.log` and `setup-report.json` record setup;
+`diagnostics/setup-unity-import.log` records Unity import/licensing;
+`diagnostics/test-report.json` identifies each verification log. A build failure
+points to the actual `build/start-elts-…/unity-build.log`, rather than an empty
+console capture. Direct builds use the output directory you selected. Copy the
+error and named files before retrying if you need to preserve them: subsequent
+runs replace diagnostic reports. Share only the relevant diagnostic files with
+the maintainer, not participant recordings or license files.
+
+**GitHub Desktop cannot sign in or clone.** Check that the browser is signed in to the correct GitHub account and that the repository URL is exactly `https://github.com/AceeEcho/DESS-ELTS-Research-Software`. Ask the repository owner to grant access if the page is unavailable. Do not paste passwords or access tokens into chat or files.
+
+**Git is missing.** GitHub Desktop normally includes the Git it needs. Restart GitHub Desktop after installation. The command-line alternative below requires Git for Windows; install it from [git-scm.com](https://git-scm.com/download/win) only if you need that workflow.
+
+**Setup says the folder is not a Git clone.** You have an older setup script. Download the updated source ZIP and extract it to a new folder, then run **SETUP-DEV (Dev Only).cmd** followed by **START-ELTS.cmd**. Keep the previous folder if it contains recordings or customized settings. Updated setup accepts both source ZIPs and Git clones.
+
+**Setup cannot download or verify a tool.** Check the network connection and the setup report. Do not replace a checksum-verified download with an untrusted mirror. Save the final error text for the project maintainer and rerun `SETUP-DEV (Dev Only).cmd` after the issue is fixed.
+
+**UAC blocks installation.** Use an account allowed to install software or ask the computer administrator. Do not bypass UAC. Rerun setup after the administrator has completed the install.
+
+**Unity asks for a license or opens the wrong version.** Sign in to Unity Hub, activate the permitted license, select `6000.3.23f1` LTS, and rerun setup. Do not substitute a nearby Unity patch. Close Unity before rerunning setup.
+
+**Pull reports local changes or a conflict.** Stop and read the list of files. If your changes are not committed, use GitHub Desktop's **Commit to main** after reviewing them, or copy your work to a safe notes folder before asking for help. Do not choose a discard or reset option casually. If a conflict is shown, open each conflicted file, keep the intended complete result, remove the conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`), save, review, commit the resolution, and push. GitHub's [merge conflict guide](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/resolving-a-merge-conflict) explains the markers. When unsure, stop before clicking **Discard changes** and contact the maintainer.
 
 ### Files and commands
 
@@ -95,7 +138,7 @@ Portable software checks, with Python 3.10+:
 python tools/ci/check.py --baseline
 ```
 
-`scripts/verify.ps1` runs doctor plus the available suites. A deferred Unity result is reported as deferred. See [CI](../modules/ci.md).
+`scripts/verify.ps1` runs doctor plus the available suites. A deferred Unity result is reported as deferred. See [CI](../developer/modules/ci.md).
 
 ### Startup lock or "another Unity instance"
 
@@ -107,7 +150,7 @@ python tools/ci/check.py --baseline
 
 ### Unity exit 198, wrong Editor, or checksum mismatch
 
-**Likely cause.** The messages and fixes already collected in [multi-machine setup](multi-machine-setup.md#if-something-goes-wrong) match the installer: license exit **198**, `runtime-config` path-separator failures on older trees, `error CS…` in the Unity log, verification assertions in `diagnostics/test-report.json`, download checksum mismatch (the installer is not executed; the message names `diagnostics/setup-console.log`), and timeouts. The PowerShell launcher leaves a timed-out install running so it does not kill an installer.
+**Likely cause.** The messages and fixes already collected in [multi-machine setup](#setup-and-first-launch-errors) match the installer: license exit **198**, `runtime-config` path-separator failures on older trees, `error CS…` in the Unity log, verification assertions in `diagnostics/test-report.json`, download checksum mismatch (the installer is not executed; the message names `diagnostics/setup-console.log`), and timeouts. The PowerShell launcher leaves a timed-out install running so it does not kill an installer.
 
 **Check.** `diagnostics/setup-unity-import.log` for licensing. `unity/ProjectSettings/ProjectVersion.txt` must contain `m_EditorVersion: 6000.3.23f1`. Doctor fails with `Unity ProjectVersion.txt disagrees with toolchain manifest` when it does not.
 
@@ -117,7 +160,7 @@ python tools/ci/check.py --baseline
 
 **Likely cause.** `diagnostics/start-build.json` is stale, the fingerprint of `unity/Assets`, `unity/Packages`, `unity/ProjectSettings`, `config`, `tools/build`, `tools/bootstrap`, and `scripts` changed, or `python -m tools.build.verify` rejected the folder. A warning then says the saved build could not be verified and a new `build/start-elts-*` directory is used. Old build folders are left in place.
 
-**Check.** `diagnostics/start-console.log` and, after a compile, `build/start-elts-*/unity-build.log`. Empty output directory is required for `scripts/build.ps1 -Output <new-empty-dir>` ([windows build](../modules/windows-build.md)).
+**Check.** `diagnostics/start-console.log` and, after a compile, `build/start-elts-*/unity-build.log`. Empty output directory is required for `scripts/build.ps1 -Output <new-empty-dir>` ([windows build](../developer/modules/windows-build.md)).
 
 **Fix.** Close the Editor and run `START-ELTS.cmd` again. If the executable is missing after a build, the launcher throws `Build finished without a dashboard executable.` Send that build log with the report; keep recordings out of the report you share.
 
@@ -129,20 +172,20 @@ python tools/ci/check.py --baseline
 
 **Check.** The `diagnostics/player-start-*.log` from this attempt, not an older log. The startup script ignores a player log that does not contain a fresh ready or fail line.
 
-**Fix.** For the safe-range message, update and rebuild with `START-ELTS.cmd`; keep `config/local.json` and recordings ([setup guide](multi-machine-setup.md#if-something-goes-wrong)). For a configuration error, fix the named field and restage:
+**Fix.** For the safe-range message, update and rebuild with `START-ELTS.cmd`; keep `config/local.json` and recordings ([setup guide](#setup-and-first-launch-errors)). For a configuration error, fix the named field and restage:
 
 ```powershell
 python tools/config/stage.py --check
 python tools/config/stage.py --write
 ```
 
-Staging rules are in [configuration staging](../modules/config-staging.md). `dataRoot` must be a relative path with no drive letter, `..`, or Windows reserved device name. Display indices must differ and be in 0–31. Those indices are stored on `MachineConfiguration` and are not read by the player when it places windows.
+Staging rules are in [configuration staging](../developer/modules/config-staging.md). `dataRoot` must be a relative path with no drive letter, `..`, or Windows reserved device name. Display indices must differ and be in 0–31. Those indices are stored on `MachineConfiguration` and are not read by the player when it places windows.
 
 If the process is still running after the 120-second wait, the launcher leaves it up: `The participant game did not initialize its dashboard within 120 seconds.` Close that window, read the player log, then retry.
 
 ## Participant application
 
-Scene: `unity/Assets/Scenes/ELTSDesktop.unity`. Product name `ELTS-Synthetic`, company `ELTS Research`, bundle `0.1.0` (`unity/ProjectSettings/ProjectSettings.asset`). Editor play of that scene is the manual path in [desktop input](../modules/desktop-input.md). `START-ELTS.cmd` builds and runs the `build/start-elts-*` player instead, and it does not open the Editor.
+Scene: `unity/Assets/Scenes/ELTSDesktop.unity`. Product name `ELTS-Synthetic`, company `ELTS Research`, bundle `0.1.0` (`unity/ProjectSettings/ProjectSettings.asset`). Editor play of that scene is the manual path in [desktop input](../developer/modules/desktop-input.md). `START-ELTS.cmd` builds and runs the `build/start-elts-*` player instead, and it does not open the Editor.
 
 ### Two windows and where the picture comes from
 
@@ -152,13 +195,13 @@ Standalone players set `vSyncCount` to 0 and `targetFrameRate` from `participant
 
 Fullscreen: F11 or Alt+Enter. Escape or F1 calls `SetFullscreen(false)` on the separate player (`ReturnToAdministrator`). Settings can also change windowed and fullscreen. `-eltsWindowed` on the launcher overrides `-eltsSecondaryDisplay` and `-eltsFullscreen`.
 
-**Moving the game to another screen.** The launcher does not apply `participantDisplayIndex` or `operatorDisplayIndex`. [The dashboard reference](../modules/operator-dashboard.md) says to connect a wireless TV with Win+K before launch, then move the window with Win+Shift+Left/Right in extended desktop. ELTS does not keep a Miracast link up. A disconnected wireless display has to be reconnected in Windows.
+**Moving the game to another screen.** The launcher does not apply `participantDisplayIndex` or `operatorDisplayIndex`. [The dashboard reference](../developer/modules/operator-dashboard.md) says to connect a wireless TV with Win+K before launch, then move the window with Win+Shift+Left/Right in extended desktop. ELTS does not keep a Miracast link up. A disconnected wireless display has to be reconnected in Windows.
 
 > **GAP-HW-DISPLAY.** The configured visible screen is the Samsung QB65R-B. The installed resolution and measured corner map still need to be recorded. `synthetic-rig.json` marks geometry `synthetic_unmeasured`. The synthetic rig uses the configured visible size of 56 1/4 in wide by 31 5/8 in tall (1.42875 m by 0.803275 m) at z = 1.5 m. The configured bottom-edge height is 41 3/8 in (`1.050925` m above the floor). Who can answer: the rig and calibration operator, and the tracking/display engineer, in [hardware follow-up](hardware-follow-up.md).
 
 ### Mouse and keyboard participant
 
-This is the input the browser station records. It is a stand-in for a later `ITrackingSource` and a device trigger adapter ([desktop input](../modules/desktop-input.md)).
+This is the input the browser station records. It is a stand-in for a later `ITrackingSource` and a device trigger adapter ([desktop input](../developer/modules/desktop-input.md)).
 
 | Input | Effect |
 | --- | --- |
@@ -169,11 +212,11 @@ This is the input the browser station records. It is a stand-in for a later `ITr
 | Home | Reset the virtual pose. |
 | Focus loss | Cancels a held click. The last pose is published again on later frames (`StationPublishPose` still runs). |
 
-A shot is refused when the pointer is outside the image, the block is not armed or running, or the click was held across an arm/disarm or a resize (`GeometryChangedEvent` cancels the click). Empty-magazine clicks are dry fires, not shots. Head, body, and limb damage are 3, 2, and 1 against 3 health ([scenario](../modules/scenario.md)).
+A shot is refused when the pointer is outside the image, the block is not armed or running, or the click was held across an arm/disarm or a resize (`GeometryChangedEvent` cancels the click). Empty-magazine clicks are dry fires, not shots. Head, body, and limb damage are 3, 2, and 1 against 3 health ([scenario](../developer/modules/scenario.md)).
 
 `DesktopTrackingSource` marks a sample invalid (`Disconnected` / `Unavailable`, no pose) when nothing has been published or the last publish is older than `MaximumSampleAgeSeconds` (0.25 s). Invalid samples are logged as invalid. Analysis drops them from aim error and does not interpolate them.
 
-The acquisition thread is named `ELTS synthetic acquisition` even for mouse input. Configured cadence is `sampleRateHz` **250** in [`config/defaults/runtime.json`](../../config/defaults/runtime.json). Open **Readiness & diagnostics** on the dashboard. **Synthetic tracking** shows `Fresh paired observations; <n> Hz observed.` or `Waiting for fresh virtual poses; keep the participant app open.` A lower number means the thread is not completing polls at that cadence. It is not a tracker radio reading. **Recording** shows `Writer active; dropped samples: <n>` or `Writer failed. Retain this recording and start a new attempt.` Sample queue capacity is **8192**. A full sample queue increments `DroppedSampleCount`. Event queue capacity is **1024**. If the critical queue cannot accept a record, the writer goes unhealthy and the session must stop ([logging](../modules/logging.md)).
+The acquisition thread is named `ELTS synthetic acquisition` even for mouse input. Configured cadence is `sampleRateHz` **250** in [`config/defaults/runtime.json`](../../config/defaults/runtime.json). Open **Readiness & diagnostics** on the dashboard. **Synthetic tracking** shows `Fresh paired observations; <n> Hz observed.` or `Waiting for fresh virtual poses; keep the participant app open.` A lower number means the thread is not completing polls at that cadence. It is not a tracker radio reading. **Recording** shows `Writer active; dropped samples: <n>` or `Writer failed. Retain this recording and start a new attempt.` Sample queue capacity is **8192**. A full sample queue increments `DroppedSampleCount`. Event queue capacity is **1024**. If the critical queue cannot accept a record, the writer goes unhealthy and the session must stop ([logging](../developer/modules/logging.md)).
 
 Trigger lockout is `triggerLockoutSeconds` **0.02**. Aim observations are at most every `aimObservationIntervalSeconds` **0.05** (20 Hz), and gaps above `aimMaximumGapSeconds` **0.25** break the aim-speed series. Those values are written with the observations.
 
@@ -191,19 +234,19 @@ Trigger lockout is `triggerLockoutSeconds` **0.02**. Aim observations are at mos
 
 ### Participant view shows a synthetic room, not the lab
 
-The library, mannequins, and outside preview are the development scene ([rendering](../modules/rendering.md)). The operator camera's IMGUI banner includes the fixed text `Base station not connected`. That string is drawn by `DevelopmentView`; it is not a poll of hardware. Head-dropout and weapon-dropout toggles on the workbench are software simulations. Missing head pose hides the screen feed. Missing weapon pose hides the bore marker. The body silhouette is inferred from the head pose.
+The library, mannequins, and outside preview are the development scene ([rendering](../developer/modules/rendering.md)). The operator camera's IMGUI banner includes the fixed text `Base station not connected`. That string is drawn by `DevelopmentView`; it is not a poll of hardware. Head-dropout and weapon-dropout toggles on the workbench are software simulations. Missing head pose hides the screen feed. Missing weapon pose hides the bore marker. The body silhouette is inferred from the head pose.
 
 There is no hit flash, shot sound, or score overlay driven by `ScenarioDefinition.ShowHitVisual`, `PlayShotSound`, or `ShowScore`. Those flags default to false and nothing in the player reads them. The HUD still draws ammo, hits, and shots. See [D-06](#open-investigator-decisions).
 
 ### Calibration fixture is not a rig calibration
 
-**Generate fixture** builds a deterministic synthetic fixture (240 poses, virtual corner means, virtual zero hold). **Accept fixture** writes a sidecar beside the recording with create-new semantics and an operator note containing the filename and SHA-256. It does not replace `config/rig` or the staged effective config. Accepted records have `mode: synthetic` and `studyReady: false`. The usual verifier does not automatically check that sidecar ([calibration](../modules/calibration.md)). Thresholds are development limits, not D-17 approval criteria.
+**Generate fixture** builds a deterministic synthetic fixture (240 poses, virtual corner means, virtual zero hold). **Accept fixture** writes a sidecar beside the recording with create-new semantics and an operator note containing the filename and SHA-256. It does not replace `config/rig` or the staged effective config. Accepted records have `mode: synthetic` and `studyReady: false`. The usual verifier does not automatically check that sidecar ([calibration](../developer/modules/calibration.md)). Thresholds are development limits, not D-17 approval criteria.
 
 > **GAP-DEC-D17.** D-17 is named only as the approval those thresholds are not. The repo does not record the numeric acceptance limits or the capture procedure. Who can answer: the calibration operator and the research lead ([hardware follow-up](hardware-follow-up.md), pivot/corners/eye/weapon-zero row).
 
 ## Browser administrator dashboard
 
-Reference: [administrator dashboard](../modules/operator-dashboard.md). Assets served from `unity/Assets/StreamingAssets/administrator/`: `index.html`, `styles.css`, `app.js`, `workflows.js`, `data-viewer.js`. Any other path returns `Not found`.
+Reference: [administrator dashboard](../developer/modules/operator-dashboard.md). Assets served from `unity/Assets/StreamingAssets/administrator/`: `index.html`, `styles.css`, `app.js`, `workflows.js`, `data-viewer.js`. Any other path returns `Not found`.
 
 ### Address, token, and port
 
@@ -215,7 +258,7 @@ API calls send `X-Elts-Token`. The host must equal `127.0.0.1:<port>` or the res
 
 The page polls `/api/state` about every `1/previewFps` seconds while visible (preview fps clamped to 5–30, default 10) and about once a second while `document.hidden`.
 
-Workspace layout for the embedded Unity dashboard is `operator-workspace-v1.json` under `Application.persistentDataPath` ([dashboard reference](../modules/operator-dashboard.md)). Browser presets and pane width use `localStorage` keys such as `elts-admin-pane`. If the browser blocks storage, controls still run; the page comment says preferences become session-local.
+Workspace layout for the embedded Unity dashboard is `operator-workspace-v1.json` under `Application.persistentDataPath` ([dashboard reference](../developer/modules/operator-dashboard.md)). Browser presets and pane width use `localStorage` keys such as `elts-admin-pane`. If the browser blocks storage, controls still run; the page comment says preferences become session-local.
 
 ### Dashboard says Offline
 
@@ -259,7 +302,7 @@ Condition codes must be each of `WE_MT`, `NE_MT`, `WE_FT`, and `NE_FT` once. `Se
 
 ## Local data and export
 
-Reference: [local participant collection](../modules/data-collection.md) and [logging](../modules/logging.md).
+Reference: [local participant collection](../developer/modules/data-collection.md) and [logging](../developer/modules/logging.md).
 
 ### Where files go
 
@@ -306,7 +349,7 @@ Keep the clone and `collection data` outside OneDrive, Dropbox, or similar. The 
 
 ## Python analysis
 
-Reference: [synthetic analysis ingest](../modules/analysis.md), [verify a run](../../tools/logging/README.md), [replay](../modules/replay-reader.md).
+Reference: [synthetic analysis ingest](../developer/modules/analysis.md), [verify a run](../../tools/logging/README.md), [replay](../developer/modules/replay-reader.md).
 
 Analysis reads a **closed** run. A checkpoint file is recovery evidence. It is not a substitute for `session-summary.json`. Dashboard metrics (`elts.task-metrics.v1`) are a separate descriptive path and are not this score.
 
@@ -357,11 +400,11 @@ Standard scoring needs `BlockStarted` and `BlockEnded` exactly **300 seconds** a
 
 `TargetDestroyed` is the only primary score event. `Despawned` removes an aim candidate and does not score. Samples with either tracker disconnected, invalid, or missing a pose increment `invalidSamples` and are left out of aim error.
 
-Replay in the player (`RecordedReplay`) is a viewer. It also requires the published summary and will not load the pending file. Its line cap is 65,536 characters. A hash or schema mismatch rejects the whole load ([replay](../modules/replay-reader.md)).
+Replay in the player (`RecordedReplay`) is a viewer. It also requires the published summary and will not load the pending file. Its line cap is 65,536 characters. A hash or schema mismatch rejects the whole load ([replay](../developer/modules/replay-reader.md)).
 
 ## Simulated Jetson controller
 
-References: [link module](../modules/elts-link.md), [session adapter](../modules/elts-session.md), [controller boundary](../modules/elts-link.md#controller-jetson-boundary), schema [`schemas/protocol/elts-development-synthetic-v1.schema.json`](../../schemas/protocol/elts-development-synthetic-v1.schema.json).
+References: [link module](../developer/modules/elts-link.md), [session adapter](../developer/modules/elts-session.md), [controller boundary](../developer/modules/elts-link.md#controller-jetson-boundary), schema [`schemas/protocol/elts-development-synthetic-v1.schema.json`](../../schemas/protocol/elts-development-synthetic-v1.schema.json).
 
 ### What you can exercise today
 
@@ -406,7 +449,7 @@ Nothing in this section establishes physical validation of the equipment recorde
 
 ### Trigger
 
-**What the repo establishes.** The scored trigger on the browser station is a mouse left-button release inside the participant image during an armed or running block, matched to the acquisition pair (`TryCaptureForTrigger`). The synthetic source emits one event on release after a hold, with `triggerLockoutSeconds` 0.02, and clears edge state on a dropout so a reconnect cannot invent a shot. `SessionReadinessReport` does not mention a trigger. Tracking checks "do not verify ... trigger timing" ([tracking](../modules/tracking.md)). Future hardware is specified only as "an `ITrackingSource` and a device trigger adapter" at the desktop boundary.
+**What the repo establishes.** The scored trigger on the browser station is a mouse left-button release inside the participant image during an armed or running block, matched to the acquisition pair (`TryCaptureForTrigger`). The synthetic source emits one event on release after a hold, with `triggerLockoutSeconds` 0.02, and clears edge state on a dropout so a reconnect cannot invent a shot. `SessionReadinessReport` does not mention a trigger. Tracking checks "do not verify ... trigger timing" ([tracking](../developer/modules/tracking.md)). Future hardware is specified only as "an `ITrackingSource` and a device trigger adapter" at the desktop boundary.
 
 **Symptom.** A physical switch, pedal, or controller trigger does nothing, or a mouse click fires when the hardware trigger does not.
 
@@ -426,7 +469,7 @@ Nothing in this section establishes physical validation of the equipment recorde
 - Readiness text, if the flags were actually false, would be `Both bound trackers must be valid for at least 2 seconds.` The player sets the flag true after two seconds of valid *software* poses (`ValidTrackingSeconds` is 2).
 - Sample fields (`schemas/logs/samples.v2.schema.json`): a `Connected` and `Valid` tracker is just `"pose":[x,y,z,qx,qy,qz,qw]`. Any other state is written as `connection` (`Disconnected` | `Connected` | `Reconnecting`) and `validity` (`Unavailable` | `OutOfRange` | `DriverFault` | `RejectedNativePose`) with no pose. `trackerId` appears on the first line and whenever it changes.
 - `TrackingCoordinateConverter.Convert` is the only OpenVR-to-Unity conversion: reflect native Z, meters, +X right, +Y up, +Z forward. No player calls it, because no player calls OpenVR.
-- Vendored SDK: Valve OpenVR **2.12.14**, commit `91825305130f446f82054c1ec3d416321ace0072`, Windows x64 DLL under `unity/Assets/ThirdParty/OpenVR/`. Preload is off. `python tools/dependencies/verify_openvr.py` checks bytes and does not load the DLL ([OpenVR dependency](../modules/openvr-dependency.md)).
+- Vendored SDK: Valve OpenVR **2.12.14**, commit `91825305130f446f82054c1ec3d416321ace0072`, Windows x64 DLL under `unity/Assets/ThirdParty/OpenVR/`. Preload is off. `python tools/dependencies/verify_openvr.py` checks bytes and does not load the DLL ([OpenVR dependency](../developer/modules/openvr-dependency.md)).
 - The illustration in [elts-simulation](../../elts-simulation/README.md) says "a forehead tracker and a mock-weapon tracker" from the briefing. It also says room dimensions and placement are demonstration values.
 
 **Symptom.** SteamVR shows trackers, and ELTS still shows synthetic motion or the serials `SYNTHETIC-HEAD` / `SYNTHETIC-WEAPON` in `samples.ndjson`.
@@ -461,7 +504,7 @@ Open the first `samples.ndjson` line and read `head.trackerId` and `weapon.track
 
 **Fix.** For rehearsal, ignore the hardware and read tracker validity in the NDJSON as software validity. Physical coverage, occlusion, and dropout recovery are the tracking/display row in the follow-up register.
 
-> **GAP-HW-STEAMVR.** The repo does not name a SteamVR version, process name, log path, or a command ELTS should run. Who can answer: the tracking/display engineer. The toolchain note says the study Windows, GPU, driver, and SteamVR baseline is pending commissioning ([toolchain](toolchain.md)).
+> **GAP-HW-STEAMVR.** The repo does not name a SteamVR version, process name, log path, or a command ELTS should run. Who can answer: the tracking/display engineer. The toolchain note says the study Windows, GPU, driver, and SteamVR baseline is pending commissioning ([toolchain](../developer/toolchain.md)).
 
 > **GAP-HW-BASESTATION.** The inventory confirms exactly one base station; a second is not part of the current plan. Model, power, channel, installed placement, and tracking coverage remain unrecorded. The simulation's overhead station is an illustration. Who can answer: the tracking/display engineer.
 
@@ -470,10 +513,10 @@ Open the first `samples.ndjson` line and read `head.trackerId` and `weapon.track
 **What the repo establishes.** The words "eye-tracker" appear as planned work, not as a driver:
 
 - README planned work: coordinate eye-tracker data with participant, session, and scenario ids. Status: not implemented.
-- [Tutorial outline](../participant-tutorial-script-outline.md) (19 October 2026, not a script and not software): a future setup cue mentions an eye-tracker. No step list.
+- [Tutorial outline](../participant-tutorial/outline.md) (19 October 2026, not a script and not software): a future setup cue mentions an eye-tracker. No step list.
 - The simulation README: "Auxiliary physiological and eye-tracking instruments are omitted because their placement and models are unspecified." Eye markers in that page are positions, not gaze.
 
-The calibration "eye" is a different thing: `Eye` input is Left or Right plus a three-component tracker-to-eye offset in meters ([calibration](../modules/calibration.md)). `headEyeOffsetM` in the synthetic rig is `[0,0,0]`. The rendering eye marker is derived from the head pose. None of these read a wearable.
+The calibration "eye" is a different thing: `Eye` input is Left or Right plus a three-component tracker-to-eye offset in meters ([calibration](../developer/modules/calibration.md)). `headEyeOffsetM` in the synthetic rig is `[0,0,0]`. The rendering eye marker is derived from the head pose. None of these read a wearable.
 
 **Symptom.** The eye tracker is worn and no ELTS file contains gaze.
 
@@ -495,7 +538,7 @@ The calibration "eye" is a different thing: `Eye` input is Left or Right plus a 
 
 **Cause in this build.** Nothing opens a heart-rate device or writes beats into `events.ndjson`.
 
-**Check.** The Data view metric list (hits, shots, aim error, and the rest in [data collection](../modules/data-collection.md)) has no heart-rate field. `task_results` will not grow one after Refresh.
+**Check.** The Data view metric list (hits, shots, aim error, and the rest in [data collection](../developer/modules/data-collection.md)) has no heart-rate field. `task_results` will not grow one after Refresh.
 
 **Fix.** Same as the eye tracker: a vendor recording is outside this repo's raw products. Do not drop it into the run folder before `session-summary.json` is written; extra files are not part of the checksum set, but do not edit the NDJSON to insert beats.
 
@@ -511,9 +554,9 @@ The calibration "eye" is a different thing: `Eye` input is Left or Right plus a 
 
 - The apparatus is described as built. The safety and follow-up docs record one base station, two Vive trackers, mounting posts, and a headband with mounts as available. Other required test/metrology equipment must still be confirmed. Availability is not physical validation.
 - Unity may send lifecycle commands only. It must not send poses, world targets, turret angles, or per-LED commands. A normally closed physical E-stop and device-owned safeguards stay independent of Unity ([safety](../safety/README.md)).
-- The in-repo controller is the simulated one in [the previous section](#simulated-jetson-controller). The [controller boundary](../modules/elts-link.md#controller-jetson-boundary) states the repository has no listener, wrapper, GPIO, network, serial, LED, or E-stop code, and no copy of the existing controller.
+- The in-repo controller is the simulated one in [the previous section](#simulated-jetson-controller). The [controller boundary](../developer/modules/elts-link.md#controller-jetson-boundary) states the repository has no listener, wrapper, GPIO, network, serial, LED, or E-stop code, and no copy of the existing controller.
 - The fixture schema is explicitly not compatible with the built controller. Field names and tick units are development conventions.
-- Before a real wrapper: the ELTS code owner must supply controller source or a reviewed wire contract, the LED-permission feedback point, and the selected D-03 transport. D-10 must choose NE behavior. D-13 must decide exposure and maximum-on time. Link timing, shutdown, E-stop, and light behavior need bench evidence ([controller boundary](../modules/elts-link.md#controller-jetson-boundary)).
+- Before a real wrapper: the ELTS code owner must supply controller source or a reviewed wire contract, the LED-permission feedback point, and the selected D-03 transport. D-10 must choose NE behavior. D-13 must decide exposure and maximum-on time. Link timing, shutdown, E-stop, and light behavior need bench evidence ([controller boundary](../developer/modules/elts-link.md#controller-jetson-boundary)).
 - The simulation, from the briefing, draws three turrets (two outer LED units and a central Brio) and says that drawing does not implement the Brio/Jetson vision pipeline. Light lines are symbolic, not an exposure calculation.
 - `toolchain.json` `validation.jetsonBaseline` is `pending device inspection`.
 
@@ -544,31 +587,7 @@ The calibration "eye" is a different thing: `Eye` input is Left or Right plus a 
 
 ## Open investigator decisions
 
-These change what a "wrong" session looks like. They are open in the source. They are not hidden settings you can flip to match the hardware.
-
-| Id | What the repo says | What you will see until it is decided |
-| --- | --- | --- |
-| **D-03** | Unity-to-Jetson transport. A real adapter "requires D-03 and controller-owner review" (`EltsLinkContracts`). | No socket or serial port. See [GAP-HW-JETSON-TRANSPORT](#gap-register). |
-| **D-04** | Study motion for moving targets. `ScenarioMovementFactory` says MT is a seeded provisional random walk until D-04 defines study motion. `config/development/scenario.json` sets `mtMotion` to `sine` and `provisionalDevelopmentValues` true. `DevelopmentScenarioAdapter` keeps that sine string as provenance and does not silently replace it with `RandomWalk`. `RequiresD04MotionResolution` is true when the configured name is not `RandomWalk`. Nothing in the player reads that flag. | The **visible** desktop session does not run sine or the generic random walk. `DevelopmentSessionScenario` passes movement name `LibraryRouteSequence` for `*_MT` and `FixedLibrary` for fixed blocks, then draws `LibraryTargetPopulation` (`library-routes-v3`, `library-fixed-poses-v2`). Dimensions are "not approved D-04 tuning." Generic `RandomWalk` runs only in `tools/runtime-tests/ScenarioChecks.cs`. If targets follow library routes, that is the current player, not a resolved D-04. |
-| **D-05** | The string `D-05` does not appear. | [GAP-DEC-D05](#gap-register). |
-| **D-06** | "D-06 remains undecided." `ShowHitVisual`, `PlayShotSound`, and `ShowScore` default false. | No code reads those flags, so there is no hit flash, shot sound, or score overlay from them. Ammo and hit counts on the HUD are separate labels. Silence is the current build, not a failed audio device. |
-| **D-07** | The string `D-07` does not appear. | [GAP-DEC-D07](#gap-register). |
-| **D-08** | The string `D-08` does not appear. | [GAP-DEC-D08](#gap-register). |
-
-Related decisions the code does name, because they change link and timing symptoms:
-
-| Id | Effect on troubleshooting |
-| --- | --- |
-| **D-10** | NE behavior is not chosen. Default fixture mode `Idle` disarms the mock before NE. `Armed` is a workbench option only. A dark lamp during NE, even on a future controller, cannot be judged until D-10. The workbench shows `D-10 pending.` |
-| **D-12** | Cross-device sync is not chosen. See [GAP-HW-SYNC](#gap-register). |
-| **D-13** | Exposure and maximum-on time are not chosen. The 30 s extra guard and the 3 s heartbeat are fixture defaults. A timeout in the mock is not a measured exposure limit. |
-| **D-17** | Calibration approval limits are not the development thresholds. See [GAP-DEC-D17](#gap-register). |
-
-> **GAP-DEC-D05.** Investigator decision D-05 is not named in code, schemas, or docs, so this guide cannot say what it decides or which symptom it would explain. Who can answer: the investigators who hold the decision list. The repo does not point to that list.
-
-> **GAP-DEC-D07.** D-07 is not named. Same limitation and same source.
-
-> **GAP-DEC-D08.** D-08 is not named. Same limitation and same source.
+Open decisions change what a "wrong" session looks like. They are not hidden settings you can flip to match the hardware. What each one means for a session, as far as the repository says, is in [decision and work-item IDs](../decisions.md).
 
 ## Gap register
 
@@ -597,9 +616,9 @@ Related decisions the code does name, because they change link and timing sympto
 ## Related docs
 
 - [User guide](user-guide.md) and the README install section for the normal click path
-- [Setup troubleshooting](multi-machine-setup.md#if-something-goes-wrong) for licenses, Git, and first-run install
-- [Developer commands](developer-quick-start.md)
-- [Data collection](../modules/data-collection.md), [logging](../modules/logging.md), [analysis](../modules/analysis.md)
-- [Dashboard](../modules/operator-dashboard.md), [desktop input](../modules/desktop-input.md), [sessions](../modules/session.md), [scenarios](../modules/scenario.md)
-- [Link](../modules/elts-link.md), [session link](../modules/elts-session.md), [Jetson boundary](../modules/elts-link.md#controller-jetson-boundary)
+- [Setup on more than one computer](multi-machine-setup.md) for first-time install steps
+- [Developer commands](../developer/quick-start.md)
+- [Data collection](../developer/modules/data-collection.md), [logging](../developer/modules/logging.md), [analysis](../developer/modules/analysis.md)
+- [Dashboard](../developer/modules/operator-dashboard.md), [desktop input](../developer/modules/desktop-input.md), [sessions](../developer/modules/session.md), [scenarios](../developer/modules/scenario.md)
+- [Link](../developer/modules/elts-link.md), [session link](../developer/modules/elts-session.md), [Jetson boundary](../developer/modules/elts-link.md#controller-jetson-boundary)
 - [Hardware follow-up](hardware-follow-up.md), [safety](../safety/README.md)

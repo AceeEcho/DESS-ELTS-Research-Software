@@ -66,13 +66,13 @@ At the top of [this GitHub page](https://github.com/AceeEcho/DESS-ELTS-Research-
 **Step 3 · Double-click START-ELTS.cmd.** It opens the **administrator dashboard** in your browser and the **participant window** as a separate app. The **first start** on a computer also sets everything up: ELTS is built on your computer, so it installs Unity **6000.3.23f1 LTS** and the other tools, checks them and builds the app. That takes a while, so leave the window open. Accept Windows install prompts and sign in to Unity Hub if asked; if it stops for licensing, activate in Unity Hub and double-click **START-ELTS.cmd** again. A small startup window shows progress and closes on its own; if something fails it stays open with an **Open startup log** button.
 
 > [!TIP]
-> From now on, just double-click **START-ELTS.cmd**. Keep the whole extracted folder together: your recordings are saved inside it, in **collection data**. If a step fails, see [setup troubleshooting](docs/operator/multi-machine-setup.md#if-something-goes-wrong).
+> From now on, just double-click **START-ELTS.cmd**. Keep the whole extracted folder together: your recordings are saved inside it, in **collection data**. If a step fails, see [setup troubleshooting](docs/operator/troubleshooting.md#install-and-startup).
 
 **Tracking PC (optional).** To set up the room, screen and Vive trackers, double-click **START-CALIBRATION.cmd**. The first time, it offers to install the live-tracking tools (answer **Y**); manual preview works without them. This needs no Unity. See [Calibration workspace](#-calibration-workspace).
 
 **VIVE gun trigger.** A configured gun tracker can now fire in tutorial practice,
 start a scenario, and fire scored shots. The calibration workspace shows its live
-button state above the 3D view. See [trigger setup](docs/modules/vive-trigger.md).
+button state above the 3D view. See [trigger setup](docs/developer/modules/vive-trigger.md).
 Aiming still uses the main app's existing desktop/synthetic pose source.
 
 **Getting a newer version.** Download and extract the new ZIP into a new folder, then double-click **START-ELTS.cmd** in it. Recordings are not carried over automatically, so keep your old folder and its **collection data** until you have exported what you need.
@@ -194,7 +194,7 @@ After the final test, complete or skip its break to close the recording, then cl
 | Reset the virtual pose | **Home** |
 | Fullscreen on / off | **F11** or **Alt + Enter**, **Esc** to restore |
 
-Targets have three health points: head, body and limb hits deal 3, 2 and 1 damage. Switching windows does **not** pause the timer. See [desktop input](docs/modules/desktop-input.md) for details.
+Targets have three health points: head, body and limb hits deal 3, 2 and 1 damage. Switching windows does **not** pause the timer. See [desktop input](docs/developer/modules/desktop-input.md) for details.
 
 ---
 
@@ -225,7 +225,7 @@ The badge says **Listen** until the narration ends. Shots, reloads and captures 
 | Overview | Learns about 4 scenarios, time limits and breaks | Nothing; it leads straight into the study |
 
 > [!NOTE]
-> All 39 narration clips are recorded and bundled. The wording lives in the [tutorial script](docs/participant-tutorial-script.md) (a plain [reading copy](docs/participant-tutorial-reading-script.md) is generated from it). Visual settings such as dot positions are in `ParticipantTutorialSettings.json`. Full details: [walkthrough guide](docs/modules/participant-tutorial.md).
+> All 39 narration clips are recorded and bundled. The wording lives in the [tutorial script](docs/participant-tutorial/script.md) (a plain [reading copy](docs/participant-tutorial/reading-script.md) is generated from it). Visual settings such as dot positions are in `ParticipantTutorialSettings.json`. Full details: [walkthrough guide](docs/developer/modules/participant-tutorial.md).
 
 ---
 
@@ -253,7 +253,7 @@ A **—** means a value is unavailable, not zero. Active time excludes pauses.
 Click **Download export** to save a prepared export; copies also stay in the data folder's **exports** directory. **Open folder** shows the data folder itself.
 
 > [!WARNING]
-> Data stays on **this computer** in the **collection data** folder beside this README. It is excluded from Git, so pushing the project does **not** back it up. Wait for saving to finish before closing ELTS. More: [data storage and recovery](docs/modules/data-collection.md).
+> Data stays on **this computer** in the **collection data** folder beside this README. It is excluded from Git, so pushing the project does **not** back it up. Wait for saving to finish before closing ELTS. More: [data storage and recovery](docs/developer/modules/data-collection.md).
 
 ---
 
@@ -283,10 +283,10 @@ Open [elts-simulation/index.html](elts-simulation/index.html) from your download
 | **ARM TEST** is disabled | Finish the walkthrough/practice or break and wait for saving |
 | Scenario order won't change | It locks during a session; change it before the next participant |
 | A save fails or a recording looks incomplete | Read the message and keep the files; don't treat it as finalized |
-| Startup stops with an error | Read the startup window, then [setup troubleshooting](docs/operator/multi-machine-setup.md#if-something-goes-wrong) |
+| Startup stops with an error | Read the startup window, then [setup troubleshooting](docs/operator/troubleshooting.md#install-and-startup) |
 | A device, export or analysis step fails mid-session | [Session troubleshooting](docs/operator/troubleshooting.md) |
 
-Full reference: [administrator dashboard](docs/modules/operator-dashboard.md).
+Full reference: [administrator dashboard](docs/developer/modules/operator-dashboard.md).
 
 ---
 
@@ -298,8 +298,8 @@ Full reference: [administrator dashboard](docs/modules/operator-dashboard.md).
 | Practice room (separate, unscored, timed) | ✅ In the development build |
 | Procedure briefing and automatic scenario → break → form flow | ✅ In the development build |
 | ELTS introduction and demonstration | 🟡 Simulated only; real apparatus not connected |
-| ELTS integration and synchronization | 🟡 Protocol fixture and [simulated controller](docs/modules/elts-link.md#controller-jetson-boundary) only; needs the controller's wire contract |
-| Physical participant controller (mock replica input) | ⬜ Not started |
+| ELTS integration and synchronization | 🟡 Protocol fixture and [simulated controller](docs/developer/modules/elts-link.md#controller-jetson-boundary) only; needs the controller's wire contract |
+| Physical participant controller (mock replica input) | 🟡 The gun tracker's trigger is read in software ([trigger setup](docs/developer/modules/vive-trigger.md)); the [connector designs](hardware/README.md) are not yet printed or tested |
 | Heart-rate, eye-tracker and NASA-TLX data alignment | ⬜ Not started |
 | Room survey: screen size and 5 / 6 / 7 ft floor marks | ⬜ Measurements pending ([checklist](docs/operator/hardware-follow-up.md#current-inventory-and-starter-room-survey)) |
 
@@ -362,11 +362,12 @@ Run Unity Play Mode tests with `-noaudio`. Set `ELTS_TUTORIAL_CAPTURE_DIR` while
 
 | Task | How |
 | --- | --- |
-| Change tutorial narration or on-screen steps | Edit [the tutorial script](docs/participant-tutorial-script.md), then `py -3 tools/build/export_participant_tutorial.py` (add `--check` to verify). Recordings follow the [audio workflow](docs/participant-tutorial-audio-workflow.md) |
-| Change tutorial visuals | `unity/Assets/ELTS/Operator/ParticipantTutorial*.cs` and `Resources/ELTS/ParticipantTutorial.uss/.uxml/Settings.json` ([walkthrough guide](docs/modules/participant-tutorial.md)) |
+| Change tutorial narration or on-screen steps | Edit [the tutorial script](docs/participant-tutorial/script.md), then `py -3 tools/build/export_participant_tutorial.py` (add `--check` to verify). Recordings follow the [audio workflow](docs/participant-tutorial/audio-workflow.md) |
+| Change tutorial visuals | `unity/Assets/ELTS/Operator/ParticipantTutorial*.cs` and `Resources/ELTS/ParticipantTutorial.uss/.uxml/Settings.json` ([walkthrough guide](docs/developer/modules/participant-tutorial.md)) |
 | Rebuild the offline simulation | `node elts-simulation/build.mjs` from the dev shell |
-| Build a standalone player | `scripts/build.ps1 -Output build/<new-empty-folder>` ([build provenance](docs/modules/windows-build.md)) |
+| Build a standalone player | `scripts/build.ps1 -Output build/<new-empty-folder>` ([build provenance](docs/developer/modules/windows-build.md)) |
 | Refresh the dashboard screenshots | `node tools/browser-tests/capture-user-guide.cjs` (needs Playwright and Chrome) |
+| Look up an ID such as D-12, DEV-10 or P8.4 | [Decision and work-item IDs](docs/decisions.md) |
 
 Local, machine-specific settings live in `config/local.json` and `config/local/` and are never committed. Research recordings stay out of Git. `scripts/setup-study-machine.ps1` and `scripts/start-study.ps1` are the future study entry points; they deliberately refuse to run until study configuration, physical acceptance and release approval exist. A root study launcher will be added with an approved release.
 
@@ -377,7 +378,10 @@ Local, machine-specific settings live in `config/local.json` and `config/local/`
 | `unity/` | Unity app: tracking, calibration, sessions, walkthrough, rendering, logging and the dashboard |
 | `Calibration Environment/` | [Standalone room and tracker setup](Calibration%20Environment/README.md) |
 | `elts-simulation/` | [Offline browser simulation](elts-simulation/README.md) |
-| `analysis/` | [Run ingestion and analysis](docs/modules/analysis.md) |
+| `analysis/` | [Run ingestion and analysis](docs/developer/modules/analysis.md) |
 | `config/`, `schemas/` | Editable settings and data contracts |
-| `scripts/`, `tools/` | Setup, build, validation, packaging and tests |
-| `docs/` | [Architecture](docs/architecture.md) · [developer commands](docs/operator/developer-quick-start.md) · [CI](docs/modules/ci.md) · [safety boundaries](docs/safety/README.md) |
+| `scripts/` | The PowerShell commands you run: setup, start, build, test, verify |
+| `tools/` | The Python and C# code behind those commands, plus the runtime test projects |
+| `hardware/` | [Tracker trigger connector CAD and bench tests](hardware/README.md) |
+| `docs/` | [Documentation map](docs/README.md): operator guides, developer and module docs, the participant tutorial, safety |
+| `collection data/` | Your local recordings and exports (created on first run, never committed) |

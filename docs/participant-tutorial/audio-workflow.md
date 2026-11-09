@@ -1,0 +1,82 @@
+# Participant tutorial audio workflow
+
+User-agreed workflow, October 30, 2026. Follow this for future participant tutorial narration work.
+
+Current stage, November 3, 2026: all 39 tutorial recordings are selected, linked, and bundled in Unity. For the latest revision, the user delegated take selection to the assistant. Its 18 new/revised cues and superseded-file locations are recorded in [the revision voice prompts](voice-prompts/revision-2026-11-03.md). Superseded takes are preserved in [`audio-archive/`](audio-archive/), one folder per part.
+
+## Source files and delivery
+
+- Read [the outline](outline.md) for context. Keep detailed script edits in the working script; revise the outline only when the user requests or authorizes a sequence change, as with the head-tracker, holding, and gun-tracker sequence.
+- Edit narration and visual directions in [the detailed script](script.md).
+- Keep [the reading script](reading-script.md) synchronized using the process below. It contains narration and ordinary action/wait cues, without scene-building directions or audio-production details.
+- Keep exact generation prompts and generation references in the matching voice-prompts document. These live in [`voice-prompts/`](voice-prompts/), one file per part; Part 1 uses `voice-prompts/part-01.md`.
+- Use Eryn - Genuine, Friendly and Natural, voice ID `kdnRe2koJdOK4Ovxn2DI`, and `eleven_v4`, unless the user changes these choices. Confirm voice identity through the voice tool when needed; do not substitute another Eryn variant.
+- Keep delivery consistent across chunks. Current prompts use `[warmly] [calmly]`, natural punctuation, and occasional `[short pause]` tags. Preserve the spoken wording unless a revision is requested. Do not put screen directions or production notes into speech prompts.
+
+## Keep the readable and detailed scripts together
+
+The detailed script is the source of truth for both versions. Every numbered chunk has one **Spoken** line and one concise **Action / wait** line. Edit those lines there, keeping the concise cue consistent with the detailed transition, then run from the repository root:
+
+```text
+py -3 tools/build/export_participant_tutorial.py
+```
+
+The export updates `docs/participant-tutorial/reading-script.md` with only headings, narration, and human-readable cues. It does not generate audio or run the tutorial. Do not edit the exported copy separately; apply requested wording changes to the detailed script and regenerate it in the same change.
+
+Verify synchronization with `py -3 tools/build/export_participant_tutorial.py --check`. Repository documentation checks also reject an out-of-date reading script. On systems without the Windows Python launcher, use `python` instead of `py -3`. Keep the script, outline, audio mapping, and reading copy aligned when adding, removing, or renumbering chunks.
+
+## Generate and select
+
+1. Generate **exactly two takes per narration node**: explicitly set `generations_count: 2`. A node represents one numbered spoken chunk, such as Part 1.1. On a revision, regenerate only the requested chunk.
+2. Present the pair in a stable order and identify them as **Top (take 1)** and **Bottom (take 2)**. If the player uses a pager instead of a vertical pair, explain that take 1 is Top and take 2 is Bottom. Record the corresponding generation IDs and node ID in the voice-prompts document so a selection can be resolved later.
+3. The user chooses by saying, for example, “Keep the top one for 1.1.” Treat top/bottom as referring to that particular pair, not to the order across unrelated nodes or old revisions. Do not guess if the selected chunk or pair is ambiguous; resolve the identity before downloading.
+4. A choice authorizes downloading and organizing that selected take. Do not generate another take, change the voice, or ask for approval again. Leave unselected takes in ElevenLabs unless the user asks to delete them.
+5. Follow the plugin's generation-view instructions. The view tracks completion itself; do not poll when instructed not to. A generation-start response does not prove that audio is finished.
+
+## Save the selected audio
+
+Download the completed take's original audio file straight into the folder the Unity walkthrough plays from. This is the only copy of each active clip:
+
+```text
+unity/Assets/ELTS/Operator/Resources/ELTS/TutorialAudio/
+```
+
+Use the chunk number and a short, meaningful description. Part 1's planned filenames are:
+
+| Script chunk | Filename stem |
+| --- | --- |
+| Part 1 | `01-welcome` |
+| Part 1.1 | `01-01-guidance-and-questions` |
+| Part 1.2 | `01-02-ready-for-setup` |
+
+Keep the actual source extension: for example, `01-welcome.mp3` for an MP3, or `01-welcome.wav` for a WAV. Do not rename one audio format as another or transcode without a reason. Later parts use the same numbering convention (`02-…`, `03-…`). A new chunk also needs its key added to `ParticipantTutorialAudio.json` in the parent `Resources/ELTS/` folder.
+
+If downloading creates a temporary local file first, move it into the final folder and verify the destination. Prefer a direct download to the final destination when practical. Check that the file is nonempty and recognizable as audio; check its duration or playback when supported. Do not mark it saved based only on a remote link or a successful generation request.
+
+If replacing a previously selected local take, first move the prior file to `docs/participant-tutorial/audio-archive/part-NN/`, named with the filename stem plus its generation ID, then update the active file. Never archive inside the Unity `Resources` folder, because everything there is bundled into the build. Keep the active filename stable for agents implementing the tutorial. Do not erase prior selections or unrelated files.
+
+## Label the script and record the selection
+
+Immediately below the matching **Spoken** paragraph, maintain an **Audio** line containing the status and a clickable repository-relative link to the saved file. Example for an actual saved MP3:
+
+```markdown
+**Audio:** Selected — [01-welcome.mp3](../../unity/Assets/ELTS/Operator/Resources/ELTS/TutorialAudio/01-welcome.mp3). Use for this spoken chunk only.
+```
+
+Before a selection is downloaded, label it **Pending selection** or **Selected; download pending** as appropriate. Do not create a link that suggests a nonexistent file is ready. Pending script entries list a planned filename stem without an extension until the audio format is known.
+
+In the voice-prompts document, record the chosen Top/Bottom take, generation ID, node ID, exact prompt, voice, model, and final repository-relative file path. Store stable IDs rather than temporary signed download URLs or account-switch links. Keep prior revisions clearly labeled as superseded.
+
+When handing off to an implementation agent, the script's Audio link is the authoritative mapping between a spoken chunk and its selected file. Play the file once for that chunk; keep operator-controlled waits and transitions in the player rather than adding long silence to the recording. Screen directions stay in the script and are not spoken.
+
+## Current state
+
+Earlier test generations used four takes per initial node and single takes for welcome revisions. They remain historical tests; this two-take policy applies to future generations. On October 30, 2026, the user selected the top take for Parts 1, 1.1, and 1.2. The latest warm welcome and first takes of the other two chunks were downloaded, linked from the script, and identified in the Part 1 voice-prompts document. Do not regenerate existing clips merely to normalize their historical take counts.
+
+November 2, 2026: Parts 2 and 3 now have per-chunk take/session/node mappings in [Part 2](voice-prompts/part-02.md) and [Part 3](voice-prompts/part-03.md). The user selected Bottom, Bottom, Bottom, Bottom, Top, Top, Bottom in chunk order 2, 2.1, 2.2, 3, 3.1, 3.2, 3.3. These seven files are downloaded, verified, and linked from the script and the corresponding voice-prompts documents.
+
+November 2, 2026: six chunks in Parts 4 and 5 have two requested takes each. Their exact prompts, node IDs, generation IDs, and Top/Bottom session mappings are in [Part 4](voice-prompts/part-04.md) and [Part 5](voice-prompts/part-05.md). Selections are saved: Bottom for 4, 4.1, 4.2, 5, and 5.1; user-supplied New tts node.mp3 for 5.2. The six files are verified and linked from the script and voice-prompts documents.
+
+November 3, 2026 update: the Unity walkthrough bundles all 39 selected recordings.
+
+November 9, 2026: the duplicate copies under `docs/participant-tutorial/audio/` were removed. Script and voice-prompt links now point at the bundled clips, and superseded takes moved to `audio-archive/`. The original supplied attachments remain archived where replaced. See the [implementation guide](../developer/modules/participant-tutorial.md) for playback, confirmation, and transition behavior.

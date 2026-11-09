@@ -7,8 +7,8 @@ import re
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "docs/participant-tutorial-script.md"
-OUTPUT = ROOT / "docs/participant-tutorial-reading-script.md"
+SOURCE = ROOT / "docs/participant-tutorial/script.md"
+OUTPUT = ROOT / "docs/participant-tutorial/reading-script.md"
 
 
 def render_reading_script() -> str:
@@ -24,7 +24,7 @@ def render_reading_script() -> str:
         "",
         "Narration and action/wait cues only. Cues are not spoken. This is the normal session flow; the operator handles exceptions.",
         "",
-        "This copy is kept in sync with the [detailed script](participant-tutorial-script.md).",
+        "This copy is kept in sync with the [detailed script](script.md).",
         "",
     ]
     count = 0
@@ -59,7 +59,7 @@ def main() -> None:
         print("PASS: readable tutorial matches the detailed script")
     else:
         OUTPUT.write_text(render_reading_script(), encoding="utf-8", newline="\n")
-        print("Updated docs/participant-tutorial-reading-script.md")
+        print("Updated docs/participant-tutorial/reading-script.md")
 
 
 if __name__ == "__main__":

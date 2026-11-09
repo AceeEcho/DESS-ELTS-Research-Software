@@ -28,7 +28,7 @@ try {
     Set-EltsStartupStatus 'ELTS could not start' $_.Exception.Message -Result failure
     Write-Host ('START STOPPED: ' + $_.Exception.Message) -ForegroundColor Red
     if ($transcribing) { Write-Host "Startup transcript: $(Join-Path $diagnostics 'start-console.log')" }
-    Write-Host "Troubleshooting: $(Join-Path $script:EltsRepositoryRoot 'docs/operator/multi-machine-setup.md')"
+    Write-Host "Troubleshooting: $(Join-Path $script:EltsRepositoryRoot 'docs/operator/troubleshooting.md')"
     $exitCode = 1
 } finally {
     if ($transcribing) { Stop-Transcript | Out-Null }

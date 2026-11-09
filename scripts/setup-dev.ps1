@@ -111,7 +111,7 @@ try {
     Write-Host ("SETUP STOPPED during $($report.phase):`n" + $report.message) -ForegroundColor Red
     Write-Host "Setup transcript: $(Join-Path $reportDirectory 'setup-console.log')"
     Write-Host "Setup report: $reportPath"
-    Write-Host "Troubleshooting: $(Join-Path $script:EltsRepositoryRoot 'docs/operator/multi-machine-setup.md')"
+    Write-Host "Troubleshooting: $(Join-Path $script:EltsRepositoryRoot 'docs/operator/troubleshooting.md')"
 } finally {
     if ($installationLock) { $installationLock.Dispose() }
     New-Item -ItemType Directory -Force $reportDirectory | Out-Null

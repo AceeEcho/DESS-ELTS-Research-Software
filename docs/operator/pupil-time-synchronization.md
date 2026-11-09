@@ -56,5 +56,5 @@ protocol details, not measured ELTS performance or approved timing thresholds.
 The apparatus is built, but testing equipment is unavailable. This note does
 not approve D-12, complete P8.4 or any gate, or validate physical timing. Trello
 completion flags do not replace the approved method and measured evidence.
-See [required follow-up](hardware-follow-up.md), [tracking](../modules/tracking.md),
-[logging](../modules/logging.md), and the [software safety boundaries](../safety/README.md).
+See [required follow-up](hardware-follow-up.md), [tracking](../developer/modules/tracking.md),
+[logging](../developer/modules/logging.md), and the [software safety boundaries](../safety/README.md).

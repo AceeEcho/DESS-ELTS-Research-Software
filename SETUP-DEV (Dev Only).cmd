@@ -10,7 +10,7 @@ if not "%ELTS_SETUP_EXIT%"=="0" (
   echo Setup needs attention. Read the failed step and How to resolve instructions above.
   echo Setup log: "%~dp0diagnostics\setup-console.log"
   echo Setup report: "%~dp0diagnostics\setup-report.json"
-  echo Troubleshooting: "%~dp0docs\operator\multi-machine-setup.md"
+  echo Troubleshooting: "%~dp0docs\operator\troubleshooting.md"
 )
 pause
 exit /b %ELTS_SETUP_EXIT%

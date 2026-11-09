@@ -32,11 +32,11 @@ RUNTIME_OUTPUT = "player/collection data/"
 RUNTIME_OUTPUTS = (RUNTIME_OUTPUT, "player/data/synthetic/")
 RUNTIME_SOURCE_PATHS = ("unity/Assets", "unity/Packages", "unity/ProjectSettings", "config")
 FILES = {
-    "docs/operator/development-package.md": "README.md",
+    "docs/developer/development-package.md": "README.md",
     "docs/operator/hardware-follow-up.md": "HARDWARE-FOLLOW-UP.md",
-    "docs/modules/calibration.md": "docs/calibration.md",
-    "docs/modules/session.md": "docs/session.md",
-    "docs/modules/elts-session.md": "docs/elts-session.md",
+    "docs/developer/modules/calibration.md": "docs/calibration.md",
+    "docs/developer/modules/session.md": "docs/session.md",
+    "docs/developer/modules/elts-session.md": "docs/elts-session.md",
     "analysis/run_ingest.py": "analysis/run_ingest.py",
     "analysis/fixtures/synthetic-calibration.json": "analysis/fixtures/synthetic-calibration.json",
     "tools/validation/schema.py": "tools/validation/schema.py",

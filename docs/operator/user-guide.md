@@ -69,7 +69,7 @@ for its actual input or operator confirmation. Calibration remains synthetic.
 Start practice when ready. Practice is unscored; pause, restart and early finish
 remain available. The simulated ELTS demonstration follows practice, then the
 study overview. All 30 selected recordings are connected. See the
-[walkthrough guide](../modules/participant-tutorial.md) for pacing and controls.
+[walkthrough guide](../developer/modules/participant-tutorial.md) for pacing and controls.
 
 ## 5. Start the study
 
@@ -134,7 +134,7 @@ The data folder and **collection.sqlite** are created when the administrator sta
 
 Storage and export failures appear in the Data view and flag its button. If updating results fails, the original raw files remain available; **Refresh** retries. Browser privacy settings that block saved layout preferences do not disable the controls.
 
-The collection is local to this machine and excluded from Git. Pushing the project does not back up recordings or synchronize databases. A standalone player copied outside the project saves beside its executable. See [data storage and recovery](../modules/data-collection.md) for the database layout and limits.
+The collection is local to this machine and excluded from Git. Pushing the project does not back up recordings or synchronize databases. A standalone player copied outside the project saves beside its executable. See [data storage and recovery](../developer/modules/data-collection.md) for the database layout and limits.
 
 ## If something does not look right
 
@@ -144,7 +144,7 @@ The collection is local to this machine and excluded from Git. Pushing the proje
 | **ARM TEST** is disabled | Finish calibration/practice or the break, and wait for saving to complete. |
 | Order cannot be changed | Finish the current participant session; arrange the next participant's order afterward. |
 | A recording is incomplete or a save fails | Read the displayed error and keep its files. Do not treat it as a finalized recording. |
-| Startup stops with an error | Read the startup window and use the [setup troubleshooting guide](multi-machine-setup.md#if-something-goes-wrong). |
+| Startup stops with an error | Read the startup window and use the [setup troubleshooting guide](troubleshooting.md#install-and-startup). |
 | A device, save, export, or analysis step fails | Use the [session troubleshooting guide](troubleshooting.md). |
 
-For detailed behavior, see the [administrator reference](../modules/operator-dashboard.md).
+For detailed behavior, see the [administrator reference](../developer/modules/operator-dashboard.md).

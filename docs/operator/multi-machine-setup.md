@@ -142,48 +142,7 @@ Before every editing session on the second computer, close Unity and click **Fet
 
 ## If something goes wrong
 
-Install and first-launch failures are in the table below. For a running session — participant window, dashboard, exports, analysis, the simulated controller, or hardware that the software does not detect yet — use [session troubleshooting](troubleshooting.md).
-
-**Start with the last error window.** Setup and startup now show the failed step,
-the underlying tool error, **How to resolve** instructions, and the full paths to
-the relevant logs/reports. A PowerShell exit code is a wrapper failure; read the
-underlying Unity or verification error below it. Logs are from the current attempt;
-if no fresh log was produced, the message says so instead of showing an old error.
-
-| Error shown | What to do |
-| --- | --- |
-| Unity exit **198** / **No valid Unity Editor license found** | Open **Unity Hub**, sign in, then open **Settings > Licenses > Refresh**. Use **Add license** if needed. Activate the license appropriate for your account; an organization license may require its administrator to assign a seat. If activation fails, check network/proxy access. Close the Editor and rerun **SETUP-DEV (Dev Only).cmd**, then **START-ELTS.cmd**. See [Unity's license guide](https://docs.unity.com/en-us/hub/manage-license). |
-| **runtime-config** / **Editor saves at project root** | Older revisions incorrectly compared Windows path separators when a machine used `data/synthetic`. Update to the corrected source and rerun **SETUP-DEV (Dev Only).cmd**. Keep `config/local.json` and your recordings; changing or deleting the data folder is unnecessary. |
-| **Development view unavailable: Development game settings are outside their safe synthetic ranges** | An older saved scene contains a patrol distance that the newer code rejects. Close the failed game, update the project, and run **START-ELTS.cmd** to rebuild with the corrected scene. Keep your configuration and recordings. This is a scene-settings error, not a Unity license failure. |
-| **error CS…** / compiler errors | The Unity log names the source file and compiler error. Update to a corrected revision or send that log to the maintainer. Rerun setup after the code is fixed. |
-| Another Unity instance / startup lock | Save your work and close this project in the Editor, or let the existing setup/startup window finish. Retry after it ends. Do not delete lock files while their processes are running. |
-| A verification assertion failed | Keep the error, failed-check log, and `diagnostics/test-report.json`. Send them to the maintainer or update to the revision that fixes the check, then rerun setup. Do not bypass verification or delete recordings to clear an assertion. |
-| Timed out | Read the log for progress or a prompt. The PowerShell launcher leaves a timed-out process running to avoid interrupting installers. Check for remaining setup/Unity processes and let them finish or close them normally before retrying. |
-
-**Where to find details:** `diagnostics/start-console.log` records startup;
-each `diagnostics/player-start-*.log` records one participant launch, including scene initialization failures;
-`diagnostics/setup-console.log` and `setup-report.json` record setup;
-`diagnostics/setup-unity-import.log` records Unity import/licensing;
-`diagnostics/test-report.json` identifies each verification log. A build failure
-points to the actual `build/start-elts-…/unity-build.log`, rather than an empty
-console capture. Direct builds use the output directory you selected. Copy the
-error and named files before retrying if you need to preserve them: subsequent
-runs replace diagnostic reports. Share only the relevant diagnostic files with
-the maintainer, not participant recordings or license files.
-
-**GitHub Desktop cannot sign in or clone.** Check that the browser is signed in to the correct GitHub account and that the repository URL is exactly `https://github.com/AceeEcho/DESS-ELTS-Research-Software`. Ask the repository owner to grant access if the page is unavailable. Do not paste passwords or access tokens into chat or files.
-
-**Git is missing.** GitHub Desktop normally includes the Git it needs. Restart GitHub Desktop after installation. The command-line alternative below requires Git for Windows; install it from [git-scm.com](https://git-scm.com/download/win) only if you need that workflow.
-
-**Setup says the folder is not a Git clone.** You have an older setup script. Download the updated source ZIP and extract it to a new folder, then run **SETUP-DEV (Dev Only).cmd** followed by **START-ELTS.cmd**. Keep the previous folder if it contains recordings or customized settings. Updated setup accepts both source ZIPs and Git clones.
-
-**Setup cannot download or verify a tool.** Check the network connection and the setup report. Do not replace a checksum-verified download with an untrusted mirror. Save the final error text for the project maintainer and rerun `SETUP-DEV (Dev Only).cmd` after the issue is fixed.
-
-**UAC blocks installation.** Use an account allowed to install software or ask the computer administrator. Do not bypass UAC. Rerun setup after the administrator has completed the install.
-
-**Unity asks for a license or opens the wrong version.** Sign in to Unity Hub, activate the permitted license, select `6000.3.23f1` LTS, and rerun setup. Do not substitute a nearby Unity patch. Close Unity before rerunning setup.
-
-**Pull reports local changes or a conflict.** Stop and read the list of files. If your changes are not committed, use GitHub Desktop's **Commit to main** after reviewing them, or copy your work to a safe notes folder before asking for help. Do not choose a discard or reset option casually. If a conflict is shown, open each conflicted file, keep the intended complete result, remove the conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`), save, review, commit the resolution, and push. GitHub's [merge conflict guide](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/resolving-a-merge-conflict) explains the markers. When unsure, stop before clicking **Discard changes** and contact the maintainer.
+Setup and first-launch errors, and what to do about each, are in [troubleshooting: install and startup](troubleshooting.md#install-and-startup).
 
 ## Short command-line alternative
 

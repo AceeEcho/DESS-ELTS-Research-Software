@@ -8,7 +8,7 @@ if not "%ELTS_START_EXIT%"=="0" (
   echo.
   echo ELTS could not finish starting. Read the failed step and How to resolve instructions above.
   echo Startup log: "%~dp0diagnostics\start-console.log"
-  echo Troubleshooting: "%~dp0docs\operator\multi-machine-setup.md"
+  echo Troubleshooting: "%~dp0docs\operator\troubleshooting.md"
   pause
 )
 exit /b %ELTS_START_EXIT%

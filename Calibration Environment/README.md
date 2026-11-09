@@ -50,7 +50,7 @@ change SteamVR's tracking solution or stand in for tracking-origin registration.
 released, or unavailable, plus observed press/release counts. In live mode it
 uses the tracker selected under **Weapon**. In SteamVR, that tracker needs
 **Held in hand → Left Hand or Right Hand** for button input. Unavailable or stale
-input is never displayed as released. See [main-app trigger setup](../docs/modules/vive-trigger.md).
+input is never displayed as released. See [main-app trigger setup](../docs/developer/modules/vive-trigger.md).
 
 Each tracked object has independent three-axis position and three-axis rotation
 offsets. Profiles store distances in **metres** and angles in **degrees**:

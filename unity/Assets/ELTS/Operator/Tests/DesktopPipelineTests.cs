@@ -83,14 +83,26 @@ namespace Elts.Operator.Tests
                     Assert.That(panel.Engine.State,Is.EqualTo(SessionState.BlockRunning),panel.Engine.Failure);
                     Assert.That(scenario.Positions.Count,Is.GreaterThan(0),"Target refresh after run-in: "+panel.DesktopFeedback);
                     Assert.That(panel.CanDesktopFire && panel.Desktop.IsOpen,Is.True,"Desktop firing remains enabled after the scripted run-in");
-                    var point=Elts.Scenario.HumanoidGeometry.Parts(scenario.Positions.First().Value,view.Configuration.Rig.VirtualFloorY).First(p=>p.Region=="head").Center;
-                    var viewport=view.ParticipantCamera.WorldToViewportPoint(new Vector3((float)point.X,(float)point.Y,(float)point.Z));
+                    var point=TargetSurfaceTestPoints.Head(host.transform.Find(scenario.Positions.First().Key));
+                    var viewport=view.ParticipantCamera.WorldToViewportPoint(point);
                     var bounds=panel.Desktop.PlayImageBounds;
                     var pointer=new Vector2(bounds.xMin+viewport.x*bounds.width,bounds.yMax-viewport.y*bounds.height);
                     Assert.That(bounds.Contains(pointer),Is.True,"Head aim must remain inside the fitted image");
-                    controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,pressed:true);yield return null;
-                    clock.Advance(TimeSpan.FromMilliseconds(30));
-                    controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,released:true);yield return null;
+                    if(block==1)
+                    {
+                        // A physical trigger uses the same recorded-pose/hitscan path,
+                        // but its source and rising edge must survive in the recording.
+                        controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero);yield return null;
+                        clock.Advance(TimeSpan.FromMilliseconds(30));
+                        panel.SubmitDesktopTrigger("vive-tracker-trigger-v1","rising","TEST-GUN");
+                        yield return null;
+                    }
+                    else
+                    {
+                        controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,pressed:true);yield return null;
+                        clock.Advance(TimeSpan.FromMilliseconds(30));
+                        controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,released:true);yield return null;
+                    }
                     Assert.That(scenario.ShotCount,Is.EqualTo(1),panel.DesktopFeedback);
                     Assert.That(scenario.HitCount,Is.EqualTo(1),panel.DesktopFeedback);
                     Assert.That(scenario.Positions.Count,Is.EqualTo(30),"A hit immediately restores all thirty targets");
@@ -127,10 +139,14 @@ namespace Elts.Operator.Tests
                 Assert.That(fixedAssignments.Select(p=>(string)p["fixedPose"]).Distinct().Count(),Is.EqualTo(5));
                 Assert.That(fixedAssignments.Select(p=>(double)p["visualYawDegrees"]).Distinct().Count(),Is.GreaterThanOrEqualTo(8));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="ShotFired"),Is.EqualTo(4));
+                Assert.That(events.Where(e=>(string)e["eventType"]=="ShotFired").All(e=>(string)e["payload"]["hitGeometry"]==view.Version),Is.True);
                 Assert.That(events.Count(e=>(string)e["eventType"]=="TargetDestroyed"),Is.EqualTo(4));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="BlockStarted"),Is.EqualTo(4));
                 var triggers=events.Where(e=>(string)e["eventType"]=="InputTrigger").ToArray();
                 Assert.That(triggers.Length,Is.EqualTo(4));
+                var hardware=triggers.Single(e=>(string)e["payload"]["source"]=="vive-tracker-trigger-v1");
+                Assert.That((string)hardware["payload"]["edge"],Is.EqualTo("rising"));
+                Assert.That((string)hardware["payload"]["trackerSerial"],Is.EqualTo("TEST-GUN"));
                 foreach(var trigger in triggers)
                 {
                     long sequence=(long)trigger["payload"]["acquisitionSequence"];

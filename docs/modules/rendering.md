@@ -82,18 +82,30 @@ keeps the supporting foot at the fitted floor height, and the visual child turns
 toward travel. Distance drives stride phase and speed drives gait weights.
 Reading desks and low bookcases provide cover between open aisle positions.
 Both participant and administrator cameras render the same objects. Cover and
-actors have no active Unity colliders; the deterministic shot model owns hit and
-occlusion geometry. This is synthetic visual presentation, not a physical lighting
+actors have no active Unity colliders; shot queries bake the currently posed skin
+and intersect its triangles directly, while furniture retains its shared cover
+bounds. This is synthetic visual presentation, not a physical lighting
 or calibration model.
 
 `DevelopmentView` exposes `Mannequin Animation` settings for gait speeds in
 metres/second, blend duration and turn speed. Session active time drives animation:
 pauses retain the exact pose and resumes continue from it. Replay seeks reset
 the presentation blend; skeletal poses are illustrative and are not recorded
-tracking data. The scenario root stays at the supplied position. The existing
-analytic head/body/limb volumes remain authoritative, so the animated mesh is
-not a pixel-exact hit mask. Root motion, autonomous animation playback and visual
-colliders are disabled.
+tracking data. The scenario root stays at the supplied position. Practice and
+scenario shots share `DevelopmentHumanoidHitMesh`, which samples the same surface
+as the renderer, including crouch/stride/yaw and recoil transforms. Skin weights
+classify head, body and limb damage at the contact point. The mesh is baked on a
+shot query after the pose changes; repeated queries reuse it. There is no wait
+for a physics tick and no upright hitbox fallback. The mannequin importer keeps
+the mesh readable in standalone builds. Root motion, autonomous animation
+playback and visual colliders remain disabled. Position-only replay still does
+not reconstruct the exact recorded skeletal pose.
+
+`TargetSurfaceTests` compares hit/miss results with an independent mesh-collider
+reference over standing, crouched, side/back-facing and stride poses, checks
+damage/cover handling, and writes visual-versus-hit-surface comparisons under
+`test-results/hitboxes/`. The left panel is the rendered model; the right is the
+shot surface (amber head, teal body, purple limbs).
 
 `DevelopmentView` exposes `Training Room` settings in the Inspector: dimensions,
 surface colors, ambient fill, ceiling bounce and daylight direction/intensity.

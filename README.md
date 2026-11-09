@@ -70,6 +70,11 @@ At the top of [this GitHub page](https://github.com/AceeEcho/DESS-ELTS-Research-
 
 **Tracking PC (optional).** To set up the room, screen and Vive trackers, double-click **START-CALIBRATION.cmd**. The first time, it offers to install the live-tracking tools (answer **Y**); manual preview works without them. This needs no Unity. See [Calibration workspace](#-calibration-workspace).
 
+**VIVE gun trigger.** A configured gun tracker can now fire in tutorial practice,
+start a scenario, and fire scored shots. The calibration workspace shows its live
+button state above the 3D view. See [trigger setup](docs/modules/vive-trigger.md).
+Aiming still uses the main app's existing desktop/synthetic pose source.
+
 **Getting a newer version.** Download and extract the new ZIP into a new folder, then double-click **START-ELTS.cmd** in it. Recordings are not carried over automatically, so keep your old folder and its **collection data** until you have exported what you need.
 
 ### Which file do I double-click?

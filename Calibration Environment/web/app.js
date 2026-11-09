@@ -1,5 +1,6 @@
 import { METRES_PER_INCH, distanceFields, readDistance } from "./distance-fields.js";
 import { CalibrationScene } from "./scene.js";
+import { triggerIndicator } from "./trigger-indicator.js";
 import { installHeadCalibration } from "./head-calibration-ui.js";
 import {
     vec,
@@ -896,6 +897,10 @@ function animate(now) {
     resizePreview();
     scene.draw();
     if (now - lastMonitor > 100) {
+        const trigger = triggerIndicator(source, config.weapon.serial, currentFrame(), config.view.staleMs);
+        $("trigger-indicator").dataset.state = trigger.state;
+        $("trigger-state").textContent = trigger.text;
+        $("trigger-detail").textContent = trigger.detail;
         updateMonitor(result);
         lastMonitor = now;
     }

@@ -53,7 +53,7 @@ namespace Elts.Operator
     }
 
     /// <summary>One immutable fixed-target pose. The scenario owns offsets and crouch height;
-    /// yaw and the sampled stride are presentation, using the existing approximate hit anatomy.</summary>
+    /// yaw and the sampled stride drive both the presentation and its shot surface.</summary>
     public readonly struct DevelopmentFixedPose
     {
         public readonly string Name;

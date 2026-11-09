@@ -19,6 +19,25 @@
 * {
     box-sizing: border-box;
 }
+.trigger-indicator {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 18px;
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-left: 5px solid var(--muted);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+.trigger-indicator strong { font-size: 16px; }
+.trigger-indicator span { color: var(--muted); overflow-wrap: anywhere; }
+.trigger-indicator[data-state="pressed"] {
+    border-left-color: var(--accent);
+    background: var(--accent-soft);
+}
+.trigger-indicator[data-state="unavailable"] strong { color: var(--warning); }
+.screen-only .trigger-indicator { display: none; }
 body {
     margin: 0;
     font-size: 14px;
@@ -718,6 +737,14 @@ dialog .primary {
     .pose-card .reference-state {
         min-height: 18px;
     }
+}
+@media (max-width: 760px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .workspace { grid-row: 1; padding: 14px; }
+    .inspector { min-height: 0; border-right: 0; }
+    .app-header, .status-bar, .view-buttons { flex-wrap: wrap; }
+    .app-header { gap: 12px; }
+    .pose-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {
     * {

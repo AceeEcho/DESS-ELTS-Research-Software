@@ -195,7 +195,7 @@ namespace Elts.Operator.Tests
                 var config=view.Configuration;var screen=config.Rig.Display;
                 var eye=screen.Origin+screen.U*(screen.Width*.5)+screen.V*(screen.Height*.5)-screen.Normal*2;
                 var head=new RigidPose(eye-config.Rig.HeadEyeOffsetM,Quaterniond.Identity);
-                interaction=new TutorialInteraction(config,clock,new SessionEventSequence(),events.Add,20,"Practice",1,15);
+                interaction=new TutorialInteraction(config,clock,new SessionEventSequence(),events.Add,20,"Practice",1,15,hitGeometry:view);
                 string originalId=interaction.Positions.Keys.Single();
                 var center=interaction.Positions.Values.Single();
                 var bodyPoint=HumanoidGeometry.Parts(center,config.Rig.VirtualFloorY).First(part=>part.Region=="body").Center;
@@ -244,6 +244,8 @@ namespace Elts.Operator.Tests
                 Assert.That(interaction.Positions.Keys.Single(),Is.Not.EqualTo(originalId));
                 Assert.That(events.Count(item=>item.EventType=="PracticeTargetHit"),Is.EqualTo(2));
                 Assert.That(events.Count(item=>item.EventType=="PracticeTargetDestroyed"),Is.EqualTo(1));
+                Assert.That(events.Where(item=>item.EventType=="PracticeShotFired")
+                    .All(item=>item.Fields.Any(field=>field.Name=="hitGeometry" && field.Text==view.Version)),Is.True);
                 Assert.That(events.Any(item=>item.EventType=="ShotFired" || item.EventType=="TargetHit"),Is.False,"practice cannot write scored hit events");
             }
             finally

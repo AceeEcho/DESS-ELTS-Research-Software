@@ -18,8 +18,8 @@ namespace Elts.Operator
         [Min(1f)] public float turnDegreesPerSecond = 420f;
     }
 
-    /// <summary>Sourced CC0 training mannequin. Presentation only: scenario geometry
-    /// remains authoritative for hit regions, movement and recorded target positions.</summary>
+    /// <summary>Sourced CC0 training mannequin. Scenario roots own movement and
+    /// recorded positions; the sampled skin also supplies the shot surface.</summary>
     internal sealed class DevelopmentHumanoidVisual : MonoBehaviour
     {
         private const string ModelResource = "ELTS/Mannequin/UAL1_Standard";
@@ -38,7 +38,16 @@ namespace Elts.Operator
         private Quaternion restingRotation;
         private float hitStarted=-100;
         private Vector3 flinchAxis;
+        private DevelopmentHumanoidHitMesh? hitMesh;
         internal Transform ImpactAnchor=>model.transform;
+        internal bool Raycast(Ray3d ray,out HumanoidSurfaceHit hit)
+        {
+            hit=default;
+            if(Dying || !gameObject.activeInHierarchy)return false;
+            hitMesh??=new DevelopmentHumanoidHitMesh(model);
+            return hitMesh.Raycast(ray,out hit);
+        }
+        private void OnDestroy() { hitMesh?.Dispose(); }
         public bool Dying { get; private set; }
         public const float DeathSeconds=.9f;
 
@@ -130,8 +139,7 @@ namespace Elts.Operator
 
         private void FitStandingModel()
         {
-            // Fit in virtual metres to the existing anatomy, rather than changing
-            // hit scoring to match the source asset's export units.
+            // Preserve the original virtual height regardless of FBX export units.
             var bounds = new Bounds();
             bool first = true;
             foreach (var renderer in model.GetComponentsInChildren<SkinnedMeshRenderer>())
@@ -216,7 +224,7 @@ namespace Elts.Operator
             animationPlayer.Sample();
             transform.position = position;
             transform.localScale = Vector3.one;
-            // Only the visual child turns. Logged target coordinates and hit geometry stay authoritative.
+            // Turning the child also turns its hit surface without changing logged roots.
             model.transform.localRotation = Quaternion.Euler(0, facingDegrees, 0);
             model.transform.localPosition = fittedPosition;
             model.transform.localScale = fittedScale;
@@ -225,6 +233,7 @@ namespace Elts.Operator
             float correction = standingFootY + (float)HumanoidGeometry.StandingCenterAt(floorY) - position.y - LowestFootY();
             model.transform.localPosition += Vector3.up * correction;
             restingPosition=model.transform.localPosition;restingRotation=model.transform.localRotation;
+            hitMesh?.Invalidate();
         }
 
         public void ReactToHit(DevelopmentTargetImpact impact)
@@ -238,8 +247,8 @@ namespace Elts.Operator
         private void LateUpdate()
         {
             if(model==null)return;
-            // Apply reaction only to the rendered child. The scenario's anatomy,
-            // root position and recorded target lifecycle remain authoritative.
+            // Recoil transforms the rendered child and its hit surface together.
+            // The recorded root and target lifecycle remain scenario-owned.
             float age=Time.unscaledTime-hitStarted;
             model.transform.localPosition=restingPosition;model.transform.localRotation=restingRotation;
             if(Dying)

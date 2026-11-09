@@ -24,6 +24,7 @@ namespace Elts.Operator
         private readonly ISharedClock clock;
         private readonly SessionEngine engine;
         private readonly SessionRecordingAdapter recording;
+        private readonly IHumanoidHitGeometry? hitGeometry;
         private HumanoidShotModel? shots;
         private ManualMagazine magazine;
         private readonly ISessionEventSequence eventSequence;
@@ -64,9 +65,10 @@ namespace Elts.Operator
 
         public DevelopmentSessionScenario(DevelopmentConfiguration config, ISharedClock clock,
             SessionEngine engine, SessionRecordingAdapter recording, ISessionEventSequence sequence,
-            DevelopmentGameSettings? gameSettings=null)
+            DevelopmentGameSettings? gameSettings=null,IHumanoidHitGeometry? hitGeometry=null)
         {
             this.config=config;this.clock=clock;this.engine=engine;this.recording=recording;
+            this.hitGeometry=hitGeometry;
             this.gameSettings=(gameSettings??new DevelopmentGameSettings()).Copy();
             this.gameSettings.ApplyPopulation(config.Scenario);this.gameSettings.Validate();
             magazine=new ManualMagazine(MagazineCapacity);
@@ -224,7 +226,7 @@ namespace Elts.Operator
             population=new LibraryTargetPopulation(gameSettings,movingBlock,config.Scenario.TargetRadiusM);
             var covers=DevelopmentScenarioLayout.Covers(center,gameSettings,config.Rig.VirtualFloorY);
             shots=new HumanoidShotModel(eventSequence,TimeSpan.FromSeconds(config.Runtime.TriggerLockoutSeconds),
-                covers,config.Rig.VirtualFloorY);
+                covers,config.Rig.VirtualFloorY,hitGeometry);
             var layoutFields=new List<LogField> {
                 LogField.String("blockId",blockId!),LogField.String("layoutVersion",DevelopmentScenarioLayout.Version),
                 LogField.NumberValue("screenBottomHeightAboveFloorM",config.Rig.ScreenBottomHeightAboveFloorM),

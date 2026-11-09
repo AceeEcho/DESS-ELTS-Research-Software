@@ -41,15 +41,19 @@ namespace Elts.Operator
 
         private void RecordInputSource()
         {
+            string configuredTriggerSerial=view.Configuration.Machine.WeaponTriggerSerial;
+            lastViveObservation="";
             string identity=usingDesktopInput?DesktopTrackingSource.SourceIdentity:FixtureIdentity;
             if(!recording!.TryRecord(new SessionEvent(sequence!.Next(),clock!.Now,"DevelopmentInputSource",new[] {
                 LogField.String("source",identity),LogField.Boolean("synthetic",true),
                 LogField.String("coordinateFrame","room-metres"),LogField.String("triggerEdge","falling"),
+                LogField.String("physicalTriggerSource",String.IsNullOrEmpty(configuredTriggerSerial)?"disabled":ViveTriggerReader.SourceIdentity),
+                LogField.String("weaponTriggerSerial",String.IsNullOrEmpty(configuredTriggerSerial)?"none":configuredTriggerSerial),
                 LogField.String("desktopMuzzlePolicy",usingDesktopInput?"coincident-with-virtual-eye":"automated-fixture")})))
                 throw new InvalidOperationException("Input-source provenance could not be recorded.");
         }
 
-        public void SubmitDesktopTrigger()
+        public void SubmitDesktopTrigger(string source = DesktopTrackingSource.SourceIdentity, string edge = "falling", string trackerSerial = "")
         {
             if(!CanDesktopFire || (!SeparateAdministrator && desktop?.IsOpen!=true))return;
             try
@@ -62,9 +66,9 @@ namespace Elts.Operator
                 if(!pair.Head.HasValidPose || !pair.Weapon.HasValidPose)
                 { desktopMessage="Shot ignored: desktop tracking is unavailable.";return; }
                 if(!recording!.TryRecord(new SessionEvent(sequence!.Next(),pair.Timestamp,"InputTrigger",new[] {
-                    LogField.String("source",DesktopTrackingSource.SourceIdentity),
+                    LogField.String("source",source),LogField.String("trackerSerial",String.IsNullOrEmpty(trackerSerial)?"none":trackerSerial),
                     LogField.String("blockId",engine!.CurrentBlockId!),
-                    LogField.NumberValue("acquisitionSequence",pair.Sequence),LogField.String("edge","falling")})))
+                    LogField.NumberValue("acquisitionSequence",pair.Sequence),LogField.String("edge",edge)})))
                 { engine!.Abort("Desktop trigger provenance could not be recorded.");return; }
                 scenario!.Fire(pair.Weapon.Pose,pair.Head.Pose,pair.Timestamp);
                 desktopMessage=scenario.LastShot;

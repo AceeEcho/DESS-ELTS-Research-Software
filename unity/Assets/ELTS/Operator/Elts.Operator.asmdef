@@ -1,6 +1,7 @@
 {
   "name": "Elts.Operator",
   "references": [
+    "Valve.OpenVR",
     "Elts.Config",
     "Elts.Geometry",
     "Elts.Rendering",

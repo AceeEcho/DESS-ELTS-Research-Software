@@ -1,4 +1,5 @@
 import * as T from "./vendor/build/three.module.js";
+import { ReferenceRoom } from "./reference-room.js";
 import { OrbitControls } from "./vendor/examples/jsm/controls/OrbitControls.js";
 import {
     vec,
@@ -234,9 +235,15 @@ export class CalibrationScene {
             new T.LineBasicMaterial({ color: 0x668485 }),
         );
         this.virtualRoom.add(this.virtualFloor);
-        box(this.virtualRoom, [0.22, 2, 0.22], [-1.25, 1, -2], 0x6aa3a5);
-        box(this.virtualRoom, [0.5, 0.5, 0.5], [0.55, 0.25, -1.4], 0xc69c63);
-        box(this.virtualRoom, [0.7, 1.1, 0.7], [-0.6, 0.55, -3.7], 0x6e8eae);
+        this.virtualFloor.position.y = 0.004;
+        this.referenceRoom = new ReferenceRoom(this.virtualRoom, this.virtualRoot);
+        this.referenceProps = [
+            box(this.virtualRoom, [0.22, 2, 0.22], [-1.25, 1, -2], 0x6aa3a5),
+            box(this.virtualRoom, [0.5, 0.5, 0.5], [0.55, 0.25, -1.4], 0xc69c63),
+            box(this.virtualRoom, [0.7, 1.1, 0.7], [-0.6, 0.55, -3.7], 0x6e8eae),
+        ];
+        for (const object of this.referenceProps)
+            this.referenceRoom.addContactShadow(this.virtualRoom, object);
         this.target = new T.Group();
         this.virtualRoot.add(this.target);
         for (let i = 0; i < 3; i++) {
@@ -250,6 +257,8 @@ export class CalibrationScene {
         }
         box(this.target, [0.025, 0.12, 0.02], [0, 0, 0], 0xe6b963);
         box(this.target, [0.12, 0.025, 0.02], [0, 0, 0], 0xe6b963);
+        this.targetStand = box(this.virtual, [0.025, 1, 0.025], [0, 0, 0], 0x8f9b98);
+        this.targetFoot = box(this.virtual, [0.4, 0.025, 0.3], [0, 0.0125, 0], 0x8f9b98);
         this.virtualHit = new T.Mesh(
             new T.SphereGeometry(0.025),
             new T.MeshBasicMaterial({ color: 0xf6b85c }),
@@ -352,7 +361,14 @@ export class CalibrationScene {
         // even when the display itself is pitched or rolled.
         const screenNormal = vec([0, 0, 1]).applyQuaternion(sp.q);
         this.virtualRoom.rotation.y = Math.atan2(screenNormal.x, screenNormal.z);
+        this.referenceRoom.configure(config);
         this.target.position.set(0, 0, -config.view.virtualDepth);
+        const targetPosition = point(sp, [0, 0, -config.view.virtualDepth]);
+        const standHeight = Math.max(0, targetPosition.y - 0.65);
+        this.targetStand.visible = this.targetFoot.visible = standHeight > 0;
+        this.targetStand.scale.y = standHeight;
+        this.targetStand.position.set(targetPosition.x, standHeight / 2, targetPosition.z);
+        this.targetFoot.position.set(targetPosition.x, 0.0125, targetPosition.z);
     }
 
     update(head, weapon) {

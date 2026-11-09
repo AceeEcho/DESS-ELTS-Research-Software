@@ -286,6 +286,7 @@ namespace Elts.Config
         public int OperatorDisplayIndex { get; }
         public string DataRoot { get; }
         public string EltsEndpoint { get; }
+        public string WeaponTriggerSerial { get; }
         /// <summary>
         /// Keep recordings in the full project clone across Editor runs and rebuilt players.
         /// A standalone copied player uses its own installation directory instead.
@@ -304,6 +305,7 @@ namespace Elts.Config
         }
         internal MachineConfiguration(JObject value)
         {
+            WeaponTriggerSerial = (string)value["weaponTriggerSerial"] ?? "";
             ParticipantDisplayIndex = (int)value["participantDisplayIndex"];
             OperatorDisplayIndex = (int)value["operatorDisplayIndex"];
             if (ParticipantDisplayIndex == OperatorDisplayIndex) JsonContract.Fail("display indices must differ");

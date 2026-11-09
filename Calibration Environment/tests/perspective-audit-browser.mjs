@@ -43,8 +43,10 @@ try {
             }
             scene.virtualFloor.geometry.computeBoundingBox();
             const bounds = scene.virtualFloor.geometry.boundingBox;
-            const objectBottoms = scene.virtualRoom.children.slice(1).map(object => new Box3().setFromObject(object).min.y);
-            results.push({ width: bounds.max.x - bounds.min.x, depth: -bounds.min.z, front: bounds.max.z, maxFloorHeight, objectBottoms });
+            const objectBottoms = scene.referenceProps.map(object => new Box3().setFromObject(object).min.y);
+            const floor = scene.referenceRoom.floor;
+            const floorTop = new Box3().setFromObject(floor).max.y;
+            results.push({ floorTop, floorWidth: floor.scale.x, floorDepth: floor.scale.z, width: bounds.max.x - bounds.min.x, depth: -bounds.min.z, front: bounds.max.z, maxFloorHeight, objectBottoms });
         }
         scene.controls.dispose();
         scene.renderer.dispose();
@@ -56,7 +58,10 @@ try {
         assert.ok(Math.abs(result.width - dimensions[0]) < 1e-5);
         assert.ok(Math.abs(result.depth - dimensions[1]) < 1e-5);
         assert.equal(result.front, 0);
-        assert.equal(result.maxFloorHeight, 0);
+        assert.ok(Math.abs(result.floorTop) < 1e-6);
+        assert.equal(result.floorWidth, dimensions[0]);
+        assert.equal(result.floorDepth, dimensions[1]);
+        assert.ok(Math.abs(result.maxFloorHeight - 0.004) < 1e-8);
         result.objectBottoms.forEach(y => assert.ok(Math.abs(y) < 1e-6));
     }
     assert.deepEqual(errors, []);

@@ -46,6 +46,12 @@ change SteamVR's tracking solution or stand in for tracking-origin registration.
 
 ## Head and weapon offsets
 
+**Gun trigger:** the indicator immediately above the 3D view shows pressed,
+released, or unavailable, plus observed press/release counts. In live mode it
+uses the tracker selected under **Weapon**. In SteamVR, that tracker needs
+**Held in hand → Left Hand or Right Hand** for button input. Unavailable or stale
+input is never displayed as released. See [main-app trigger setup](../docs/modules/vive-trigger.md).
+
 Each tracked object has independent three-axis position and three-axis rotation
 offsets. Profiles store distances in **metres** and angles in **degrees**:
 
@@ -192,7 +198,13 @@ hardware timing. SteamVR/driver filtering is outside this app's control.
 
 ## Perspective testing
 
-The lower preview shows a simple 3D scene behind the physical screen. It uses an
+The lower preview shows a reference room behind the physical screen, with a
+solid floor, walls/baseboards, an open doorway, and contact shadows under the
+floor-standing objects. Floor-depth posts mark 1, 2, and 4 metres (also labeled
+in feet), and the screen-plane reticle provides a zero-depth reference. Room
+width, depth, and height size this scene. The target has a floor stand.
+This scene uses one-to-one eye movement so its spatial cues can be evaluated
+without a movement-gain adjustment. It uses an
 off-axis frustum derived from the measured screen rectangle and configured eye
 position. The virtual floor uses **Room width** and **Room depth**, extends
 behind the screen, and stays at room Y=0. Floor-standing objects rest on that

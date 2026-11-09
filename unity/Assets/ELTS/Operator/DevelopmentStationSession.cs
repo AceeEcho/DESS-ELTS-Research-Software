@@ -259,21 +259,21 @@ namespace Elts.Operator
             if(desktopSource==null)view.SetSessionFrame(headPose,weaponPose,EmptyDesktopTargets);
         }
 
-        public bool StationParticipantTrigger()
+        public bool StationParticipantTrigger(string source = Elts.Tracking.DesktopTrackingSource.SourceIdentity, string edge = "falling", string trackerSerial = "")
         {
             if(IsBusy || closing || engine==null)return false;
             if(TutorialCanInteract)
             {
-                try{return SubmitTutorialTrigger();}
+                try{return SubmitTutorialTrigger(source,edge,trackerSerial);}
                 catch(Exception error){engine.Abort("Tutorial input failure: "+error.Message);return false;}
             }
             if(TestArmed && engine.State==SessionState.BlockReady)
-                return TryStartStationBlock(automatic: false);
+                return TryStartStationBlock(false,source,edge,trackerSerial);
             if(engine.State!=SessionState.BlockRunning)return false;
-            int before=StationShots;SubmitDesktopTrigger();return StationShots>before;
+            int before=StationShots;SubmitDesktopTrigger(source,edge,trackerSerial);return StationShots>before;
         }
 
-        private bool TryStartStationBlock(bool automatic)
+        private bool TryStartStationBlock(bool automatic, string source = Elts.Tracking.DesktopTrackingSource.SourceIdentity, string edge = "falling", string trackerSerial = "")
         {
             if(engine?.State!=SessionState.BlockReady || IsBusy || closing)return false;
             // Every entry path, including early clicks and delayed administrator
@@ -289,7 +289,8 @@ namespace Elts.Operator
                 LogField.String("blockId",engine.CurrentBlockId!),
                 LogField.NumberValue("acquisitionSequence",pair.Sequence),
                 LogField.NumberValue("observedMonotonicTicks",pair.Timestamp.Ticks),
-                LogField.String("edge",automatic ? "automatic" : "falling")})))
+                LogField.String("source",automatic?"automatic":source),LogField.String("trackerSerial",automatic || String.IsNullOrEmpty(trackerSerial)?"none":trackerSerial),
+                LogField.String("edge",automatic ? "automatic" : edge)})))
             {engine.Abort("Scenario start could not be recorded.");return false;}
             engine.StartBlock();
             if(engine.State!=SessionState.BlockRunning)return false;

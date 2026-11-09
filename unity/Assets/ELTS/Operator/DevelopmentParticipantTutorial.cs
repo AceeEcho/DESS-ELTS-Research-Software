@@ -313,7 +313,7 @@ namespace Elts.Operator
             if(tutorialInteraction!=null && (!live || tutorialInteraction.Scope!=scope))EndTutorialInteraction();
             if(live && tutorialInteraction==null)
                 tutorialInteraction=new TutorialInteraction(view.Configuration,clock!,sequence!,RecordTutorialEvent,
-                    StationMagazineCapacity,scope,++tutorialPracticeAttempt,tutorialSettings.targetDistanceM,tutorialSettings.targetRespawnSeconds);
+                    StationMagazineCapacity,scope,++tutorialPracticeAttempt,tutorialSettings.targetDistanceM,tutorialSettings.targetRespawnSeconds,view);
         }
         private void EndTutorialInteraction()
         { try{tutorialInteraction?.End();}finally{tutorialInteraction=null;} }
@@ -323,12 +323,13 @@ namespace Elts.Operator
             var pair=acquisition?.Snapshot;
             view.SetSessionFrame(pair?.Head.Pose,pair?.Weapon.Pose,tutorialInteraction.Positions,0,tutorialInteraction.FixedPoses);
         }
-        private bool SubmitTutorialTrigger()
+        private bool SubmitTutorialTrigger(string source, string edge, string trackerSerial)
         {
             if(!TutorialCanInteract || acquisition==null || !acquisition.TryCaptureForTrigger(out var pair) || !pair.IsValid)return false;
             RecordTutorialEvent(new SessionEvent(sequence!.Next(),pair.Timestamp,"TutorialInputTrigger",new[]{
                 LogField.String("blockId",tutorialInteraction!.InteractionId),LogField.String("scope",tutorialInteraction.Scope),
-                LogField.NumberValue("acquisitionSequence",pair.Sequence),LogField.Boolean("scored",false),LogField.String("edge","falling")}));
+                LogField.String("source",source),LogField.String("trackerSerial",String.IsNullOrEmpty(trackerSerial)?"none":trackerSerial),
+                LogField.NumberValue("acquisitionSequence",pair.Sequence),LogField.Boolean("scored",false),LogField.String("edge",edge)}));
             bool fired=tutorialInteraction.Fire(pair.Weapon.Pose!.Value,pair.Head.Pose!.Value,pair.Timestamp);
             if(tutorialInteraction.LastImpact.HasValue)view.ShowTargetImpact(tutorialInteraction.LastImpact.Value);
             if(fired)tutorial.ObserveFire();

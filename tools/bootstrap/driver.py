@@ -313,6 +313,7 @@ def run(args) -> tuple[dict, Path]:
                     # tools that need arguments or longer execution budgets.
                     runtime_checks = (
                         ("TrackingChecks", " tracking checks"),
+                        ("TriggerChecks", "PASS: trigger hold"),
                         ("SyntheticTrackingChecks", " synthetic tracking checks"),
                         ("DesktopTrackingChecks", " desktop tracking checks"),
                         ("Dev03ReviewChecks", "DEV-03 review regressions"),

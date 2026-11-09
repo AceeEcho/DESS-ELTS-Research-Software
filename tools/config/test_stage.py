@@ -22,6 +22,22 @@ def fixture_root(parent: Path) -> Path:
     return root.resolve()
 
 class StageTests(unittest.TestCase):
+    def test_trigger_binding_from_profile_and_machine_override(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = fixture_root(Path(temp))
+            profile = json.loads((ROOT / "Calibration Environment/defaults.json").read_text())
+            profile["weapon"]["serial"] = "LHR-GUN"
+            directory = root / "Calibration Environment/profiles"
+            directory.mkdir(parents=True)
+            (directory / "Trigger.json").write_text(json.dumps(profile))
+            effective, _ = build_bundle(root, use_calibration_profile=True)
+            self.assertEqual(effective["machine"]["weaponTriggerSerial"], "LHR-GUN")
+            local = json.loads((root / "config/local.example.json").read_text())
+            local["weaponTriggerSerial"] = "LHR-OVERRIDE"
+            (root / "config/local.json").write_text(json.dumps(local))
+            effective, _ = build_bundle(root, use_calibration_profile=True)
+            self.assertEqual(effective["machine"]["weaponTriggerSerial"], "LHR-OVERRIDE")
+
     def test_latest_calibration_profile_stages_converted_synthetic_geometry(self):
         with tempfile.TemporaryDirectory() as temp:
             root = fixture_root(Path(temp))

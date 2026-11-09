@@ -15,10 +15,20 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 import server
-from tracking import checked_matrix, TrackingBridge
+from tracking import checked_matrix, TrackingBridge, TriggerState
 
 
 class ConfigTests(unittest.TestCase):
+    def test_trigger_hold_and_disconnect(self):
+        trigger = TriggerState()
+        self.assertEqual(trigger.observe(True, True)["presses"], 0)
+        trigger.observe(True, False)
+        self.assertEqual(trigger.observe(True, True)["presses"], 1)
+        self.assertEqual(trigger.observe(True, True)["presses"], 1)
+        self.assertIsNone(trigger.observe(False)["pressed"])
+        self.assertEqual(trigger.observe(True, True)["presses"], 1)
+        self.assertEqual(trigger.observe(True, False)["releases"], 2)
+
     def test_default_and_reference_round_trip(self):
         config = copy.deepcopy(server.DEFAULTS)
         config['head']['reference'] = {'quaternion': [0, 0, 0, 1], 'source': 'manual', 'serial': ''}
@@ -47,10 +57,13 @@ class ConfigTests(unittest.TestCase):
     def test_stalled_native_poll_invalidates_pose(self):
         bridge=TrackingBridge()
         try:
-            bridge._publish('connected','test',[{'valid':True,'matrix':[[1,0,0,0],[0,1,0,0],[0,0,1,0]]}])
+            bridge._publish('connected','test',[{'valid':True,'matrix':[[1,0,0,0],[0,1,0,0],[0,0,1,0]],
+                                                'trigger': {'available': True, 'pressed': True}},
+                                               {'valid': True, 'trigger': None}])
             bridge.sample_time=time.monotonic()-1
             value=bridge.snapshot()['devices'][0]
             self.assertFalse(value['valid']);self.assertIsNone(value['matrix'])
+            self.assertFalse(value['trigger']['available']);self.assertIsNone(value['trigger']['pressed'])
         finally:bridge.close()
 
 

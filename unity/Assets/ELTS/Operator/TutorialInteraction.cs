@@ -38,7 +38,8 @@ namespace Elts.Operator
         public string Feedback { get; private set; }="";
 
         public TutorialInteraction(DevelopmentConfiguration config,ISharedClock clock,ISessionEventSequence sequence,
-            Action<SessionEvent> record,int capacity,string scope,int attempt,double distanceM,double respawnSeconds=1.1)
+            Action<SessionEvent> record,int capacity,string scope,int attempt,double distanceM,double respawnSeconds=1.1,
+            IHumanoidHitGeometry? hitGeometry=null)
         {
             this.config=config;this.clock=clock;this.sequence=sequence;this.record=record;Scope=scope;this.respawnSeconds=respawnSeconds;
             InteractionId=scope.ToLowerInvariant()+"-"+attempt.ToString("D2");
@@ -47,7 +48,7 @@ namespace Elts.Operator
             var middle=screen.Origin+screen.U*(screen.Width*.5)+screen.V*(screen.Height*.5)+screen.Normal*distanceM;
             center=new Vector3d(middle.X,HumanoidGeometry.StandingCenterAt(config.Rig.VirtualFloorY),middle.Z);
             shots=new HumanoidShotModel(sequence,TimeSpan.FromSeconds(config.Runtime.TriggerLockoutSeconds),
-                Array.Empty<HumanoidCover>(),config.Rig.VirtualFloorY);
+                Array.Empty<HumanoidCover>(),config.Rig.VirtualFloorY,hitGeometry);
             Record("Started",new[]{LogField.NumberValue("magazineCapacity",capacity)});
             Spawn();
         }

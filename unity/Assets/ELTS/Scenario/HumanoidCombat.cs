@@ -21,8 +21,8 @@ namespace Elts.Scenario
         {if(Remaining==Capacity)return false;Remaining=Capacity;return true;}
     }
 
-    /// <summary>One shared synthetic anatomy in metres. The render model uses these
-    /// dimensions too, so visible body regions agree with the recorded hit test.</summary>
+    /// <summary>Legacy analytic anatomy in metres, retained for standalone fixtures
+    /// and mannequin height fitting. The application uses the posed mesh for hits.</summary>
     public static class HumanoidGeometry
     {
         public const double StandingCenterY=-0.15, CrouchedCenterY=-0.45;
@@ -75,6 +75,27 @@ namespace Elts.Scenario
         {Id=id;Center=center;HalfSize=halfSize;}
     }
 
+    /// <summary>A surface intersection measured along the unit world-space bore ray.</summary>
+    public readonly struct HumanoidSurfaceHit
+    {
+        public readonly string Region;
+        public readonly double Distance;
+        public HumanoidSurfaceHit(string region, double distance)
+        {
+            if(region!="head" && region!="body" && region!="limb")throw new ArgumentException("Unknown hit region.");
+            if(distance<=0 || Double.IsNaN(distance) || Double.IsInfinity(distance))throw new ArgumentOutOfRangeException(nameof(distance));
+            Region=region;Distance=distance;
+        }
+    }
+
+    /// <summary>Supplies the visible mannequin's current surface without coupling
+    /// the scoring/recording code to Unity or its physics update schedule.</summary>
+    public interface IHumanoidHitGeometry
+    {
+        string Version {get;}
+        bool Raycast(Ray3d ray, string targetId, out HumanoidSurfaceHit hit);
+    }
+
     /// <summary>Three-health development shot model. One falling trigger edge emits
     /// one ShotFired event. Cover wins when it is nearer than every body part.</summary>
     public sealed class HumanoidShotModel : IShotModel
@@ -83,6 +104,7 @@ namespace Elts.Scenario
         private readonly TimeSpan minimumInterval;
         private readonly IReadOnlyList<HumanoidCover> covers;
         private readonly double floorY;
+        private readonly IHumanoidHitGeometry? geometry;
         private MonotonicTimestamp? previous;
         public bool Accepted {get;private set;}
         public string Outcome {get;private set;}="";
@@ -93,8 +115,9 @@ namespace Elts.Scenario
         public Vector3d? ImpactPoint {get;private set;}
         /// <summary>Set by the development weapon immediately before dispatch.</summary>
         public int MagazineBefore {get;set;}
-        public HumanoidShotModel(ISessionEventSequence sequence,TimeSpan minimumInterval,IReadOnlyList<HumanoidCover> covers,double floorY=HumanoidGeometry.DefaultFloorY)
-        {this.sequence=sequence;this.minimumInterval=minimumInterval;this.covers=covers;this.floorY=floorY;}
+        public HumanoidShotModel(ISessionEventSequence sequence,TimeSpan minimumInterval,IReadOnlyList<HumanoidCover> covers,
+            double floorY=HumanoidGeometry.DefaultFloorY,IHumanoidHitGeometry? geometry=null)
+        {this.sequence=sequence;this.minimumInterval=minimumInterval;this.covers=covers;this.floorY=floorY;this.geometry=geometry;}
 
         public IReadOnlyList<SessionEvent> Fire(ShotContext shot,string blockId,IEnumerable<TargetEntity> targets,Func<TargetEntity,bool> isVisible)
         {
@@ -110,9 +133,17 @@ namespace Elts.Scenario
             {
                 if(target.State!=TargetState.Active || !isVisible(target))continue;
                 visible.Add(target);
-                foreach(var part in HumanoidGeometry.Parts(target.Position,floorY))
-                    if(RayEllipsoid(shot.BoreRay,part.Center,part.Radii,out double distance) && distance<nearest)
-                    {nearest=distance;hit=target;region=part.Region;}
+                if(geometry!=null)
+                {
+                    // A mesh miss must stay a miss; never fall back to the old
+                    // upright volumes when a limb has moved out of the way.
+                    if(geometry.Raycast(shot.BoreRay,target.Id,out var surface) && surface.Distance<nearest)
+                    {nearest=surface.Distance;hit=target;region=surface.Region;}
+                }
+                else
+                    foreach(var part in HumanoidGeometry.Parts(target.Position,floorY))
+                        if(RayEllipsoid(shot.BoreRay,part.Center,part.Radii,out double distance) && distance<nearest)
+                        {nearest=distance;hit=target;region=part.Region;}
             }
             string coverId="";double coverDistance=Double.PositiveInfinity;
             foreach(var cover in covers)
@@ -123,6 +154,7 @@ namespace Elts.Scenario
             var fields=AimGeometry.Fields(shot.BoreRay,visible,hit);
             fields.Add(LogField.String("blockId",blockId));
             fields.Add(LogField.String("outcome",Outcome));
+            fields.Add(LogField.String("hitGeometry",geometry?.Version??"analytic-humanoid-v1"));
             if(MagazineBefore>0)
             {
                 fields.Add(LogField.NumberValue("magazineBefore",MagazineBefore));
@@ -139,6 +171,9 @@ namespace Elts.Scenario
                 fields.Add(LogField.String("hitRegion",Region));
                 fields.Add(LogField.NumberValue("damage",Damage));
                 fields.Add(LogField.NumberValue("remainingHealth",RemainingHealth));
+                fields.Add(LogField.NumberValue("impactWorldX",ImpactPoint.Value.X));
+                fields.Add(LogField.NumberValue("impactWorldY",ImpactPoint.Value.Y));
+                fields.Add(LogField.NumberValue("impactWorldZ",ImpactPoint.Value.Z));
             }
             events.Add(new SessionEvent(sequence.Next(),shot.Timestamp,"ShotFired",fields));
             if(hit!=null)

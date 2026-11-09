@@ -10,7 +10,16 @@ legacy generic target lifetime and spawn interval do not expire or delay library
 targets. A finishing shot records destruction before recording its replacement
 on the shared acquisition clock. Pause and tracking-validity controls still apply.
 
-`SessionEventSequence` is supplied explicitly to the block controller and shot model, preserving one strict session event sequence. `ScenarioBlockController.Fire` refuses trigger observations at or after the deadline. The development `HumanoidShotModel` intersects head, body and limb volumes and tests cover first when it is closer to the shooter. Every accepted shot records outcome, region, damage and remaining health. The target has three health; head/body/limb damage is 3/2/1. `TargetHit` records partial damage and `TargetDestroyed` records the health-zero transition. Empty-magazine attempts and manual reloads are separate events and do not count as shots. The generic `HitscanShotModel` remains for non-humanoid fixtures. `TargetsDestroyedCount` derives the primary score from logged destruction events within the monotonic half-open interval `[BlockStarted, BlockEnded)`; uninterrupted 300-second scoring requirements remain unchanged.
+`SessionEventSequence` is supplied explicitly to the block controller and shot model, preserving one strict session event sequence. `ScenarioBlockController.Fire` refuses trigger observations at or after the deadline. The development `HumanoidShotModel` queries the presented mannequin's posed triangle surface and tests cover first when it is closer to the shooter. Every accepted shot records outcome, region, damage and remaining health. The target has three health; head/body/limb damage is 3/2/1. `TargetHit` records partial damage and `TargetDestroyed` records the health-zero transition. Empty-magazine attempts and manual reloads are separate events and do not count as shots. The generic `HitscanShotModel` remains for non-humanoid fixtures. `TargetsDestroyedCount` derives the primary score from logged destruction events within the monotonic half-open interval `[BlockStarted, BlockEnded)`; uninterrupted 300-second scoring requirements remain unchanged.
+
+Practice and scenarios both inject `DevelopmentView` as `IHumanoidHitGeometry`.
+The shared mesh query follows crouching, yaw, stride and recoil, uses the nearest
+triangle, and classifies damage by the skin's head/torso/limb bone influences at
+the contact point. Empty gaps between limbs stay misses. Removed or dying actors
+cannot leave invisible hit volumes. Accepted shot events identify
+`hitGeometry=posed-mannequin-mesh-v1`; hits also record `impactWorldX/Y/Z` in metres.
+The old analytic anatomy is retained only for standalone numerical fixtures and
+model-height fitting, never as a fallback after an application mesh miss.
 
 `ScenarioBlockController` uses the shared monotonic clock for boundary events.
 The library population is owned by `LibraryTargetPopulation`; generic population
@@ -30,8 +39,8 @@ and frozen mid-stride poses according to station furniture and spawn ordinal.
 Small lateral/depth offsets vary the authored positions; eight facing angles include side-on
 and turned-away dummies. Every fixed skeleton holds its sampled pose as session
 time advances. Crouch height and offsets affect authoritative positions; yaw and
-stride remain presentation using the existing approximate synthetic hit anatomy,
-not mesh-accurate hitboxes. `DevelopmentGameSettings` exposes offset limits,
+stride affect both the presented skeleton and its shot surface.
+`DevelopmentGameSettings` exposes offset limits,
 peek crouch fraction and the yaw list. Per-target assignment events record the
 pose version, name, crouch, yaw, clip phase, stride flag and offsets. The current
 position-only replay viewer does not reconstruct these visual pose fields.
@@ -90,7 +99,8 @@ and `initialRouteAgeSeconds` offset. Moving targets record
 starts (immediately for the opening population, whose offset skips the entry).
 Actual target positions continue to be logged on the acquisition clock.
 Pause freezes choreography without stopping acquisition. Character animation
-follows those positions and cannot move target roots or change scoring.
+follows those positions and cannot move target roots; its posed surface determines
+where a shot contacts the target. Damage and lifecycle rules stay in the shot model.
 
 This is synthetic development choreography, not physical validation or an
 approved study-motion decision. `DevelopmentScenarioAdapter` retains the legacy

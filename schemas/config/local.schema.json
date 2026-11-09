@@ -10,6 +10,11 @@
     "eltsEndpoint"
   ],
   "properties": {
+    "weaponTriggerSerial": {
+      "type": "string",
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_-]*$"
+    },
     "schemaVersion": {
       "const": 1
     },

@@ -139,7 +139,7 @@ def _validate_local(local: dict) -> None:
         raise ValueError("Participant and operator displays must differ")
 
 
-def _apply_latest_profile(root: Path, rig: dict) -> None:
+def _apply_latest_profile(root: Path, rig: dict, machine: dict) -> None:
     directory = _safe_path(root, "Calibration Environment/profiles")
     profiles = [
         _safe_path(root, path.relative_to(root).as_posix())
@@ -152,6 +152,13 @@ def _apply_latest_profile(root: Path, rig: dict) -> None:
     try:
         profile, raw = _load_json(path)
         apply_profile(rig, profile, sha256_bytes(raw))
+        # An explicit machine binding wins; otherwise use the saved weapon serial.
+        serial = profile["weapon"].get("serial", "")
+        if serial and not machine.get("weaponTriggerSerial"):
+            if serial == profile["head"].get("serial"):
+                raise ValueError("Head and trigger must use different trackers")
+            machine["weaponTriggerSerial"] = serial
+            validate_file(machine, _safe_path(root, "schemas/config/local.schema.json"))
         validate_file(rig, _safe_path(root, "schemas/config/rig.schema.json"))
         _validate_rig(rig)
     except (KeyError, TypeError, ValueError, OverflowError, OSError) as error:
@@ -180,7 +187,7 @@ def build_bundle(root: Path, *, use_calibration_profile: bool = False) -> tuple[
         raw_hashes[key] = sha256_bytes(raw)
     _validate_rig(values["rig"]); _validate_local(values["local"])
     if use_calibration_profile:
-        _apply_latest_profile(root, values["rig"])
+        _apply_latest_profile(root, values["rig"], values["local"])
     effective = {"schemaVersion": 1, "mode": "synthetic", "studyReady": False, "runtime": values["runtime"], "rig": values["rig"], "scenario": values["scenario"], "session": values["session"], "machine": values["local"]}
     schema_bytes = {name: _safe_path(root, "schemas/config/" + name).read_bytes() for name in STAGED_SCHEMAS}
     validate_file(effective, root / "schemas/config/effective.schema.json")

@@ -1,8 +1,24 @@
-"""Read-only OpenVR acquisition. No compositor, trigger, haptic or apparatus commands."""
+"""Read-only OpenVR poses and trigger input. No haptic or apparatus commands."""
 import copy
 import math
 import threading
 import time
+
+
+class TriggerState:
+    """Count observed edges without treating reconnection as a button press."""
+    def __init__(self):
+        self.previous = None
+        self.presses = self.releases = 0
+
+    def observe(self, available, pressed=False):
+        value = bool(pressed) if available else None
+        if self.previous is not None and value is not None and value != self.previous:
+            self.presses += int(value)
+            self.releases += int(not value)
+        self.previous = value
+        return {"available": bool(available), "pressed": value,
+                "presses": self.presses, "releases": self.releases}
 
 
 def checked_matrix(matrix):
@@ -53,15 +69,20 @@ class TrackingBridge:
         if result["ageMs"] is not None and result["ageMs"] > 500:
             for device in result["devices"]:
                 device.update(valid=False, matrix=None, reason="stale")
+                if device.get("trigger") is not None:
+                    device["trigger"].update(available=False, pressed=None)
         return result
 
     def _run(self):
         vr = system = None
+        triggers = {}
         while not self.closed.is_set():
             if not self.enabled.is_set():
                 if system is not None:
                     vr.shutdown()
                     system = None
+                for trigger in triggers.values():
+                    trigger.observe(False)
                 self.closed.wait(0.1)
                 continue
             try:
@@ -72,6 +93,7 @@ class TrackingBridge:
                 # driver filtering is outside this app's control.
                 poses = system.getDeviceToAbsoluteTrackingPose(vr.TrackingUniverseStanding, 0, vr.k_unMaxTrackedDeviceCount)
                 devices = []
+                observed = set()
                 classes = {vr.TrackedDeviceClass_GenericTracker: "tracker", vr.TrackedDeviceClass_Controller: "controller",
                            vr.TrackedDeviceClass_HMD: "headset", vr.TrackedDeviceClass_TrackingReference: "base station"}
                 for index, pose in enumerate(poses):
@@ -90,12 +112,29 @@ class TrackingBridge:
                             matrix = checked_matrix(pose.mDeviceToAbsoluteTracking)
                         except ValueError:
                             valid = False
+                    # Button availability is independent of optical pose validity.
+                    trigger = None
+                    if kind in ("tracker", "controller"):
+                        observed.add(serial)
+                        counter = triggers.setdefault(serial, TriggerState())
+                        try:
+                            available, buttons = system.getControllerState(index)
+                            available = bool(available and pose.bDeviceIsConnected)
+                            trigger = counter.observe(available, bool(buttons.ulButtonPressed & (1 << vr.k_EButton_SteamVR_Trigger)))
+                        except Exception:
+                            trigger = counter.observe(False)
                     devices.append({"serial": serial, "kind": kind, "connected": bool(pose.bDeviceIsConnected),
-                                    "valid": valid, "matrix": matrix, "reason": "valid" if valid else f"unavailable ({pose.eTrackingResult})"})
+                                    "valid": valid, "matrix": matrix, "trigger": trigger,
+                                    "reason": "valid" if valid else f"unavailable ({pose.eTrackingResult})"})
+                for serial, trigger in triggers.items():
+                    if serial not in observed:
+                        trigger.observe(False)
                 if self.enabled.is_set():
                     self._publish("connected", "SteamVR connected · standing origin · no added prediction", devices)
                 self.closed.wait(1 / 60)
             except Exception as error:
+                for trigger in triggers.values():
+                    trigger.observe(False)
                 if system is not None:
                     try:
                         vr.shutdown()

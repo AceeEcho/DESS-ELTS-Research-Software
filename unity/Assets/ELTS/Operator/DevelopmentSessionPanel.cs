@@ -99,6 +99,7 @@ namespace Elts.Operator
             InitializeCalibrationControls();
             InitializeDashboard();
             InitializeDesktop();
+            InitializeViveTrigger();
             SetVisible(true);
             // The browser station reads engine state directly; its hidden workbench
             // must not rebuild labels and list presentation on every game frame.
@@ -231,7 +232,7 @@ namespace Elts.Operator
         /// must drive the view's hit feedback (spark, flinch, fall); create scenarios only here.</summary>
         private void StartScenario()
         {
-            scenario=new DevelopmentSessionScenario(view.Configuration,clock!,engine!,recording!,sequence!,view.GameSettings);
+            scenario=new DevelopmentSessionScenario(view.Configuration,clock!,engine!,recording!,sequence!,view.GameSettings,view);
             scenario.TargetHit+=view.ShowTargetImpact;
         }
 
@@ -257,6 +258,7 @@ namespace Elts.Operator
             if(root == null) return;
             if(Time.unscaledDeltaTime>FrameHitchSeconds) frameHitches++;
             if(operation != null && operation.IsCompleted) operation=null;
+            PollViveTrigger();
             if(engine != null && !IsBusy)
             {
                 var pair=acquisition?.Snapshot;
@@ -347,6 +349,7 @@ namespace Elts.Operator
         {
             if(destroyed) return;
             destroyed=true;
+            viveTrigger?.Dispose();
             tutorialNarration?.Dispose();tutorialNarration=null;
             desktop?.Dispose();
             dashboard?.Dispose();

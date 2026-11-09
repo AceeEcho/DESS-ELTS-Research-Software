@@ -17,7 +17,7 @@ namespace Elts.Operator
     /// The same immutable observation path drives demo and recorded replay diagnostics.
     /// </summary>
     [DefaultExecutionOrder(-200)]
-    public sealed class DevelopmentView : MonoBehaviour
+    public sealed class DevelopmentView : MonoBehaviour, IHumanoidHitGeometry
     {
         // View-only choices are centralized here; physical layout comes from the staged rig configuration.
         // The near wall closes the participant room but is cut away for the outside camera.
@@ -35,6 +35,16 @@ namespace Elts.Operator
         private DevelopmentEnvironment? authoredEnvironment;
         private readonly List<LineRenderer> screenLines = new List<LineRenderer>(), frustumLines = new List<LineRenderer>(), rods = new List<LineRenderer>();
         private readonly Dictionary<string,GameObject> targetObjects = new Dictionary<string,GameObject>();
+        public string Version => DevelopmentHumanoidHitMesh.GeometryVersion;
+
+        /// <summary>Read the currently presented pose, including root yaw and
+        /// recoil. Missing/removed actors never leave an invisible scoring volume.</summary>
+        public bool Raycast(Ray3d ray,string targetId,out HumanoidSurfaceHit hit)
+        {
+            hit=default;
+            return targetObjects.TryGetValue(targetId,out var actor) && actor!=null &&
+                actor.GetComponent<DevelopmentHumanoidVisual>().Raycast(ray,out hit);
+        }
         private LineRenderer bore = null!, aim = null!, aimVertical = null!, viewRay = null!;
         private OperatorScreenPreview screenPreview=null!;
         private GameObject body=null!;

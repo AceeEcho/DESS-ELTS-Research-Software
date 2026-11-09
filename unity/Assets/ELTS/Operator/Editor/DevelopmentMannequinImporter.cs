@@ -15,6 +15,9 @@ namespace Elts.Operator.Editor
             importer.addCollider = false;
             importer.importCameras = false;
             importer.importLights = false;
+            // Shot queries read the posed triangle surface and its skin weights
+            // in standalone players as well as in the Editor.
+            importer.isReadable = true;
         }
 
         private void OnPreprocessAnimation()
@@ -32,6 +35,6 @@ namespace Elts.Operator.Editor
         }
 
         // Reimport existing checkouts when the retained clip set changes.
-        public override uint GetVersion() => 3;
+        public override uint GetVersion() => 4;
     }
 }

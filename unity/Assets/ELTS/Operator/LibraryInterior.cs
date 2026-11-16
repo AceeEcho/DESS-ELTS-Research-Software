@@ -116,14 +116,6 @@ namespace Elts.Operator
             }
         }
 
-        public static void Label(Transform parent,string text,Vector3 position,float size,float yaw=0)
-        {
-            var root=Group(parent,"Sign · "+text,position,yaw);
-            var label=root.gameObject.AddComponent<TextMesh>();label.text=text;label.anchor=TextAnchor.MiddleCenter;
-            label.alignment=TextAlignment.Center;label.characterSize=size*.3f;label.fontSize=64;
-            label.color=new Color(.90f,.88f,.79f);
-        }
-
         public void Fixture(Transform parent,LibraryFixture fixture,int seed)
         {
             var p=fixture.Center;var s=fixture.Size;

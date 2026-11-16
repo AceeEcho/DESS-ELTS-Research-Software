@@ -68,7 +68,6 @@ namespace Elts.Operator
                     Box("Vestibule back",new Vector3(side*12.6f,1.15f,z),new Vector3(.1f,2.3f,2.2f),furniture.DarkOak,false);
                     foreach(float edge in new[]{-1.08f,1.08f})
                         Box("Vestibule return",new Vector3(side*11.8f,1.15f,z+edge),new Vector3(1.6f,2.3f,.1f),wall,false);
-                    LibraryInterior.Label(root,side<0?"COLLECTIONS":"STUDY ROOMS",new Vector3(side*10.78f,2.5f,z),.04f,side<0?90:-90);
                 }
             }
             // Window bays, rather than identical windows wrapping every wall.
@@ -83,9 +82,6 @@ namespace Elts.Operator
 
             int seed=0;
             foreach(var fixture in LibraryFloorPlan.Fixtures)furniture.Fixture(root,fixture,seed++);
-            LibraryInterior.Label(root,"INFORMATION",new Vector3(-3.9f,.66f,1.215f),.047f);
-            LibraryInterior.Label(root,"NEW BOOKS",new Vector3(-.6f,1.04f,4.86f),.035f);
-            LibraryInterior.Label(root,"READING ROOM",new Vector3(0,2.65f,27.86f),.055f);
             // Service tools and reader belongings establish function without filling the aisles.
             furniture.Monitor(root,new Vector3(-3.8f,1.02f,1.8f));
             furniture.BookPile(root,new Vector3(-2.8f,1.02f,1.7f),17);
@@ -98,9 +94,6 @@ namespace Elts.Operator
                     furniture.BookPile(root,p+new Vector3(-.55f,0,.17f),fixture.Id.Length);
                     Box("Reader notebook",p+new Vector3(.35f,.012f,-.30f),new Vector3(.28f,.024f,.21f),furniture.Paper);
                 }
-                if(fixture.Kind==LibraryFixtureKind.Stack && fixture.Size.Z>3)
-                    LibraryInterior.Label(root,fixture.Id.StartsWith("literature")?"LITERATURE":"REFERENCE",
-                        new Vector3((float)fixture.Center.X,1.85f,(float)(fixture.Center.Z-fixture.Size.Z/2)-.02f),.027f);
             }
             // Long suspended lights follow the reading area; compact lights run across
             // the stack bays. There is no repeating theatrical raft over each target.

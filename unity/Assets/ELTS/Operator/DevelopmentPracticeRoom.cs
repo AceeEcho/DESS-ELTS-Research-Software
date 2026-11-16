@@ -54,7 +54,6 @@ namespace Elts.Operator
                 Box("Overhead light",new Vector3(0,height-.27f,z),new Vector3(3,.025f,.13f),light);
             }
             Box("Target standing area",new Vector3(0,.009f,(float)targetDistance),new Vector3(2.6f,.018f,2.2f),lowerWall);
-            LibraryInterior.Label(root,"PRACTICE",new Vector3(0,4.3f,back-.16f),.10f);
             return root.gameObject;
         }
         private static Vector3 ToUnity(Vector3d p)=>new Vector3((float)p.X,(float)p.Y,(float)p.Z);

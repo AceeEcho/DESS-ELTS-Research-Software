@@ -82,6 +82,7 @@ static class SessionInteropFixture
 
     static void RecordCanonicalBlockActivity(SessionEngine engine, SessionRecordingAdapter adapter, ManualSharedClock clock, SessionEventSequence sequence, int number, bool includeOperatorAnnotations)
     {
+        engine.Tick(); // Link/deadline observations must precede the captured shot.
         var head = new TrackerId("SYNTHETIC-HEAD-001"); var weapon = new TrackerId("SYNTHETIC-WEAPON-001");
         var stamp = TrackingAcquisitionStamp.Capture(clock, number + 1); var pose = new RigidPose(Vector3d.Zero, Quaterniond.Identity);
         Require(adapter.TryLogSample(new TrackingSamplePair(TrackingSample.Valid(stamp, head, pose), TrackingSample.Valid(stamp, weapon, pose))), "raw paired sample " + number);

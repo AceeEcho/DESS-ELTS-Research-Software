@@ -49,7 +49,7 @@ namespace Elts.Operator.Tests
                 float limit=Time.realtimeSinceStartup+20;
                 while(session.Tutorial.Stage!=Elts.Session.TutorialStage.FirstReady && Time.realtimeSinceStartup<limit)
                 { ReviewFixtureWhenReady(session,station);clock.Advance(TimeSpan.FromSeconds(.1));yield return null; }
-                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),session.StationMessage);
+                Assert.That(session.Engine?.State,Is.EqualTo(SessionState.BlockReady),session.StationMessage);
                 ParticipantTutorialTests.ArmAfterInstructions(session,station);
                 input.Frame=new DesktopControlFrame(true,new Vector2(300,300),Vector3.zero,pressed:true);yield return null;
                 input.Frame=new DesktopControlFrame(true,new Vector2(300,300),Vector3.zero,released:true);yield return null;
@@ -149,7 +149,7 @@ namespace Elts.Operator.Tests
                 float limit=Time.realtimeSinceStartup+20;
                 while(session.Tutorial.Stage!=Elts.Session.TutorialStage.FirstReady && Time.realtimeSinceStartup<limit)
                 { ReviewFixtureWhenReady(session,station);clock.Advance(TimeSpan.FromSeconds(0.1));yield return null; }
-                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),session.StationMessage);
+                Assert.That(session.Engine?.State,Is.EqualTo(SessionState.BlockReady),session.StationMessage);
                 string run=session.StationRecordingPath;
                 for(int block=0;block<4;block++)
                 {
@@ -175,17 +175,20 @@ namespace Elts.Operator.Tests
                     var scenario=(DevelopmentSessionScenario)typeof(DevelopmentSessionPanel).GetField("scenario",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(session);
                     if(session.Engine.CurrentCondition.EndsWith("_MT"))
                         for(int step=0;step<80;step++){clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                    // Wait for the current posed actors before choosing an aim
+                    // point. Keep that simulated pose fixed through the click.
+                    clock.Advance(TimeSpan.FromSeconds(0.03));
+                    yield return null;yield return null;
                     float poseDeadline=Time.realtimeSinceStartup+2;
                     while(scenario.Positions.Count==0 && Time.realtimeSinceStartup<poseDeadline)yield return null;
                     Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockRunning),session.StationMessage);
                     Assert.That(scenario.Positions.Count,Is.GreaterThan(0),session.StationMessage);
-                    var point=scenario.Positions.First().Value+new Vector3d(0,.65,0);
-                    var viewport=view.ParticipantCamera.WorldToViewportPoint(new Vector3((float)point.X,(float)point.Y,(float)point.Z));
+                    var point=TargetSurfaceTestPoints.Head(view,scenario.Positions.First().Key);
+                    var viewport=view.ParticipantCamera.WorldToViewportPoint(point);
                     var bounds=station.ParticipantRoot.worldBound;
                     var pointer=new Vector2(bounds.xMin+viewport.x*bounds.width,bounds.yMax-viewport.y*bounds.height);
                     Assert.That(bounds.Contains(pointer),Is.True,"Head aim must remain inside the participant surface");
                     input.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,pressed:true);yield return null;
-                    clock.Advance(TimeSpan.FromSeconds(0.03));
                     input.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,released:true);yield return null;
                     Assert.That(session.StationShots,Is.EqualTo(1));Assert.That(session.StationHits,Is.EqualTo(1));
                     clock.Advance(TimeSpan.FromSeconds(300));yield return null;
@@ -251,6 +254,7 @@ namespace Elts.Operator.Tests
                 float limit=Time.realtimeSinceStartup+20;
                 while(session.Engine?.State!=SessionState.Calibration && Time.realtimeSinceStartup<limit)
                 {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                Assert.That(session.Engine?.State,Is.EqualTo(SessionState.Calibration),session.StationMessage);
                 Assert.That((bool)JObject.Parse(station.StateJson())["tutorial"]["canManual"],Is.True,"Manual mode is offered before the walkthrough");
 
                 ParticipantTutorialTests.Command(station,session,"tutorialManual");
@@ -319,7 +323,7 @@ namespace Elts.Operator.Tests
                 float limit=Time.realtimeSinceStartup+20;
                 while(session.Engine?.State!=SessionState.Calibration && Time.realtimeSinceStartup<limit)
                 {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
-                Assert.That(session.Engine.State,Is.EqualTo(SessionState.Calibration));
+                Assert.That(session.Engine?.State,Is.EqualTo(SessionState.Calibration),session.StationMessage);
                 Assert.Throws<InvalidOperationException>(()=>station.ApplyCommand(new JObject{["action"]="startPractice"}),"Calibration acceptance is explicit");
                 while(session.Engine.State!=SessionState.Practice && Time.realtimeSinceStartup<limit)
                 {ParticipantTutorialTests.AdvanceWalkthrough(session,station,false);clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}

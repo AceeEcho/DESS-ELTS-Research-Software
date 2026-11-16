@@ -159,6 +159,10 @@ namespace Elts.Session
             return shotModel.Fire(shot, blockId, targets, isVisible);
         }
 
+        /// <summary>Only observations in this active segment may be recorded as triggers.</summary>
+        public bool ContainsShotTime(MonotonicTimestamp timestamp) =>
+            State == ScenarioBlockState.Running && timestamp >= startedAt && timestamp < deadline;
+
         private SessionEvent Event(MonotonicTimestamp timestamp, string eventType, params LogField[] extra)
         {
             var fields = new List<LogField> { LogField.String("blockId", blockId) };
@@ -403,7 +407,9 @@ namespace Elts.Session
             else throw new InvalidOperationException("This state cannot advance.");
         }
 
-        public void Tick()
+        public void Tick() => Tick(checkLink: true);
+
+        private void Tick(bool checkLink)
         {
             if (State == SessionState.Practice && !PracticePaused && PracticeActiveSeconds >= practiceSeconds)
             {
@@ -424,7 +430,7 @@ namespace Elts.Session
                 Transition(SessionState.BlockEnded);
                 return;
             }
-            if (link is ISessionConditionLink conditionLink)
+            if (checkLink && link is ISessionConditionLink conditionLink)
             {
                 try
                 {
@@ -645,10 +651,20 @@ namespace Elts.Session
             if(!plan.AllowsDevelopmentOnlyDurationOverride)throw new InvalidOperationException("Flexible test controls require an explicit development session.");
         }
 
-        /// <summary>Forwards an in-window shot through the active block and records every resulting event.</summary>
+        /// <summary>Check after capture, before logging input: a capture can cross the block deadline.</summary>
+        public bool CanRecordTriggerAt(MonotonicTimestamp timestamp) =>
+            State == SessionState.BlockRunning && block != null && block.ContainsShotTime(timestamp);
+
+        /// <summary>
+        /// Forwards an in-window shot and records every resulting event. Call Tick
+        /// before capturing the trigger pose so link observations precede that capture.
+        /// </summary>
         public bool Fire(IShotModel shotModel, ShotContext shot, IEnumerable<TargetEntity> targets, Func<TargetEntity, bool> isVisible)
         {
-            ExpireCurrentPhase();
+            // Expire the block if needed, but do not poll the link between input
+            // capture and shot publication: that would insert newer events ahead
+            // of the shot's original timestamp. Never retime the recorded pose.
+            ExpireCurrentPhase(checkLink: false);
             Require(SessionState.BlockRunning);
             if (block == null) throw new InvalidOperationException("The active block has not been initialized.");
             bool shotRecorded = false;
@@ -705,10 +721,10 @@ namespace Elts.Session
             Record(Event("SyncMarker", LogField.String("label", String.IsNullOrWhiteSpace(text) ? "provisional" : text), LogField.Boolean("provisional", true)));
         }
 
-        private void ExpireCurrentPhase()
+        private void ExpireCurrentPhase(bool checkLink = true)
         {
             if (State == SessionState.Practice || State == SessionState.BlockRunning)
-                Tick();
+                Tick(checkLink);
         }
 
         private bool Transition(SessionState next, params LogField[] extra)

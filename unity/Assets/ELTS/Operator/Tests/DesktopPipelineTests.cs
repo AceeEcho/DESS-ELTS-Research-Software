@@ -28,13 +28,23 @@ namespace Elts.Operator.Tests
         { using(var evt=NavigationSubmitEvent.GetPooled()) {evt.target=button;button.SendEvent(evt);} }
         private static T Private<T>(object owner,string name) => (T)owner.GetType().GetField(name,BindingFlags.NonPublic|BindingFlags.Instance).GetValue(owner);
 
+        private sealed class AdvancingClock : ISharedClock
+        {
+            long ticks;
+            public DateTimeOffset UtcStartupAnchor { get; } = DateTimeOffset.UtcNow;
+            // Even between explicit advances, successive events have distinct times.
+            // This exposes insertion of later link events ahead of captured shots.
+            public MonotonicTimestamp Now => new MonotonicTimestamp(System.Threading.Interlocked.Increment(ref ticks));
+            public void Advance(TimeSpan elapsed) { System.Threading.Interlocked.Add(ref ticks,elapsed.Ticks); }
+        }
+
         [UnityTest]
         public IEnumerator DesktopSessionRecordsFourConditionsShotsAndReplay()
         {
             var host=new GameObject("Desktop full pipeline fixture");
             var view=host.AddComponent<DevelopmentView>();var panel=host.AddComponent<DevelopmentSessionPanel>();
             var controls=new Controls();panel.Desktop.Controls=controls;
-            var clock=new ManualSharedClock(DateTimeOffset.UtcNow);
+            var clock=new AdvancingClock();
             typeof(DevelopmentSessionPanel).GetField("clock",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(panel,clock);
             var target=new RenderTexture(1440,960,24,RenderTextureFormat.ARGB32);target.Create();panel.SetDiagnosticRenderTarget(target);
             try
@@ -78,12 +88,17 @@ namespace Elts.Operator.Tests
                     if(panel.Engine.CurrentCondition.EndsWith("_MT"))
                         for(int step=0;step<20;step++)
                         {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                    // Finish the simulated movement before choosing the click's
+                    // pixel. Advancing time between aim and release can move a
+                    // small posed head away from that pixel (a legitimate miss).
+                    clock.Advance(TimeSpan.FromMilliseconds(30));
+                    yield return null;yield return null;
                     float poseDeadline=Time.realtimeSinceStartup+2;
                     while(scenario.Positions.Count==0 && Time.realtimeSinceStartup<poseDeadline)yield return null;
                     Assert.That(panel.Engine.State,Is.EqualTo(SessionState.BlockRunning),panel.Engine.Failure);
                     Assert.That(scenario.Positions.Count,Is.GreaterThan(0),"Target refresh after run-in: "+panel.DesktopFeedback);
                     Assert.That(panel.CanDesktopFire && panel.Desktop.IsOpen,Is.True,"Desktop firing remains enabled after the scripted run-in");
-                    var point=TargetSurfaceTestPoints.Head(host.transform.Find(scenario.Positions.First().Key));
+                    var point=TargetSurfaceTestPoints.Head(view,scenario.Positions.First().Key);
                     var viewport=view.ParticipantCamera.WorldToViewportPoint(point);
                     var bounds=panel.Desktop.PlayImageBounds;
                     var pointer=new Vector2(bounds.xMin+viewport.x*bounds.width,bounds.yMax-viewport.y*bounds.height);
@@ -93,18 +108,16 @@ namespace Elts.Operator.Tests
                         // A physical trigger uses the same recorded-pose/hitscan path,
                         // but its source and rising edge must survive in the recording.
                         controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero);yield return null;
-                        clock.Advance(TimeSpan.FromMilliseconds(30));
                         panel.SubmitDesktopTrigger("vive-tracker-trigger-v1","rising","TEST-GUN");
                         yield return null;
                     }
                     else
                     {
                         controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,pressed:true);yield return null;
-                        clock.Advance(TimeSpan.FromMilliseconds(30));
                         controls.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,released:true);yield return null;
                     }
                     Assert.That(scenario.ShotCount,Is.EqualTo(1),panel.DesktopFeedback);
-                    Assert.That(scenario.HitCount,Is.EqualTo(1),panel.DesktopFeedback);
+                    Assert.That(scenario.HitCount,Is.EqualTo(1),panel.Engine.CurrentCondition+": "+panel.DesktopFeedback);
                     Assert.That(scenario.Positions.Count,Is.EqualTo(30),"A hit immediately restores all thirty targets");
 
                     // A click held through focus loss cannot become a later shot.

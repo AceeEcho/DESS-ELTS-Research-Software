@@ -125,7 +125,13 @@ namespace Elts.Operator
         }
 
         public void Fire(RigidPose? weapon, RigidPose? head)
-            => Fire(weapon,head,clock.Now);
+        {
+            // The automated preview has no input edge, but follows the same
+            // preflight-before-observation order as a captured desktop trigger.
+            engine.Tick();
+            var observedAt=clock.Now;
+            if(engine.CanRecordTriggerAt(observedAt))Fire(weapon,head,observedAt);
+        }
 
         /// <summary>Sample the current unpredicted bore at a bounded, configured
         /// cadence. This is frame-sampled telemetry; the full raw tracker stream

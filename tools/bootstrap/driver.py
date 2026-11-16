@@ -349,7 +349,7 @@ def run(args) -> tuple[dict, Path]:
                             result_file.parent.mkdir(parents=True, exist_ok=True)
                             started_at = time.time()
                             log = report_path.parent / (suite + ".log")
-                            command(suite, [str(editor), "-batchmode", "-projectPath", str(ROOT / "unity"),
+                            command(suite, [str(editor), "-batchmode", "-noaudio", "-projectPath", str(ROOT / "unity"),
                                     "-runTests", "-testPlatform", platform_name, "-testResults", str(result_file),
                                     "-logFile", str(log)], UNITY_TIMEOUT_SECONDS, editor_log=log)
                             try:

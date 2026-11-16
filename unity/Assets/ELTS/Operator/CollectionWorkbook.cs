@@ -50,7 +50,7 @@ namespace Elts.Operator
                         for(int i=0;i<sheets.Count;i++)Relationship(w,"rId"+(i+1),"worksheet","worksheets/sheet"+(i+1)+".xml");
                         Relationship(w,"rIdStyles","styles","styles.xml");w.WriteEndElement();
                     });
-                    Entry(zip,"xl/styles.xml",w=>WriteXml(w,"<styleSheet xmlns=\""+Main+"\"><fonts count=\"2\"><font><sz val=\"11\"/><name val=\"Calibri\"/></font><font><b/><color rgb=\"FFFFFFFF\"/><sz val=\"11\"/><name val=\"Calibri\"/></font></fonts><fills count=\"3\"><fill><patternFill patternType=\"none\"/></fill><fill><patternFill patternType=\"gray125\"/></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FF173F4A\"/><bgColor indexed=\"64\"/></patternFill></fill></fills><borders count=\"1\"><border/></borders><cellStyleXfs count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/></cellStyleXfs><cellXfs count=\"3\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\"/><xf numFmtId=\"0\" fontId=\"1\" fillId=\"2\" borderId=\"0\" xfId=\"0\" applyAlignment=\"1\"><alignment wrapText=\"1\" vertical=\"center\"/></xf><xf numFmtId=\"2\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/></cellXfs><cellStyles count=\"1\"><cellStyle name=\"Normal\" xfId=\"0\" builtinId=\"0\"/></cellStyles></styleSheet>"));
+                    Entry(zip,"xl/styles.xml",w=>WriteXml(w,"<styleSheet xmlns=\""+Main+"\"><fonts count=\"2\"><font><sz val=\"11\"/><name val=\"Calibri\"/></font><font><b/><color rgb=\"FFFFFFFF\"/><sz val=\"11\"/><name val=\"Calibri\"/></font></fonts><fills count=\"3\"><fill><patternFill patternType=\"none\"/></fill><fill><patternFill patternType=\"gray125\"/></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FF173F4A\"/><bgColor indexed=\"64\"/></patternFill></fill></fills><borders count=\"1\"><border/></borders><cellStyleXfs count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/></cellStyleXfs><cellXfs count=\"4\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\"/><xf numFmtId=\"0\" fontId=\"1\" fillId=\"2\" borderId=\"0\" xfId=\"0\" applyAlignment=\"1\"><alignment wrapText=\"1\" vertical=\"center\"/></xf><xf numFmtId=\"2\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyAlignment=\"1\"><alignment wrapText=\"1\" vertical=\"top\"/></xf></cellXfs><cellStyles count=\"1\"><cellStyle name=\"Normal\" xfId=\"0\" builtinId=\"0\"/></cellStyles></styleSheet>"));
                     for(int i=0;i<sheets.Count;i++){var sheet=sheets[i];Entry(zip,"xl/worksheets/sheet"+(i+1)+".xml",w=>WriteSheet(w,sheet));}
                 }
                 File.Move(pending,destination);
@@ -60,15 +60,25 @@ namespace Elts.Operator
         private static void WriteSheet(XmlWriter w,Sheet sheet)
         {
             if(sheet.Rows.Length>1048575)throw new IOException("Excel row limit exceeded. Export the SQLite database to retain the full collection.");
+            bool guide=sheet.Name=="Metric guide";
             w.WriteStartElement("worksheet",Main);
             w.WriteStartElement("sheetViews");w.WriteStartElement("sheetView");w.WriteAttributeString("workbookViewId","0");Empty(w,"pane","ySplit","1","topLeftCell","A2","activePane","bottomLeft","state","frozen");w.WriteEndElement();w.WriteEndElement();
             w.WriteStartElement("cols");
-            for(int c=0;c<sheet.Columns.Length;c++)Empty(w,"col","min",(c+1).ToString(),"max",(c+1).ToString(),"width",sheet.Columns[c]=="Definition"?"110":TextColumns.Contains(sheet.Columns[c])?"26":"20","customWidth","1");
+            for(int c=0;c<sheet.Columns.Length;c++)
+            {
+                string width=guide?(c==0?"46":c==1?"14":"96"):TextColumns.Contains(sheet.Columns[c])?"26":"20";
+                Empty(w,"col","min",(c+1).ToString(),"max",(c+1).ToString(),"width",width,"customWidth","1");
+            }
             w.WriteEndElement();w.WriteStartElement("sheetData");
             for(int r=0;r<=sheet.Rows.Length;r++)
             {
                 w.WriteStartElement("row");w.WriteAttributeString("r",(r+1).ToString());
                 if(r==0){w.WriteAttributeString("ht","38");w.WriteAttributeString("customHeight","1");}
+                else if(guide)
+                {
+                    w.WriteAttributeString("ht",GuideRowHeight(sheet.Rows[r-1]).ToString(CultureInfo.InvariantCulture));
+                    w.WriteAttributeString("customHeight","1");
+                }
                 for(int c=0;c<sheet.Columns.Length;c++)
                 {
                     string text=r==0?Header(sheet.Columns[c]):sheet.Rows[r-1][c];
@@ -76,7 +86,7 @@ namespace Elts.Operator
                     if(text.Length>32767)throw new IOException("Excel cell limit exceeded. Use the database export for full text.");
                     w.WriteStartElement("c");w.WriteAttributeString("r",Column(c)+(r+1));
                     bool number=r>0 && !TextColumns.Contains(sheet.Columns[c]) && Double.TryParse(text,NumberStyles.Float,CultureInfo.InvariantCulture,out double parsed) && !Double.IsNaN(parsed) && !Double.IsInfinity(parsed);
-                    w.WriteAttributeString("s",r==0?"1":number && text.Contains(".")?"2":"0");
+                    w.WriteAttributeString("s",r==0?"1":guide?"3":number && text.Contains(".")?"2":"0");
                     if(number)w.WriteElementString("v",text);
                     else {w.WriteAttributeString("t","inlineStr");w.WriteStartElement("is");w.WriteStartElement("t");w.WriteAttributeString("xml","space",null,"preserve");w.WriteString(text);w.WriteEndElement();w.WriteEndElement();}
                     w.WriteEndElement();
@@ -84,6 +94,16 @@ namespace Elts.Operator
                 w.WriteEndElement();
             }
             w.WriteEndElement();Empty(w,"autoFilter","ref","A1:"+Column(sheet.Columns.Length-1)+(sheet.Rows.Length+1));w.WriteEndElement();
+        }
+
+        private static double GuideRowHeight(string[] row)
+        {
+            // Excel readers do not all autofit wrapped text on open. Allow room
+            // for word boundaries as well as the 11-point font's line height.
+            int[] charactersPerLine={40,12,88};
+            double lines=2;
+            for(int i=0;i<row.Length;i++)lines=Math.Max(lines,Math.Ceiling(row[i].Length/(double)charactersPerLine[i])+1);
+            return lines*15+6; // Row height is in points, not pixels.
         }
         private static void WriteXml(XmlWriter writer,string xml) { using(var reader=XmlReader.Create(new StringReader(xml)))writer.WriteNode(reader,true); }
         private static string Header(string key)

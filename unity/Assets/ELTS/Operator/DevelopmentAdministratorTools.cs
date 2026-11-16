@@ -244,8 +244,11 @@ namespace Elts.Operator
             File.Move(pending,path); // No overwrite, including repeated attempts.
         }
 
+        // Each PlayMode run starts with a fresh collection. Keep previous synthetic
+        // recordings available for inspection without importing them during setup.
+        private static readonly string automatedRecordingRun = Guid.NewGuid().ToString("N");
         private string StationDataRoot => Array.IndexOf(Environment.GetCommandLineArgs(),"-runTests")>=0
-            ?Path.Combine(Application.temporaryCachePath,"elts-automated-recordings")
+            ?Path.Combine(Application.temporaryCachePath,"elts-automated-recordings",automatedRecordingRun)
             :view.Configuration.Machine.ResolveDataRoot(Path.Combine(Application.dataPath,".."));
 
         public void StationArchiveAction(string action,string id="")

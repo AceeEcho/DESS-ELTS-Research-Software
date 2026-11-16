@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Elts.Clock;
 using Elts.EltsLink;
+using Elts.Geometry;
 using Elts.Logging;
 using Elts.Scenario;
 using Elts.Session;
@@ -22,7 +23,61 @@ static class EltsSessionChecks
         ExerciseUnexpectedNeStateFailsClosed();
         ExerciseHeartbeatLossFailsClosed();
         ExerciseReconnectNeverResumes();
+        ExerciseTriggerTimestampOrdering();
         Console.WriteLine("PASS: " + passed + " ELTS session adapter checks");
+    }
+
+    static void ExerciseTriggerTimestampOrdering()
+    {
+        // A frozen clock hides a later heartbeat being inserted before an older
+        // captured shot. Advance on every read, without nondeterministic sleeps.
+        var clock = new AdvancingClock();
+        var records = new List<SessionEvent>();
+        var sequence = new SessionEventSequence();
+        var sink = new Sink(records);
+        var mock = new MockEltsLink(new SimulatedEltsController(clock));
+        var engine = new SessionEngine(clock, sequence,
+            new SessionPlan("timestamp-fixture", new[] { "NE_FT", "WE_FT", "NE_MT", "WE_MT" }, 10, true),
+            new SessionTiming(0, 0, true), sink, new SessionEltsLinkAdapter(clock, sequence, sink, mock));
+        True(engine.StartSetup(Ready()).SetupAccepted, "advancing-clock fixture starts");
+        engine.Advance(); engine.Advance(); engine.Tick();
+        for (int block = 0; block < 4; block++)
+        {
+            engine.StartBlock();
+            engine.Tick(); // Same preflight order as the actual desktop/physical-trigger adapter.
+            var capturedAt = clock.Now;
+            True(engine.CanRecordTriggerAt(capturedAt), "active capture is in the block window");
+            sink.TryRecord(new SessionEvent(sequence.Next(), capturedAt, "InputTrigger"));
+            True(engine.Fire(new HitscanShotModel(sequence),
+                new ShotContext(capturedAt, new Ray3d(Vector3d.Zero, new Vector3d(0, 0, 1)), true),
+                Array.Empty<TargetEntity>(), _ => true), "advancing-clock shot accepted");
+            True(records[records.Count - 1].EventType == "ShotFired" &&
+                records[records.Count - 1].Timestamp == capturedAt, "shot retains the captured input/pose timestamp");
+            clock.Advance(TimeSpan.FromSeconds(11));
+            True(!engine.CanRecordTriggerAt(clock.Now), "late capture cannot precede an earlier BlockEnded event");
+            engine.Tick(); engine.Advance(); engine.Advance();
+        }
+        True(Strict(records), "shot and link event sequences remain strictly ordered");
+        for (int i = 1; i < records.Count; i++)
+            True(records[i].Timestamp >= records[i - 1].Timestamp,
+                "timestamps remain ordered: " + records[i - 1].EventType + " then " + records[i].EventType);
+
+        // The moved preflight must continue to reject input after a link failure.
+        var failClock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+        var failedRecords = new List<SessionEvent>();
+        var failedLink = new MockEltsLink(new SimulatedEltsController(failClock));
+        var failedEngine = NewEngine(failClock, failedRecords, failedLink);
+        Begin(failedEngine, failClock); failedEngine.StartBlock(); failedLink.SimulateReconnect(); failedEngine.Tick();
+        True(failedEngine.State == SessionState.Failed && !failedEngine.CanRecordTriggerAt(failClock.Now),
+            "failed link preflight blocks trigger admission");
+    }
+
+    sealed class AdvancingClock : ISharedClock
+    {
+        long ticks;
+        public DateTimeOffset UtcStartupAnchor => DateTimeOffset.UnixEpoch;
+        public MonotonicTimestamp Now => new MonotonicTimestamp(ticks += TimeSpan.TicksPerMillisecond);
+        public void Advance(TimeSpan elapsed) { ticks += elapsed.Ticks; }
     }
 
     static void ExerciseWeAndNeLifecycle()

@@ -58,6 +58,10 @@ namespace Elts.Operator
             if(!CanDesktopFire || (!SeparateAdministrator && desktop?.IsOpen!=true))return;
             try
             {
+                // Complete deadline/link checks before taking the shot's timestamp.
+                // A failed link check must still stop the session before any shot.
+                engine!.Tick();
+                if(!CanDesktopFire)return;
                 // Input and critical events are observed on the main thread.
                 // The acquisition lock admits this exact pair to raw logging
                 // before we record its trigger identity or use it for hitscan.
@@ -65,6 +69,8 @@ namespace Elts.Operator
                 { desktopMessage="Shot ignored: raw pose sample was not admitted to the recording.";return; }
                 if(!pair.Head.HasValidPose || !pair.Weapon.HasValidPose)
                 { desktopMessage="Shot ignored: desktop tracking is unavailable.";return; }
+                if(!engine.CanRecordTriggerAt(pair.Timestamp))
+                { desktopMessage="Shot ignored: the test has ended.";return; }
                 if(!recording!.TryRecord(new SessionEvent(sequence!.Next(),pair.Timestamp,"InputTrigger",new[] {
                     LogField.String("source",source),LogField.String("trackerSerial",String.IsNullOrEmpty(trackerSerial)?"none":trackerSerial),
                     LogField.String("blockId",engine!.CurrentBlockId!),

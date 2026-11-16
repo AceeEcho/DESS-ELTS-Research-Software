@@ -235,6 +235,16 @@ namespace Elts.Operator.Tests
 
     internal static class TargetSurfaceTestPoints
     {
+        public static Vector3 Head(DevelopmentView view,string targetId)
+        {
+            // IDs restart in each block. Transform.Find can return an old actor
+            // still finishing its fall, rather than the current scoring target.
+            var field=typeof(DevelopmentView).GetField("targetObjects",
+                System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);
+            var actors=(Dictionary<string,GameObject>)field.GetValue(view);
+            return Head(actors[targetId].transform);
+        }
+
         // Aim the integration test at the model's visible head, not the obsolete
         // analytic head centre that the regression is intended to replace.
         public static Vector3 Head(Transform actor)

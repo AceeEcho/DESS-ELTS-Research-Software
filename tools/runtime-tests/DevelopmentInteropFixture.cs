@@ -177,6 +177,7 @@ static class DevelopmentInteropFixture
 
     private static void RecordCanonicalActivity(SessionEngine engine, SessionRecordingAdapter adapter, ManualSharedClock clock, SessionEventSequence sequence, int index, bool notes)
     {
+        engine.Tick(); // Link/deadline observations must precede the captured shot.
         var head = new TrackerId("SYNTHETIC-HEAD-001");
         var weapon = new TrackerId("SYNTHETIC-WEAPON-001");
         var stamp = TrackingAcquisitionStamp.Capture(clock, index + 1);

@@ -1,0 +1,11 @@
+{
+  "units": "mm",
+  "outer_diameter": 11.2,
+  "inner_diameter": 6.9,
+  "edge_chamfer": 0.08,
+  "thicknesses": [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.2, 3.5],
+  "copies_per_size": 3,
+  "plate_center_x": 90,
+  "first_row_y": 27,
+  "spacing": 18
+}

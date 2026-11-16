@@ -15,7 +15,8 @@ unconnected. No Arduino, supply or extra pull-up is needed. Leave the other pads
 unconnected and never apply 5 V to the trigger pad. Pin numbering and pad layout
 are in HTC's [VIVE Tracker 3.0 developer guidelines v1.1](https://developer.vive.com/documents/850/HTC_Vive_Tracker_3.0_Developer_Guidelines_v1.1_06022021.pdf),
 printed pages 13–17; follow its illustrated orientation rather than an assumed
-left/right order. Cradle and mount CAD is kept locally and is not in this repository.
+left/right order. The full [wiring guide](../../../hardware/vive-tracker-3.0/wiring-guide.md)
+and connector CAD are in [`hardware/`](../../../hardware/README.md).
 
 ## Bind the tracker
 

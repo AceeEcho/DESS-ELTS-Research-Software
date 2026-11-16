@@ -1,0 +1,160 @@
+{
+  "revision": "D_Open_Clamp",
+  "status": "CAD only; physical retention, contact and fit untested",
+  "printed_parts": {
+    "mount_frame": {
+      "valid_solid": true,
+      "mesh": {
+        "open_or_nonmanifold_edges": 0,
+        "connected_regions": 1,
+        "volume_mm3": 6782.49903667139,
+        "bed_z_mm": 0.0
+      },
+      "tracker_overlap_mm3": 0.0
+    },
+    "clamp_jaw": {
+      "valid_solid": true,
+      "mesh": {
+        "open_or_nonmanifold_edges": 0,
+        "connected_regions": 1,
+        "volume_mm3": 785.8866943313101,
+        "bed_z_mm": 0.0
+      },
+      "tracker_overlap_mm3": 0.0
+    },
+    "setup_gauge_lower_0p0mm": {
+      "valid_solid": true,
+      "mesh": {
+        "open_or_nonmanifold_edges": 0,
+        "connected_regions": 1,
+        "volume_mm3": 177.94671147237415,
+        "bed_z_mm": 0.0
+      },
+      "removed_before_tracker_mounting": true
+    },
+    "setup_gauge_lower_0p25mm": {
+      "valid_solid": true,
+      "mesh": {
+        "open_or_nonmanifold_edges": 0,
+        "connected_regions": 1,
+        "volume_mm3": 148.288926226978,
+        "bed_z_mm": 0.0
+      },
+      "removed_before_tracker_mounting": true
+    },
+    "setup_gauge_lower_0p5mm": {
+      "valid_solid": true,
+      "mesh": {
+        "open_or_nonmanifold_edges": 0,
+        "connected_regions": 1,
+        "volume_mm3": 118.6311409815827,
+        "bed_z_mm": 0.0
+      },
+      "removed_before_tracker_mounting": true
+    }
+  },
+  "contact_settings": {
+    "0.0": {
+      "lowering_mm": 0.0,
+      "pins": [
+        {
+          "x_mm": -5.25,
+          "free_tracker_spring_overlap_mm3": 0.5576036874905381,
+          "exposed_height_mm": 2.0
+        },
+        {
+          "x_mm": 1.75,
+          "free_tracker_spring_overlap_mm3": 0.5576036874905372,
+          "exposed_height_mm": 2.0
+        }
+      ]
+    },
+    "0.25": {
+      "lowering_mm": 0.25,
+      "pins": [
+        {
+          "x_mm": -5.25,
+          "free_tracker_spring_overlap_mm3": 0.42212250430447823,
+          "exposed_height_mm": 1.75
+        },
+        {
+          "x_mm": 1.75,
+          "free_tracker_spring_overlap_mm3": 0.42212250430447756,
+          "exposed_height_mm": 1.75
+        }
+      ]
+    },
+    "0.5": {
+      "lowering_mm": 0.5,
+      "pins": [
+        {
+          "x_mm": -5.25,
+          "free_tracker_spring_overlap_mm3": 0.2866413211184179,
+          "exposed_height_mm": 1.5
+        },
+        {
+          "x_mm": 1.75,
+          "free_tracker_spring_overlap_mm3": 0.286641321118418,
+          "exposed_height_mm": 1.5
+        }
+      ]
+    }
+  },
+  "pair_overlaps_mm3": {
+    "mount_frame/clamp_jaw": 0.0,
+    "mount_frame/mount_screw_reference": 0.0,
+    "mount_frame/clamp_screw_0_reference": 0.0,
+    "mount_frame/clamp_nut_0_reference": 0.0,
+    "mount_frame/clamp_screw_1_reference": 0.0,
+    "mount_frame/clamp_nut_1_reference": 0.0,
+    "clamp_jaw/mount_screw_reference": 0.0,
+    "clamp_jaw/clamp_screw_0_reference": 0.0,
+    "clamp_jaw/clamp_nut_0_reference": 0.0,
+    "clamp_jaw/clamp_screw_1_reference": 0.0,
+    "clamp_jaw/clamp_nut_1_reference": 0.0,
+    "mount_screw_reference/clamp_screw_0_reference": 0.0,
+    "mount_screw_reference/clamp_nut_0_reference": 0.0,
+    "mount_screw_reference/clamp_screw_1_reference": 0.0,
+    "mount_screw_reference/clamp_nut_1_reference": 0.0,
+    "clamp_screw_0_reference/clamp_nut_0_reference": 0.0,
+    "clamp_screw_0_reference/clamp_screw_1_reference": 0.0,
+    "clamp_screw_0_reference/clamp_nut_1_reference": 0.0,
+    "clamp_nut_0_reference/clamp_screw_1_reference": 0.0,
+    "clamp_nut_0_reference/clamp_nut_1_reference": 0.0,
+    "clamp_screw_1_reference/clamp_nut_1_reference": 0.0
+  },
+  "assembly_solids": 9,
+  "nominal_mount_projection_mm": 4.5,
+  "available_jaw_closing_travel_mm": 0.25,
+  "limits": [
+    "Nominal pin and fastener sizes, not measured tolerances",
+    "Printed barrel grip and clamp force untested; no adhesive or positive axial pin stop",
+    "Gauge and print dimensions require measurement; gauges removed before mounting",
+    "No physical contact, tracking calibration or mounting strength validation"
+  ],
+  "tracker_sha256": "d6a92f3d5a04dfa01b1e8b80da74cb02b7c250a603ebcba302438810fcca73df",
+  "files_sha256": {
+    "parameters.json": "b03efae9343cca41f56c1153959f9f764dd48e050b77b603f6742b15706cb73d",
+    "build_connector.py": "e40c2429629e85f6b1d952fd5ad889f9b623a27453453bb3e341c1551fefdcc3",
+    "validate_connector.py": "66038d8ac8170c3687aa09345e3547883c00521a529c551639153e0f7b986891",
+    "output\\clamp_jaw.step": "85a2c997804c2255e555969552d9faa0d3b75ec555de7f436a1d82a9617026e4",
+    "output\\clamp_nut_0_reference.step": "443f6ff0eafdae7c9e2599143522d923ed25d64fa82454d701adcb499e49338b",
+    "output\\clamp_nut_1_reference.step": "bd9100943d0fec454af419fe422ab34331ff57ae2138166610a5f847ec138972",
+    "output\\clamp_screw_0_reference.step": "d36171df569f4e2e48b17f59e5358426f920a9f2f8d96c76d813bd841a581957",
+    "output\\clamp_screw_1_reference.step": "5690daaaaee216a751cdf6dfa2d0f6ae25b08a8c9192af1ffd319bab2a2a1d7c",
+    "output\\contact_2_reference.step": "84ba50491e35e4e38b2575da92f6f196cc0e5d38b0b1e334fbb018a0244070c9",
+    "output\\contact_4_reference.step": "2a13ae83266a352633595c9273fbeef4ed165ce998ccbca95155c62768d5b391",
+    "output\\ELTS_VIVE_Tracker_3_Rev_D_Open_Clamp.step": "aa3ebec4d992d31814b650f28c8f2fd160a4c984c0e1901356a96d31bd29eb75",
+    "output\\mount_frame.step": "9b5c9b6cad77959b765d513c1dece6d8a21ffb69773bb6cd7bd5e7c7bdf665fb",
+    "output\\mount_screw_reference.step": "31e231df567cfc6ce42151d959efa7a5add6f9049da40d9bc0b45a0dd4740ae3",
+    "output\\setup_gauge_lower_0p0mm.step": "dea1e352cec6bda3d2f82c226fc95a9e7ba85590e139c3ad6e8b8397ddd5a7a6",
+    "output\\setup_gauge_lower_0p25mm.step": "c6844ca11ad43e2926713567ad7d0d3f7f479c238fadb159dbceabfd3b4beeb8",
+    "output\\setup_gauge_lower_0p5mm.step": "76ff7d81c8665d52e3e41edcec3a7137923a7df36d68ae1eb2eb3fbfbe06976b",
+    "output\\clamp_jaw.stl": "ac90613d4f8e9811da2f8e8f0db646586b21d8a08da4c659f28978a6610fa7aa",
+    "output\\mount_frame.stl": "2126dde274d34324675fe871c99b7526aaf4636e438bcf9bbfad727c0ae9b7a8",
+    "output\\setup_gauge_lower_0p0mm.stl": "aa1452c86ce2f737ac151bffd6a50fd85efca80656d7bce36c687439b6cb939f",
+    "output\\setup_gauge_lower_0p25mm.stl": "618daa039f155b58e1ed2ff65be8d52e7202b4af899c8df3f88224a80ae09868",
+    "output\\setup_gauge_lower_0p5mm.stl": "61e773201c5a01a787aec77e1ac59fcc9be8ca8a8bb05b1578ab0ad18df0f3de"
+  },
+  "passed": true
+}

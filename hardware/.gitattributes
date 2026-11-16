@@ -1,0 +1,6 @@
+# CAD exchange files are generated artifacts. Preserve their exact bytes and
+# avoid enormous text diffs or whitespace normalization during publication.
+*.step binary
+*.stp binary
+*.brep binary
+*.stl binary

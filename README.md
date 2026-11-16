@@ -302,7 +302,7 @@ Full reference: [administrator dashboard](docs/developer/modules/operator-dashbo
 | Procedure briefing and automatic scenario → break → form flow | ✅ In the development build |
 | ELTS introduction and demonstration | 🟡 Simulated only; real apparatus not connected |
 | ELTS integration and synchronization | 🟡 Protocol fixture and [simulated controller](docs/developer/modules/elts-link.md#controller-jetson-boundary) only; needs the controller's wire contract |
-| Physical participant controller (mock replica input) | 🟡 The gun tracker's trigger is read in software ([trigger setup](docs/developer/modules/vive-trigger.md)). The mock rifle is an airsoft platform with a printed pogo-pin tracker cradle; its rail mount is in progress. Aiming from the gun tracker's pose is not connected yet |
+| Physical participant controller (mock replica input) | 🟡 The gun tracker's trigger is read in software ([trigger setup](docs/developer/modules/vive-trigger.md)). The mock rifle is an airsoft platform with a printed pogo-pin tracker cradle ([connector designs](hardware/README.md)); its rail mount is in progress. Aiming from the gun tracker's pose is not connected yet |
 | Heart-rate, eye-tracker and NASA-TLX data alignment | ⬜ Not started |
 | Room survey: screen size and 5 / 6 / 7 ft floor marks | ✅ Screen size recorded (Samsung QB65R-B, the default in ELTS and the calibration workspace) and floor marks placed ([survey](docs/operator/hardware-follow-up.md#current-inventory-and-starter-room-survey)) |
 
@@ -385,6 +385,6 @@ Local, machine-specific settings live in `config/local.json` and `config/local/`
 | `config/`, `schemas/` | Editable settings and data contracts |
 | `scripts/` | The PowerShell commands you run: setup, start, build, test, verify |
 | `tools/` | The Python and C# code behind those commands, plus the runtime test projects |
-| `hardware/` | Local only (ignored by Git): CAD, print files and bench sketches |
+| `hardware/` | [Tracker trigger connector CAD and bench tests](hardware/README.md) |
 | `docs/` | [Documentation map](docs/README.md): operator guides, developer and module docs, the participant tutorial, safety |
 | `collection data/` | Your local recordings and exports (created on first run, never committed) |

@@ -1,0 +1,2 @@
+# ~40 MB; regenerate with: python build_connector.py --with-tracker
+output/*_with_tracker_reference.step

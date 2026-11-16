@@ -1,0 +1,79 @@
+{
+ "name": "ELTS_VIVE_Tracker_3_Trigger_Connector_Rev_E",
+ "frame": "seat Z: 0 = connector top = tracker flat underside (HTC z -2.50)",
+ "printed": {
+  "mount_base": {
+   "volume_mm3": 15797.62,
+   "bbox_seat_frame": [
+    -17.005,
+    -27.007,
+    -12.0,
+    17.008,
+    20.508,
+    5.2
+   ],
+   "print_orientation": "top face up (stabilizing pin up), as modelled",
+   "step": "mount_base.step",
+   "stl": "ELTS_VIVE_Tracker_3_Trigger_Connector_Rev_E_mount_base.stl",
+   "3mf": "ELTS_VIVE_Tracker_3_Trigger_Connector_Rev_E_mount_base.3mf",
+   "stl_sha256": "eff06a6c61168e8e3f49da715687f099670014f1c9bb73c5fafba6d93a4b1c8a"
+  },
+  "contact_carrier": {
+   "volume_mm3": 382.77,
+   "bbox_seat_frame": [
+    -9.6,
+    -19.409,
+    -12.0,
+    6.1,
+    -13.559,
+    2.595
+   ],
+   "print_orientation": "lying on its flat back (-Y) face; contact seat face is vertical",
+   "step": "contact_carrier.step",
+   "stl": "ELTS_VIVE_Tracker_3_Trigger_Connector_Rev_E_contact_carrier.stl",
+   "3mf": "ELTS_VIVE_Tracker_3_Trigger_Connector_Rev_E_contact_carrier.3mf",
+   "stl_sha256": "7a1d3036b98971afb2436cae2ba701a5f60d4aa394c09ea76990ebd5591db306"
+  },
+  "bottom_cover": {
+   "volume_mm3": 10456.37,
+   "bbox_seat_frame": [
+    -17.005,
+    -27.007,
+    -20.0,
+    17.008,
+    20.508,
+    -12.0
+   ],
+   "print_orientation": "bottom face down, as modelled",
+   "step": "bottom_cover.step",
+   "stl": "ELTS_VIVE_Tracker_3_Trigger_Connector_Rev_E_bottom_cover.stl",
+   "3mf": "ELTS_VIVE_Tracker_3_Trigger_Connector_Rev_E_bottom_cover.3mf",
+   "stl_sha256": "60a81048e00711f2673193cf571093ce8c93a6d79a1d6cc0296cb37317410e9e"
+  }
+ },
+ "hardware": {
+  "pogo_contact_pin2_GND_to_COM": {
+   "volume_mm3": 9.028
+  },
+  "pogo_contact_pin4_TRIGGER_to_NO": {
+   "volume_mm3": 9.028
+  },
+  "mount_screw_1_4_20x5_8": {
+   "volume_mm3": 641.658
+  },
+  "m3x16_screw_minusX": {
+   "volume_mm3": 176.253
+  },
+  "m3_nut_minusX": {
+   "volume_mm3": 45.909
+  },
+  "m3x16_screw_plusX": {
+   "volume_mm3": 176.253
+  },
+  "m3_nut_plusX": {
+   "volume_mm3": 45.909
+  }
+ },
+ "assembly_step": "ELTS_VIVE_Tracker_3_Trigger_Connector_Rev_E.step",
+ "assembly_with_tracker_step": "ELTS_VIVE_Tracker_3_Trigger_Connector_Rev_E_with_tracker_reference.step"
+}

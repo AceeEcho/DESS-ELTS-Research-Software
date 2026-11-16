@@ -1,0 +1,97 @@
+{
+  "status": "CAD checks only; physical fit and electrical operation untested",
+  "tracker_step_sha256": "d6a92f3d5a04dfa01b1e8b80da74cb02b7c250a603ebcba302438810fcca73df",
+  "printed_parts": {
+    "body": {
+      "valid_solid": true,
+      "solids": 1,
+      "tracker_overlap_mm3": 0.0,
+      "mesh": {
+        "open_or_nonmanifold_edges": 0,
+        "connected_regions": 1,
+        "volume_mm3": 10808.327693870411,
+        "triangles": 5476,
+        "minimum_z_mm": 0.0
+      }
+    },
+    "insert_front": {
+      "valid_solid": true,
+      "solids": 1,
+      "tracker_overlap_mm3": 0.0,
+      "mesh": {
+        "open_or_nonmanifold_edges": 0,
+        "connected_regions": 1,
+        "volume_mm3": 278.8276960913641,
+        "triangles": 2532,
+        "minimum_z_mm": 0.0
+      }
+    },
+    "insert_rear": {
+      "valid_solid": true,
+      "solids": 1,
+      "tracker_overlap_mm3": 0.0,
+      "mesh": {
+        "open_or_nonmanifold_edges": 0,
+        "connected_regions": 1,
+        "volume_mm3": 278.827611183113,
+        "triangles": 2532,
+        "minimum_z_mm": 0.0
+      }
+    },
+    "wire_cover": {
+      "valid_solid": true,
+      "solids": 1,
+      "tracker_overlap_mm3": 0.0,
+      "mesh": {
+        "open_or_nonmanifold_edges": 0,
+        "connected_regions": 1,
+        "volume_mm3": 1944.9254928329137,
+        "triangles": 2478,
+        "minimum_z_mm": 0.0
+      }
+    }
+  },
+  "pair_overlaps_mm3": {
+    "body/insert_front": 0.0,
+    "body/insert_rear": 0.0,
+    "body/wire_cover": 0.0,
+    "insert_front/insert_rear": 0.0,
+    "insert_front/wire_cover": 0.0,
+    "insert_rear/wire_cover": 0.0
+  },
+  "contact_checks": {
+    "pin_2_ground": {
+      "free_spring_overlap_mm3": 0.5576036874905381,
+      "overlap_outside_intended_contact_mm3": 0.0,
+      "face_height_mm": 2.515,
+      "stationary_barrel_accessible_length_mm": 1.785,
+      "maximum_target_height_with_axial_clearance_mm": 2.595,
+      "joint_envelope_diameter_mm": 2.6
+    },
+    "pin_4_trigger": {
+      "free_spring_overlap_mm3": 0.5576036874905372,
+      "overlap_outside_intended_contact_mm3": 0.0,
+      "face_height_mm": 2.515,
+      "stationary_barrel_accessible_length_mm": 1.785,
+      "maximum_target_height_with_axial_clearance_mm": 2.595,
+      "joint_envelope_diameter_mm": 2.6
+    }
+  },
+  "coupon_mesh": {
+    "open_or_nonmanifold_edges": 0,
+    "connected_regions": 1,
+    "volume_mm3": 791.6874627912744,
+    "triangles": 2544,
+    "minimum_z_mm": 0.0
+  },
+  "fasteners": {
+    "mount_screw_exposed_thread_mm": 4.5,
+    "mount_head_recess_mm": 0.6000000000000014,
+    "cover_screws": "M2.5 x 12; no washers",
+    "nut_engagement_mm": 2.0,
+    "screw_projection_past_nut_mm": 0.09999999999999964,
+    "rigid_envelopes_clear": true
+  },
+  "assembly_step_solid_count": 11,
+  "passed": true
+}

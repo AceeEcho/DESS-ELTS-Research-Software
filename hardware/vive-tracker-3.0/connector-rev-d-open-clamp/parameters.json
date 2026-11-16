@@ -1,0 +1,81 @@
+{
+  "revision": "D_Open_Clamp",
+  "units": "mm",
+  "tracker": {
+    "official_mount_face_z": -2.0,
+    "contact_y": -16.520189036345,
+    "contact_x": [-5.25, 1.75],
+    "contact_face_z": 2.515,
+    "locator_y": 14.001,
+    "locator_diameter": 4.1,
+    "locator_height": 4.5,
+    "mount_seat_diameter": 9.3
+  },
+  "pin": {
+    "source": "Treedix B0BFD27HSR, nominal 6 mm variant; reused from Rev B",
+    "flange_diameter": 2.0,
+    "flange_thickness": 0.5,
+    "barrel_diameter": 1.5,
+    "barrel_length": 3.5,
+    "plunger_diameter": 0.9,
+    "overall_length": 6.0
+  },
+  "frame": {
+    "width": 30.0,
+    "rear_y": -5.0,
+    "top_z": -0.5,
+    "spine_width": 16.0,
+    "spine_front_y": -8.0,
+    "spine_rear_y": 19.0,
+    "corner_radius": 1.5,
+    "mount_bore": 6.8,
+    "wire_relief_diameter": 4.0,
+    "wire_relief_top_z": -0.6,
+    "tie_slot_width": 1.5,
+    "tie_slot_length": 4.0,
+    "tie_slot_x": [-5.0, 5.0],
+    "tie_slot_y": -8.5
+  },
+  "jaw": {
+    "front_y": -21.4,
+    "bottom_z": -7.2,
+    "split_gap": 0.3,
+    "grip_bore": 1.6,
+    "grip_bridge_width": 14.0,
+    "grip_bridge_depth": 5.0,
+    "wire_exit_depth": 2.0,
+    "grip_bridge_center_x": -1.75,
+    "tower_top_z": 0.515,
+    "screw_x": [-11.0, 11.0],
+    "screw_z": -3.7,
+    "screw_clearance": 3.4,
+    "nut_pocket_af": 5.8,
+    "nut_pocket_front_y": -8.0
+  },
+  "hardware": {
+    "mount_screw_length": 15.875,
+    "mount_engagement": 4.5,
+    "mount_diameter": 6.35,
+    "mount_head_diameter": 10.8,
+    "mount_head_height": 3.2,
+    "mount_hex_af": 3.97,
+    "clamp_screw_length": 16.0,
+    "clamp_diameter": 3.0,
+    "clamp_head_diameter": 5.5,
+    "clamp_head_height": 3.0,
+    "clamp_hex_af": 2.5,
+    "nut_af": 5.5,
+    "nut_thickness": 2.4,
+    "dimensions_status": "Nominal envelopes, not measured hardware or thread models"
+  },
+  "gauge": {
+    "lowering_options": [0.0, 0.25, 0.5],
+    "slot_diameter": 1.7,
+    "width": 18.0,
+    "depth": 7.0,
+    "center_x": -1.75,
+    "center_y_offset": -2.0
+  },
+  "export": {"mesh_tolerance": 0.025, "angular_tolerance": 0.1},
+  "status": "Unvalidated physical prototype. Pin grip depends on printed bore and clamp friction."
+}

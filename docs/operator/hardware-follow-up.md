@@ -18,8 +18,8 @@ Inventory confirmed October 21, 2026:
 - A second base station is not part of the current plan.
 - The mock rifle is an airsoft platform with a printed pogo-pin cradle for the gun
   tracker; a rail mount for the cradle is in progress. Its trigger is read in
-  software ([VIVE gun trigger](../developer/modules/vive-trigger.md)). Cradle and
-  mount CAD is kept locally, outside this repository.
+  software ([VIVE gun trigger](../developer/modules/vive-trigger.md)). Connector
+  CAD is in [`hardware/`](../../hardware/README.md).
 - Availability is not evidence of fit, rigidity, calibration, serial binding,
   tracking coverage, timing, or physical/safety acceptance. Keep those checks open.
 

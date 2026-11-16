@@ -30,8 +30,6 @@ Thumbs.db
 /data/
 /collection data/
 /unity/data/
-# Hardware CAD, print files and bench sketches are kept locally, not in the repo.
-/hardware/
 # Raw research/private deployment inputs must never enter source control.
 *.ulf
 *.pfx

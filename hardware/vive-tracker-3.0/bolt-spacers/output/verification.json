@@ -1,0 +1,91 @@
+{
+  "physical_fit_tested": false,
+  "sizes": [
+    {
+      "thickness_mm": 0.5,
+      "copies": 3,
+      "valid_solid": true,
+      "closed_mesh": true,
+      "body_overlap_mm3": {
+        "connector-treedix-fixed-base": 0.0,
+        "connector-rev-b": 0.0
+      }
+    },
+    {
+      "thickness_mm": 1.0,
+      "copies": 3,
+      "valid_solid": true,
+      "closed_mesh": true,
+      "body_overlap_mm3": {
+        "connector-treedix-fixed-base": 0.0,
+        "connector-rev-b": 0.0
+      }
+    },
+    {
+      "thickness_mm": 1.5,
+      "copies": 3,
+      "valid_solid": true,
+      "closed_mesh": true,
+      "body_overlap_mm3": {
+        "connector-treedix-fixed-base": 0.0,
+        "connector-rev-b": 0.0
+      }
+    },
+    {
+      "thickness_mm": 2.0,
+      "copies": 3,
+      "valid_solid": true,
+      "closed_mesh": true,
+      "body_overlap_mm3": {
+        "connector-treedix-fixed-base": 0.0,
+        "connector-rev-b": 0.0
+      }
+    },
+    {
+      "thickness_mm": 2.5,
+      "copies": 3,
+      "valid_solid": true,
+      "closed_mesh": true,
+      "body_overlap_mm3": {
+        "connector-treedix-fixed-base": 0.0,
+        "connector-rev-b": 0.0
+      }
+    },
+    {
+      "thickness_mm": 3.0,
+      "copies": 3,
+      "valid_solid": true,
+      "closed_mesh": true,
+      "body_overlap_mm3": {
+        "connector-treedix-fixed-base": 0.0,
+        "connector-rev-b": 0.0
+      }
+    },
+    {
+      "thickness_mm": 3.2,
+      "copies": 3,
+      "valid_solid": true,
+      "closed_mesh": true,
+      "body_overlap_mm3": {
+        "connector-treedix-fixed-base": 0.0,
+        "connector-rev-b": 0.0
+      }
+    },
+    {
+      "thickness_mm": 3.5,
+      "copies": 3,
+      "valid_solid": true,
+      "closed_mesh": true,
+      "body_overlap_mm3": {
+        "connector-treedix-fixed-base": 0.0,
+        "connector-rev-b": 0.0
+      }
+    }
+  ],
+  "object_count": 24,
+  "outer_diameter_mm": 11.2,
+  "inner_diameter_mm": 6.9,
+  "radial_pocket_clearance_mm": 0.3,
+  "radial_thread_clearance_mm": 0.27500000000000036,
+  "passed": true
+}

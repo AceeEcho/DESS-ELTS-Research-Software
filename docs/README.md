@@ -40,4 +40,5 @@ The folders below are grouped by who reads them.
 
 - [Safety boundaries](safety/README.md): what the software must never do, and what remains unvalidated.
 - [Decision and work-item IDs](decisions.md): what labels such as D-12, DEV-10 and P8.4 refer to.
+- [Hardware design files](../hardware/README.md): trigger connector CAD and bench tests.
 - [VIVE trigger bench test](../tools/diagnostics/README.md): check the gun tracker's trigger on its own before a session.

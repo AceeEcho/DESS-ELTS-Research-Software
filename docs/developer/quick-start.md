@@ -41,7 +41,7 @@ calibration, safety, timing, display, or study-readiness acceptance.
    The driver writes structured reports under `diagnostics/`. Fix the reported
    input or failure before rerunning the affected check.
 
-   The portable console identities are `geometry`, `config`, `runtime`,
+   The suites are `baseline`, `validation`, `config`, `geometry`, `runtime`,
    `unity-edit`, and `unity-play`; `-Suite all` runs the available subset and
    reports deferred Unity work without claiming a study result. Unity XML is
    accepted only when it is fresh and reports `Passed`.
@@ -50,8 +50,8 @@ calibration, safety, timing, display, or study-readiness acceptance.
    or changed prerequisites, not a step to repeat before each edit.
 
 If Python is not available, install a supported interpreter or invoke an existing
-supported interpreter by its full executable path. Do not assume a Codex-specific
-runtime path exists on another machine.
+supported interpreter by its full executable path. Do not copy another machine's
+tool paths.
 
 A configuration/schema mismatch must be fixed before using that configuration.
 A missing device blocks its physical checks while synthetic work can continue.

@@ -70,10 +70,13 @@ At the top of [this GitHub page](https://github.com/AceeEcho/DESS-ELTS-Research-
 
 **Tracking PC (optional).** To set up the room, screen and Vive trackers, double-click **START-CALIBRATION.cmd**. The first time, it offers to install the live-tracking tools (answer **Y**); manual preview works without them. This needs no Unity. See [Calibration workspace](#-calibration-workspace).
 
-**VIVE gun trigger.** A configured gun tracker can now fire in tutorial practice,
-start a scenario, and fire scored shots. The calibration workspace shows its live
-button state above the 3D view. See [trigger setup](docs/developer/modules/vive-trigger.md).
-Aiming still uses the main app's existing desktop/synthetic pose source.
+**VIVE gun trigger (optional).** The gun tracker's trigger can fire in tutorial practice, start a scenario and fire scored shots. To turn it on:
+
+1. In SteamVR **Manage Trackers**, set the gun tracker to **Held in hand → Right Hand** (or Left Hand).
+2. In the calibration workspace, pick that tracker under **Weapon**, check that the trigger indicator above the 3D view shows **pressed** and **released**, and **Save profile**.
+3. Double-click **START-ELTS.cmd**. It uses the weapon tracker from the most recently saved profile.
+
+Aiming still uses the desktop/synthetic pose source; the mouse keeps working. Details: [trigger setup](docs/developer/modules/vive-trigger.md).
 
 **Getting a newer version.** Download and extract the new ZIP into a new folder, then double-click **START-ELTS.cmd** in it. Recordings are not carried over automatically, so keep your old folder and its **collection data** until you have exported what you need.
 
@@ -299,9 +302,9 @@ Full reference: [administrator dashboard](docs/developer/modules/operator-dashbo
 | Procedure briefing and automatic scenario → break → form flow | ✅ In the development build |
 | ELTS introduction and demonstration | 🟡 Simulated only; real apparatus not connected |
 | ELTS integration and synchronization | 🟡 Protocol fixture and [simulated controller](docs/developer/modules/elts-link.md#controller-jetson-boundary) only; needs the controller's wire contract |
-| Physical participant controller (mock replica input) | 🟡 The gun tracker's trigger is read in software ([trigger setup](docs/developer/modules/vive-trigger.md)); the [connector designs](hardware/README.md) are not yet printed or tested |
+| Physical participant controller (mock replica input) | 🟡 The gun tracker's trigger is read in software ([trigger setup](docs/developer/modules/vive-trigger.md)). The mock rifle is an airsoft platform with a printed pogo-pin tracker cradle; its rail mount is in progress. Aiming from the gun tracker's pose is not connected yet |
 | Heart-rate, eye-tracker and NASA-TLX data alignment | ⬜ Not started |
-| Room survey: screen size and 5 / 6 / 7 ft floor marks | ⬜ Measurements pending ([checklist](docs/operator/hardware-follow-up.md#current-inventory-and-starter-room-survey)) |
+| Room survey: screen size and 5 / 6 / 7 ft floor marks | ✅ Screen size recorded (Samsung QB65R-B, the default in ELTS and the calibration workspace) and floor marks placed ([survey](docs/operator/hardware-follow-up.md#current-inventory-and-starter-room-survey)) |
 
 **Current tracking hardware** (confirmed October 21, 2026): one base station, two Vive trackers, existing tracker mounting posts and a headband with mounts. Having the equipment does not establish calibration, tracking coverage, mount rigidity, safety or study readiness.
 
@@ -356,7 +359,7 @@ Close Unity → **Pull** → edit → run checks → review every changed file �
 | `scripts/verify.ps1` | Full development verification, including the available Unity and runtime tests |
 | `dotnet run --project tools/runtime-tests/TutorialChecks.csproj` | Walkthrough progression rules (fast, no Unity) |
 
-Run Unity Play Mode tests with `-noaudio`. Set `ELTS_TUTORIAL_CAPTURE_DIR` while running `ParticipantTutorialTests` to save a screenshot of every walkthrough screen.
+`scripts/test.ps1` runs Unity tests with `-noaudio`; add it yourself when running them from the command line. Set `ELTS_TUTORIAL_CAPTURE_DIR` while running `ParticipantTutorialTests` to save a screenshot of every walkthrough screen.
 
 ### Common tasks
 
@@ -382,6 +385,6 @@ Local, machine-specific settings live in `config/local.json` and `config/local/`
 | `config/`, `schemas/` | Editable settings and data contracts |
 | `scripts/` | The PowerShell commands you run: setup, start, build, test, verify |
 | `tools/` | The Python and C# code behind those commands, plus the runtime test projects |
-| `hardware/` | [Tracker trigger connector CAD and bench tests](hardware/README.md) |
+| `hardware/` | Local only (ignored by Git): CAD, print files and bench sketches |
 | `docs/` | [Documentation map](docs/README.md): operator guides, developer and module docs, the participant tutorial, safety |
 | `collection data/` | Your local recordings and exports (created on first run, never committed) |

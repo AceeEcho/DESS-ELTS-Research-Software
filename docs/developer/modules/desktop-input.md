@@ -9,20 +9,18 @@ Prerequisites and local tool discovery follow the repository setup guide.
 
 ## Run the pipeline
 
-1. In Preparation select **Mouse and keyboard** before creating a recording.
-   Enter a unique synthetic test identifier and arrange the four conditions.
-2. Create the synthetic recording and wait for readiness. Continue to calibration,
-   generate the development fixture, review it, and accept it.
-3. Continue through the ten-second practice timer. Open desktop play from Preparation
-   or the practice/blocks module. Choose **Start block** in the play view when ready.
-4. Point at targets and click. A shot occurs when the left button is released after
-   a press inside the image during the same running block. Each release fires at
-   most one round. The HUD shows hits, shots and the 20-round magazine. Press R
-   to reload manually. The standard four 300-second blocks and five-second development breaks
-   still use the session controller; the desktop mode does not shorten them.
-5. Use the play view's phase action between blocks. After completion, use Recordings
-   to find the run or open replay. Files remain under `data/synthetic` relative to
-   the player (under `unity/data/synthetic` in the Editor).
+1. Run a session from the administrator dashboard as in the
+   [user guide](../../operator/user-guide.md): **New participant**, then
+   **Begin walkthrough** or **Manual mode · skip walkthrough**.
+2. Point at targets and click in the participant window. A shot occurs when the
+   left button is released after a press inside the image during the same armed
+   or running block. Each release fires at most one round. The HUD shows hits,
+   shots and the 20-round magazine. Press R to reload manually. A configured
+   [VIVE gun trigger](vive-trigger.md) fires through the same path on press.
+3. Recordings go to `collection data/` in the repository root (beside the
+   README), whether you press Play in the Editor or use `START-ELTS.cmd`. A
+   standalone player copied outside the repository saves beside its executable.
+   Review them under **Data** on the dashboard.
 
 | Control | Action |
 | --- | --- |
@@ -38,9 +36,7 @@ Prerequisites and local tool discovery follow the repository setup guide.
 Leaving the view or losing focus cancels a held click. Session time continues;
 returning to the administrator is not a pause. Letterbox bars and menu clicks do
 not fire. Before a recording, the view is a geometry preview. Scored firing is
-enabled during running blocks. The existing practice phase remains a timed
-preparation phase. Select **Automated synthetic motion** before a new recording to
-use the earlier automatic fixture instead.
+enabled during running blocks; practice shots are not scored.
 
 ## Source and future hardware boundary
 
@@ -61,8 +57,9 @@ The acquisition worker serializes raw admission with trigger capture. Each deskt
 `InputTrigger` identifies its raw acquisition sequence; scoring uses that exact pair.
 `DevelopmentInputSource` records the source identity and synthetic muzzle policy.
 
-Future equipment should supply an `ITrackingSource` and a device trigger adapter
-at this boundary. Keep calibration, shared clock, session controller, condition
+The physical trigger adapter now exists ([VIVE gun trigger](vive-trigger.md));
+poses still come from this desktop source. Future tracking equipment should supply
+an `ITrackingSource` at this boundary. Keep calibration, shared clock, session controller, condition
 rendering, hitscan, recording and replay downstream. Hardware timestamps, coordinate
 transforms, tracker bindings, trigger timing, calibration and physical validation
 must be established separately before replacing the desktop source for research.

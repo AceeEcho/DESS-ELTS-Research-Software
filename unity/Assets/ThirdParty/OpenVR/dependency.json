@@ -8,7 +8,7 @@
   "license": "BSD-3-Clause",
   "platform": "Windows x86_64",
   "purpose": "Vendored binding and native ABI only; physical tracking integration is a separate task",
-  "runtimeInitialization": "Not performed; synthetic mode never initializes OpenVR",
+  "runtimeInitialization": "Background application, only when a weapon trigger serial is bound (ViveTriggerReader reads trigger buttons; no poses); disabled in automated Unity test runs",
   "files": [
     {
       "path": "openvr_api.cs",

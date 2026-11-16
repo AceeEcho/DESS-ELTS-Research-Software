@@ -10,12 +10,12 @@
 
 The Unity player opens the [administrator dashboard](operator-dashboard.md), with
 task navigation, focused controls and two persistent emulated camera views.
-Enter a synthetic test identifier and a permutation of `WE_MT`, `NE_MT`,
-`WE_FT`, and `NE_FT`. The staged session and scenario templates and effective
+Arrange a permutation of `WE_MT`, `NE_MT`, `WE_FT`, and `NE_FT` in **⚙ Settings**,
+then enter a participant ID under **New participant**. The staged session and scenario templates and effective
 configuration hash are shown before creation. Template choices remain in the
 validated configuration pipeline; this panel does not read arbitrary JSON.
 
-Choose **Create synthetic recording**. A background operation reserves a unique
+Choose **Create recording**. A background operation reserves a unique
 output directory and starts the writer. A dedicated synthetic producer supplies
 raw paired observations to the writer and immutable snapshots to rendering. The
 preflight observes two seconds of fresh, valid synthetic data, configuration
@@ -24,12 +24,13 @@ explicitly emulated; the controller uses the [in-process protocol adapter](elts-
 These substitutions never enable
 study readiness.
 
-**Continue** advances setup to the [synthetic calibration fixture wizard](calibration.md).
-Generate, review and accept a fixture within its provisional limits before
-continuing to practice. The results do not replace measured rig calibration.
-Practice and break durations come from staged development session configuration.
-**Start block** starts the selected condition; its clock deadline is fixed at
-300 seconds. Targets appear only during `BlockRunning`; the operator test trigger
+**Begin walkthrough** captures and reviews the [synthetic calibration fixture](calibration.md)
+inside the [participant walkthrough](participant-tutorial.md) before practice;
+**Manual mode · skip walkthrough** generates and accepts it automatically. The
+results do not replace measured rig calibration. Practice and break durations come
+from staged development session configuration or the dashboard fields. With the
+walkthrough each scenario arms itself; in manual mode **ARM TEST** arms it. The
+participant's start shot begins the block; its clock deadline defaults to 300 seconds. Targets appear only during `BlockRunning`; the operator test trigger
 uses the same block-owned hitscan path as other synthetic trigger adapters.
 Moving targets use an explicitly provisional random-walk policy while D-04 remains
 unresolved. Spawn volume dimensions and other temporary presentation choices are
@@ -41,10 +42,10 @@ the primary count. Target expiration is a v2 `Despawned` lifecycle record and
 does not score. Rendering consumes the raw acquisition snapshot separately from
 logging; no render prediction can rewrite a recorded pose.
 
-**Abort** requires a reason and is available throughout an unfinished session.
+**Abort participant session** requires a reason and is available throughout an unfinished session.
 Only a running block emits `BlockAborted`. At or beyond a block deadline the
 engine first records its exact normal end, preserving monotonic event ordering.
-A valid **Re-run block** closes the earlier recording, reserves a distinct
+A valid **Repeat a test…** closes the earlier recording, reserves a distinct
 `-rNNNN` directory and uses a distinct attempt ID. The earlier files remain intact.
 Notes and provisional sync markers use the same shared monotonic clock and event
 sequence. D-12 synchronization approval remains outstanding.
@@ -55,8 +56,10 @@ These counters are diagnostics, not a physical or full-load performance pass.
 **Open rendering / replay tools** exposes the separate viewing controls; the
 **Session controls** button returns to this panel.
 
-Editor output defaults below `unity/data/`; packaged-player output is relative to
-the extracted player directory, according to the validated machine `dataRoot`.
+Output follows the validated machine `dataRoot` (default `collection data`). Inside
+the repository, from the Editor or a `START-ELTS.cmd` build, that resolves to
+`collection data/` in the repository root; a player copied elsewhere resolves it
+beside its executable.
 Both are local outputs and must remain outside source control. Copying a build
 does not make its synthetic configuration a measured calibration.
 

@@ -16,10 +16,21 @@ Inventory confirmed October 21, 2026:
 - Exactly **one base station** and **two Vive trackers** are available.
 - Tracker mounting posts and a headband with mounts are already available.
 - A second base station is not part of the current plan.
+- The mock rifle is an airsoft platform with a printed pogo-pin cradle for the gun
+  tracker; a rail mount for the cradle is in progress. Its trigger is read in
+  software ([VIVE gun trigger](../developer/modules/vive-trigger.md)). Cradle and
+  mount CAD is kept locally, outside this repository.
 - Availability is not evidence of fit, rigidity, calibration, serial binding,
   tracking coverage, timing, or physical/safety acceptance. Keep those checks open.
 
-The initial hands-on task is deliberately limited to measurement and floor marking:
+**Starter room survey: done (November 2026).** The screen is a Samsung QB65R-B
+with a visible area of 56 1/4 in × 31 5/8 in (1.42875 m × 0.803275 m),
+its bottom edge 41 3/8 in (1.050925 m) above the floor. These are the defaults in
+ELTS and the calibration workspace. The 5, 6 and 7 ft floor marks are placed.
+The steps below are kept for repeating the survey in another room or after
+moving the screen.
+
+The starter task is deliberately limited to measurement and floor marking:
 
 1. Measure and record the actual screen width and height, with units. Identify
    the measured screen edges; do not substitute an advertised diagonal size.

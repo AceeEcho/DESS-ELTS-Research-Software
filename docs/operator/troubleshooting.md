@@ -2,7 +2,7 @@
 
 Use this when a study session stalls and you need the next check, not a tour of the software. It covers the Unity participant window, the browser administrator dashboard, local export, install and startup, the Python analysis tools, and the simulated Jetson controller. The hardware section covers only what this repository establishes about the trigger, Vive trackers, the SteamVR base station, a wearable eye tracker, a heart-rate monitor, and the ELTS apparatus.
 
-Written 21 October 2026; reconciled with the inventory documented that day. One base station, two Vive trackers, mounting posts, and a headband with mounts are available. Other required test/metrology equipment must still be confirmed, and physical validation remains pending. A passing setup, doctor report, or synthetic session does not accept a device, a calibration, or a study gate. See [required follow-up](hardware-follow-up.md) and [safety boundaries](../safety/README.md).
+Written 21 October 2026; last reviewed 16 November 2026 (VIVE trigger input, walkthrough and room survey). One base station, two Vive trackers, mounting posts, and a headband with mounts are available. Other required test/metrology equipment must still be confirmed, and physical validation remains pending. A passing setup, doctor report, or synthetic session does not accept a device, a calibration, or a study gate. See [required follow-up](hardware-follow-up.md) and [safety boundaries](../safety/README.md).
 
 Claims below are taken from the current source, configs, schemas, and docs. Where a model, cable, driver, pairing step, port, or procedure is absent, the gap is marked and named in [the gap register](#gap-register).
 
@@ -27,7 +27,8 @@ Commands assume the repository root on Windows x64, which is the only platform t
 | **SAVE FAILED**, Data shows an error, export will not download | [Local data and export](#local-data-and-export) |
 | `INGEST FAILED` or `scoreStatus: unavailable` | [Python analysis](#python-analysis) |
 | Lights, Jetson, or E-stop do not respond | [Simulated controller](#simulated-jetson-controller) and [ELTS apparatus and Jetson](#elts-apparatus-and-jetson) |
-| Trackers, base station, SteamVR, eye tracker, or heart rate never appear | [Hardware](#hardware) — expect this on the current build |
+| The gun trigger does nothing | [Trigger](#trigger) |
+| Trackers, base station, SteamVR, eye tracker, or heart rate never appear | [Hardware](#hardware) — expected for poses on the current build; only the gun trigger is read |
 | Targets move in a way you did not configure, or there is no hit flash or shot sound | [Open decisions](../decisions.md) |
 
 ## What the running session actually is
@@ -201,7 +202,7 @@ Fullscreen: F11 or Alt+Enter. Escape or F1 calls `SetFullscreen(false)` on the s
 
 ### Mouse and keyboard participant
 
-This is the input the browser station records. It is a stand-in for a later `ITrackingSource` and a device trigger adapter ([desktop input](../developer/modules/desktop-input.md)).
+This is the input the browser station records. It stands in for a later `ITrackingSource` for poses ([desktop input](../developer/modules/desktop-input.md)). A configured VIVE gun tracker can fire alongside the mouse; see [Trigger](#trigger).
 
 | Input | Effect |
 | --- | --- |
@@ -222,13 +223,13 @@ Trigger lockout is `triggerLockoutSeconds` **0.02**. Aim observations are at mos
 
 ### Arming and the participant trigger
 
-**ARM TEST disabled.** The dashboard enables it only when state `canArm` is true. Finish calibration (**Generate fixture**, review, **Accept fixture**), practice, and the break, and wait until the test save finishes. Order edits lock while a participant session is open. Gray controls are inactive on purpose ([user guide](user-guide.md)).
+**ARM TEST disabled.** **ARM TEST** is used in manual mode; with the walkthrough the first scenario arms itself. The dashboard enables it only when state `canArm` is true. Finish the walkthrough calibration (or choose manual mode, which saves the synthetic fixture for you), practice, and the break, and wait until the test save finishes. Order edits lock while a participant session is open. Gray controls are inactive on purpose ([user guide](user-guide.md)).
 
-**Stuck on "Shoot to begin".** That title is shown while `TestArmed` is true (`participantTitle`). The participant must click and release inside the game image. The dashboard cannot synthesize that click (`DevelopmentTestStation` says no browser action can manufacture a participant trigger). **DISARM TEST** returns to ready.
+**Stuck on "Shoot to begin".** That title is shown while `TestArmed` is true (`participantTitle`). The participant must click and release inside the game image, or pull a configured gun trigger. The dashboard cannot synthesize that shot (`DevelopmentTestStation` says no browser action can manufacture a participant trigger). **DISARM TEST** returns to ready.
 
 **Practice shots are not scored.** Practice is a timer from the staged session (`practiceDurationSeconds` **10** in `config/defaults/session.json`) or from the dashboard practice field. **Finish practice** and **Restart practice** are administrator actions.
 
-**The next test does not start by itself.** After a save, **Start break** begins the countdown (`breakDurationSeconds` **5** in the staged session file; the dashboard field overrides it for this station, 0–3600 s). When the break ends, arm the next test yourself.
+**The next test does not start by itself.** That is expected in manual mode only. After a save, **Start break** begins the countdown (`breakDurationSeconds` **120** in the staged session file; the dashboard field overrides it for this station, 0–3600 s). When the break ends, arm the next test yourself. With the walkthrough, breaks and the next scenario start automatically once tracking is valid.
 
 **Pause does not stop the clock source.** Pause holds the test timer, target motion, lifetimes, and respawn delay. Acquisition and logging continue. The simulated WE link is stopped on pause and prepared again with the remaining duration on resume. Switching windows is not a pause.
 
@@ -240,7 +241,7 @@ There is no hit flash, shot sound, or score overlay driven by `ScenarioDefinitio
 
 ### Calibration fixture is not a rig calibration
 
-**Generate fixture** builds a deterministic synthetic fixture (240 poses, virtual corner means, virtual zero hold). **Accept fixture** writes a sidecar beside the recording with create-new semantics and an operator note containing the filename and SHA-256. It does not replace `config/rig` or the staged effective config. Accepted records have `mode: synthetic` and `studyReady: false`. The usual verifier does not automatically check that sidecar ([calibration](../developer/modules/calibration.md)). Thresholds are development limits, not D-17 approval criteria.
+The walkthrough's calibration captures (or manual mode, automatically) build a deterministic synthetic fixture (240 poses, virtual corner means, virtual zero hold). Accepting the review writes a sidecar beside the recording with create-new semantics and an operator note containing the filename and SHA-256. It does not replace `config/rig` or the staged effective config. Accepted records have `mode: synthetic` and `studyReady: false`. The usual verifier does not automatically check that sidecar ([calibration](../developer/modules/calibration.md)). Thresholds are development limits, not D-17 approval criteria.
 
 > **GAP-DEC-D17.** D-17 is named only as the approval those thresholds are not. The repo does not record the numeric acceptance limits or the capture procedure. Who can answer: the calibration operator and the research lead ([hardware follow-up](hardware-follow-up.md), pivot/corners/eye/weapon-zero row).
 
@@ -445,21 +446,25 @@ These projects need the .NET SDK in `global.json`. They do not open a socket. `c
 
 ## Hardware
 
-Nothing in this section establishes physical validation of the equipment recorded in the 21 October 2026 inventory. The software described above will not detect that equipment. [Hardware follow-up](hardware-follow-up.md) records the available equipment, the missing physical evidence, and the roles named for it. Generic vendor steps are labeled. They are not ELTS procedures.
+Nothing in this section establishes physical validation of the equipment recorded in the 21 October 2026 inventory. Apart from the gun tracker's trigger button, the software described above does not read that equipment. [Hardware follow-up](hardware-follow-up.md) records the available equipment, the missing physical evidence, and the roles named for it. Generic vendor steps are labeled. They are not ELTS procedures.
 
 ### Trigger
 
-**What the repo establishes.** The scored trigger on the browser station is a mouse left-button release inside the participant image during an armed or running block, matched to the acquisition pair (`TryCaptureForTrigger`). The synthetic source emits one event on release after a hold, with `triggerLockoutSeconds` 0.02, and clears edge state on a dropout so a reconnect cannot invent a shot. `SessionReadinessReport` does not mention a trigger. Tracking checks "do not verify ... trigger timing" ([tracking](../developer/modules/tracking.md)). Future hardware is specified only as "an `ITrackingSource` and a device trigger adapter" at the desktop boundary.
+**What the repo establishes.** Two trigger paths feed the same firing logic. The mouse fires one round on left-button **release** inside the participant image during an armed or running block, matched to the acquisition pair (`TryCaptureForTrigger`). A configured Vive gun tracker fires on the **rising edge** (press) of its trigger button, read by `ViveTriggerReader` through OpenVR once per Unity update; a held trigger never repeats. Both paths share ammunition, `triggerLockoutSeconds` 0.02, recorded-pose admission and scenario-state checks. Accepted physical shots carry `source=vive-tracker-trigger-v1`, `edge=rising` and the tracker serial; `ViveTriggerState` events record availability and button changes. Wiring and binding are in [VIVE gun trigger input](../developer/modules/vive-trigger.md). Aiming still comes from the mouse/synthetic pose, not the gun tracker.
 
-**Symptom.** A physical switch, pedal, or controller trigger does nothing, or a mouse click fires when the hardware trigger does not.
+**Symptom.** Pulling the gun trigger does nothing, while a mouse click still fires.
 
-**Cause in this build.** No HID, serial, or OpenVR button path is wired. Vendored OpenVR defines `k_EButton_SteamVR_Trigger`, and the player never calls OpenVR init (`dependency.json`: `runtimeInitialization` is `Not performed; synthetic mode never initializes OpenVR`).
+**Cause.** One of: no weapon serial is bound (no `weaponTriggerSerial` in `config/local.json` and no Weapon tracker in the latest saved calibration profile); the tracker has no SteamVR hand role, so SteamVR reports no button input; SteamVR or the tracker is off or disconnected; the trigger was already held when the phase changed (release, then pull again); the game is not in a phase that accepts shots; or the switch wiring is open.
 
-**Check.** Confirm the participant window title is `Shoot to begin` or the block is running, the pointer is inside the image, and the dashboard is not holding a canceled click (click again after focusing the game window). Confirm `events.ndjson` gains a `ShotFired` from that mouse release. A silent physical trigger will not appear there.
+**Check.**
 
-**Fix.** Use the mouse path for software rehearsal. A hardware trigger needs the adapter described in the desktop-input doc, plus the evidence in the follow-up register.
+1. Run the [trigger bench test](../../tools/diagnostics/README.md) with the gun tracker's serial. One press and one release per pull means the tracker, role and switch are fine.
+2. In the calibration workspace, confirm the indicator above the 3D view shows **pressed**/**released** for the tracker selected under **Weapon**, then **Save profile**.
+3. Restart with **START-ELTS.cmd** so the binding is staged. After a session, `events.ndjson` should contain `ViveTriggerState` lines and `ShotFired` events with `source=vive-tracker-trigger-v1`.
 
-> **GAP-HW-TRIGGER.** The repo does not name the trigger's model, connector, debounce, or timestamp source. No owner is named for the trigger specifically. The nearest named roles are the tracking/display engineer (exercise physical tracking) and the research lead (study acceptance) in [hardware follow-up](hardware-follow-up.md).
+**Fix.** In SteamVR **Manage Trackers**, set the gun tracker to **Held in hand → Right Hand** (or Left Hand). Bind its serial through a saved calibration profile or `weaponTriggerSerial`, then restart. If the bench test shows no presses, check the switch between tracker pins 4 and 2. The mouse path keeps working for rehearsal.
+
+> **GAP-HW-TRIGGER.** The switch model and debounce are not recorded, and polling once per frame can miss very short pulses. Host timestamps are not hardware latency measurements. Who can answer: the tracking/display engineer (exercise physical tracking) and the research lead (study acceptance) in [hardware follow-up](hardware-follow-up.md).
 
 ### Vive trackers
 
@@ -468,13 +473,13 @@ Nothing in this section establishes physical validation of the equipment recorde
 - Two logical trackers, roles `head` and `weapon`, serial strings in `trackerSerials`. The synthetic template uses `SYNTHETIC-HEAD` and `SYNTHETIC-WEAPON`. They must be distinct non-empty strings. The desktop source stamps those strings onto mouse poses. It does not enumerate USB devices.
 - Readiness text, if the flags were actually false, would be `Both bound trackers must be valid for at least 2 seconds.` The player sets the flag true after two seconds of valid *software* poses (`ValidTrackingSeconds` is 2).
 - Sample fields (`schemas/logs/samples.v2.schema.json`): a `Connected` and `Valid` tracker is just `"pose":[x,y,z,qx,qy,qz,qw]`. Any other state is written as `connection` (`Disconnected` | `Connected` | `Reconnecting`) and `validity` (`Unavailable` | `OutOfRange` | `DriverFault` | `RejectedNativePose`) with no pose. `trackerId` appears on the first line and whenever it changes.
-- `TrackingCoordinateConverter.Convert` is the only OpenVR-to-Unity conversion: reflect native Z, meters, +X right, +Y up, +Z forward. No player calls it, because no player calls OpenVR.
+- `TrackingCoordinateConverter.Convert` is the only OpenVR-to-Unity conversion: reflect native Z, meters, +X right, +Y up, +Z forward. No player calls it yet: the player opens OpenVR only to read the gun tracker's trigger button, never poses.
 - Vendored SDK: Valve OpenVR **2.12.14**, commit `91825305130f446f82054c1ec3d416321ace0072`, Windows x64 DLL under `unity/Assets/ThirdParty/OpenVR/`. Preload is off. `python tools/dependencies/verify_openvr.py` checks bytes and does not load the DLL ([OpenVR dependency](../developer/modules/openvr-dependency.md)).
 - The illustration in [elts-simulation](../../elts-simulation/README.md) says "a forehead tracker and a mock-weapon tracker" from the briefing. It also says room dimensions and placement are demonstration values.
 
 **Symptom.** SteamVR shows trackers, and ELTS still shows synthetic motion or the serials `SYNTHETIC-HEAD` / `SYNTHETIC-WEAPON` in `samples.ndjson`.
 
-**Cause in this build.** There is no tracker poll. `samples.ndjson` `trackerId` will be the configured serials, which are the synthetic literals unless you change and restage the rig file. Changing the strings only changes the label. It does not bind a device.
+**Cause in this build.** There is no tracker pose poll. `samples.ndjson` `trackerId` will be the configured serials, which are the synthetic literals unless you change and restage the rig file. Changing the strings only changes the label. It does not bind a device.
 
 **Check.**
 
@@ -486,11 +491,11 @@ Open the first `samples.ndjson` line and read `head.trackerId` and `weapon.track
 
 **Fix.** Keep using the synthetic serials for rehearsal. Binding real serials is the follow-up item "Bind actual trackers; measure positions...". After a real adapter exists, invalid rows must stay invalid; do not hand-edit NDJSON to force `Valid`, or checksums and ingest will fail.
 
-> **GAP-HW-VIVE-MODEL.** The inventory records two Vive trackers, mounting posts, and a headband with mounts. It does not establish the Vive generation, installed mounting geometry or rigidity, or the serial bindings to put in `trackerSerials`. Who can answer: the rig and calibration operator ([hardware follow-up](hardware-follow-up.md)).
+> **GAP-HW-VIVE-MODEL.** The inventory records two Vive trackers, mounting posts, and a headband with mounts; the trigger wiring follows HTC's Tracker 3.0 pinout. It does not establish installed mounting geometry or rigidity, or the serial bindings to put in `trackerSerials`. Who can answer: the rig and calibration operator ([hardware follow-up](hardware-follow-up.md)).
 
-> **GAP-HW-VIVE-PAIR.** Pairing, dongle or USB layout, and the SteamVR role assignment are not described. Who can answer: the tracking/display engineer. The OpenVR module doc says enumeration, serial binding, and polling are separate tasks; having the trackers available does not establish those integrations or physical validation.
+> **GAP-HW-VIVE-PAIR.** Dongle or USB layout for the study machine is not described. The calibration workspace's one-time setup installs Steam/SteamVR and configures headset-free tracking ([tracking setup](../../Calibration%20Environment/README.md#connect-vive--steamvr-trackers)), and the gun tracker needs the **Held in hand** role ([trigger](../developer/modules/vive-trigger.md)). Pose enumeration and serial binding in the main app remain separate tasks. Who can answer: the tracking/display engineer.
 
-> **General guidance, not an ELTS procedure.** Valve's upstream README, vendored at `unity/Assets/ThirdParty/OpenVR/UPSTREAM-README.md`, says the OpenVR runtime is SteamVR under Tools in Steam and links to `https://steamvr.com`. ELTS does not launch Steam, install SteamVR, or pair a tracker.
+> **General guidance, not an ELTS procedure.** Valve's upstream README, vendored at `unity/Assets/ThirdParty/OpenVR/UPSTREAM-README.md`, says the OpenVR runtime is SteamVR under Tools in Steam and links to `https://steamvr.com`. The main ELTS app does not launch Steam or pair a tracker; **START-CALIBRATION.cmd**'s optional setup can install Steam and SteamVR.
 
 ### SteamVR base station
 
@@ -512,7 +517,7 @@ Open the first `samples.ndjson` line and read `head.trackerId` and `weapon.track
 
 **What the repo establishes.** The words "eye-tracker" appear as planned work, not as a driver:
 
-- README planned work: coordinate eye-tracker data with participant, session, and scenario ids. Status: not implemented.
+- README project status: "Heart-rate, eye-tracker and NASA-TLX data alignment" is not started.
 - [Tutorial outline](../participant-tutorial/outline.md) (19 October 2026, not a script and not software): a future setup cue mentions an eye-tracker. No step list.
 - The simulation README: "Auxiliary physiological and eye-tracking instruments are omitted because their placement and models are unspecified." Eye markers in that page are positions, not gaze.
 
@@ -524,15 +529,15 @@ The calibration "eye" is a different thing: `Eye` input is Left or Right plus a 
 
 **Check.** Recording products are only the four logging files plus checkpoints, `participant.json`, and the optional calibration sidecar. None has a gaze schema under `schemas/logs/`.
 
-**Fix.** Record the wearable with its own vendor tool if you need a file today, and keep it out of the ELTS raw folder so you do not break checksums. Joining it to a session id is the unimplemented README item.
+**Fix.** Record the wearable with its own vendor tool if you need a file today, and keep it out of the ELTS raw folder so you do not break checksums. Joining it to a session id is the not-started README status item.
 
-> **GAP-HW-EYE.** Model, placement, SDK, sample rate, and file format are absent. No role in [hardware follow-up](hardware-follow-up.md) is assigned to a wearable eye tracker. The nearest text is the README integration checklist and the tutorial outline.
+> **GAP-HW-EYE.** Model, placement, SDK, sample rate, and file format are absent. No role in [hardware follow-up](hardware-follow-up.md) is assigned to a wearable eye tracker. The nearest text is the README project status table and the tutorial outline.
 
 > **General guidance, not an ELTS procedure.** Vendor software for a wearable may show its own battery, fit, and recording status. That status is not read by ELTS.
 
 ### Heart-rate monitor (Polar)
 
-**What the repo establishes.** "Heart-rate monitor" appears in the same two places as the eye tracker: the README integration checklist and the tutorial outline's setup cue. NASA-TLX is named there as a questionnaire to associate with a segment, also unimplemented. A search of the repo finds no use of the name Polar, no BLE or ANT handle, and no heart-rate schema.
+**What the repo establishes.** "Heart-rate monitor" appears in the same two places as the eye tracker: the README project status table and the tutorial outline's setup cue. NASA-TLX is named there as a questionnaire to associate with a segment, also unimplemented. A search of the repo finds no use of the name Polar, no BLE or ANT handle, and no heart-rate schema.
 
 **Symptom.** A Polar strap or watch is on the participant and ELTS has no heart-rate column.
 
@@ -542,7 +547,7 @@ The calibration "eye" is a different thing: `Eye` input is Left or Right plus a 
 
 **Fix.** Same as the eye tracker: a vendor recording is outside this repo's raw products. Do not drop it into the run folder before `session-summary.json` is written; extra files are not part of the checksum set, but do not edit the NDJSON to insert beats.
 
-> **GAP-HW-POLAR.** The repo never names Polar, a model, a radio, a pairing step, or an output file. Calling the device Polar in this guide follows the request to cover that instrument; it is not a repository fact. Who can answer: no hardware-follow-up row exists. The nearest text is the README "Study data integration" item.
+> **GAP-HW-POLAR.** The repo never names Polar, a model, a radio, a pairing step, or an output file. Calling the device Polar in this guide follows the request to cover that instrument; it is not a repository fact. Who can answer: no hardware-follow-up row exists. The nearest text is the README project status table.
 
 > **GAP-SW-NASATLX.** No form, response file, or id join exists. The tutorial outline lists the post-study form as unfinished. Who can answer: the research lead, for the protocol; the repo does not name a software owner for the form.
 
@@ -595,13 +600,13 @@ Open decisions change what a "wrong" session looks like. They are not hidden set
 | --- | --- | --- |
 | GAP-HW-DISPLAY | Study display technology, resolution, Windows mapping, and measured screen corners. Config display indices are validated and unused at runtime. Rig geometry is `synthetic_unmeasured`. | Rig and calibration operator; tracking/display engineer |
 | GAP-DEC-D17 | Approved calibration limits and the physical capture procedure behind them. D-17 is only named as not being the development thresholds. | Calibration operator and research lead |
-| GAP-HW-TRIGGER | Physical trigger model, connector, and timing path. | No trigger-specific role. Nearest: tracking/display engineer; research lead for acceptance |
-| GAP-HW-VIVE-MODEL | Vive generation, installed mounting geometry/rigidity, and serial bindings. Two trackers, mounting posts, and a headband with mounts are available. | Rig and calibration operator |
-| GAP-HW-VIVE-PAIR | Pairing, dongle or USB, and SteamVR role assignment. OpenVR is vendored and never initialized. | Tracking/display engineer |
+| GAP-HW-TRIGGER | Switch model, debounce, and hardware timing. Trigger input itself is implemented (Tracker 3.0 pins 4/2, OpenVR button read once per frame). | No trigger-specific role. Nearest: tracking/display engineer; research lead for acceptance |
+| GAP-HW-VIVE-MODEL | Installed mounting geometry/rigidity and pose serial bindings. Two Vive trackers, mounting posts, and a headband with mounts are available. | Rig and calibration operator |
+| GAP-HW-VIVE-PAIR | Study-machine dongle/USB layout and main-app pose binding. OpenVR is initialized only for the trigger button. | Tracking/display engineer |
 | GAP-HW-STEAMVR | SteamVR version, process, log, and whether ELTS should start it. The player forces `SteamVrRunning=true`. | Tracking/display engineer. Baseline pending in `config/toolchain.json` |
 | GAP-HW-BASESTATION | Base-station model, power, channel, installed placement, and coverage. Exactly one is available; a second is not planned. The on-screen "not connected" line is static and the simulation placement is illustrative. | Tracking/display engineer |
-| GAP-HW-EYE | Wearable eye-tracker model, placement, SDK, and file format. Calibration "eye" is a tracker-to-eye offset. | No follow-up row. Nearest text: README integration checklist and the tutorial outline |
-| GAP-HW-POLAR | Polar is not named. Heart-rate model, radio, pairing, and file format are absent. | No follow-up row. Nearest text: README "Study data integration" |
+| GAP-HW-EYE | Wearable eye-tracker model, placement, SDK, and file format. Calibration "eye" is a tracker-to-eye offset. | No follow-up row. Nearest text: README project status and the tutorial outline |
+| GAP-HW-POLAR | Polar is not named. Heart-rate model, radio, pairing, and file format are absent. | No follow-up row. Nearest text: README project status |
 | GAP-SW-NASATLX | Questionnaire content, storage, and join to session ids. | Research lead for the protocol; no software owner named |
 | GAP-HW-JETSON-TRANSPORT | D-03 transport: no serial, UDP, host, port, or MQTT. Endpoint whitelist is `mock://elts` and `null://elts`. | ELTS code owner; controller engineer and research lead |
 | GAP-HW-JETSON-OS | Jetson OS, host, login, and service. `jetsonBaseline` is `pending device inspection`. | Controller engineer; no separate image owner named |

@@ -23,6 +23,7 @@ The folders below are grouped by who reads them.
 | [Development package](developer/development-package.md) | Package a development player with its provenance |
 | [Operator design language](developer/operator-design-language.md) | Keep the dashboard and participant screens visually consistent |
 | [`modules/`](developer/modules/) | Read one page per subsystem, from `analysis.md` to `windows-build.md` |
+| [VIVE gun trigger](developer/modules/vive-trigger.md) | Bind the gun tracker's trigger and see how its presses are recorded |
 
 ## Participant tutorial (`participant-tutorial/`)
 
@@ -39,4 +40,4 @@ The folders below are grouped by who reads them.
 
 - [Safety boundaries](safety/README.md): what the software must never do, and what remains unvalidated.
 - [Decision and work-item IDs](decisions.md): what labels such as D-12, DEV-10 and P8.4 refer to.
-- [Hardware design files](../hardware/README.md): trigger connector CAD and bench tests.
+- [VIVE trigger bench test](../tools/diagnostics/README.md): check the gun tracker's trigger on its own before a session.

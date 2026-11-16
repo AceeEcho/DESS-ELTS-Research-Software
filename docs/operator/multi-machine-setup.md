@@ -113,7 +113,7 @@ If you change the toolchain or a developer dependency, rerun `SETUP-DEV (Dev Onl
 This is a complete beginner exercise that proves the source, build, and review loop:
 
 1. Close Unity before pulling or running setup. Open `elts-simulation/elts-environment.html` in a text editor. Windows Notepad works for this small exercise: choose **File > Open**, change the file type filter to **All files**, and select that file inside your clone. Opening it normally in a browser only shows the page; it does not edit its source.
-2. Near the start of the file, find the visible text `ELTS · testing environment` and add ` — local test` to that text. Keep the surrounding `<strong>` tags intact. If you have a later styled revision, change its visible heading instead.
+2. Near the start of the file, find the heading `<h1>Testing environment</h1>` and change it to `<h1>Testing environment — local test</h1>`. Keep the `<h1>` tags intact.
 3. Save the file. Double-click `OPEN-DEV-SHELL (Dev Only).cmd`, run `node elts-simulation/build.mjs`, then open `elts-simulation/index.html` in a browser.
 4. Confirm the new heading appears. Return to GitHub Desktop, review the changed source and generated files, and commit the intended result.
 5. Run `.\scripts\verify.ps1` in the development shell before pushing. Fix any reported issue or ask the maintainer before continuing.

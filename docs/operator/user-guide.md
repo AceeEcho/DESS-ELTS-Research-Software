@@ -2,7 +2,7 @@
 
 Use this guide to run the **development** version of the administrator dashboard.
 
-**Quick flow:** Open → Settings → New participant → Calibration → Practice → ARM TEST → Participant starts → Test saves → Start break → ARM TEST again.
+**Quick flow:** Open → ⚙ Settings → New participant → Begin walkthrough → participant pulls the trigger once → scenarios and breaks run automatically → form.
 
 > This version uses synthetic inputs. It is for software rehearsal, not physical equipment validation or study-ready operation. Screenshots show the current interface with fictional demonstration data; the camera feed is not connected in these examples. Click any image on GitHub to enlarge it.
 
@@ -11,15 +11,15 @@ actions, active selections and keyboard focus; green, amber and red retain
 their labeled success, warning and error meanings. Turn on **Reduce interface
 motion** in Settings if you prefer immediate state changes without transitions.
 
-[Open the software](#1-open-the-software) · [Set up tests](#2-arrange-tests-and-set-the-times) · [Add a participant](#3-create-the-participant-recording) · [Run tests](#5-arm-and-run-a-test) · [Breaks](#7-start-the-break-yourself) · [Find data](#8-finish-and-find-the-saved-data)
+[Open the software](#1-open-the-software) · [Set up tests](#2-arrange-tests-and-set-the-times) · [Add a participant](#3-create-the-participant-recording) · [Walkthrough](#4-begin-the-participant-walkthrough) · [Run tests](#5-start-the-study) · [Breaks](#7-breaks-and-the-next-test) · [Find data](#8-finish-and-find-the-saved-data)
 
 ## 1. Open the software
 
-1. Use your local copy of the repository on the **development** branch. Finish any active session before updating it.
-2. Open the project folder and double-click **START-ELTS.cmd**. This is the one button to use: it installs or reuses the required development tools, builds or reuses the verified player, then opens both the administrator dashboard and participant game. On first use, allow setup and the build to finish. Complete any Unity sign-in or license prompts.
+1. Use the ELTS folder you extracted from the **main** branch ZIP (see [Install and run](../../README.md#-install-and-run)). Finish any active session before updating it.
+2. Open that folder and double-click **START-ELTS.cmd**. This is the one button to use: it installs or reuses the required development tools, builds or reuses the verified player, then opens both the administrator dashboard and participant game. On first use, allow setup and the build to finish. Complete any Unity sign-in or license prompts.
 3. Two windows open: the **administrator dashboard** in your browser and the **participant game**. You do not need to open the Unity Editor to run a test.
 
-Need the project on a new computer? Follow the [illustrated setup guide](multi-machine-setup.md), choosing **development** for this version. The required Unity version is **6000.3.23f1 LTS**.
+Need the project on a new computer? Follow the [install steps in the README](../../README.md#-install-and-run) or the [illustrated setup guide](multi-machine-setup.md). The required Unity version is **6000.3.23f1 LTS**.
 
 ![Dashboard overview: Data, New participant and the Settings gear are at the top right; test controls are in the right pane.](images/user-guide/texas-tech/01-dashboard.png)
 
@@ -44,7 +44,7 @@ Before creating a participant, click **⚙ Settings**.
 **Set the times:** scroll down to **Durations**.
 
 - **Test durations:** enter seconds for each test. Click outside the field or press Tab, then wait for **Saved**. The default is 300 seconds (5 minutes).
-- **Practice** and **Every break:** enter the durations, then click **Save practice & breaks**. The same break duration applies after every test. The 60-second break shown below is an example.
+- **Practice** and **Every break:** enter the durations, then click **Save practice & breaks**. The same break duration applies after every test. The study plan calls for 120-second (two-minute) breaks, as shown below.
 
 ![Durations: individual test fields on the left, Practice and Every break fields with their save button on the right.](images/user-guide/texas-tech/03-timing.png)
 
@@ -68,20 +68,20 @@ for its actual input or operator confirmation. Calibration remains synthetic.
 
 Start practice when ready. Practice is unscored; pause, restart and early finish
 remain available. The simulated ELTS demonstration follows practice, then the
-study overview. All 30 selected recordings are connected. See the
+study overview. All 39 narration clips are bundled. See the
 [walkthrough guide](../developer/modules/participant-tutorial.md) for pacing and controls.
 
 ## 5. Start the study
 
 With the walkthrough, the first test arms after the readiness message. The participant uses **Shoot to begin** once. The later tests start automatically after their breaks and transition announcements.
 
-For a manual session, check the condition and duration in **Current task** and click **ARM TEST** when the participant is ready.
+**Manual mode.** To skip the walkthrough, click **Manual mode · skip walkthrough** instead of **Begin walkthrough** and confirm. The synthetic calibration fixture is saved for you and practice is skipped. This cannot be undone for that participant, and nothing arms or starts on its own. Check the condition and duration in **Current task** and click **ARM TEST** when the participant is ready.
 
 ![Ready test showing its condition, duration and the large ARM TEST button.](images/user-guide/texas-tech/07-arm.png)
 
-The participant window then says **Shoot to begin**. The participant clicks and releases to start the test; that starting click is not counted as a shot. Before they start, **DISARM TEST** cancels arming.
+The participant window then says **Shoot to begin**. The participant clicks and releases, or pulls the gun trigger if one is set up, to start the test; that starting shot is not counted. Before they start, **DISARM TEST** cancels arming.
 
-During the test, the participant aims with the mouse and clicks/releases to fire one round. The magazine holds 20 rounds and does not reload automatically; press R to reload. W/S moves forward/back, A/D moves left/right, Q/E moves down/up, and Home resets the virtual pose. The synthetic targets have three health: head/body/limb hits deal 3/2/1 damage. The dashboard shows region hits, cover hits, misses, and targets down.
+During the test, the participant aims with the mouse and clicks/releases (or pulls a configured gun trigger) to fire one round. See [VIVE gun trigger](../../README.md#-install-and-run) for setting up the trigger. The magazine holds 20 rounds and does not reload automatically; press R to reload. W/S moves forward/back, A/D moves left/right, Q/E moves down/up, and Home resets the virtual pose. The synthetic targets have three health: head/body/limb hits deal 3/2/1 damage. The dashboard shows region hits, cover hits, misses, and targets down.
 
 To resize the participant window, drag its edges. F11 or Alt+Enter toggles fullscreen; Escape returns to the previous window size. Switching windows does **not** pause the timer.
 
@@ -122,10 +122,10 @@ Click the small **Data** button at the top. It switches the dashboard to the par
 ![Data viewer showing a fictional participant profile, saved sessions, results, notes and export controls.](images/user-guide/texas-tech/13-data-viewer.png)
 
 1. Find a participant by ID or name in the left panel. Reusing the same participant ID groups their sessions under one unique profile.
-2. Choose a saved session to see its test results and notes. Expand **Explore original records** to page through events, tracking samples or target records.
+2. Choose a saved session, then an attempt. Tabs: **Overview** (rates, accuracy, shot error, aim stability), **Timeline**, **Shots** and **Metric guide**. Expand **Explore original records** to page through events, tracking samples or target records.
 3. Click **Refresh** to index existing recordings or pick up newly flushed data.
 
-- **Export results:** creates one Excel workbook for every participant. **Results** has one row per participant per task attempt (each scenario, including repeats), **Shots** has one row per shot, and **Timeline** has one row per active second. Participants are listed by code, not name.
+- **Export results:** creates one Excel workbook for every participant. **Results** has one row per participant per task attempt (each scenario, including repeats), **Shots** has one row per shot, **Timeline** has one row per active second and **Metric guide** explains every column. Participants are listed by code, not name.
 - **Raw archive:** creates a ZIP of the selected finalized session's original tracker, target and event files with their checksums.
 - **Download export:** downloads the prepared file through your browser. Export copies also remain in the data folder's **exports** directory.
 - **Open folder:** opens the actual data folder shown in the viewer. The default is **collection data** beside the README and Start button; a customized machine configuration may select another folder.

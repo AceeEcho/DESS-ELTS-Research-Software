@@ -6,6 +6,19 @@ press/release counts. It never substitutes the head tracker. Button availability
 is independent of optical pose validity; stale input is unavailable. Counts are
 diagnostic observations, not shot counts or switch-timing measurements.
 
+## Wiring
+
+The trigger is a normally open momentary switch across two of the tracker's
+pogo-pin pads: **pin 4** (trigger input, active-low with an internal pull-up) and
+**pin 2** (ground). For a three-terminal microswitch use COM and NO and leave NC
+unconnected. No Arduino, supply or extra pull-up is needed. Leave the other pads
+unconnected and never apply 5 V to the trigger pad. Pin numbering and pad layout
+are in HTC's [VIVE Tracker 3.0 developer guidelines v1.1](https://developer.vive.com/documents/850/HTC_Vive_Tracker_3.0_Developer_Guidelines_v1.1_06022021.pdf),
+printed pages 13–17; follow its illustrated orientation rather than an assumed
+left/right order. Cradle and mount CAD is kept locally and is not in this repository.
+
+## Bind the tracker
+
 In SteamVR **Manage Trackers**, assign the gun tracker **Held in hand**, then
 **Right Hand** or **Left Hand**. The applications only read this configuration;
 they do not change roles. Assigning a SteamVR role can change pose conventions,
@@ -37,6 +50,11 @@ This change supplies physical **button input**. The main app's aiming/pose sourc
 remains its existing desktop/synthetic source, and recordings retain that
 provenance. It does not add live weapon-pose aiming or apparatus output. Automated
 Unity batch runs disable hardware reads so regression tests use scripted input.
+
+## Check it
+
+Before a session, the [trigger bench test](../../../tools/diagnostics/README.md)
+watches one tracker serial on its own and logs every press and release.
 
 Verification: `dotnet run --project tools/runtime-tests/TriggerChecks.csproj`,
 the calibration Python/browser tests, and Unity PlayMode tests cover holds,

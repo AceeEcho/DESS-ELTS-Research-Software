@@ -269,12 +269,14 @@ it is not a scored shot or a simulated physical projectile.
 Developer checks (from this folder):
 
 ```powershell
-node --test tests/geometry.test.mjs
-node --test tests/head-calibration.test.mjs
+node --test tests/geometry.test.mjs tests/head-calibration.test.mjs tests/perspective-audit.test.mjs tests/trigger-indicator.test.mjs
 py -3 -m unittest discover -s tests -p 'test_*.py'
 # Optional desktop browser checks require Playwright and the running local server.
 node tests/browser-check.mjs
 node tests/head-calibration-browser.mjs
+node tests/head-reset-browser.mjs
+node tests/perspective-audit-browser.mjs
+node tests/trigger-indicator-browser.mjs
 ```
 
 Checks cover transform inversion, coordinate axes, tilted/off-centre projection,

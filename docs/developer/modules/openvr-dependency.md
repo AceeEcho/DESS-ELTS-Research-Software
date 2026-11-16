@@ -10,7 +10,10 @@ Run `python tools/dependencies/verify_openvr.py` for an offline byte/provenance
 and PE architecture audit. The audit never loads the DLL. Unity imports it only
 for the Windows x64 player and Windows x64 Editor; preloading is disabled.
 `Valve.OpenVR` is a separate assembly without automatic references. Synthetic
-tracking has no dependency on it and never calls native initialization.
+tracking has no dependency on it. The only runtime caller is `ViveTriggerReader`,
+which starts OpenVR as a background application when a weapon trigger serial is
+bound, reads that tracker's trigger button and never reads poses
+([VIVE gun trigger](vive-trigger.md)). Automated Unity batch runs skip it.
 
 The upstream binding conditionally includes Unity convenience helpers, so its
 assembly requires the UnityEngine reference to compile unmodified. ELTS adapters
@@ -24,8 +27,8 @@ Change the binding and native library together, using one upstream revision,
 then rerun the audit and Unity compilation. Never replace only one binary or
 claim ABI/hardware acceptance from a successful checksum check.
 
-Actual OpenVR background initialization, device enumeration, serial binding,
-polling/reconnect behavior and physical validation are separate tracking tasks.
+Pose enumeration, pose serial binding, pose polling/reconnect behavior and
+physical validation are separate tracking tasks.
 One base station and two Vive trackers are available, but their physical
 acceptance is still pending. See the [inventory and follow-up register](../../operator/hardware-follow-up.md);
 this vendoring step does not pass a study gate.

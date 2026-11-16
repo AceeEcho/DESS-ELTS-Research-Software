@@ -13,26 +13,23 @@ pending; availability of other test/metrology equipment must still be confirmed.
 2. Open `player/ELTS-Synthetic.exe`. Unity and .NET SDK installation are not needed
    to run this packaged player. Use a Windows x64 machine with a graphics driver;
    this package has only been exercised on the development machine.
-3. In **Synthetic session control**, enter a test ID and choose **Create synthetic
-   recording**. At least 2 GB free space is required. Use invented test IDs only.
-4. After the two-second synthetic preflight, choose **Continue**. In the
-   calibration wizard, generate a fixture, review it, accept it, and continue to
-   practice. Scroll inside each column to reach its controls. Provisional limits
-   and eye inputs can be adjusted before fixture generation; **Redo** discards
-   an unaccepted review. This is a generated fixture, not a measured calibration.
-5. After practice, choose **Start block**. Each condition lasts 300 seconds.
-   **Synthetic trigger** exercises shooting; **Save note** writes an annotation.
-   Abort ends the current attempt. A permitted rerun reserves a new directory.
-   **Simulate reconnect and abort** ends the session; it never silently resumes.
+3. The player opens the administrator dashboard in your browser and the
+   participant window. Run a session exactly as in the user guide: **⚙ Settings**,
+   **New participant** (use invented test IDs only; at least 2 GB free space is
+   required), then **Begin walkthrough** or **Manual mode · skip walkthrough**.
+   Calibration is a generated synthetic fixture, not a measured calibration.
+4. Scenarios last 300 seconds each by default. The mouse fires on click-and-release;
+   **Add note** writes an annotation; **Stop test** ends an attempt early and
+   **Repeat a test…** reserves a new attempt. **Abort participant session** ends
+   the session; it never silently resumes.
+5. Use **Data** to review the recording and export results.
 6. Close the player normally and let its recording operation finish. Keep the
    resulting `player/data/synthetic/` files together. Incomplete writer closure
    is an error requiring inspection, not usable complete evidence.
 
-The two camera views are emulated on the development display. Real two-display
-assignment, tracker bindings and controller behavior are separate pending checks.
-The development NE selector offers Idle and Armed alternatives; this does not
-decide the final study behavior. Accepted fixture output does not replace the
-startup rig configuration. More detail: [calibration](docs/calibration.md),
+Real two-display assignment, pose tracking and controller behavior are separate
+pending checks. Accepted fixture output does not replace the startup rig
+configuration. More detail: [calibration](docs/calibration.md),
 [sessions](docs/session.md), and [mock protocol](docs/elts-session.md).
 
 ## Verify the package and try the included sample
@@ -79,5 +76,9 @@ Do not hand-edit the packaged effective configuration or its hashes. Never treat
 synthetic geometry as measured calibration.
 
 The source checkout's `scripts/package-development.ps1` assembles an already
-verified development build. Study provisioning and `package-study.ps1` remain
+verified development build. The package recipe requires the build's staged
+`dataRoot` to be `data/synthetic` (so recordings land in `player/data/synthetic/`)
+and refuses a build that already holds recordings. The default `config/local.json`
+uses `collection data`, so set `"dataRoot": "data/synthetic"` in that file and
+rebuild with `scripts/build.ps1` before packaging. Study provisioning and `package-study.ps1` remain
 blocked until their separate approvals and physical prerequisites are satisfied.

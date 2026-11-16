@@ -44,7 +44,7 @@ let current = {
   editableDurations: conditions.slice(), blocks: [], remainingSeconds: 0, activeSeconds: 0,
   tracking: {}, camera: { yaw: 145, pitch: 20, distance: 4 },
   data:{ready:true,busy:false,path:'collection data',message:'Local collection refreshed.',profiles:[{id:'demo-profile',code:'DEMO-001',name:'Demonstration participant',sessions:'1',modifiedUtc:'2026-09-11T12:00:00Z'}]},
-  tools: { practiceSeconds: 10, breakSeconds: 60, saveStatus: 'No recording yet.', notes: [], checkpoints: [],
+  tools: { practiceSeconds: 10, breakSeconds: 120, saveStatus: 'No recording yet.', notes: [], checkpoints: [],
     schedule: conditions.slice(), queueIndex: 0, repeatable: [], readiness: [], calibration: {}, recordings: [] }
 };
 const server = http.createServer(async (req, res) => {
@@ -111,10 +111,10 @@ const server = http.createServer(async (req, res) => {
       canStartParticipant: false, recordingPath: 'collection data / DEMO-001-example' });
     current.tools.calibration = { canGenerate: true, review: 'Generate the synthetic fixture to review it.' };
     current.tools.saveStatus = 'Recording active.';
-    await settle(); await shot('05-preparation', '#preparationPanel');
+    await settle();
     current.state = 'Practice'; current.remainingSeconds = 10;
     current.tools.calibration = {}; current.tools.canRestartPractice = true; current.tools.canFinishPractice = true;
-    await settle(); await shot('06-practice', '#practicePanel');
+    await settle();
     current.state = 'BlockReady'; current.canArm = true; current.remainingSeconds = 300;
     current.tools.canFinishPractice = false; current.tools.canRestartPractice = false; current.tools.canSkipTest = true;
     await settle(); await shot('07-arm', '.task-card');

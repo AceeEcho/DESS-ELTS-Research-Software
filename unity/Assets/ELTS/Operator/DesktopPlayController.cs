@@ -116,10 +116,12 @@ namespace Elts.Operator
             var hints=Controls as IDesktopControlHints;
             string reload=hints==null?"use reload control":hints.ReloadHint+" reload";
             string reset=hints==null?"use reset control":hints.ResetViewHint+" reset viewpoint";
-            root.Q<Label>("playControlsHint").text="Move mouse to aim · click and release to fire · "+
+            root.Q<Label>("playControlsHint").text="Mouse aim · click and release to fire · "+
                 reload+" · WASD move · Q/E height · "+reset;
-            root.Q<Label>("playGuidance").text=session.DesktopInputSelected
-                ? root.Q<Label>("nextActionHint").text : "Automated synthetic input is selected. Change input source in Preparation before creating the next recording.";
+            var guidance=root.Q<Label>("playGuidance");
+            guidance.text=session.DesktopInputSelected
+                ? root.Q<Label>("nextActionHint").text : "Automated input active. Choose desktop input in Preparation for the next recording.";
+            guidance.EnableInClassList("hidden",String.IsNullOrEmpty(guidance.text));
             image.style.visibility=view.ParticipantCamera.enabled?Visibility.Visible:Visibility.Hidden;
             reticle.EnableInClassList("hidden",!session.DesktopInputSelected || !view.ParticipantCamera.enabled);
             Vector2 at=new Vector2(bounds.xMin+Model.Aim.x*bounds.width,bounds.yMax-Model.Aim.y*bounds.height);

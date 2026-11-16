@@ -25,7 +25,7 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
       await command('applySetup', value);
       await refresh();
       setOrder(getState().conditionOrder.slice());
-      $('orderStatus').textContent = 'Setup saved for the next participant.';
+      $('orderStatus').textContent = 'Setup saved.';
     } catch (e) {
       setOrder(getState().conditionOrder.slice());
       error('settingsError', e); $('orderStatus').textContent = 'Setup was not changed.';
@@ -60,7 +60,7 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
       let tile = [...list.children].find(child => child.dataset.condition === condition);
       if (!tile) {
         tile = document.createElement('li'); tile.className = 'order-item'; tile.dataset.condition = condition;
-        tile.innerHTML = `<button type="button" class="grab-handle" aria-label="Drag ${escapeHtml(condition)} or use arrow keys" title="Drag to reorder"><span aria-hidden="true">⠿</span></button><span class="order-num"></span><strong>${escapeHtml(condition)}</strong>`;
+        tile.innerHTML = `<button type="button" class="grab-handle" aria-label="Reorder ${escapeHtml(condition)} with the up and down arrow keys" title="Drag or use ↑ / ↓ to reorder"><span aria-hidden="true">⠿</span></button><span class="order-num"></span><strong>${escapeHtml(condition)}</strong>`;
       }
       if (list.children[index] !== tile) list.insertBefore(tile, list.children[index] || null);
       tile.querySelector('.grab-handle').disabled = !getState()?.canStartParticipant || setupBusy;
@@ -93,7 +93,7 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
     tile.classList.add('is-dragging');
     Object.assign(tile.style, { width: `${rect.width}px`, height: `${rect.height}px`, left: `${rect.left}px`, top: `${rect.top}px` });
     handle.setPointerCapture(event.pointerId); handle.focus();
-    $('orderStatus').textContent = `Moving ${tile.dataset.condition}. Release to drop; Escape to cancel.`;
+    $('orderStatus').textContent = `Moving ${tile.dataset.condition} · Esc to cancel`;
     scrollFrame = requestAnimationFrame(scrollDrag);
   });
   function placePlaceholder() {
@@ -213,8 +213,8 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
     const state = getState();
     exceptionContext = { kind, runId: state.runId, blockId: state.blockId };
     $('exceptionTitle').textContent = kind === 'skipTest' ? `Skip ${state.condition}?` : 'Repeat a finished test';
-    $('exceptionHelp').textContent = kind === 'skipTest' ? 'This test will be marked Skipped with your reason. No score is assigned. The remaining tests stay queued.'
-      : 'A new attempt is added next. Earlier attempts and the remaining test order are preserved.';
+    $('exceptionHelp').textContent = kind === 'skipTest' ? 'The reason is saved with the skipped test.'
+      : 'The new attempt runs next. Earlier results are kept.';
     $('repeatChoice').hidden = kind !== 'repeatTest';
     $('repeatCondition').innerHTML = (state.tools.repeatable || []).map(c => `<option>${escapeHtml(c)}</option>`).join('');
     $('exceptionReason').value = ''; $('exceptionError').hidden = true;
@@ -280,6 +280,7 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
       renderOrder();
     }
     $('setupWelcome').hidden = !state.canStartParticipant;
+    $('orderLocked').hidden = state.canStartParticipant;
     renderTutorial(state, tutorial);
     $('practicePanel').hidden = !tutorial?.canRestartPractice && tutorial?.stage !== 'PracticeRunning';
     $('practiceTimer').textContent = state.state === 'Practice' ? formatTime(Math.ceil(state.remainingSeconds)) : 'Finished';
@@ -290,10 +291,12 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
     $('startBreak').hidden = !waitingForBreak;
     $('startBreak').disabled = actionBusy || !tools.canStartBreak;
     $('breakTimer').textContent = formatTime(Math.ceil(waitingForBreak ? tools.breakSeconds : state.remainingSeconds));
-    $('breakHelp').textContent = state.busy ? 'Saving the test.' : waitingForBreak
-      ? (tools.automaticStudy ? 'The break starts automatically after the transition prompt.' : 'Press Start break to begin the countdown.')
-      : tools.queueIndex + 1 >= tools.schedule.length ? 'The participant session closes after this break.'
-      : (tools.automaticStudy ? 'The next scenario starts automatically after the break and transition prompt.' : 'When the timer ends, press Arm test when ready.');
+    const breakHelp = $('breakHelp');
+    breakHelp.textContent = state.busy ? 'Saving results…' : waitingForBreak
+      ? (tools.automaticStudy ? 'Break starts automatically.' : '')
+      : tools.queueIndex + 1 >= tools.schedule.length ? 'Session ends after this break.'
+      : (tools.automaticStudy ? 'Next test starts automatically after the transition.' : '');
+    breakHelp.hidden = !breakHelp.textContent;
     $('skipBreak').disabled = actionBusy || !tools.canSkipBreak;
     $('skipTest').disabled = actionBusy || !tools.canSkipTest;
     $('repeatTest').disabled = actionBusy || !tools.canRepeat || !tools.repeatable?.length;
@@ -324,9 +327,9 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
     if (!tutorial) return;
     const step = tutorial.step ? ` · ${tutorial.step.replaceAll('-', '.')}` : '';
     $('tutorialStep').textContent = tutorial.manual ? `MANUAL MODE${step}` : tutorial.step ? `WALKTHROUGH${step}` : 'PARTICIPANT WALKTHROUGH';
-    $('tutorialTitle').textContent = tutorial.started ? tutorial.title || 'Scenario running' : 'Begin the participant walkthrough';
-    $('tutorialInstruction').textContent = tutorial.started ? tutorial.instruction
-      : 'Setup, calibration and practice are guided inside the game. Manual mode skips straight to the tests.';
+    $('tutorialTitle').textContent = tutorial.started ? tutorial.title || 'Scenario running' : 'Setup, calibration and practice';
+    $('tutorialInstruction').textContent = tutorial.started ? tutorial.instruction : '';
+    $('tutorialInstruction').hidden = !$('tutorialInstruction').textContent;
     $('tutorialStatus').textContent = tutorial.status || '';
     $('tutorialStatus').hidden = !tutorial.status;
     // Narration is optional per step; say which applies rather than a fixed label.

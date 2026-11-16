@@ -296,20 +296,26 @@ namespace Elts.Operator
             string? reload=(Controls as IDesktopControlHints)?.ReloadHint;
             ammo.text="AMMO  "+session.ParticipantAmmo+" / "+session.StationMagazineCapacity+"   ·   "+
                 (reload==null?"RELOAD":reload.ToUpperInvariant()+" RELOAD");
-            if(session.TestArmed){title.text="Shoot to begin";subtitle.text="Click and release when you are ready.";return;}
-            switch(session.Engine?.State)
+            string detail="";
+            if(session.TestArmed)
             {
-                case SessionState.BlockPaused:title.text="Test paused";subtitle.text="Please wait for the administrator to resume.";break;
-                case SessionState.SessionComplete:title.text="Test complete";subtitle.text="Thank you. Please wait for the administrator.";break;
-                case SessionState.BlockEnded:title.text="Test finished";
-                    subtitle.text="Please wait for the administrator to start your break.";break;
-                case SessionState.Break:title.text="Take a break";
-                    subtitle.text="Rest time remaining: "+FormatStationCountdown(session.Engine.RemainingSeconds);break;
-                case SessionState.Practice:title.text="Practice · move and aim";subtitle.text="Familiarize yourself with the controls. Shots are not scored. "+
-                    FormatStationCountdown(session.Engine.RemainingSeconds);break;
-                case SessionState.Aborted:case SessionState.Failed:title.text="Test stopped";subtitle.text="Please wait for the administrator.";break;
-                default:title.text="Please wait";subtitle.text="The administrator is preparing your test.";break;
+                title.text="Shoot to begin";
+                detail="Click and release.";
             }
+            else switch(session.Engine?.State)
+            {
+                case SessionState.BlockPaused:title.text="Test paused";break;
+                case SessionState.SessionComplete:title.text="Test complete";break;
+                case SessionState.BlockEnded:title.text="Test finished";detail="Wait for your break.";break;
+                case SessionState.Break:title.text="Take a break";
+                    detail=FormatStationCountdown(session.Engine.RemainingSeconds);break;
+                case SessionState.Practice:title.text="Practice · move and aim";
+                    detail="Unscored · "+FormatStationCountdown(session.Engine.RemainingSeconds);break;
+                case SessionState.Aborted:case SessionState.Failed:title.text="Test stopped";break;
+                default:title.text="Please wait";break;
+            }
+            subtitle.text=detail;
+            subtitle.EnableInClassList("participant-hidden",detail.Length==0);
         }
         private static string FormatStationCountdown(double seconds)
         {

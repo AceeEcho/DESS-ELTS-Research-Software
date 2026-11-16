@@ -61,7 +61,8 @@
   $('remaining').hidden = !['BlockReady','BlockRunning','BlockPaused'].includes(state.state);
   if(state.state === 'BlockReady') $('remaining').textContent = formatTime(state.durationSeconds);
   $('elapsed').textContent = formatTime(state.activeSeconds);
-  $('testTiming').textContent = `Test duration: ${formatTime(state.durationSeconds || 300)} · edit individual durations in Settings`;
+  $('testTiming').hidden = !['BlockRunning','BlockPaused'].includes(state.state);
+  $('testTiming').textContent = `Total duration · ${formatTime(state.durationSeconds || 300)}`;
   $('shots').textContent = state.shots ?? 0;
   $('hits').textContent = state.hits ?? 0;
   $('ammo').textContent = `${state.ammo ?? 20} / ${state.magazineCapacity ?? 20}`;
@@ -70,7 +71,12 @@
   const badge = $('stateBadge');
   badge.textContent = titleCase(state.state || phase).toUpperCase();
   badge.className = `badge ${state.armed ? 'armed' : running ? 'running' : /abort|error/i.test(phase) ? 'error' : ''}`;
-  const armText = state.state === 'BlockEnded' ? (state.busy ? 'Test finished · saving results.' : 'Test saved · start the break when ready.') : state.state === 'Break' ? 'Break in progress · arm the next test after the timer ends.' : state.canResume ? 'Paused · timer and targets held' : state.canPause ? 'Test running · pause or finish this test below' : state.armed ? 'ARMED · waiting for first shot' : state.canArm ? 'Ready to arm this condition' : state.message || (state.participant ? 'Preparing participant pipeline…' : 'Waiting for participant');
+  const armText = state.state === 'BlockEnded' ? (state.busy ? 'Saving results…' : 'Test saved')
+    : state.state === 'Break' ? 'Break in progress'
+    : state.canResume ? 'Test paused'
+    : state.canPause ? 'Test running'
+    : state.armed ? 'Armed · waiting for first shot'
+    : state.canArm ? 'Ready to arm' : state.message || (state.participant ? 'Preparing participant…' : 'Waiting for participant');
   $('armStatus').innerHTML = `<span class="status-dot ${state.armed ? 'warn' : state.canArm ? '' : 'offline'}"></span><span>${escapeHtml(armText)}</span>`;
   $('armButton').disabled = !state.canArm && !state.armed;
   $('armButton').textContent = state.armed ? 'DISARM TEST' : 'ARM TEST';
@@ -147,6 +153,7 @@
       const input = document.createElement('input'); input.type = 'number'; input.min = '1'; input.max = '3600'; input.step = '1'; input.required = true; input.id = `duration-${condition}`;
       label.append(input);
       const status = document.createElement('span'); status.className = 'duration-save-status'; status.id = `durationStatus-${condition}`; status.setAttribute('role', 'status');
+      input.setAttribute('aria-describedby', status.id);
       form.append(label, status); $('durationEditors').append(form);
       input.addEventListener('input', () => {
         durationDrafts.add(condition); durationFeedback.set(condition, 'Unsaved change');
@@ -176,10 +183,11 @@
       if (!durationDrafts.has(condition) && document.activeElement !== input) input.value = seconds;
       const editable = state.editableDurations?.includes(condition) === true;
       input.disabled = !editable || durationSaves.has(condition);
-      status.textContent = durationFeedback.get(condition) || '';
+      const pauseToEdit = !editable && state.state === 'BlockRunning' && state.condition === condition;
+      status.textContent = pauseToEdit ? 'Pause to edit' : durationFeedback.get(condition) || '';
       status.classList.toggle('is-saving', durationSaves.has(condition));
-      status.classList.toggle('is-saved', durationFeedback.get(condition) === 'Saved');
-      status.classList.toggle('is-error', durationFeedback.get(condition) === 'Not saved');
+      status.classList.toggle('is-saved', status.textContent === 'Saved');
+      status.classList.toggle('is-error', status.textContent === 'Not saved');
     }
   }
   async function testAction(action, payload = {}) {

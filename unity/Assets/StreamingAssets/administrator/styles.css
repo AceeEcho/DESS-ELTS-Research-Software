@@ -182,23 +182,9 @@ input:focus,textarea:focus{border-color:var(--accent);
   display:flex;
   align-items:center;
   justify-content:center;
-  flex-direction:column;
-  gap:8px;
   color:var(--muted);
   background:radial-gradient(ellipse at center,var(--bg3) 0,var(--bg) 65%)}
 .view-placeholder strong{font-size:14px}
-.view-placeholder span:last-child{font-size:11px;
-  color:var(--dim)}
-.placeholder-glyph{font-size:34px;
-  color:var(--accent-text)}
-.orbit-help{position:absolute;
-  bottom:10px;
-  right:12px;
-  color:var(--dim);
-  font-size:11px;
-  background:#171717dd;
-  padding:4px 7px;
-  border-radius:4px}
 .tracking-strip{display:grid;
   grid-template-columns:1fr 1fr 1fr;
   gap:1px;
@@ -428,10 +414,10 @@ button:focus-visible, [tabindex]:focus-visible { outline:2px solid var(--accent)
 
 /* Duration drafts stay mounted while live state refreshes. */
 .timing-settings { margin:22px 0; padding:18px; border:1px solid var(--line2); border-radius:10px; background:var(--bg2); }
-.timing-heading { margin-bottom:12px; }.timing-heading h3 { margin:3px 0 0; }
+.timing-settings > h3 { margin:0 0 12px; }
 .timing-settings-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
 .timing-group { padding:14px; border:1px solid var(--line); border-radius:8px; background:var(--bg3); }
-.timing-group h4 { margin:0 0 7px; font-size:15px; }.timing-group > .subtle { min-height:50px; margin-top:0; }
+.timing-group h4 { margin:0 0 7px; font-size:15px; }
 .duration-editor { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:end; margin:12px 0; }
 .duration-editor label { margin:0; }
 .duration-save-status { min-width:72px; padding-bottom:10px; color:var(--muted); font-size:12px; text-align:right; }
@@ -442,7 +428,6 @@ button:focus-visible, [tabindex]:focus-visible { outline:2px solid var(--accent)
 
 /* Operator preparation stays available before participant intake. */
 .setup-welcome { margin:14px; padding:16px; border:1px solid var(--accent); border-radius:9px; background:var(--accent-soft); }
-.setup-welcome p { color:var(--muted); margin-bottom:0; }
 .preparation-panel { padding-top:16px; }
 .preparation-panel h2 { font-size:16px; }
 .review-copy { white-space:pre-line; line-height:1.6; color:var(--muted); }
@@ -522,7 +507,6 @@ details summary { cursor:pointer; color:var(--muted); padding:7px 0; }
 .chart-scrubber { display:grid; grid-template-columns:auto minmax(100px,1fr); align-items:center; gap:8px 16px; font-size:12px; margin-top:12px; }
 .chart-scrubber input { width:100%; margin:0; padding:0; accent-color:var(--accent); cursor:ew-resize; }
 .chart-scrubber span { grid-column:1/-1; font-variant-numeric:tabular-nums; color:var(--muted); }
-#chartHelp {font-size:11px;line-height:1.5;}
 .chart-readout {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;border-top:1px solid var(--line);padding-top:12px;}
 .chart-readout span,.chart-readout small {display:block;font-size:11px;color:var(--muted);}.chart-readout strong {display:block;margin:6px 0;font-size:22px;font-variant-numeric:tabular-nums;}
 .chart-readout>div:nth-child(1) strong {color:var(--green)}.chart-readout>div:nth-child(2) strong {color:var(--accent-text)}.chart-readout>div:nth-child(3) strong {color:var(--amber)}
@@ -547,7 +531,7 @@ details summary { cursor:pointer; color:var(--muted); padding:7px 0; }
 .pane-head h1 { font-size:19px; }
 .task-card { border-left:3px solid var(--accent); }
 .data-profile { background:var(--bg2); }
-.link-btn,.placeholder-glyph,.note-timeline time { color:var(--accent-text); }
+.link-btn,.note-timeline time { color:var(--accent-text); }
 input,select { accent-color:var(--accent); }
 .primary-btn:active:not(:disabled),.ghost-btn:active:not(:disabled),.arm-btn:active:not(:disabled),.btn:active:not(:disabled) { transform:scale(.985); }
 button:focus-visible,[tabindex]:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible { outline-color:var(--accent-text); }

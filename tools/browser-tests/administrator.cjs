@@ -163,6 +163,14 @@ const server = http.createServer(async (req, res) => {
     await page.waitForFunction(() => document.getElementById('durationStatus-WE_FT').textContent === 'Saved');
     assert.equal(await page.locator('#durationStatus-WE_FT').textContent(), 'Saved', 'Test duration autosaves with confirmation');
     await page.screenshot({ path: path.join(output, 'administrator-setup.png'), fullPage: true });
+    Object.assign(current, { state: 'BlockRunning', condition: 'WE_FT', canStartParticipant: false, editableDurations: conditions.slice(1) });
+    await page.waitForFunction(() => document.getElementById('durationStatus-WE_FT').textContent === 'Pause to edit');
+    assert.equal(await page.locator('#duration-WE_FT').isDisabled(), true, 'The running test explains why editing is locked');
+    assert.equal(await page.locator('#duration-WE_MT').isEnabled(), true, 'Upcoming tests stay editable');
+    assert.equal(await page.locator('#orderLocked').isVisible(), true, 'Test order explains the session lock');
+    Object.assign(current, { state: 'BlockPaused', editableDurations: conditions.slice() });
+    await page.waitForFunction(() => !document.getElementById('duration-WE_FT').disabled);
+    assert.equal(await page.locator('#durationStatus-WE_FT').textContent(), 'Saved', 'Paused tests can be edited again');
     await page.locator('#closeSettings').click();
     Object.assign(current, {state:'Calibration',participant:'TUTORIAL-FIXTURE',runId:'tutorial-browser',canStartParticipant:false,
       tutorial:{started:false,stage:'NotStarted',revision:0,primaryAction:'tutorialBegin',primaryLabel:'Begin tutorial / walkthrough',

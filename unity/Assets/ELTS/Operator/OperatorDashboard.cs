@@ -18,18 +18,18 @@ namespace Elts.Operator
     {
         public sealed class Module
         {
-            public readonly string Id, Name, Title, Description;
-            public Module(string id,string name,string title,string description)
-            {Id=id;Name=name;Title=title;Description=description;}
+            public readonly string Id, Name;
+            public Module(string id,string name)
+            {Id=id;Name=name;}
         }
         public static readonly Module[] Modules = {
-            new Module("preparation","Preparation","Prepare a test session","Choose the test identity and condition order. Preflight observes the synthetic recording path before you continue."),
-            new Module("calibration","Calibration","Review the calibration fixture","Capture, inspect and accept one development fixture. Physical calibration remains a separate validation step."),
-            new Module("run","Practice and blocks","Carry out the session","Keep the live view in sight. The session engine controls timing and tells you when the next action is available."),
-            new Module("notes","Notes and markers","Record an observation","Capture what the administrator saw, without leaving the session or losing the current task."),
-            new Module("recordings","Recordings and replay","Keep the test record","Inspect the current destination and writer state. Completed attempts remain available for later analysis."),
-            new Module("devices","Devices and diagnostics","Inspect the test connections","These sources are simulated. View bindings and exercise the mock controller without connecting to hardware."),
-            new Module("checkpoints","Administrator checkpoints","Make the procedure yours","Keep your local reminders in the order that makes sense to you. Add, edit, reorder and undo removals here.")
+            new Module("preparation","Preparation"),
+            new Module("calibration","Calibration"),
+            new Module("run","Practice and blocks"),
+            new Module("notes","Notes and markers"),
+            new Module("recordings","Recordings and replay"),
+            new Module("devices","Devices and diagnostics"),
+            new Module("checkpoints","Administrator checkpoints")
         };
 
         private readonly VisualElement root, surface;
@@ -119,7 +119,7 @@ namespace Elts.Operator
             foreach(var definition in Modules)
             {Show(Q<VisualElement>(definition.Id+"Module"),definition.Id==id);moduleRows[definition.Id].EnableInClassList("selected",definition.Id==id);}
             currentModule=id;Workspace.SelectedModule=id;
-            Text("stageKicker",module.Name);Text("stageTitle",module.Title);Text("stageDescription",module.Description);
+            Text("stageTitle",module.Name);
             Vector2 saved=scrollPositions.TryGetValue(id,out var at)?at:Vector2.zero;
             // Restore only this module's scroll after layout, never the whole viewport.
             scroll.schedule.Execute(()=> {if(currentModule==id)scroll.scrollOffset=saved;}).ExecuteLater(1);
@@ -153,13 +153,14 @@ namespace Elts.Operator
             moduleSummaries["checkpoints"].text=Workspace.Checkpoints.Count==0?"Add local reminders":Workspace.Checkpoints.Count(item=>item.Completed)+" of "+Workspace.Checkpoints.Count+" marked";
             Text("state",phase);
             Text("countdown",state.State.HasValue && state.RemainingSeconds>0?ClockText(state.RemainingSeconds)+" remaining":state.State==SessionState.BlockReady?"05:00 block":"No timer running");
-            Text("nextActionHint",Guidance(state));Text("runGuidance",Guidance(state));
+            var guidance=Guidance(state);
+            Text("nextActionHint",guidance);Show(Q<Label>("nextActionHint"),guidance.Length>0);
             double duration=state.Running?300:state.State==SessionState.Practice?state.PracticeSeconds:state.State==SessionState.Break?state.BreakSeconds:0;
             Q<ProgressBar>("sessionProgress").value=duration>0?(float)Math.Max(0,Math.Min(100,100*(1-state.RemainingSeconds/duration))):0;
             Q<Button>("advance").text=state.State==SessionState.SessionSetup?"Continue to calibration":state.State==SessionState.Calibration?"Continue to practice":state.State==SessionState.BlockEnded?"Continue to break":"Continue";
             Q<Button>("viewTools").SetEnabled(!state.Busy && (!state.State.HasValue || (state.Closed && !state.WriterOpen)));
             Q<Button>("openRecordingFolder").SetEnabled(state.RunDirectory.Length>0);
-            Text("recordingHealth",state.WriterOpen?(state.WriterHealthy?"Writer active. Files close after completion or abort.":"Writer not healthy. Inspect the session error before continuing."):state.RunDirectory.Length>0?"Writer closed. The recorded attempt is retained.":"Create a session to reserve a new recording folder.");
+            Text("recordingHealth",state.WriterOpen?(state.WriterHealthy?"Recording active":"Writer error. Check the session status."):state.RunDirectory.Length>0?"Recording closed":"Create a session to start recording.");
             Text("liveMode",state.WriterOpen?"Synthetic recording":"Synthetic preview");
             bool previewReady=view.ParticipantCamera.enabled;
             Q<Image>("participantImage").style.visibility=previewReady?Visibility.Visible:Visibility.Hidden;
@@ -187,21 +188,14 @@ namespace Elts.Operator
         }
         private static string Guidance(DashboardSessionSnapshot state)
         {
-            if(state.Busy)return "Finishing a recording operation. Session actions return when it completes.";
+            if(state.Busy)return "Finishing recording operation…";
             switch(state.State)
             {
-                case SessionState.Idle:return "Waiting for two seconds of fresh synthetic tracking and a healthy writer.";
-                case SessionState.SessionSetup:return "Preflight is complete for synthetic use. Continue to the calibration fixture.";
-                case SessionState.Calibration:return state.Calibrated?"Fixture accepted for development. Continue to practice.":"Generate a fixture, review its residuals, then accept it before continuing.";
-                case SessionState.Practice:return "Practice is running. The first block becomes available when the practice timer ends.";
-                case SessionState.BlockReady:return "Confirm the administrator is ready, then start the next 5-minute block.";
-                case SessionState.BlockRunning:return "The block ends automatically at its recorded deadline. Use Abort session to stop early.";
-                case SessionState.BlockEnded:return "The block has ended. Continue to the break, or explicitly rerun this block in a new recording.";
-                case SessionState.Break:return "Continue becomes available when the configured break has elapsed.";
-                case SessionState.SessionComplete:return "The session is complete. Wait for recording closure before opening replay tools.";
-                case SessionState.Aborted:return "The session is stopped. A rerun requires a new recording; it will not resume automatically.";
-                case SessionState.Failed:return "Inspect the error and recording before starting another session.";
-                default:return "Prepare the test identifier and condition order, then create a synthetic recording.";
+                case SessionState.Idle:return "Waiting for tracking and the recording writer.";
+                case SessionState.Calibration:return state.Calibrated?"":"Review the fixture before accepting it.";
+                case SessionState.Aborted:return "Create a new recording to rerun.";
+                case SessionState.Failed:return "Check the session error before continuing.";
+                default:return "";
             }
         }
 

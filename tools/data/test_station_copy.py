@@ -53,7 +53,13 @@ class StationCopyTests(unittest.TestCase):
         destination.mkdir()
         (destination / "keep.txt").write_text("unrelated", encoding="ascii")
         with self.assertRaises(ValueError):
-            station_copy(self.station, destination, apply=True)
+            station_copy(self.station, destination)
+        if os.name == "nt":
+            with self.assertRaises(ValueError):
+                station_copy(self.station, destination, apply=True)
+        else:
+            with self.assertRaisesRegex(RuntimeError, "Windows station"):
+                station_copy(self.station, destination, apply=True)
         self.assertEqual((destination / "keep.txt").read_text(), "unrelated")
 
     def test_preview_uses_station_configuration_and_detects_ambiguous_legacy_roots(self):

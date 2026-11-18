@@ -3,6 +3,7 @@
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { mkdir, writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
+import { installDraftFixture } from "./draft-fixture.mjs";
 const { chromium } = await import(
     process.env.PLAYWRIGHT_MODULE_PATH
         ? pathToFileURL(process.env.PLAYWRIGHT_MODULE_PATH).href
@@ -12,11 +13,14 @@ const output = new URL("../test-results/", import.meta.url);
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({
     headless: true,
+    // Use the full Chromium browser: headless-shell rejects popup fullscreen.
+    channel: "chromium",
     args: process.env.CALIBRATION_SOFTWARE_GL
         ? ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
         : [],
 });
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+await installDraftFixture(page);
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 page.on("console", (msg) => {
@@ -25,22 +29,8 @@ page.on("console", (msg) => {
 page.on("dialog", (dialog) => dialog.accept());
 const checks = [];
 try {
-    await page.goto("http://127.0.0.1:8766");
-    const station = page.locator("section").filter({ has: page.getByRole("heading", { name: "Base station 1", exact: true }) });
-    const x = station.getByRole("group", { name: "X · left / right" });
-    await x.getByLabel("Feet").fill("0");
-    await x.getByLabel("Inches").fill("6.5");
-    await x.getByLabel("Inches").press("Tab");
-    assert.equal(await x.getByLabel("Direction").inputValue(), "-1");
-    const y = station.getByRole("group", { name: "Y · centre height from floor" });
-    await y.getByLabel("Feet").fill("7");
-    await y.getByLabel("Inches").fill("2.5");
-    await y.getByLabel("Inches").press("Tab");
-    const z = station.getByRole("group", { name: "Z · front / back" });
-    await z.getByLabel("Direction").selectOption({ label: "Front" });
-    await z.getByLabel("Feet").fill("2");
-    await z.getByLabel("Inches").fill("0");
-    await z.getByLabel("Inches").press("Tab");
+    await page.goto(process.env.CALIBRATION_BASE_URL || "http://127.0.0.1:8766");
+    assert.equal(await page.getByRole("heading", { name: "Base station 1" }).count(), 0);
     await page.getByRole("button", { name: "Tracking", exact: true }).click();
     await page.locator("#source-select").selectOption("manual");
     await page.waitForFunction(
@@ -109,9 +99,14 @@ try {
     await page
         .getByRole("button", { name: "Profiles & export", exact: true })
         .click();
-    await page.locator("#profile-name").fill("Desktop verification");
+    await page.locator("#profiles-dialog").waitFor({ state: "visible" });
+    const digits = page.locator("#participant-id select");
+    assert.equal(await digits.count(), 6);
+    for (const [index, value] of Array.from("990001").entries())
+        await digits.nth(index).selectOption(value);
     await page
-        .getByRole("button", { name: "Save to profile folder", exact: true })
+        .getByRole("button", { name: "Save calibration", exact: true })
+        .last()
         .click();
     await page.waitForFunction(() =>
         document
@@ -119,23 +114,24 @@ try {
             .textContent.startsWith("Saved."),
     );
     await page
-        .getByRole("button", { name: "Load selected profile", exact: true })
+        .getByRole("button", { name: "Load selected calibration", exact: true })
         .click();
     await page.waitForFunction(
         () => !document.querySelector("#profiles-dialog").open,
     );
     const savedProfile = await page.request.get(
-        new URL("/api/profile?name=Desktop%20verification", page.url()).href,
+        new URL("/api/participant?id=990001", page.url()).href,
     );
     assert.equal(savedProfile.ok(), true);
-    const savedConfig = await savedProfile.json();
+    const savedRecord = await savedProfile.json();
+    assert.equal("name" in savedRecord, false);
+    const savedConfig = savedRecord.calibration;
+    checks.push("Calibration saves under an exact numeric ID without a name");
     assert.equal(savedConfig.person.height, 74.5 * 0.0254);
-    assert.deepEqual(savedConfig.baseStations[0].position, [-6.5, 86.5, -24].map(inches => inches * 0.0254));
-    checks.push("Base station height and signed offsets save in metres");
     await page.getByRole("button", { name: "Head", exact: true }).click();
     assert.equal(await height.getByLabel("Feet").inputValue(), "6");
     assert.equal(await height.getByLabel("Inches").inputValue(), "2.5");
-    assert.equal(savedConfig.head.eye[2], -2.75 * 0.0254);
+    assert.ok(Math.abs(savedConfig.head.eye[2] - savedConfig.head.mount.position[2] + 2.75 * 0.0254) < 1e-9);
     assert.equal(await eyeDepth.getByLabel("Inches").inputValue(), "2.75");
     assert.equal(await eyeDepth.getByLabel("Direction").inputValue(), "-1");
     checks.push("Signed viewing-eye depth round-trips through a metric profile");
@@ -228,6 +224,8 @@ try {
             .querySelector("#head-position")
             .textContent.includes("-0.050 / 1.650 / 2.500"),
     );
+    await page.waitForFunction(() => document.querySelector("#eye-readout").textContent.startsWith("Eye XYZ"));
+    const eyeBeforeMountEdit = await page.locator("#eye-readout").textContent();
     await page.locator('[data-path="head.mount.position.0"]').fill("0.15");
     await page.locator('[data-path="head.mount.position.0"]').press("Tab");
     await page.waitForFunction(() =>
@@ -235,6 +233,12 @@ try {
             .querySelector("#head-position")
             .textContent.includes("-0.150 / 1.650 / 2.500"),
     );
+    // Pose labels also update directly on edits; allow the separate 100 ms
+    // rendered-eye monitor to refresh before comparing its displayed result.
+    await page.waitForTimeout(250);
+    assert.equal(await page.locator("#eye-readout").textContent(), eyeBeforeMountEdit,
+        "Changing the schematic head centre preserves the measured live eye position");
+    checks.push("Head-centre reference edits preserve the tracker-to-eye measurement and live viewing position");
     await page
         .getByRole("button", { name: "Set looking forward", exact: true })
         .click();
@@ -281,9 +285,9 @@ try {
     await page.waitForFunction(
         () =>
             document.querySelector("#save-state").textContent ===
-            "Restored browser draft",
+            "Restored calibration draft",
     );
-    checks.push("Browser draft survives refresh");
+    checks.push("Calibration draft survives refresh");
     await page.setViewportSize({ width: 1366, height: 768 });
     await page
         .getByRole("button", { name: "Room", exact: true })

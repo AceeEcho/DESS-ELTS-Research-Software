@@ -33,6 +33,10 @@ RUNTIME_OUTPUTS = (RUNTIME_OUTPUT, "player/data/synthetic/")
 RUNTIME_SOURCE_PATHS = ("unity/Assets", "unity/Packages", "unity/ProjectSettings", "config")
 FILES = {
     "docs/developer/development-package.md": "README.md",
+    "tools/build/packaged-start.cmd": "START-ELTS.cmd",
+    "tools/build/packaged-prepare.cmd": "PREPARE-REHEARSAL.cmd",
+    "tools/build/packaged-add-id.cmd": "ADD-REHEARSAL-ID.cmd",
+    "tools/build/packaged-start.ps1": "start-rehearsal.ps1",
     "docs/operator/hardware-follow-up.md": "HARDWARE-FOLLOW-UP.md",
     "docs/developer/modules/calibration.md": "docs/calibration.md",
     "docs/developer/modules/session.md": "docs/session.md",
@@ -41,6 +45,7 @@ FILES = {
     "analysis/fixtures/synthetic-calibration.json": "analysis/fixtures/synthetic-calibration.json",
     "tools/validation/schema.py": "tools/validation/schema.py",
     "tools/logging/verify_run.py": "tools/logging/verify_run.py",
+    "tools/data/station_copy.py": "tools/data/station_copy.py",
     "tools/build/provenance.py": "tools/build/provenance.py",
     "tools/build/verify.py": "tools/build/verify.py",
     "tools/build/package.py": "tools/build/package.py",
@@ -162,12 +167,12 @@ def create_package(build: Path, output: Path, evidence: list[Path], sample_run: 
     if archive.exists():
         raise ValueError("Package archive already exists; choose a new output name")
     build_info = verify_player(build)
-    runtime_directory = build / "data/synthetic"
-    if runtime_directory.exists() and any(runtime_directory.rglob("*")):
-        raise ValueError("Package only a pristine player without runtime recordings")
     effective = load_json(build / "ELTS-Synthetic_Data/StreamingAssets/config-generated/effective-config.json")
-    if effective["machine"]["dataRoot"] != "data/synthetic":
-        raise ValueError("This package recipe requires the documented data/synthetic output path")
+    data_root = safe_relative(effective["machine"]["dataRoot"])
+    for folder in {build / data_root, build / "data/synthetic", build / "collection data",
+                   build / "Calibration Environment/profiles"}:
+        if folder.exists() and any(folder.rglob("*")):
+            raise ValueError("Package only a pristine player without participant data")
     if not evidence:
         raise ValueError("At least one passing evidence report is required")
     reports = []
@@ -196,6 +201,12 @@ def create_package(build: Path, output: Path, evidence: list[Path], sample_run: 
         path = output / destination
         path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / source, path)
+    # The example is generated only from the versioned defaults, never a local profile.
+    example = {"format": "elts-participant-calibration-v1", "participantId": 0,
+               "savedUtc": "", "calibration": load_json(ROOT / "Calibration Environment/defaults.json")}
+    example_path = output / "samples/participant-0.json"
+    example_path.parent.mkdir(exist_ok=True)
+    example_path.write_text(json.dumps(example, indent=2) + "\n", encoding="utf-8")
     for source_dir, pattern in (("analysis/src/elts_analysis", "*.py"), ("schemas/logs", "*.json")):
         for source in sorted((ROOT / source_dir).glob(pattern)):
             destination = output / source.relative_to(ROOT)
@@ -219,7 +230,7 @@ def create_package(build: Path, output: Path, evidence: list[Path], sample_run: 
         "evidenceSha256": {p.name: sha(p) for p in reports},
         "evidenceBinding": bindings,
         "sampleRun": "samples/synthetic-run" if sample_run else None,
-        "runtimeOutput": RUNTIME_OUTPUT, "secondMachineTest": "unavailable; same-machine copied-output tests only",
+        "runtimeOutput": data_root.as_posix(), "secondMachineTest": "unavailable; same-machine copied-output tests only",
         "limitations": ["Synthetic and unmeasured configuration only", "No study release or physical safety acceptance", "Hashes are integrity records, not authenticated signatures"],
     }
     (output / "package-info.json").write_text(json.dumps(info, indent=2, allow_nan=False) + "\n", encoding="utf-8")

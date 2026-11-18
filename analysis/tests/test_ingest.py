@@ -1,4 +1,4 @@
-import hashlib, json, math, tempfile, unittest
+import hashlib, json, math, shutil, tempfile, unittest
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parents[1] / 'src'))
@@ -30,6 +30,16 @@ class IngestTests(unittest.TestCase):
     def test_counts_and_invalid_exclusion(self):
         root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True)); result=ingest_run(run,cal)
         self.assertEqual(result['counts']['invalidSamples'],1); self.assertEqual(result['blocks'][0]['targetsDestroyed'],1); self.assertEqual(result['blocks'][0]['shots'],1); self.assertEqual(result['blocks'][0]['validSamples'],1); self.assertEqual(result['blocks'][0]['rawSampleMeanAimErrorDegrees'],0.0); self.assertEqual(result['source']['rawInputs']['samples.ndjson']['sha256'],hashlib.sha256((run/'samples.ndjson').read_bytes()).hexdigest())
+
+    def test_rows_after_the_last_sample_are_counted(self):
+        root, run, calibration = self.make_run()
+        self.addCleanup(shutil.rmtree, root)
+        source = json.loads((run / 'targets.ndjson').read_text().strip())
+        snapshots = [dict(source, sequence=i, monotonicTicks=100+i) for i in range(1, 25)]
+        self.refresh(run, samples=[], targets=snapshots)
+        result = ingest_run(run, calibration)
+        self.assertEqual(result['counts']['samples'], 0)
+        self.assertEqual(result['counts']['targets'], len(snapshots))
 
     def test_flexible_synthetic_timing_is_retained_without_standard_score(self):
         root,run,cal=self.make_run(); self.addCleanup(lambda: __import__('shutil').rmtree(root,ignore_errors=True))

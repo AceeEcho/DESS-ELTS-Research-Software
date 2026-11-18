@@ -212,7 +212,11 @@ def verify_run(run_directory: Path | str) -> dict[str, Any]:
         if path.parent != directory or not path.is_file():
             raise VerificationError(f"Missing supplementary file named in session summary: {file_name}")
         try:
-            actual_checksum = hashlib.sha256(path.read_bytes()).hexdigest()
+            checksum = hashlib.sha256()
+            with path.open("rb") as source:
+                for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                    checksum.update(chunk)
+            actual_checksum = checksum.hexdigest()
         except OSError as exc:
             raise VerificationError(f"Could not read {file_name}: {exc}") from exc
         if actual_checksum != expected_checksum:

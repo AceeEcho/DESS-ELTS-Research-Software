@@ -2,7 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Globalization;
+using Elts.Config;
 using Elts.Geometry;
 using Elts.Logging;
 using Elts.Scenario;
@@ -21,7 +22,10 @@ namespace Elts.Operator
         private bool stationPreparing;
         private string? stationAutomaticallyArmedBlock;
         private string stationParticipant = "";
-        private string stationParticipantName = "", stationInitialNotes = "";
+        private ParticipantCalibration? stationCalibration;
+        private bool stationScreenDiffers;
+        private const string ScreenDiffersMessage="The saved screen measurements differ from this ELTS build; " +
+            "the build's screen is used. Restart START-ELTS to apply the latest saved screen.";
         // One visit spans the first recording and every repeat or continuation folder.
         private string stationVisitId = "";
         private double stationStartedAt;
@@ -52,7 +56,10 @@ namespace Elts.Operator
         public int StationDryFires => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.DryFires??0 : 0;
         public int StationAmmo => scenario?.RecordedBlockId==engine?.CurrentBlockId ? scenario?.AmmoRemaining??view.GameSettings.magazineCapacity : view.GameSettings.magazineCapacity;
         public int StationMagazineCapacity=>scenario?.MagazineCapacity??view.GameSettings.magazineCapacity;
-        public string[] StationOrder => Field("conditionOrder").value.Split(',');
+        private string[] preparedOrder = Array.Empty<string>();
+        private string[]? assignedOrder;
+        private string orderDeviation = "";
+        public string[] StationOrder => SeparateAdministrator ? preparedOrder : Field("conditionOrder").value.Split(',');
         public double StationElapsed => Math.Max(0,(clock?.Now.Elapsed.TotalSeconds ?? 0)-stationStartedAt);
         public IReadOnlyDictionary<string,double> StationDurations => stationDurations;
         public bool StationCanPause => !IsBusy && !closing && engine?.State == SessionState.BlockRunning;
@@ -96,6 +103,7 @@ namespace Elts.Operator
         public void EnableSeparateAdministrator()
         {
             SeparateAdministrator=true;
+            preparedOrder = view.Configuration.Session.ConditionOrder.ToArray();
             InitializeTutorial();
             stationBreakSeconds=view.Configuration.Session.BreakDurationSeconds;
             stationPracticeSeconds=view.Configuration.Session.PracticeDurationSeconds;
@@ -105,30 +113,45 @@ namespace Elts.Operator
             view.SessionControlsVisible=true;
         }
 
-        public void StationStartParticipant(string participant, IEnumerable<string> order, string participantName="", string initialNotes="")
+        /// <summary>
+        /// Starts a participant by numeric ID and applies the calibration saved for
+        /// that ID in the Calibration Environment. Nothing changes if the ID is not
+        /// numeric or no valid calibration is saved for it.
+        /// </summary>
+        public void StationStartParticipant(string participant, IEnumerable<string> order, string? assignedId = null, string[]? assignment = null, string deviation = "")
         {
             if(!StationCanStartParticipant)throw new InvalidOperationException("Finish the current participant first.");
-            participant=participant.Trim();
-            if(!Regex.IsMatch(participant,@"^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$"))
-                throw new ArgumentException("Use 1–40 letters, numbers, hyphens or underscores for the participant ID.");
+            if(!ParticipantCalibration.TryParseId(participant,out int id))
+                throw new ArgumentException("Enter the participant ID as a whole number from 0 to "+ParticipantCalibration.MaximumId+".");
+            string code=id.ToString(CultureInfo.InvariantCulture);
             var conditions=order.ToArray();
             // Validate through the canonical session plan before opening a writer.
-            _=new SessionPlan(participant,conditions);
-            if(participantName.Length>120 || initialNotes.Length>2000)
-                throw new ArgumentException("Name is limited to 120 characters and initial notes to 2000 characters.");
-            stationParticipant=participant;
+            _=new SessionPlan(code,conditions);
+            if (assignment != null)
+            {
+                if (assignedId != code) throw new ArgumentException("Assignment row belongs to another participant.");
+                _ = new SessionPlan(code, assignment);
+                bool matches = assignment.SequenceEqual(conditions);
+                if (matches && deviation.Length > 0 || !matches && deviation != "assignment-correction" && deviation != "schedule-change")
+                    throw new ArgumentException("Review the assignment and choose a reason for a different order.");
+            }
+            else if (assignedId != null || deviation.Length > 0) throw new ArgumentException("Assignment row is incomplete.");
+            var calibration=ParticipantCalibration.Load(CalibrationProfileDirectory,id);
+            stationScreenDiffers=!calibration.ScreenMatches(view.Configuration.Rig);
+            view.ApplyParticipantCalibration(calibration);
+            stationCalibration=calibration;
+            assignedOrder=assignment?.ToArray(); orderDeviation=deviation;
+            stationParticipant=code;
             ResetTutorial();
-            stationNotes.Clear(); stationCheckpoints.Clear(); stationCheckpointId="";
+            stationCheckpoints.Clear(); stationCheckpointId="";
             stationAutomaticallyArmedBlock=null;
             stationSaveStatus="Recording will start after setup.";
-            stationParticipantName=participantName.Trim();stationInitialNotes=initialNotes.Trim();
             stationVisitId=Guid.NewGuid().ToString("N");
             stationStartedAt=clock?.Now.Elapsed.TotalSeconds ?? 0;
-            Field("participant").value=participant+"-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss")+"-"+Guid.NewGuid().ToString("N").Substring(0,6);
-            Field("conditionOrder").value=String.Join(",",conditions);
-            root.Q<DropdownField>("inputSource").value=DesktopInputOption;
+            string identifier=code+"-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss")+"-"+Guid.NewGuid().ToString("N").Substring(0,6);
+            preparedOrder=conditions;
             TestArmed=false;stationPreparing=true;
-            Begin(CreateSessionAsync);
+            Begin(() => CreateSessionAsync(identifier, conditions, true, DevelopmentNeLinkMode.Idle));
         }
 
         public void StationTick()
@@ -140,13 +163,16 @@ namespace Elts.Operator
                 {
                     if(engine?.State==SessionState.SessionSetup)
                     {
-                        StationNote("Participant ID: "+stationParticipant+"; desktop synthetic rehearsal.");
-                        // The name never enters the immutable recording; it is kept only
-                        // in the local collection, where removal can delete it.
-                        if(stationInitialNotes.Length>0)StationNote("Initial observations: "+stationInitialNotes);
+                        RecordSessionDetail("Participant ID: "+stationParticipant+"; desktop synthetic rehearsal.");
+                        // Identify exactly which saved calibration supplied the offsets.
+                        // Notes are limited to 256 characters, so the screen warning is separate.
+                        if(stationCalibration!=null)
+                            RecordSessionDetail("Calibration: "+stationCalibration.FileName+" · SHA-256 "+stationCalibration.Sha256+
+                                " · synthetic, not measured.");
+                        if(stationScreenDiffers)RecordSessionDetail(ScreenDiffersMessage);
                         AdvanceWithCalibration();
                         stationPreparing=false;
-                        lastMessage="Participant ready. Begin the tutorial / walkthrough.";
+                        lastMessage="Participant ready. Begin the tutorial / walkthrough."+(stationScreenDiffers?" "+ScreenDiffersMessage:"");
                     }
                     if(engine?.State==SessionState.BlockReady)
                     { stationPreparing=false;lastMessage="Ready. Arm the test when the participant is ready."; }
@@ -219,11 +245,10 @@ namespace Elts.Operator
             StationEvent("TestDisarmed");TestArmed=false;
             lastMessage="Disarmed. The participant cannot start the test.";
         }
-        public void StationAbort(string reason)
+        public void StationAbort()
         {
             if(engine==null || closing)throw new InvalidOperationException("No active session to abort.");
-            if(String.IsNullOrWhiteSpace(reason))throw new ArgumentException("Enter a reason for stopping this session.");
-            TestArmed=false;stationPreparing=false;engine.Abort(reason.Trim());
+            TestArmed=false;stationPreparing=false;engine.Abort();
         }
         public void StationStartBreak()
         {
@@ -239,12 +264,11 @@ namespace Elts.Operator
             if (engine.State == SessionState.BlockEnded) StationStartBreak();
             else engine.Advance();
         }
-        public void StationNote(string text)
+        // Preserve automatic session provenance in the recording even without a notes editor.
+        private void RecordSessionDetail(string text)
         {
-            if(engine==null || closing || String.IsNullOrWhiteSpace(text))throw new ArgumentException("Enter a note for an active session.");
-            engine.AddNote(text.Trim());lastMessage="Note saved.";
-            if(engine.State==SessionState.Failed)throw new InvalidOperationException(engine.Failure);
-            stationNotes.Add(new StationNoteEntry { seconds=StationElapsed,text=text.Trim() });
+            engine!.AddNote(text);
+            if (engine.State == SessionState.Failed) throw new InvalidOperationException(engine.Failure);
         }
         private void StationEvent(string type)
         {

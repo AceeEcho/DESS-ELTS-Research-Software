@@ -1,8 +1,10 @@
 """Version-aware, read-only ingest of completed ELTS logging runs."""
 from __future__ import annotations
 import argparse, hashlib, json, math, statistics, re, sys
+from contextlib import closing
 from pathlib import Path
-from typing import Any
+import sqlite3
+from typing import Any, Iterator
 
 ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
@@ -100,26 +102,38 @@ def _calibration(path: Path) -> dict[str, Any]:
             "zeroCorrectionQuaternion": _finite_quat(value.get("zeroCorrectionQuaternion"), "zeroCorrectionQuaternion"),
             "calibrationId": calibration_id}
 
-def _records(path: Path, expected: str | tuple[str, ...]) -> list[dict[str, Any]]:
-    result=[]; previous_sequence=0; previous_ticks=-1
-    try: handle=path.open("r", encoding="utf-8")
-    except OSError as exc: raise IngestError(f"cannot read {path.name}: {exc}") from exc
-    with handle:
-        for line_no, line in enumerate(handle, 1):
-            if not line.strip(): raise IngestError(f"blank line at {path.name}:{line_no}")
-            try: value=strict_json(line, f"{path.name}:{line_no}")
-            except (json.JSONDecodeError, VerificationError) as exc: raise IngestError(f"malformed JSON at {path.name}:{line_no}: {exc}") from exc
-            _schema(value, expected, f"{path.name}:{line_no}")
-            sequence = value.get("sequence")
-            ticks = value.get("monotonicTicks")
-            if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence <= previous_sequence:
-                raise IngestError(f"ordering violation at {path.name}:{line_no}: sequence must increase")
-            if not isinstance(ticks, int) or isinstance(ticks, bool) or ticks < 0 or ticks < previous_ticks:
-                raise IngestError(f"ordering violation at {path.name}:{line_no}: monotonicTicks must be nondecreasing")
-            previous_sequence=sequence; previous_ticks=ticks; result.append(value)
-    if isinstance(expected, tuple) and len({row["schemaVersion"] for row in result}) > 1:
-        raise IngestError(f"mixed target schema versions in {path.name}")
-    return result
+def _records(path: Path, expected: str | tuple[str, ...], checksum: str) -> Iterator[dict[str, Any]]:
+    """Parse ordered NDJSON incrementally and bind this pass to its verified bytes."""
+    previous_sequence, previous_ticks = 0, -1
+    version = None
+    digest = hashlib.sha256()
+    try:
+        with path.open("rb") as handle:
+            for line_no, raw in enumerate(handle, 1):
+                digest.update(raw)
+                location = f"{path.name}:{line_no}"
+                if not raw.strip():
+                    raise IngestError(f"blank line at {location}")
+                try:
+                    value = strict_json(raw.decode("utf-8"), location)
+                except (UnicodeError, ValueError, VerificationError) as exc:
+                    raise IngestError(f"malformed JSON at {location}: {exc}") from exc
+                _schema(value, expected, location)
+                if version is not None and value["schemaVersion"] != version:
+                    raise IngestError(f"mixed target schema versions in {path.name}")
+                version = value["schemaVersion"]
+                sequence, ticks = value.get("sequence"), value.get("monotonicTicks")
+                if type(sequence) is not int or sequence <= previous_sequence:
+                    raise IngestError(f"ordering violation at {location}: sequence must increase")
+                if type(ticks) is not int or ticks < 0 or ticks < previous_ticks:
+                    raise IngestError(f"ordering violation at {location}: monotonicTicks must be nondecreasing")
+                previous_sequence, previous_ticks = sequence, ticks
+                yield value
+    except OSError as exc:
+        raise IngestError(f"cannot read {path.name}: {exc}") from exc
+    if digest.hexdigest() != checksum:
+        raise IngestError(f"{path.name} changed during analysis")
+
 
 def _output_path(directory: Path, calibration: Path, output: str | Path | None) -> Path | None:
     if output is None:
@@ -171,45 +185,21 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
     for name in ("samples.ndjson", "events.ndjson", "targets.ndjson"):
         expected = _require_sha(checksums.get(name), f"checksumsSha256.{name}")
         if expected != raw[name]["sha256"]: raise IngestError(f"{name} checksum does not match summary")
-    samples=_records(directory/"samples.ndjson", SAMPLE_SCHEMA); events=_records(directory/"events.ndjson", EVENT_SCHEMA); targets=_records(directory/"targets.ndjson", TARGET_SCHEMAS)
-    target_by_tick=[]
-    for row in targets:
-        _require_string(row.get("targetId"), "targetId")
-        _require_string(row.get("blockId"), "blockId")
-        _finite_vector([row.get("worldPositionMeters", {}).get(k) for k in ("x", "y", "z")], "worldPositionMeters")
-        target_by_tick.append((row["monotonicTicks"], row))
-    valid=[]; invalid=0; errors=[]
-    current_targets: dict[tuple[str, str], dict[str, Any]] = {}
-    target_cursor = 0
-    for row in samples:
-        if not _sample_valid(row): invalid += 1; continue
-        head_pos, head_ori = _validate_pose(row["head"], "head")
-        weapon=row["weapon"]; pos, ori = _validate_pose(weapon, "weapon")
-        corrected=_qmul(ori, cal["zeroCorrectionQuaternion"]); muzzle=tuple(pos[i]+_qrotate(ori,cal["muzzleOffsetMeters"])[i] for i in range(3)); bore=_qrotate(corrected,cal["boreDirectionLocal"])
-        tick=row["monotonicTicks"]
-        candidates=[]
-        # Fold target snapshots in timestamp order. A newer update replaces the
-        # prior position; destruction removes that target from aim candidates.
-        while target_cursor < len(target_by_tick) and target_by_tick[target_cursor][0] <= tick:
-            _, target = target_by_tick[target_cursor]
-            key = (target["blockId"], target["targetId"])
-            if target.get("lifecycle") in ("Destroyed", "Despawned"):
-                current_targets.pop(key, None)
-            else:
-                current_targets[key] = target
-            target_cursor += 1
-        for t in current_targets.values():
-            tp=t["worldPositionMeters"]; target_pos=(tp["x"],tp["y"],tp["z"]); candidates.append((target_pos, _angle(bore,_sub(target_pos,muzzle)), t["targetId"]))
-        if candidates:
-            target_pos, error, target_id=min(candidates,key=lambda x:x[1]); errors.append(error); valid.append({"sequence":row["sequence"],"monotonicTicks":tick,"targetId":target_id,"aimErrorDegrees":error})
-        else: valid.append({"sequence":row["sequence"],"monotonicTicks":tick,"targetId":None,"aimErrorDegrees":None})
+    def records(name, schema):
+        return _records(directory/name, schema, checksums[name])
+
     # Primary scores still require the standard uninterrupted 300-second window.
     # Flexible synthetic tests retain explicit timing summaries without silently
     # presenting their counts as the standard dependent variable.
     markers = {}
     development_blocks = set()
-    for event in events:
+    aborted_blocks = set()
+    event_count = 0
+    for event in records("events.ndjson", EVENT_SCHEMA):
+        event_count += 1
         kind = event.get("eventType"); payload = event.get("payload", {})
+        if kind == "BlockAborted" and isinstance(payload.get("blockId"), str):
+            aborted_blocks.add(payload["blockId"])
         if kind in ("BlockPaused", "BlockResumed") or (
                 kind in ("BlockStarted", "BlockEnded", "BlockDurationChanged") and payload.get("developmentTiming") is True):
             block_id = payload.get("blockId")
@@ -228,12 +218,6 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
                 item["activeSeconds"] = payload.get("activeSeconds")
                 item["durationSeconds"] = payload.get("durationSeconds")
                 item["reason"] = payload.get("reason", "elapsed")
-    aborted_blocks = {
-        event.get("payload", {}).get("blockId")
-        for event in events
-        if event.get("eventType") == "BlockAborted"
-        and isinstance(event.get("payload", {}).get("blockId"), str)
-    }
     score_blocks = []
     for block_id, item in markers.items():
         if "start" not in item or "end" not in item: continue
@@ -245,40 +229,95 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
     ordered_blocks = sorted(score_blocks, key=lambda block: block[1])
     if any(previous[2] > current[1] for previous, current in zip(ordered_blocks, ordered_blocks[1:])):
         raise IngestError("complete block intervals overlap")
-    destroyed_seen = set()
-    for event in events:
-        if event.get("eventType") != "TargetDestroyed": continue
-        payload = event.get("payload", {}); block_id, target_id = payload.get("blockId"), payload.get("targetId")
-        if not isinstance(block_id, str) or not isinstance(target_id, str): raise IngestError(f"TargetDestroyed event {event['sequence']} requires scalar targetId and blockId")
-        # A destruction in an incomplete/aborted block cannot complete a DV and
-        # is retained in the raw stream without being assigned a score.
-        if not [b for b in score_blocks if b[0] == block_id and b[1] <= event["monotonicTicks"] < b[2]]: continue
-        key = (block_id, target_id)
-        if key in destroyed_seen: raise IngestError(f"duplicate TargetDestroyed for {target_id!r} in block {block_id!r}")
-        destroyed_seen.add(key)
-    blocks = {block_id: {"blockId": block_id, "startTicks": start_tick, "endTicks": end_tick, "targetsDestroyed": 0, "shots": 0, "validSamples": 0, "invalidSamples": 0, "aimErrorsDegrees": []} for block_id, start_tick, end_tick in score_blocks}
-    for event in events:
-        for block_id, start_tick, end_tick in score_blocks:
-            if start_tick <= event["monotonicTicks"] < end_tick:
-                if event.get("eventType") == "TargetDestroyed":
-                    if event.get("payload", {}).get("blockId") == block_id:
-                        blocks[block_id]["targetsDestroyed"] += 1
-                if event.get("eventType") == "ShotFired" and event.get("payload", {}).get("blockId", block_id) == block_id: blocks[block_id]["shots"] += 1
-                break
-    for row in samples:
-        for block_id, start_tick, end_tick in score_blocks:
-            if start_tick <= row["monotonicTicks"] < end_tick:
-                b=blocks[block_id]
-                if _sample_valid(row): b["validSamples"] += 1
-                else: b["invalidSamples"] += 1
-                break
-    for row in valid:
-        if row["aimErrorDegrees"] is None: continue
-        for block_id, start_tick, end_tick in score_blocks:
-            if start_tick <= row["monotonicTicks"] < end_tick: blocks[block_id]["aimErrorsDegrees"].append(row["aimErrorDegrees"]); break
-    block_reports=[]
-    for block_id,b in blocks.items():
-        vals=b.pop("aimErrorsDegrees"); b["rawSampleMeanAimErrorDegrees"]=statistics.fmean(vals) if vals else None; b["rawSampleMedianAimErrorDegrees"]=statistics.median(vals) if vals else None; total=b["validSamples"]+b["invalidSamples"]; b["validSampleFraction"]=b["validSamples"]/total if total else None; block_reports.append(b)
+    blocks = {block_id: {"blockId": block_id, "startTicks": start, "endTicks": end,
+                         "targetsDestroyed": 0, "shots": 0, "validSamples": 0, "invalidSamples": 0}
+              for block_id, start, end in score_blocks}
+
+    def active_block(tick):
+        return next((blocks[key] for key, start, end in score_blocks if start <= tick < end), None)
+
+    # SQLite creates a private temporary file and removes it on close. Exact medians
+    # and duplicate checks do not require retaining one Python object per observation.
+    with closing(sqlite3.connect("")) as scratch:
+        scratch.execute("PRAGMA temp_store=FILE")
+        scratch.execute("CREATE TABLE measurements (block TEXT, value REAL)")
+        scratch.execute("CREATE TABLE destroyed (block TEXT, target TEXT, PRIMARY KEY(block,target))")
+        for event in records("events.ndjson", EVENT_SCHEMA):
+            kind, payload = event.get("eventType"), event.get("payload", {})
+            block = active_block(event["monotonicTicks"])
+            if kind == "TargetDestroyed":
+                key, target = payload.get("blockId"), payload.get("targetId")
+                if not isinstance(key, str) or not isinstance(target, str):
+                    raise IngestError(f"TargetDestroyed event {event['sequence']} requires scalar targetId and blockId")
+                if block is not None and key == block["blockId"]:
+                    try:
+                        scratch.execute("INSERT INTO destroyed VALUES (?,?)", (key, target))
+                    except sqlite3.IntegrityError as exc:
+                        raise IngestError(f"duplicate TargetDestroyed for {target!r} in block {key!r}") from exc
+                    block["targetsDestroyed"] += 1
+            elif kind == "ShotFired" and block is not None and payload.get("blockId", block["blockId"]) == block["blockId"]:
+                block["shots"] += 1
+
+        target_count = 0
+        def target_records():
+            nonlocal target_count
+            for row in records("targets.ndjson", TARGET_SCHEMAS):
+                _require_string(row.get("targetId"), "targetId")
+                _require_string(row.get("blockId"), "blockId")
+                _finite_vector([row.get("worldPositionMeters", {}).get(k) for k in ("x", "y", "z")], "worldPositionMeters")
+                target_count += 1
+                yield row
+
+        sample_count = invalid = 0
+        current_targets = {}
+        with closing(target_records()) as target_stream:
+            target = next(target_stream, None)
+            for row in records("samples.ndjson", SAMPLE_SCHEMA):
+                sample_count += 1
+                block = active_block(row["monotonicTicks"])
+                valid = _sample_valid(row)
+                if block is not None:
+                    block["validSamples" if valid else "invalidSamples"] += 1
+                if not valid:
+                    invalid += 1
+                    continue
+                _validate_pose(row["head"], "head")
+                pos, ori = _validate_pose(row["weapon"], "weapon")
+                corrected = _qmul(ori, cal["zeroCorrectionQuaternion"])
+                offset = _qrotate(ori, cal["muzzleOffsetMeters"])
+                muzzle = tuple(pos[i] + offset[i] for i in range(3))
+                bore = _qrotate(corrected, cal["boreDirectionLocal"])
+                while target is not None and target["monotonicTicks"] <= row["monotonicTicks"]:
+                    key = (target["blockId"], target["targetId"])
+                    if target.get("lifecycle") in ("Destroyed", "Despawned"):
+                        current_targets.pop(key, None)
+                    else:
+                        point = target["worldPositionMeters"]
+                        current_targets[key] = (point["x"], point["y"], point["z"])
+                    target = next(target_stream, None)
+                if current_targets:
+                    error = min(_angle(bore, _sub(point, muzzle)) for point in current_targets.values())
+                    if block is not None:
+                        scratch.execute("INSERT INTO measurements VALUES (?,?)", (block["blockId"], error))
+            # Validate and count trailing snapshots even if the sample stream ends first.
+            for _ in target_stream:
+                pass
+
+        scratch.execute("CREATE INDEX by_block_and_value ON measurements(block,value)")
+        block_reports = []
+        for key, block in blocks.items():
+            n = scratch.execute("SELECT COUNT(*) FROM measurements WHERE block=?", (key,)).fetchone()[0]
+            block["rawSampleMeanAimErrorDegrees"] = None
+            block["rawSampleMedianAimErrorDegrees"] = None
+            if n:
+                values = scratch.execute("SELECT value FROM measurements WHERE block=? ORDER BY rowid", (key,))
+                block["rawSampleMeanAimErrorDegrees"] = statistics.fmean(value for (value,) in values)
+                middle = scratch.execute("SELECT value FROM measurements WHERE block=? ORDER BY value LIMIT ? OFFSET ?",
+                                         (key, 2 if n % 2 == 0 else 1, (n-1)//2))
+                block["rawSampleMedianAimErrorDegrees"] = statistics.median(value for (value,) in middle)
+            total = block["validSamples"] + block["invalidSamples"]
+            block["validSampleFraction"] = block["validSamples"] / total if total else None
+            block_reports.append(block)
     block_reports.sort(key=lambda x:x["startTicks"])
     for block_id in sorted(development_blocks):
         item = markers.get(block_id, {})
@@ -292,14 +331,14 @@ def ingest_run(run_directory: str | Path, calibration: str | Path, output: str |
     if not block_reports: block_reports=[{"scoreStatus":"unavailable","reason":"no complete BlockStarted/BlockEnded interval in event stream"}]
     counts = summary.get("counts")
     if not isinstance(counts, dict): raise IngestError("session summary counts are required")
-    expected_counts = {"writtenSamples": len(samples), "writtenEvents": len(events), "writtenTargets": len(targets)}
+    expected_counts = {"writtenSamples": sample_count, "writtenEvents": event_count, "writtenTargets": target_count}
     for key, actual in expected_counts.items():
         if counts.get(key) != actual: raise IngestError(f"session summary {key} does not match input")
     # The official aim error is meanAimErrorDeg in the results export (elts.task-metrics.v1),
     # calculated from AimObserved events with the visible-target policy used for shots.
     # These raw 250 Hz sample figures are an independent cross-check with a different
     # target policy, named so the two cannot be mistaken for each other.
-    report={"analysisVersion":"elts.analysis.v2","officialAimError":"results meanAimErrorDeg (elts.task-metrics.v1)","targetSelectionPolicy":"latest-nondestroyed-snapshot-per-block-target; nearest-angular-candidate","source":{"runDirectory":str(directory.resolve()),"sessionSummary":provenance,"rawInputs":raw},"calibration":{**cal,"sha256":_sha(calibration_path)[0]},"counts":{"samples":len(samples),"validSamples":sum(1 for x in samples if _sample_valid(x)),"invalidSamples":invalid,"events":len(events),"targets":len(targets)},"blocks":block_reports}
+    report={"analysisVersion":"elts.analysis.v2","officialAimError":"results meanAimErrorDeg (elts.task-metrics.v1)","targetSelectionPolicy":"latest-nondestroyed-snapshot-per-block-target; nearest-angular-candidate","source":{"runDirectory":str(directory.resolve()),"sessionSummary":provenance,"rawInputs":raw},"calibration":{**cal,"sha256":_sha(calibration_path)[0]},"counts":{"samples":sample_count,"validSamples":sample_count-invalid,"invalidSamples":invalid,"events":event_count,"targets":target_count},"blocks":block_reports}
     if output_path is not None:
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)

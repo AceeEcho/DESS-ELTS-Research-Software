@@ -20,10 +20,24 @@ internal static class LoggingChecks
     private static void True(bool condition, string name) { if (!condition) throw new Exception("FAIL: " + name); passed++; }
     private static void Throws<T>(Action action, string name) where T : Exception { try { action(); throw new Exception("FAIL: " + name + " did not throw"); } catch (T) { passed++; } }
 
+    private static void CheckRecordingText()
+    {
+        using var fixture = JsonDocument.Parse(File.ReadAllText("tools/runtime-tests/fixtures/recording-text.json"));
+        foreach (var item in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            string value = String.Concat(Enumerable.Repeat(item.GetProperty("unit").GetString(), item.GetProperty("repeat").GetInt32()));
+            if (item.GetProperty("accepted").GetBoolean())
+                True(LogField.String("reason", value).Text == value, "recorder preserves an accepted exception reason");
+            else
+                Throws<ArgumentException>(() => LogField.String("reason", value), "recorder rejects an invalid exception reason");
+        }
+    }
+
     private static int Main(string[] args)
     {
         try
         {
+            CheckRecordingText();
             int soakSeconds = ParseSoakSeconds(args);
             string? output = ParseOutput(args);
             if (soakSeconds > 0) RunSoak(soakSeconds, output);

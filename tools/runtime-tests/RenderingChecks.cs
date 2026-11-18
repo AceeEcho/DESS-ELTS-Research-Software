@@ -19,6 +19,22 @@ internal static class RenderingChecks
             foreach(var c in new[]{(0.0,0.0,-1.0,-1.0),(2.0,0.0,1.0,-1.0),(0.0,1.2,-1.0,1.0),(2.0,1.2,1.0,1.0)})
             {var p=projection.ProjectNdc(screen.Origin+screen.U*c.Item1+screen.V*c.Item2);Near(p.X,c.Item3);Near(p.Y,c.Item4);}
         }
+        // Independent physical-eye check at close distances. Clipping may move,
+        // but a fixed 1 m object 5 m behind the TV must keep its visual angle.
+        var display=new ScreenPlane(new Vector3d(-0.72,-0.405,0),new Vector3d(1,0,0),new Vector3d(0,1,0),1.44,0.81);
+        double previousAngle=0;
+        foreach(double distance in new[]{2.0,0.5,0.05,0.02,0.001,0.000001})
+        {
+            var projection=new OffAxisProjection(display,new Vector3d(0,0,-distance),0.05,100);
+            Check(projection.Near>0 && projection.Near<distance);
+            var left=projection.ProjectNdc(new Vector3d(-0.5,0,5));
+            var right=projection.ProjectNdc(new Vector3d(0.5,0,5));
+            double imageWidth=(right.X-left.X)*display.Width/2;
+            double angle=2*Math.Atan(imageWidth/(2*distance));
+            Near(angle,2*Math.Atan(0.5/(distance+5)));
+            Check(angle>previousAngle && angle<2*Math.Atan(0.5/5));
+            previousAngle=angle;
+        }
         var raw=new RigidPose(new Vector3d(1,2,3),Quaterniond.Identity);
         var predicted=RenderHeadPrediction.Predict(raw,new Vector3d(2,0,0),0.02);
         Near(predicted!.Value.Position.X,1.04);Near(raw.Position.X,1);

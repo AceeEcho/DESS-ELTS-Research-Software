@@ -44,7 +44,19 @@
 
 ## 🚀 Install and run
 
-*For operators running study sessions. Developers: use [Developer setup](#-developer-setup) instead.*
+### Run the packaged rehearsal
+
+The prebuilt package runs on Windows x64 without the Unity Editor or developer tools. [Download the Windows rehearsal ZIP](https://github.com/AceeEcho/DESS-ELTS-Research-Software/releases/download/development-rehearsal-2026-11-18/ELTS-Development-Rehearsal-20261118.zip).
+
+1. Extract the full ZIP, then double-click **PREPARE-REHEARSAL.cmd** to create fictional participant **0** and open ELTS.
+2. In the dashboard choose **New participant**, select **0**, and choose **Create recording**.
+3. Use **ADD-REHEARSAL-ID.cmd** to pick another fictional ID. If ELTS is open, the ID appears in its picker. Use **START-ELTS.cmd** to reopen the same rehearsal on later visits.
+
+The package stores its collection under `%LOCALAPPDATA%/ELTS/DevelopmentRehearsal` by default. A regular launch after permanent removal opens an empty dataset. To update the app, extract the new release into a new folder and use **START-ELTS.cmd** there. The rehearsal collection carries over.
+
+### Install from source
+
+Use the source checkout for the separate calibration workspace or to change the software. Developers can follow [Developer setup](#-developer-setup).
 
 ![Download the ZIP, extract it, then double-click START-ELTS.cmd. The first start also installs everything ELTS needs.](docs/images/readme/quick-start.svg)
 
@@ -66,21 +78,21 @@ At the top of [this GitHub page](https://github.com/AceeEcho/DESS-ELTS-Research-
 **Step 3 · Double-click START-ELTS.cmd.** It opens the **administrator dashboard** in your browser and the **participant window** as a separate app. The **first start** on a computer also sets everything up: ELTS is built on your computer, so it installs Unity **6000.3.23f1 LTS** and the other tools, checks them and builds the app. That takes a while, so leave the window open. Accept Windows install prompts and sign in to Unity Hub if asked; if it stops for licensing, activate in Unity Hub and double-click **START-ELTS.cmd** again. A small startup window shows progress and closes on its own; if something fails it stays open with an **Open startup log** button.
 
 > [!TIP]
-> From now on, just double-click **START-ELTS.cmd**. Keep the whole extracted folder together: your recordings are saved inside it, in **collection data**. If a step fails, see [setup troubleshooting](docs/operator/troubleshooting.md#install-and-startup).
+> From now on, just double-click **START-ELTS.cmd**. Keep the whole extracted folder together. Source launches save recordings in **collection data** by default. If a step fails, see [setup troubleshooting](docs/operator/troubleshooting.md#install-and-startup).
 
 **Tracking PC (optional).** To set up the room, screen and Vive trackers, double-click **START-CALIBRATION.cmd**. The first time, it offers to install the live-tracking tools (answer **Y**); manual preview works without them. This needs no Unity. See [Calibration workspace](#-calibration-workspace).
 
 **VIVE gun trigger (optional).** The gun tracker's trigger can fire in tutorial practice, start a scenario and fire scored shots. To turn it on:
 
 1. In SteamVR **Manage Trackers**, set the gun tracker to **Held in hand → Right Hand** (or Left Hand).
-2. In the calibration workspace, pick that tracker under **Weapon**, check that the trigger indicator above the 3D view shows **pressed** and **released**, and **Save profile**.
-3. Double-click **START-ELTS.cmd**. It uses the weapon tracker from the most recently saved profile.
+2. In the calibration workspace, pick that tracker under **Weapon**, check that the trigger indicator above the 3D view shows **pressed** and **released**, then open **Save calibration** and choose **Save station room**.
+3. Double-click **START-ELTS.cmd**. It uses the tracker binding from the saved station room.
 
 Aiming still uses the desktop/synthetic pose source; the mouse keeps working. Details: [trigger setup](docs/developer/modules/vive-trigger.md).
 
-**Getting a newer version.** Download and extract the new ZIP into a new folder, then double-click **START-ELTS.cmd** in it. Recordings are not carried over automatically, so keep your old folder and its **collection data** until you have exported what you need.
+**Updating a source installation.** With both apps closed, copy the station data to a stable folder and set `ELTS_STATION_HOME` for both launchers. Use that folder with the new source ZIP. [Move a station or restore a copy](docs/operator/user-guide.md#move-a-station-or-restore-a-copy)
 
-### Which file do I double-click?
+### Source checkout launchers
 
 | File | When to use it |
 | --- | --- |
@@ -99,15 +111,15 @@ Everything marked **(Dev Only)** is for [developers](#-developer-setup).
 
 ### 1 · Open the software
 
-Double-click **START-ELTS.cmd**. You control everything from the dashboard; the participant only sees the participant window.
+Double-click **START-ELTS.cmd** after installation. On the first packaged rehearsal, start with **PREPARE-REHEARSAL.cmd**. You control the session from the dashboard. The participant sees the separate participant window.
 
-![Dashboard overview: Data, New participant and the Settings gear are at the top right; test controls are in the right pane.](docs/operator/images/user-guide/texas-tech/01-dashboard.png)
+![Idle dashboard with Data and New participant at the top and the applied session plan in the right pane.](docs/operator/images/user-guide/texas-tech/01-dashboard.png)
 
 | Where | What it does |
 | --- | --- |
 | **⚙ Settings** (top right) | Scenario order, time limits, practice and break lengths, window options |
-| **New participant** (top right) | Enter participant details and start a recording |
-| **Test session** (right pane) | Walkthrough controls, arm / pause / resume / stop, breaks, notes and save status |
+| **New participant** (top right) | Choose a saved participant ID and start a recording |
+| **Test session** (right pane) | Walkthrough controls, arm / pause / resume / stop, breaks and save status |
 | **Outside view** (left pane) | Camera view. Drag to orbit, scroll to zoom |
 | **Data** (top right) | Participant profiles, saved sessions and exports |
 
@@ -115,12 +127,12 @@ Drag the thin divider to resize the panes. Gray buttons light up when their acti
 
 ### 2 · Set the order and times
 
-Open **⚙ Settings** before creating a participant.
+Open **Review setup** or **⚙ Settings** before creating a participant.
 
 | Scenario order | Durations |
 | :---: | :---: |
-| ![The four scenario tiles, each with a dotted grab handle.](docs/operator/images/user-guide/texas-tech/02-test-order.png) | ![Individual scenario durations, plus Practice and Every break.](docs/operator/images/user-guide/texas-tech/03-timing.png) |
-| Drag the **six-dot handle** (or focus it and use ↑/↓). Escape cancels. Order locks once a session starts. | Enter seconds per scenario (default **300**), click outside to save. Set **Practice** and **Every break**, then **Save practice & breaks**. |
+| ![The four ordered scenario tiles with a grab handle and duration on each row.](docs/operator/images/user-guide/texas-tech/02-test-order.png) | ![Session plan with practice and break durations below the scenario order.](docs/operator/images/user-guide/texas-tech/03-timing.png) |
+| Drag the **six-dot handle** (or focus it and use ↑/↓). Escape cancels. Order locks once a session starts. | Enter seconds per scenario (default **300**), click outside to save. Practice and break times save the same way. |
 
 > [!NOTE]
 > The study plan calls for two-minute breaks: set **Every break** to **120** seconds. The walkthrough never changes your settings on its own.
@@ -129,9 +141,9 @@ To reuse a setup, type a **Preset name** under **Saved setups** → **Save setup
 
 ### 3 · Create the participant recording
 
-Click **New participant**, enter the **Participant number / ID** (name and notes are optional) and click **Create recording**. This saves the details; it does not start a scenario.
+Click **New participant**, choose a saved **Participant ID**, then click **Create recording**. In the Windows package, use **ADD-REHEARSAL-ID.cmd** to create another fictional ID. From source, use **START-CALIBRATION.cmd** to save the calibration under a numeric ID. The same ID groups that participant’s visits.
 
-![Participant entry with a demonstration ID, optional name, observations and Create recording button.](docs/operator/images/user-guide/texas-tech/04-participant.png)
+![Participant entry with the numeric ID picker and Create recording button.](docs/operator/images/user-guide/texas-tech/04-participant.png)
 
 ### 4 · Begin the walkthrough
 
@@ -143,11 +155,11 @@ Click **Begin walkthrough**. The participant window guides the participant step 
 - **Pause instruction** / **Repeat instruction** pause or replay the current narration and picture. Repeating never re-captures, re-fires or restarts anything.
 - **Redo capture** discards the head directions and starts them again.
 - During practice: **Pause practice**, **Restart practice**, **Finish practice**.
-- The checklist (head review, gun review, firing tried, reload tried) only fills from real events.
+- The checklist updates when the corresponding steps finish. **Settings** also offers narration captions and a display and audio check.
 
 <br clear="right">
 
-### 5 · Let the study run
+### 5 · Run the scenarios
 
 After the overview the first scenario arms by itself. The participant sees **Shoot to begin** and pulls the trigger once; that start shot is not scored. From then on, scenarios and breaks follow each other automatically: each scenario saves, a break counts down, and the next scenario starts when tracking is valid. After the final break the participant fills in the post-study form, you click **Confirm form completed**, and the thank-you screen appears.
 
@@ -172,7 +184,7 @@ After the final test, complete or skip its break to close the recording, then cl
 
 </details>
 
-### 6 · Pause, stop or add a note
+### 6 · Pause, stop or finish a session
 
 ![Running test showing remaining time, active time, Pause test and Stop test.](docs/operator/images/user-guide/texas-tech/08-running.png)
 
@@ -180,11 +192,10 @@ After the final test, complete or skip its break to close the recording, then cl
 | --- | --- |
 | **Pause test** / **Resume test** | Freezes the timer and targets, then continues the same attempt |
 | **Stop test** | Ends early after a confirmation. Saved as **Stopped early**; it cannot resume |
-| **Add note** (scroll down) | Saves an observation to the session's note history |
 | **Skip this test…** | Skips a ready, unarmed scenario with a reason |
 | **Repeat a test…** | Adds another attempt with a reason; earlier results are kept |
 | **Skip break** | Ends the current break early |
-| **Abort participant session** | Ends the whole session, including remaining scenarios. Use only on purpose |
+| **Abort participant session** | Opens a confirmation. Confirming ends the session and closes the recording. |
 
 ### Participant controls (desktop rehearsal)
 
@@ -238,9 +249,9 @@ Click **Data** at the top of the dashboard. Click **Test administration** to go 
 
 ![Participant data view with task metrics, firing-rate graph and export buttons, using fictional demonstration data.](docs/operator/images/user-guide/texas-tech/13-data-viewer.png)
 
-1. **Find the participant** by ID or name. Reusing an ID groups all their sessions under one profile.
-2. **Pick a session, then an attempt.** Tabs: **Overview** (rates, accuracy, shot error, aim stability) · **Timeline** · **Shots** · **Metric guide**.
-3. **Refresh** picks up newly saved recordings.
+1. **Find the participant** by ID. Reusing an ID groups all their visits under one profile.
+2. **Choose a visit and recording**, then an attempt. Use **Overview**, **Timeline**, **Shots**, or **Metric guide**.
+3. **Refresh** picks up changed recordings. **Verify checksums** checks a closed recording against its saved closure summary. Expand **Standard 300-second analysis** to see the eligibility screening and any exclusion reason.
 
 | Timeline: drag across the graph | Shots: filter hits, misses, unknown |
 | :---: | :---: |
@@ -250,21 +261,25 @@ A **—** means a value is unavailable, not zero. Active time excludes pauses.
 
 | Export | What you get |
 | --- | --- |
-| **Export results** | One `.xlsx` workbook for **every participant**: **Results** (one row per participant per task attempt, labelled by condition), **Shots** (one row per shot), **Timeline** (one row per active second) and **Metric guide**. Participants appear by code, not name. Excel isn't needed to create it |
-| **Raw archive** | A ZIP of one finished session's original tracker, target and event files with their checksums |
+| **Export results** | Creates an Excel workbook for everyone, one participant, one visit or a UTC recording modification date range. Includes **Results**, **Shots**, **Timeline**, **Metric guide**, a **Recordings** manifest, and **Handoff** rows for matching external recordings. Preview the row counts under **Export scope and index options**. |
+| **Raw archive** | A ZIP of one closed recording’s original tracker, target and event files with their checksums |
+| **Recovery copy** | Available files from an interrupted recording after acquisition stops |
 
 Click **Download export** to save a prepared export; copies also stay in the data folder's **exports** directory. **Open folder** shows the data folder itself.
 
-> [!WARNING]
-> Data stays on **this computer** in the **collection data** folder beside this README. It is excluded from Git, so pushing the project does **not** back it up. Wait for saving to finish before closing ELTS. More: [data storage and recovery](docs/developer/modules/data-collection.md).
+Wait for saving to finish before closing ELTS. Participant data is stored locally and excluded from Git. [Move or restore a collection](docs/operator/user-guide.md#move-a-station-or-restore-a-copy)
+
+### Start a fresh dataset
+
+Finish or abort the active session. Go to the bottom of **Settings** and click the red **Remove all participant data…** button. Type `CONFIRM` exactly and click **Remove** to erase the station’s participant recordings, calibrations, drafts, index, and managed exports. This operation creates no backup. Shared room settings and copies stored elsewhere are separate. [Full reset steps](docs/operator/user-guide.md#start-a-fresh-dataset)
 
 ---
 
 ## 🎯 Calibration workspace
 
-A separate browser app for describing the room: screen size and position, base-station location, head and weapon mount offsets, a 3D room view and a view from the participant's eyes. It never starts ELTS and its profiles are stored apart from ELTS recordings.
+A separate browser app for setting the display and previewing the participant’s view. Save shared room settings separately from numeric participant calibrations. It never starts ELTS and its profiles are stored apart from ELTS recordings.
 
-![Calibration workspace in manual preview: setup tabs on the left, a 3D room with the screen, base station, trackers and person, and a screen-perspective preview.](docs/images/readme/calibration-workspace.png)
+![Calibration workspace in manual preview: setup tabs on the left, a 3D room with the screen, trackers and participant model, and a screen-perspective preview.](docs/images/readme/calibration-workspace.png)
 
 1. Double-click **START-CALIBRATION.cmd**. **Manual preview** works with no equipment.
 2. For live Vive trackers, answer **Y** when it offers the one-time setup on a new PC. It installs Python, the OpenVR reader, Steam and SteamVR, and configures headset-free tracking with backups of your existing settings. Live mode then reads the SteamVR trackers.

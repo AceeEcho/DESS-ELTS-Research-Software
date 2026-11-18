@@ -89,7 +89,7 @@ namespace Elts.Operator
             tutorial.Stage==TutorialStage.PracticeReady?"tutorialPractice":tutorial.Stage==TutorialStage.Form?"tutorialForm":"tutorialContinue";
         private string TutorialPrimaryLabel => !tutorial.Started?"Begin walkthrough":TutorialCalibrationStep?
             (calibration.State==CalibrationWizardState.Idle?(tutorial.Stage==TutorialStage.HeadCalibration?
-                "Capture direction "+(tutorial.HeadCalibrationIndex+1)+" of 7 · "+tutorial.Step.Title:"Capture synthetic gun fixture"):
+                "Capture direction "+(tutorial.HeadCalibrationIndex+1)+" of 7 · "+tutorial.Step.Title:"Check calibration"):
                 "Accept review · continue"):tutorial.Step.OperatorAction;
         private bool TutorialPrimaryEnabled => !IsBusy && (TutorialCanBegin || TutorialCanCapture || TutorialCanAccept ||
             tutorial.CanContinue || (!tutorial.Paused && tutorial.CueFinished && tutorial.Stage==TutorialStage.PracticeReady) ||
@@ -202,12 +202,12 @@ namespace Elts.Operator
             if(!calibrationWithinLimits)
             {
                 ResetCalibration();
-                throw new InvalidOperationException("The synthetic calibration fixture is outside the development limits. Use the walkthrough to review it.");
+                throw new InvalidOperationException("Calibration needs review. Open the walkthrough and try again.");
             }
             try
             {
                 AcceptCalibrationFixture();
-                StationNote("Manual mode: the operator skipped the participant walkthrough and practice.");
+                RecordSessionDetail("Manual mode: the operator skipped the participant walkthrough and practice.");
                 AdvanceWithCalibration();
                 engine!.FinishDevelopmentPractice();
                 if(engine.State!=SessionState.BlockReady)throw new IOException(engine.Failure??"The first test could not be prepared.");

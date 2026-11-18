@@ -9,9 +9,8 @@ illustrative application, not a validated hardware model.
 
 1. **Configuration** is loaded from `config/`, validated against `schemas/config/`
    and staged into generated Unity files. Machine-local values are separate from
-   shared defaults and synthetic rig geometry. On each `START-ELTS.cmd`, the most
-   recently saved [calibration workspace](../../Calibration%20Environment/README.md)
-   profile supplies screen geometry, mount offsets and the gun tracker serial.
+   shared defaults and synthetic rig geometry. At startup the [calibration workspace](../../Calibration%20Environment/README.md)
+   supplies shared room settings. Participant-specific settings load at intake.
    See [configuration staging](modules/config-staging.md).
 2. **Clock and tracking** provide a shared process monotonic timestamp and explicit
    validity with converted room-frame poses. Invalid observations remain invalid;
@@ -68,3 +67,5 @@ Unity is pinned to **6000.3.23f1 LTS**. Other tool versions live in
 `config/toolchain.json`. Builds, caches, diagnostics and recordings are local
 outputs. [Developer commands](quick-start.md) explain how to
 build/test; [safety boundaries](../safety/README.md) describe what remains unavailable.
+
+Run `python tools/ci/interfaces.py` from the checkout root for calibration, analysis, dashboard, narration and offline-demo checks. For the dashboard suite, run `npm ci` and `npx playwright install chromium` in `tools/browser-tests` and set `ELTS_TEST_BROWSER=chromium`. The pull-request workflow runs the affected suites automatically. For development-player frame times, memory and command timings, run the copied-player smoke with `--measure`. It writes results under `test-results/data-player-smoke`.

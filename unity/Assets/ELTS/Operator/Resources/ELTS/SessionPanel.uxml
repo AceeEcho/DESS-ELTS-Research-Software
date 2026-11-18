@@ -33,7 +33,7 @@
             <ui:DropdownField name="dominantEye" label="Dominant eye" /><ui:TextField name="eyeOffset" label="Eye offset · m, x,y,z" />
             <ui:TextField name="calibrationThresholds" label="Limits · mm,mm,°,°,°" value="2,5,0.5,1,2" />
             <ui:Label text="Pivot RMS, corner error, corner angle, 3×3 mean and maximum. Provisional development limits; physical approval pending." class="small muted" />
-            <ui:Button name="captureCalibration" text="Generate synthetic calibration fixture" class="primary" /><ui:Label name="calibrationReview" class="review-output" text="No fixture captured. Create a recording and continue to calibration." />
+            <ui:Button name="captureCalibration" text="Check calibration" class="primary" /><ui:Label name="calibrationReview" class="review-output" text="No fixture captured. Create a recording and continue to calibration." />
             <ui:VisualElement class="button-row"><ui:Button name="acceptCalibration" text="Accept development fixture" class="primary" /><ui:Button name="redoCalibration" text="Redo fixture" /></ui:VisualElement>
           </ui:Foldout>
         </ui:VisualElement>
@@ -44,10 +44,9 @@
           <ui:Button name="rerun" text="Re-run block in a new recording" />
         </ui:VisualElement>
         <ui:VisualElement name="notesModule" class="task-module hidden">
-          <ui:Label text="Operator notes" class="section-title" />
-          <ui:TextField name="note" label="Observation" multiline="true" class="note-input" />
-          <ui:VisualElement class="button-row"><ui:Button name="addNote" text="Save note" class="primary" /><ui:Button name="syncMarker" text="Add sync marker" /></ui:VisualElement>
-          <ui:Label text="Sync markers are provisional; synchronization approval remains pending." class="small muted" /><ui:Label name="notesFeedback" class="small muted" />
+          <ui:Label text="Synchronization" class="section-title" />
+          <ui:Button name="syncMarker" text="Add sync marker" />
+          <ui:Label text="Sync markers are provisional; synchronization approval remains pending." class="small muted" />
         </ui:VisualElement>
         <ui:VisualElement name="recordingsModule" class="task-module hidden">
           <ui:Label text="Recording destination" class="section-title" /><ui:Label name="recording" class="path-output" /><ui:Label name="recordingHealth" class="body-copy muted" /><ui:Button name="openRecordingFolder" text="Open recording folder" />
@@ -71,7 +70,7 @@
         <ui:VisualElement class="section-heading"><ui:Label name="state" text="Ready to prepare" class="section-title" /><ui:Label name="countdown" text="No block running" class="small" /></ui:VisualElement>
         <ui:ProgressBar name="sessionProgress" low-value="0" high-value="100" value="0" title="" /><ui:Label name="nextActionHint" class="small muted" />
         <ui:VisualElement class="button-row"><ui:Button name="createSession" text="Create synthetic recording" class="primary spacious-action" /><ui:Button name="advance" text="Continue" class="primary" /><ui:Button name="startBlock" text="Start block" class="primary" /><ui:Button name="endBlock" text="End block" /></ui:VisualElement><ui:Label name="message" class="error" />
-        <ui:VisualElement class="stop-row"><ui:TextField name="abortReason" label="Stop reason" /><ui:Button name="abort" text="Abort session" class="abort" /></ui:VisualElement>
+        <ui:VisualElement class="stop-row"><ui:Button name="abort" text="Abort session" class="abort" /></ui:VisualElement>
       </ui:VisualElement>
     </ui:VisualElement>
     <ui:VisualElement name="liveSplitter" class="splitter" focusable="true" tooltip="Drag to resize live view. Arrow keys adjust width." />

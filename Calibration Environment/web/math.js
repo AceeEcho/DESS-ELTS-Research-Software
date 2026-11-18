@@ -51,32 +51,54 @@ export function screenPose(config) {
     };
     return { p: point(lower, [0, s.height / 2, 0]), q: lower.q };
 }
-// Move the tracking origin, not the raw samples or measured mounting offsets.
-// Face screen-local -Z, with optional measured head height above the room floor.
-export function resetHeadPose(config, distance, headHeight) {
+// Perpendicular distance, in metres, from a room point to the display plane.
+// Positive is on the viewer's side; it is not distance to the screen centre.
+export function screenDistance(config, position) {
+    const screen = screenPose(config);
+    return position.clone().sub(screen.p).applyQuaternion(screen.q.clone().invert()).z;
+}
+export function registrationTiltDegrees(config) {
+    const up = vec([0, 1, 0]);
+    return up.angleTo(up.clone().applyQuaternion(rotation(config.registration.rotation))) / radians;
+}
+// This is measured in head-facing axes, not the arbitrarily rotated puck axes.
+// Keep the existing profile fields: eye minus mount is the tracker-to-eye vector.
+export function trackerToEye(config) {
+    return vec(config.head.eye).sub(vec(config.head.mount.position));
+}
+export function resetReferencePoint(config, head, reference = "eye") {
+    if (reference === "eye") return point(head, config.head.eye);
+    if (reference === "head") return head.p.clone();
+    throw new Error("Choose viewing eye or head centre as the measurement reference.");
+}
+// Place the selected measurement point at the requested distance and floor
+// height. This determines a position only; the screen never sets gravity-up.
+export function resetTargetPosition(config, distance, height) {
     if (!Number.isFinite(distance) || distance < 0.25 || distance > 10)
         throw new Error("Choose a reset distance between 0.25 and 10 metres.");
     const screen = screenPose(config);
-    const target = { p: point(screen, [0, 0, distance]), q: screen.q };
-    if (headHeight !== undefined) {
-        if (!Number.isFinite(headHeight) || headHeight < 0 || headHeight > 10)
-            throw new Error("Enter a head-centre height from zero to approximately 32 feet 10 inches.");
+    const target = point(screen, [0, 0, distance]);
+    if (height !== undefined) {
+        if (!Number.isFinite(height) || height < 0 || height > 10)
+            throw new Error("Enter the selected point's height from zero to approximately 32 feet 10 inches.");
         // Slide along screen-up so measured height does not change the
         // perpendicular distance to a pitched/rolled screen.
         const up = vec([0, 1, 0]).applyQuaternion(screen.q);
         if (Math.abs(up.y) < 1e-6)
             throw new Error("This screen orientation cannot use a floor-based reset height.");
-        target.p.addScaledVector(up, (headHeight - target.p.y) / up.y);
+        target.addScaledVector(up, (height - target.y) / up.y);
     }
     return target;
 }
-export function recenteredRegistration(config, currentHead, distance, headHeight) {
-    const target = resetHeadPose(config, distance, headHeight);
-    const registration = compose(
-        compose(target, inverse(currentHead)),
-        pose(config.registration),
-    );
-    return { position: registration.p.toArray(), rotation: degrees(registration.q) };
+export function recenteredRegistration(config, currentHead, distance, height, reference = "eye") {
+    const target = resetTargetPosition(config, distance, height);
+    const current = resetReferencePoint(config, currentHead, reference);
+    // A position reset translates the shared room registration. Absorbing the
+    // head's current rotation here would make a nod/roll tilt both tracker axes.
+    return {
+        position: vec(config.registration.position).add(target.sub(current)).toArray(),
+        rotation: [...config.registration.rotation],
+    };
 }
 export function resolveObject(config, role, source, frame) {
     const settings = config[role];
@@ -145,12 +167,16 @@ export function hitScreen(origin, direction, config) {
 export function offAxis(camera, eye, config) {
     const s = screenPose(config);
     const localEye = eye.clone().sub(s.p).applyQuaternion(s.q.clone().invert());
-    const near = config.view.near,
+    if (!Number.isFinite(localEye.z) || localEye.z <= 0) return false;
+    // Keep the near plane before the glass even at close viewing distances.
+    // Only clipping changes: never clamp the eye distance or the field of view.
+    const near = Math.min(config.view.near, localEye.z / 2),
         far = config.view.far;
-    if (localEye.z <= near) return false;
     const scale = near / localEye.z;
     camera.position.copy(eye);
     camera.quaternion.copy(s.q);
+    camera.near = near;
+    camera.far = far;
     camera.projectionMatrix.makePerspective(
         (-config.screen.width / 2 - localEye.x) * scale,
         (config.screen.width / 2 - localEye.x) * scale,

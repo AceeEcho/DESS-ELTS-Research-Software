@@ -5,13 +5,14 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
   let clientError = '';
   let state, visible = false, selected = '', session = '', page = 0, stream = 'events.ndjson';
   let profileSignature = '', listSignature = '', rowsSignature = '', requestBusy = false;
+  let latestLive, detailsSnapshot, datasetVersion, fetchingDetails = false, retryDetailsAt = 0, detailsError = '';
   let taskId = '', detailTab = 'overview', detailPage = 0, outcome = 'All';
   let renderedReviewText, lastTaskRender, cachedReviewText, cachedReview;
   let chart = null, chartPosition = {key: '', index: 0};
   const number = (value, digits = 2) => typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString(undefined, {maximumFractionDigits: digits}) : '—';
   const conditions = {WE_FT:'WE · Fixed targets', WE_MT:'WE · Moving targets', NE_FT:'NE · Fixed targets', NE_MT:'NE · Moving targets'};
-  // The same saved review arrives with every live poll. Parse it only when its
-  // source changes, and let task rendering use the stable parsed object identity.
+  // A checkpoint may leave the selected review unchanged. Keep its parsed
+  // object so chart and table rendering also retain focus and scroll position.
   const reviewOf = record => {
     const text = record?.review || '{}';
     if (text !== cachedReviewText) {
@@ -20,7 +21,19 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
     }
     return cachedReview;
   };
-  const currentReview = () => reviewOf(state?.data?.profile?.sessions?.find(s => s.id === session));
+  const currentRecord = () => state?.data?.profile?.sessions?.find(s => s.id === session);
+  const currentReview = () => reviewOf(currentRecord());
+  function attemptEligibility(attempt) {
+    const blocker = currentRecord()?.analysisBlocker;
+    return blocker ? {analysisEligibility:'Excluded', analysisReason:blocker} : {
+      analysisEligibility:attempt.analysisEligibility || 'Needs analysis',
+      analysisReason:attempt.analysisReason || 'Refresh the index to inspect saved interval markers.'
+    };
+  }
+  function analysisSummary(record) {
+    if (!record?.analysisEligibility) return '';
+    return `<details><summary>Standard 300-second analysis · ${esc(record.analysisEligibility)}</summary><p>Recording · ${esc(record.analysisReason)}</p><p>Visit · ${esc(record.visitEligibility)}. ${esc(record.visitAnalysisReason)}</p></details>`;
+  }
   const date = value => value ? new Date(value).toLocaleString() : 'No saved sessions';
   const renderedHtml = new WeakMap();
   const html = (id, text) => {
@@ -33,6 +46,28 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
       renderedHtml.set(element, text);
     }
   };
+  function sessionOptions(records, activeDirectory, pendingDirectory) {
+    const visits = new Map();
+    for (const record of records) {
+      const id = record.visitId || record.id;
+      if (!visits.has(id)) visits.set(id, []);
+      visits.get(id).push(record);
+    }
+    return [...visits.values()].map(runs => {
+      const first = runs[runs.length - 1];
+      const options = [...runs].reverse().map((r, i) => {
+        const status = r.directory && r.directory === pendingDirectory ? 'Closed · awaiting index' :
+          r.finalized === '1' ? 'Closed' : r.directory && r.directory === activeDirectory ? 'Recording' : 'Interrupted';
+        return `<option value="${esc(r.id)}" ${r.id === session ? 'selected' : ''}>${i + 1} · ${esc(date(r.modifiedUtc))} · ${status}</option>`;
+      }).join('');
+      return `<optgroup label="Visit · ${esc(date(first.modifiedUtc))}">${options}</optgroup>`;
+    }).join('');
+  }
+  function noteLabel(text) {
+    if (/^synthetic calibration fixture accepted/i.test(text)) return 'Calibration accepted.';
+    if (/^calibration: participant-\d+\.json.*sha-256/i.test(text)) return 'Participant calibration loaded.';
+    return text;
+  }
   async function act(action, payload = {}) {
     requestBusy = true; clientError = ''; $('dataError').hidden = true; $('dataStatus').textContent = 'Working…';
     try { await command(action, payload); await refresh(); }
@@ -48,7 +83,15 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
   $('dataSearch').addEventListener('input', () => { listSignature = ''; render(state); });
   $('dataRefresh').addEventListener('click', () => { profileSignature = ''; act('refreshData', {id:selected}); });
   $('dataFolder').addEventListener('click', () => act('openDataFolder'));
-  $('dataExportAll').addEventListener('click', () => act('exportResults'));
+  function exportAction(action) {
+    const scope = $('exportScope').value;
+    const visit = state?.data?.profile?.sessions?.find(record => record.id === session)?.visitId;
+    act(action, {scope, participant:selected, visit:visit || '', from:$('exportFrom').value, through:$('exportThrough').value});
+  }
+  $('dataExportAll').addEventListener('click', () => exportAction('exportResults'));
+  $('previewResults').addEventListener('click', () => exportAction('previewResults'));
+  $('rebuildIndex').addEventListener('click', () => act('refreshData', {id:selected, rebuild:true}));
+  $('exportScope').addEventListener('change', () => { $('exportDates').hidden = $('exportScope').value !== 'dates'; });
   $('dataProfiles').addEventListener('click', event => {
     const button = event.target.closest('[data-profile-id]'); if (!button || requestBusy) return;
     selected = button.dataset.profileId; profileSignature = ''; session = ''; taskId = ''; listSignature = '';
@@ -62,8 +105,23 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
     const record = profile?.sessions?.find(s => s.id === session);
     if (!profile?.participant || (!participant && !record)) return;
     const subject = participant ? `participant ${profile.participant.code} and all ${profile.sessions.length} saved runs` : `the selected run (${date(record.modifiedUtc)}) for participant ${profile.participant.code}`;
-    if (!window.confirm(`Remove ${subject} from the data viewer?\n\nThis removes their results${participant ? ' and saved name' : ''}. Refresh will not restore them. Original recording files and existing exports remain on disk. Active recordings cannot be removed.`)) return;
+    if (!window.confirm(`Remove ${subject} from the data viewer?\n\nThis removes their results. Refresh will not restore them. Original recording files and existing exports remain on disk. Active recordings cannot be removed.`)) return;
     act(participant ? 'removeParticipant' : 'removeRun', {id: participant ? selected : session, participant:selected, confirmed:true});
+  }
+  function downloadReview() {
+    const review = currentReview();
+    if (!review || !session) return;
+    const columns = ['condition','blockId','status','hits','shots','activeSeconds','reason','scoreStatus','analysisEligibility','analysisReason'];
+    // Quote the text and prevent spreadsheet interpretation of operator-entered reasons.
+    const cell = value => '"' + String(value ?? '').replace(/^\s*[=+@-]/, match => "'" + match).replaceAll('"', '""') + '"';
+    const rows = [columns, ...review.attempts.map(attempt => {
+      const row = {...attempt,...attemptEligibility(attempt)};
+      return columns.map(key => row[key]);
+    })];
+    const blob = new Blob(['\uFEFF' + rows.map(row => row.map(cell).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = session + '-review.csv'; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   $('dataProfile').addEventListener('click', event => {
     const button = event.target.closest('button'); if (!button) return;
@@ -72,7 +130,9 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
     if (button.dataset.taskId) {taskId = button.dataset.taskId; detailPage = 0; renderTasks(currentReview());}
     if (button.dataset.detailTab) {detailTab = button.dataset.detailTab; detailPage = 0; renderTasks(currentReview());}
     if (button.id === 'detailPrevious' || button.id === 'detailNext') {detailPage = Math.max(0, detailPage + (button.id === 'detailNext' ? 1 : -1)); renderTasks(currentReview());}
-    if (button.id === 'dataExportRaw') act('exportSessionRaw', {id:session});
+    if (button.id === 'downloadReview') downloadReview();
+    if (button.id === 'dataExportRaw') act('exportSessionRaw', {id:session, recovery:button.dataset.recovery === 'true'});
+    if (button.id === 'dataVerify') act('verifyRecording', {id:session, participant:selected});
     if (button.id === 'dataLoadRows') {page = 0; loadRows();}
     if (button.id === 'dataPrevious') {page = Math.max(0, page - 1); loadRows();}
     if (button.id === 'dataNext') {page++; loadRows();}
@@ -225,13 +285,53 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
       button.classList.toggle('selected', active);
       button.setAttribute('aria-pressed', String(active));
     }
-    html('taskHeading', `<div class="task-detail-heading"><div><h3>${esc(conditions[a.condition] || a.condition)}</h3><small>${esc(a.blockId)}</small></div><span class="task-status">${esc(a.status)} · ${number(a.activeSeconds)} active s</span></div>${a.reason ? `<p class="task-reason">${esc(a.reason)}</p>` : ''}`);
+    const eligibility=attemptEligibility(a);
+    html('taskHeading', `<div class="task-detail-heading"><div><h3>${esc(conditions[a.condition] || a.condition)}</h3><small>${esc(a.blockId)}</small></div><span class="task-status">${esc(a.status)} · ${number(a.activeSeconds)} active s</span></div>${a.reason ? `<p class="task-reason">${esc(a.reason)}</p>` : ''}<p class="subtle">Standard analysis · ${esc(eligibility.analysisEligibility)}. ${esc(eligibility.analysisReason)}</p>`);
     html('taskDetailBody', body);
     mountChart(a.seconds || []);
     lastTaskRender = {element, review, taskId, tab:detailTab, page:detailPage, outcome};
   }
+  // Detailed historical records travel only when Data is visible and its
+  // revision changes. Live status always takes precedence over stored details.
+  async function loadDetails() {
+    if (fetchingDetails || Date.now() < retryDetailsAt) return;
+    fetchingDetails = true;
+    try {
+      const response = await fetch('/api/data', { headers: {'X-Elts-Token': token}, cache: 'no-store' });
+      if (!response.ok) throw new Error('Could not load the recording index.');
+      const received = await response.json();
+      if (!received.details) throw new Error('Recording index is initializing.');
+      if (latestLive?.data?.revision !== received.revision) return;
+      detailsError = '';
+      detailsSnapshot = received;
+      if (visible) render(latestLive);
+    } catch (error) {
+      retryDetailsAt = Date.now() + 1000;
+      detailsError = error.message;
+    } finally { fetchingDetails = false; }
+  }
+  function clearSelection() {
+    selected = ''; session = ''; taskId = ''; page = 0;
+    profileSignature = ''; rowsSignature = ''; listSignature = '';
+    renderedReviewText = cachedReviewText = cachedReview = lastTaskRender = chart = undefined;
+    html('dataProfile', '<h2>Select a participant</h2>');
+  }
   function render(current) {
-    if (!current) return; state = current;
+    if (!current) return;
+    // Local navigation can rerender the already merged view model.
+    if (current !== state) latestLive = current;
+    const live = latestLive || current;
+    if (live.datasetRemoval && datasetVersion !== live.datasetRemoval.version) {
+      datasetVersion = live.datasetRemoval.version;
+      detailsSnapshot = undefined;
+      clearSelection();
+      html('dataProfiles', '');
+    }
+    state = live;
+    if (live.data?.revision !== undefined && visible) {
+      if (detailsSnapshot?.revision !== live.data.revision) loadDetails();
+      state = {...live, data: {...detailsSnapshot?.details, ...live.data}};
+    }
     const data = state.data;
     if (!data) {
       $('dataStatus').textContent = 'Data service unavailable. Close ELTS and run START-ELTS to rebuild.';
@@ -239,9 +339,14 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
     }
     $('dataStatus').textContent = data.message || 'Preparing storage…';
     $('dataPath').textContent = data.path || '';
-    $('dataError').textContent = clientError || data.error || ''; $('dataError').hidden = !clientError && !data.error;
-    $('dataLive').hidden = !state.participant || state.canStartParticipant;
-    $('dataLive').textContent = 'The session stays active while you view data.';
+    $('dataError').textContent = clientError || data.error || detailsError;
+    $('dataError').hidden = !$('dataError').textContent;
+    const saveStatus = state.tools?.saveStatus || 'Waiting for checkpoint';
+    const writerFault = /save failed/i.test(saveStatus);
+    $('dataLive').hidden = !data.closedPendingDirectory && !writerFault && (!state.participant || state.canStartParticipant);
+    $('dataLive').textContent = [state.participant && `Participant ${state.participant}`, state.runId,
+      data.closedPendingDirectory ? 'Recording closed · awaiting index' : state.state, saveStatus].filter(Boolean).join(' · ');
+    $('dataLive').classList.toggle('save-failed', writerFault);
     $('dataDownload').hidden = !state.downloadId || data.busy;
     if (!visible) $('recordingsButton').textContent = data.error ? 'Data !' : 'Data';
     $('recordingsButton').title = data.error || 'Browse participant data';
@@ -250,18 +355,21 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
     // Administration keeps its live updates; saved-data markup does no hidden
     // work while the participant view is on screen.
     if (!visible) return;
-    ['dataRefresh', 'dataExportAll'].forEach(id => $(id).disabled = data.busy || requestBusy);
-    const profiles = (data.profiles || []).filter(p => `${p.code} ${p.name}`.toLowerCase().includes($('dataSearch').value.toLowerCase()));
+    ['dataRefresh','dataExportAll','rebuildIndex','previewResults'].forEach(id => $(id).disabled = data.busy || requestBusy);
+    const profiles = (data.profiles || []).filter(p => String(p.code).toLowerCase().includes($('dataSearch').value.toLowerCase()));
     const list = JSON.stringify([profiles, selected, data.busy]);
     if (list !== listSignature) {
       listSignature = list;
-      html('dataProfiles', profiles.map(p => `<button class="data-person ${p.id === selected ? 'selected' : ''}" data-profile-id="${esc(p.id)}" ${data.busy ? 'disabled' : ''}><strong>${esc(p.code)}</strong><span>${esc(p.name || 'Name not supplied')}</span><small>${esc(p.sessions)} sessions · ${esc(date(p.modifiedUtc))}</small></button>`).join('') || '<p class="subtle">No matching participants. Refresh to index existing recordings.</p>');
+      html('dataProfiles', profiles.map(p => `<button class="data-person ${p.id === selected ? 'selected' : ''}" data-profile-id="${esc(p.id)}" ${data.busy ? 'disabled' : ''}><strong>${esc(p.code)}</strong><small>${esc(p.sessions)} sessions · ${esc(date(p.modifiedUtc))}</small></button>`).join('') || '<p class="subtle">No matching participants. Refresh to index existing recordings.</p>');
     }
     const profile = data.profile;
     if (!profile?.participant || profile.participant.id !== selected) {
-      if (selected && !(data.profiles || []).some(p => p.id === selected)) {
-        selected = ''; session = ''; taskId = ''; profileSignature = ''; rowsSignature = ''; chart = null;
-        html('dataProfile', '<h2>Select a participant</h2>');
+      if (selected && !requestBusy && !(data.profiles || []).some(p => p.id === selected)) clearSelection();
+      else if (selected && !requestBusy && !data.busy && profile?.participant && profile.participant.id !== selected) {
+        // A queued selection or a second dashboard may have changed the server's
+        // open profile. Keep the requested ID for the next matching snapshot.
+        profileSignature = ''; rowsSignature = ''; lastTaskRender = chart = undefined;
+        html('dataProfile', '<p>Select the participant again to load their recordings.</p>');
       }
       return;
     }
@@ -271,17 +379,20 @@ window.createDataViewer = ({command, refresh, escapeHtml: esc, token}) => {
     const reviewText = record?.review || '{}';
     // Large reviews from other sessions do not belong in a high-frequency DOM
     // signature. Only navigation metadata and the selected review can change it.
-    const signature = JSON.stringify([profile.participant, sessions.map(s => [s.id, s.modifiedUtc, s.finalized]), session]);
+    const signature = JSON.stringify([profile.participant, sessions.map(s => [s.id, s.visitId, s.modifiedUtc, s.finalized, s.integrityStatus, s.integrityCheckedUtc, s.visitEligibility, s.visitAnalysisReason]), session, data.activeDirectory, data.closedPendingDirectory]);
     if (signature !== profileSignature || reviewText !== renderedReviewText) {
       profileSignature = signature; rowsSignature = '';
       renderedReviewText = reviewText;
       const review = reviewOf(record);
-      html('dataProfile', `<div class="data-heading"><div><h2>${esc(profile.participant.code)}</h2><p>${esc(profile.participant.name || 'Name not supplied')}</p></div><div class="data-actions"><button id="dataRemoveParticipant" class="danger-btn">Remove participant data</button></div></div><label for="dataSession">Saved session</label><select id="dataSession">${sessions.map(s => `<option value="${esc(s.id)}" ${s.id === session ? 'selected' : ''}>${esc(date(s.modifiedUtc))} · ${s.finalized === '1' ? 'Finalized' : 'Open / incomplete'}</option>`).join('')}</select><div class="data-actions"><button id="dataExportRaw" class="ghost-btn" ${record?.finalized === '1' ? '' : 'disabled'}>Raw archive</button><button id="dataRemoveRun" class="danger-btn">Remove selected run</button></div><p class="subtle">Synthetic results · — means unavailable.</p><section id="taskExplorer" aria-label="Task results"></section><h3>Session notes</h3><ul class="data-notes">${(review.notes || []).map(note => note.text).filter(Boolean).map(text => `<li>${esc(text)}</li>`).join('') || '<li>No session notes.</li>'}</ul><details><summary>Explore original records</summary><p>Only complete records are shown.</p><label for="dataStream">Record stream</label><select id="dataStream">${['events.ndjson','samples.ndjson','targets.ndjson','session-summary.json'].map(s => `<option ${s === stream ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select><button id="dataLoadRows" class="ghost-btn">Load records</button><pre id="dataRawRows">Choose Load records.</pre><div class="data-actions"><button id="dataPrevious" class="ghost-btn" disabled>Previous</button><span id="dataPage">Page 1</span><button id="dataNext" class="ghost-btn" disabled>Next</button></div></details>`);
+      html('dataProfile', `<div class="data-heading"><div><h2>${esc(profile.participant.code)}</h2></div><div class="data-actions"><button id="dataRemoveParticipant" class="danger-btn">Remove participant data</button></div></div><label for="dataSession">Visit and recording</label><select id="dataSession">${sessionOptions(sessions, data.activeDirectory, data.closedPendingDirectory)}</select><div class="data-actions"><button id="downloadReview" class="ghost-btn">Review CSV</button><button id="dataVerify" class="ghost-btn">Verify checksums</button><button id="dataExportRaw" class="ghost-btn" data-recovery="${record?.finalized !== '1'}">${record?.finalized === '1' ? 'Raw archive' : 'Recovery copy'}</button><button id="dataRemoveRun" class="danger-btn">Remove selected run</button></div><p class="subtle">Development recording · Study score unavailable. File checksums: ${esc(record?.integrityStatus || 'Unchecked')}${record?.integrityCheckedUtc ? ` · ${esc(date(record.integrityCheckedUtc))}` : ''}.${review.lastCheckpoint ? ` Last checkpoint · ${esc(review.lastCheckpoint.condition)} · ${esc(date(review.lastCheckpoint.savedUtc))}.` : ''}</p>${analysisSummary(record)}<section id="taskExplorer" aria-label="Task results"></section><h3>Session notes</h3><ul class="data-notes">${(review.notes || []).map(note => note.text).filter(Boolean).map(text => `<li>${esc(noteLabel(text))}</li>`).join('') || '<li>No session notes.</li>'}</ul><details><summary>Explore original records</summary><p>Only complete records are shown.</p><label for="dataStream">Record stream</label><select id="dataStream">${['events.ndjson','samples.ndjson','targets.ndjson','session-summary.json'].map(s => `<option ${s === stream ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select><button id="dataLoadRows" class="ghost-btn">Load records</button><pre id="dataRawRows">Choose Load records.</pre><div class="data-actions"><button id="dataPrevious" class="ghost-btn" disabled>Previous</button><span id="dataPage">Page 1</span><button id="dataNext" class="ghost-btn" disabled>Next</button></div></details>`);
     }
     renderTasks(currentReview());
     $('dataRemoveParticipant').disabled = data.busy || requestBusy;
     $('dataRemoveRun').disabled = data.busy || requestBusy || !session;
-    $('dataExportRaw').disabled = data.busy || requestBusy || sessions.find(s => s.id === session)?.finalized !== '1';
+    $('downloadReview').disabled = !currentReview().attempts?.length;
+    const isActive = !!record?.directory && record.directory === data.activeDirectory;
+    $('dataExportRaw').disabled = data.busy || requestBusy || !record || isActive;
+    $('dataVerify').disabled = data.busy || requestBusy || record?.finalized !== '1';
     $('dataLoadRows').disabled = data.busy || requestBusy;
     const matchingRows = data.rowsSession === undefined || (data.rowsSession === session && data.rowsStream === stream && data.rowsPage === page);
     const loadedRows = matchingRows ? data.rows || [] : [];

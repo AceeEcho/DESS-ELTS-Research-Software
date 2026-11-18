@@ -1,8 +1,10 @@
 import { pathToFileURL, fileURLToPath } from 'node:url';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE_PATH ? pathToFileURL(process.env.PLAYWRIGHT_MODULE_PATH).href : 'playwright');
 import assert from 'node:assert/strict';
-const browser = await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+import { installDraftFixture } from './draft-fixture.mjs';
+const browser = await chromium.launch({headless:true,channel:'chromium',args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page = await browser.newPage({viewport:{width:1600,height:1100}});
+const drafts = await installDraftFixture(page);
 const errors=[]; page.on('pageerror',e=>errors.push(e.message));
 let x=0, stale=false, enabled=false;
 await page.route('**/api/tracking', async route=>{
@@ -10,16 +12,17 @@ await page.route('**/api/tracking', async route=>{
  return route.fulfill({json:{status:'connected',message:'Synthetic browser check',sequence:1,ageMs:stale?2000:0,devices:[{serial:'test-head',kind:'tracker',connected:true,valid:true,matrix:[[1,0,0,x],[0,1,0,1.7],[0,0,1,1]]},{serial:'Null Serial Number',kind:'headset',connected:true,valid:true,matrix:[[1,0,0,0],[0,1,0,0],[0,0,1,0]]}]}});
 });
 try {
- await page.goto('http://127.0.0.1:8766');
+ await page.goto(process.env.CALIBRATION_BASE_URL || 'http://127.0.0.1:8766');
  await page.waitForFunction(()=>document.querySelector('#head-quality').textContent==='Live');
  assert.ok(enabled);
- const draft=await page.evaluate(()=>JSON.parse(localStorage.getItem('elts-calibration-v1-draft')).config);
+ const draft=(await drafts.waitFor(value => value.config.head.serial === 'test-head')).config;
  assert.equal(draft.head.serial,'test-head'); assert.equal(draft.weapon.serial,'');
  const screenCentreY=(draft.screen.bottom+draft.screen.height/2).toFixed(3);
  await page.locator('#reset-head').click();
- await page.waitForFunction((expected)=>document.querySelector('#head-position').textContent===expected,`XYZ 0.000 / ${screenCentreY} / 2.000 m`);
+ await page.waitForFunction(()=>document.querySelector('#eye-distance-readout').textContent.includes('2.000 m'));
+ await page.waitForFunction((expected)=>document.querySelector('#head-position').textContent===expected,`XYZ 0.000 / ${screenCentreY} / 2.090 m`);
  x=0.3;
- await page.waitForFunction((expected)=>document.querySelector('#head-position').textContent===expected,`XYZ 0.300 / ${screenCentreY} / 2.000 m`);
+ await page.waitForFunction((expected)=>document.querySelector('#head-position').textContent===expected,`XYZ 0.300 / ${screenCentreY} / 2.090 m`);
  await page.screenshot({path:fileURLToPath(new URL('../test-results/head-reset-desktop.png', import.meta.url)),fullPage:true});
  stale=true;
  await page.waitForFunction(()=>document.querySelector('#reset-head').disabled);

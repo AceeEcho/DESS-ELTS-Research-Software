@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ConfigChecks.cs" />
+    <Compile Include="ProfileInventoryBenchmark.cs" />
     <Compile Include="../../unity/Assets/ELTS/Geometry/*.cs" Link="Geometry/%(Filename)%(Extension)" />
     <Compile Include="../../unity/Assets/ELTS/Config/*.cs" Link="Config/%(Filename)%(Extension)" />
     <Reference Include="Newtonsoft.Json">

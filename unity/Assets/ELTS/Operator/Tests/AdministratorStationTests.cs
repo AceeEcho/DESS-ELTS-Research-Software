@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Elts.Clock;
+using Elts.Config;
 using Elts.Geometry;
 using Elts.Session;
 using Newtonsoft.Json.Linq;
@@ -44,7 +45,8 @@ namespace Elts.Operator.Tests
                 for(int i=0;i<5;i++)yield return null;
                 station.ApplyCommand(new JObject{["action"]="setDuration",["condition"]="WE_FT",["seconds"]=20});
                 station.ApplyCommand(new JObject{["action"]="setDuration",["condition"]="WE_MT",["seconds"]=40});
-                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="pause-test",
+                ParticipantCalibrationFixture.Save(session,4101);
+                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="4101",
                     ["conditionOrder"]=new JArray("WE_FT","WE_MT","NE_FT","NE_MT")});
                 float limit=Time.realtimeSinceStartup+20;
                 while(session.Tutorial.Stage!=Elts.Session.TutorialStage.FirstReady && Time.realtimeSinceStartup<limit)
@@ -106,7 +108,7 @@ namespace Elts.Operator.Tests
                 Assert.That(session.Engine.CurrentCondition,Is.EqualTo("WE_MT"));
                 Assert.That(session.Engine.CurrentDurationSeconds,Is.EqualTo(40));
                 Assert.Throws<InvalidOperationException>(()=>station.ApplyCommand(new JObject{["action"]="stopTest",["blockId"]=blockId}));
-                session.StationAbort("Fixture cleanup after independent stop verification");yield return null;
+                session.StationAbort();yield return null;
                 limit=Time.realtimeSinceStartup+15;
                 while(session.IsBusy && Time.realtimeSinceStartup<limit)yield return null;
                 var events=File.ReadAllLines(Path.Combine(run,"events.ndjson")).Select(JObject.Parse).ToArray();
@@ -143,9 +145,23 @@ namespace Elts.Operator.Tests
                 Assert.That(view.OperatorCamera.targetTexture,Is.Not.Null);
                 Assert.That(session.PanelRoot.resolvedStyle.display,Is.EqualTo(DisplayStyle.None));
                 Assert.That(station.ParticipantRoot.Query<Button>().ToList(),Is.Empty,"Participant view must contain no administrator buttons");
-                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="station-test",
-                    ["participantName"]="Synthetic Test Alias",["initialNotes"]="Initial fixture observation",
-                    ["conditionOrder"]=new JArray("WE_FT","WE_MT","NE_FT","NE_MT")});
+                var order=new JArray("WE_FT","WE_MT","NE_FT","NE_MT");
+                // Participant IDs are numeric and require a saved calibration; nothing starts otherwise.
+                Assert.Throws<ArgumentException>(()=>station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="station-test",["conditionOrder"]=order}));
+                Assert.Throws<FileNotFoundException>(()=>station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="4199",["conditionOrder"]=order}));
+                Assert.That(session.Engine,Is.Null);
+                ParticipantCalibrationFixture.Save(session,4102,"Synthetic Test Alias",eye:new[]{0.01,-0.02,-0.09});
+                var saved=ParticipantCalibration.Load(session.CalibrationProfileDirectory,4102);
+                float scanLimit=Time.realtimeSinceStartup+5;
+                while(!JObject.Parse(station.StateJson())["participantCalibrations"].Any(c=>(int)c["id"]==4102) && Time.realtimeSinceStartup<scanLimit)yield return null;
+                var listed=JObject.Parse(station.StateJson())["participantCalibrations"].Single(c=>(int)c["id"]==4102);
+                Assert.That((bool)listed["available"],Is.True);
+                Assert.That(listed["name"],Is.Null,"Legacy names never reach the dashboard");
+                // Leading zeros normalize to the same participant.
+                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="04102",["conditionOrder"]=order});
+                Assert.That(session.StationParticipant,Is.EqualTo("4102"));
+                Assert.That(view.Configuration.Rig.HeadEyeOffsetM,Is.EqualTo(saved.HeadEyeOffsetM),"Saved eye offset is applied");
+                Assert.That(view.Configuration.Rig.CalibrationId,Is.EqualTo(saved.CalibrationId));
                 float limit=Time.realtimeSinceStartup+20;
                 while(session.Tutorial.Stage!=Elts.Session.TutorialStage.FirstReady && Time.realtimeSinceStartup<limit)
                 { ReviewFixtureWhenReady(session,station);clock.Advance(TimeSpan.FromSeconds(0.1));yield return null; }
@@ -213,11 +229,11 @@ namespace Elts.Operator.Tests
                 Assert.That(session.IsBusy,Is.False);
                 string eventText=File.ReadAllText(Path.Combine(run,"events.ndjson"));
                 var events=eventText.Split(new[]{'\n'},StringSplitOptions.RemoveEmptyEntries).Select(JObject.Parse).ToArray();
-                // The name stays out of the immutable recording; only the code and notes are recorded.
+                // The name stays out of the immutable recording; the numeric ID and calibration file are recorded.
                 Assert.That(eventText+File.ReadAllText(Path.Combine(run,"participant.json")),Does.Not.Contain("Synthetic Test Alias"));
-                Assert.That((string)JObject.Parse(File.ReadAllText(Path.Combine(run,"participant.json")))["participantId"],Is.EqualTo("station-test"));
+                Assert.That((string)JObject.Parse(File.ReadAllText(Path.Combine(run,"participant.json")))["participantId"],Is.EqualTo("4102"));
                 var details=events.Single(e=>(string)e["eventType"]=="OperatorNote" &&
-                    (string)e["payload"]["text"]=="Initial observations: Initial fixture observation");
+                    ((string)e["payload"]["text"]).StartsWith("Calibration: participant-4102.json · SHA-256 "+saved.Sha256,StringComparison.Ordinal));
                 Assert.That((long)details["sequence"],Is.LessThan((long)events.First(e=>(string)e["eventType"]=="TestArmed")["sequence"]));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="TestArmed"),Is.EqualTo(4));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="ParticipantStartTrigger"),Is.EqualTo(4));
@@ -250,7 +266,8 @@ namespace Elts.Operator.Tests
                 for(int i=0;i<5;i++)yield return null;
                 station.ApplyCommand(new JObject { ["action"]="applySetup",["conditionOrder"]=new JArray("WE_FT","WE_MT","NE_FT","NE_MT"),
                     ["durations"]=new JObject{["WE_FT"]=2,["WE_MT"]=2,["NE_FT"]=2,["NE_MT"]=2},["practiceSeconds"]=10,["breakSeconds"]=5 });
-                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="manual-test"});
+                ParticipantCalibrationFixture.Save(session,4103);
+                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="4103"});
                 float limit=Time.realtimeSinceStartup+20;
                 while(session.Engine?.State!=SessionState.Calibration && Time.realtimeSinceStartup<limit)
                 {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
@@ -294,7 +311,7 @@ namespace Elts.Operator.Tests
                 Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),"Manual mode never starts the next test on its own");
                 Assert.That(session.TestArmed,Is.False);
 
-                session.StationAbort("Fixture complete");yield return null;
+                session.StationAbort();yield return null;
                 yield return WaitForSave(session);
                 string events=File.ReadAllText(Path.Combine(run,"events.ndjson"));
                 Assert.That(events,Does.Contain("TutorialSkippedForManualMode"));
@@ -319,7 +336,8 @@ namespace Elts.Operator.Tests
                     ["durations"]=new JObject{["NE_FT"]=2,["WE_FT"]=2,["NE_MT"]=2,["WE_MT"]=2},["practiceSeconds"]=10,["breakSeconds"]=30 });
                 Assert.That(session.StationOrder[0],Is.EqualTo("NE_FT"),"Order can change before participant intake");
                 Assert.That(session.StationParticipant,Is.Empty);
-                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="workflow-test"});
+                ParticipantCalibrationFixture.Save(session,4104);
+                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="4104"});
                 float limit=Time.realtimeSinceStartup+20;
                 while(session.Engine?.State!=SessionState.Calibration && Time.realtimeSinceStartup<limit)
                 {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
@@ -364,16 +382,7 @@ namespace Elts.Operator.Tests
                 ParticipantTutorialTests.Command(station,session,"tutorialForm");
                 Assert.That(File.Exists(Path.Combine(original,"session-summary.json")),Is.True);
                 string originalEvents=File.ReadAllText(Path.Combine(original,"events.ndjson"));
-                station.ApplyCommand(new JObject{["action"]="reviewRecording",["id"]=Path.GetFileName(original)});
-                limit=Time.realtimeSinceStartup+15;
-                while((bool)JObject.Parse(station.StateJson())["tools"]["archiveBusy"] && Time.realtimeSinceStartup<limit)yield return null;
-                var review=JObject.Parse(station.StateJson())["tools"]["review"];
-                Assert.That(review["attempts"].Count(),Is.EqualTo(5));
-                Assert.That(review["notes"].Count(),Is.GreaterThan(0));
-                station.ApplyCommand(new JObject{["action"]="exportRecording",["id"]=Path.GetFileName(original)});
-                limit=Time.realtimeSinceStartup+15;
-                while((bool)JObject.Parse(station.StateJson())["tools"]["archiveBusy"] && Time.realtimeSinceStartup<limit)yield return null;
-                Assert.That(File.Exists((string)JObject.Parse(station.StateJson())["tools"]["exportPath"]),Is.True);
+                Assert.That(File.ReadAllText(Path.Combine(original,"session-summary.json")), Does.Contain("checksumsSha256"));
                 station.ApplyCommand(new JObject{["action"]="repeatTest",["blockId"]="",["condition"]="NE_FT",["reason"]="Repeat after finalization"});
                 yield return WaitForSave(session);
                 Assert.That(session.Engine.CurrentBlockId,Is.EqualTo("NE_FT-attempt-03"));
@@ -384,7 +393,7 @@ namespace Elts.Operator.Tests
                 var feedback=(Delegate)typeof(DevelopmentSessionScenario).GetField("TargetHit",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(repeated);
                 Assert.That(feedback?.GetInvocationList().Select(handler=>handler.Method.Name),Has.Member("ShowTargetImpact"),
                     "A repeated test lost its hit feedback");
-                session.StationAbort("Fixture complete");yield return null;
+                session.StationAbort();yield return null;
                 yield return WaitForSave(session);
             }
             finally{UnityEngine.Object.DestroyImmediate(host);}

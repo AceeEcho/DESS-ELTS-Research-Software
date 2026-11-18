@@ -117,7 +117,7 @@ the maintainer, not participant recordings or license files.
 -eltsWindowed -screen-fullscreen 0 -screen-width 1280 -screen-height 720 -logFile <diagnostics/player-start-*.log>
 ```
 
-It waits up to 120 seconds for a line matching `ELTS_ADMINISTRATOR_READY http://127.0.0.1:<port>/#`. The startup window closes after that line. Errors stay up, with **Open startup log**.
+It waits up to 120 seconds for a line matching `ELTS_ADMINISTRATOR_READY`. The startup window closes after that line. Errors stay up, with **Open startup log**.
 
 Doctor, from the repo root:
 
@@ -251,7 +251,7 @@ Reference: [administrator dashboard](../developer/modules/operator-dashboard.md)
 
 ### Address, token, and port
 
-`AdministratorServer` listens on `127.0.0.1` only. Preferred port is **18764** (`PreferredPort`). If `Start` throws `SocketException`, it binds port **0** and uses whatever port the OS assigned. The origin is `http://127.0.0.1:<port>`. The browser URL is that origin plus `/#<token>`. The token is a new GUID each process. A discovery file `elts-administrator.json` (`url`, `pid`) is written under Unity's `Application.temporaryCachePath`. This repo does not hardcode that Windows folder.
+`AdministratorServer` listens on `127.0.0.1` only. Preferred port is **18764** (`PreferredPort`). If `Start` throws `SocketException`, it binds port **0** and uses whatever port the OS assigned. The origin is `http://127.0.0.1:<port>`. The browser URL is that origin plus `/#<token>`. The token is a new GUID each process. The player writes its current dashboard URL to a process-specific file in the user's temporary folder and removes it on orderly exit.
 
 Startup opens Microsoft Edge at `%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe` if that file exists, otherwise Chrome at `%ProgramFiles%\Google\Chrome\Application\chrome.exe`, with `--app="<url>" --window-size=1280,900 --new-window`. If neither file exists, it opens `server.Url` with the system handler. `-eltsNoAdminWindow`, `-runTests`, and `-eltsSmokeTest` skip the browser. The intro (`TexasTechIntro`) finishes before the browser is started.
 
@@ -268,7 +268,7 @@ Workspace layout for the embedded Unity dashboard is `operator-workspace-v1.json
 **Check.**
 
 1. The participant window is still running. The server is inside that process.
-2. The address is the URL from this launch (`ELTS_ADMINISTRATOR_READY` in `diagnostics/player-start-*.log`), including the hash token. An old bookmark targets a dead port or token.
+2. Use the browser window opened for the current launch. An old bookmark targets a dead port or token.
 3. You are on `127.0.0.1`, not another host name. A different host fails the host check.
 4. Only one player is bound. If 18764 was taken, this launch is on another port; the log line is the authority.
 
@@ -281,8 +281,8 @@ Workspace layout for the embedded Unity dashboard is `operator-workspace-v1.json
 | Message | Meaning |
 | --- | --- |
 | `Finish the current participant first.` | A session is still open. |
-| `Use 1–40 letters, numbers, hyphens or underscores for the participant ID.` | ID must match `^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$`. |
-| `Name is limited to 120 characters and initial notes to 2000 characters.` | Intake limits. |
+| No saved IDs | Save a numbered participant in the Calibration Environment. |
+| This calibration cannot be read | Inspect or replace the selected calibration and reopen intake. |
 | `The participant changed. Review the current session and try again.` | Command `runId` does not match the open station, and the action is not a data action. |
 | `Order must be a permutation of the four conditions.` | `SessionPlan` requires each of `WE_MT`, `NE_MT`, `WE_FT`, and `NE_FT` once. |
 | `At least 2 GB free disk space is required.` | Free space on the drive of the resolved data root is under 2 GiB (`MinimumDiskBytes`, and the same text in `SessionReadinessReport`). |
@@ -297,7 +297,7 @@ Workspace layout for the embedded Unity dashboard is `operator-workspace-v1.json
 
 ### Durations, order, and presets
 
-Test durations are seconds from **1** to **3600**, default **300** (`MinimumDevelopmentDurationSeconds` / `MaximumDevelopmentDurationSeconds`). They save on blur for the station and reset when the process exits. A new duration must be longer than active time already played. Practice and break use **Save practice & breaks**. Presets live in this browser only. The staged file `config/defaults/session.json` still has practice 10 s, break 5 s, and order `WE_MT`, `NE_MT`, `WE_FT`, `NE_FT` until you restage; the dashboard fields override the running station without rewriting that file.
+Test durations are seconds from **1** to **3600**, default **300** (`MinimumDevelopmentDurationSeconds` / `MaximumDevelopmentDurationSeconds`). They save on blur for the station and reset when the process exits. A new duration must be longer than active time already played. Practice and break times also save when you leave the field. Presets live in this browser only. The source defaults in `config/defaults/session.json` specify practice 10 s, break 120 s, and order `WE_MT`, `NE_MT`, `WE_FT`, `NE_FT` until you restage; the dashboard fields override the running station without rewriting that file.
 
 Condition codes must be each of `WE_MT`, `NE_MT`, `WE_FT`, and `NE_FT` once. `SessionPlan` rejects anything else.
 
@@ -313,7 +313,7 @@ The Data view prints the folder it is using. **Open folder** starts `explorer.ex
 
 The indexer looks only at run folders directly under the data root. It does not recurse into nested build folders. It skips reparse points (directory links).
 
-On startup the player creates the folder and `collection.sqlite` even before the first participant. Windows uses the system library `winsqlite3` (editor/standalone Win). Busy timeout is **5000** ms. `PRAGMA user_version` is 4; an older database's copy of raw lines is dropped on startup. The records viewer reads the run's own files and pages **50** records; a raw line over **16 MB** shows `Raw record exceeds 16 MB.` `Cannot open collection database: ` plus the SQLite error means the file could not be opened.
+On startup the player creates the folder and `collection.sqlite` even before the first participant. Windows uses the system library `winsqlite3` (editor/standalone Win). Busy timeout is **5000** ms. `PRAGMA user_version` is 7; an older database's copy of raw lines is dropped on startup. The records viewer reads the run's own files and pages **50** records; a raw line over **16 MB** shows `Raw record exceeds 16 MB.` `Cannot open collection database: ` plus the SQLite error means the file could not be opened.
 
 Each run directory can contain:
 
@@ -325,12 +325,12 @@ Each run directory can contain:
 | `session-summary.json` | Closure (`elts.session-summary.v2`), including checksums of the other run files. Readers require `complete: true` and `error: null` |
 | `.session-summary.pending.json` | In-progress closure. Readers ignore it |
 | `test-checkpoint-<attempt>.json` | Per-test durable save marker (`elts.test-checkpoint.v2`), `finalized: false`; no result counts |
-| `participant.json` | Participant code and visit ID (`elts.participant.v3`), written so a startup interruption still has them |
+| `participant.json` | Participant code and visit ID (`elts.participant.v4`), written so a startup interruption still has them |
 | `.<runId>.reservation` | Reservation file beside the run, under the data root |
 
 Run ids that collide gain `-r0001`, `-r0002`, and so on. Flush interval is `logFlushSeconds` **1**. The dashboard shows **Saved** only after both logging queues pass the checkpoint and the checkpoint file is published. `SAVE FAILED:` plus the exception aborts the session. The raw files already written stay on disk. A later collection failure is a second message: `Results need a refresh: `. **Refresh** indexes again. `Data action failed. Raw recordings are retained. Retry with Refresh.` is the collection-action wrapper.
 
-The run folder name is the hidden workbench field. The browser station sets it to the typed id, a hyphen, UTC `yyyyMMdd-HHmmss`, a hyphen, and six hex characters (`DevelopmentStationSession`). `participant.json` in that folder stores the typed code as `participantId` and a `visitId` shared by every repeat or continuation folder of that participant start (`elts.participant.v3`). Import uses that file, otherwise the folder name. The optional name is saved only in `collection.sqlite`, never in the recording. Participant codes match without ASCII case: `P-001` and `p-001` are one profile.
+The run folder name is the hidden workbench field. The browser station sets it to the selected ID, a hyphen, UTC `yyyyMMdd-HHmmss`, a hyphen, and six hex characters (`DevelopmentStationSession`). `participant.json` in that folder stores the selected code as `participantId` and a `visitId` shared by every repeat or continuation folder of that participant start (`elts.participant.v4`). Import uses that file, otherwise the folder name. Participant codes match without ASCII case: `P-001` and `p-001` are one profile.
 
 ### Export buttons
 
@@ -342,7 +342,7 @@ The run folder name is the hidden workbench field. The browser station sets it t
 
 Download route: `GET /api/download/<id>?token=`. Content types are zip or xlsx. A missing id or file returns 404 `Export no longer available. Create a new export.` The server will not read an arbitrary path. Results describe the last indexed save. Finish the test or press **Refresh** before exporting it. Export does not pause a running test.
 
-**Remove participant data** / **Remove selected run** delete the collection rows (including a removed participant's name) and remember the directory in `removed_recordings` so Refresh will not import it. Original files and older export copies remain. An open recording cannot be removed (`collection.Remove` refuses the active directory).
+**Remove participant data** / **Remove selected run** delete the collection rows (for the selected profile or recording) and remember the directory in `removed_recordings` so Refresh will not import it. Original files and older export copies remain. An open recording cannot be removed (`collection.Remove` refuses the active directory).
 
 ### Disk and sync folders
 
@@ -454,15 +454,15 @@ Nothing in this section establishes physical validation of the equipment recorde
 
 **Symptom.** Pulling the gun trigger does nothing, while a mouse click still fires.
 
-**Cause.** One of: no weapon serial is bound (no `weaponTriggerSerial` in `config/local.json` and no Weapon tracker in the latest saved calibration profile); the tracker has no SteamVR hand role, so SteamVR reports no button input; SteamVR or the tracker is off or disconnected; the trigger was already held when the phase changed (release, then pull again); the game is not in a phase that accepts shots; or the switch wiring is open.
+**Cause.** One of: no weapon serial is bound (no `weaponTriggerSerial` in `config/local.json` and no Weapon tracker in the selected station room settings); the tracker has no SteamVR hand role, so SteamVR reports no button input; SteamVR or the tracker is off or disconnected; the trigger was already held when the phase changed (release, then pull again); the game is not in a phase that accepts shots; or the switch wiring is open.
 
 **Check.**
 
 1. Run the [trigger bench test](../../tools/diagnostics/README.md) with the gun tracker's serial. One press and one release per pull means the tracker, role and switch are fine.
-2. In the calibration workspace, confirm the indicator above the 3D view shows **pressed**/**released** for the tracker selected under **Weapon**, then **Save profile**.
+2. In the calibration workspace, confirm the indicator above the 3D view shows **pressed**/**released** for the tracker selected under **Weapon**, then **Save calibration**.
 3. Restart with **START-ELTS.cmd** so the binding is staged. After a session, `events.ndjson` should contain `ViveTriggerState` lines and `ShotFired` events with `source=vive-tracker-trigger-v1`.
 
-**Fix.** In SteamVR **Manage Trackers**, set the gun tracker to **Held in hand → Right Hand** (or Left Hand). Bind its serial through a saved calibration profile or `weaponTriggerSerial`, then restart. If the bench test shows no presses, check the switch between tracker pins 4 and 2. The mouse path keeps working for rehearsal.
+**Fix.** In SteamVR **Manage Trackers**, set the gun tracker to **Held in hand → Right Hand** (or Left Hand). Save the tracker binding with **Save station room** or set `weaponTriggerSerial`, then restart. If the bench test shows no presses, check the switch between tracker pins 4 and 2. The mouse path keeps working for rehearsal.
 
 > **GAP-HW-TRIGGER.** The switch model and debounce are not recorded, and polling once per frame can miss very short pulses. Host timestamps are not hardware latency measurements. Who can answer: the tracking/display engineer (exercise physical tracking) and the research lead (study acceptance) in [hardware follow-up](hardware-follow-up.md).
 
@@ -627,3 +627,5 @@ Open decisions change what a "wrong" session looks like. They are not hidden set
 - [Dashboard](../developer/modules/operator-dashboard.md), [desktop input](../developer/modules/desktop-input.md), [sessions](../developer/modules/session.md), [scenarios](../developer/modules/scenario.md)
 - [Link](../developer/modules/elts-link.md), [session link](../developer/modules/elts-session.md), [Jetson boundary](../developer/modules/elts-link.md#controller-jetson-boundary)
 - [Hardware follow-up](hardware-follow-up.md), [safety](../safety/README.md)
+
+After startup, `diagnostics/start-summary.json` identifies each stage, its elapsed time, the build fingerprint and the reason a build was reused or rebuilt. Share this file when reporting startup trouble. The full transcript and player log stay local for detailed diagnosis.

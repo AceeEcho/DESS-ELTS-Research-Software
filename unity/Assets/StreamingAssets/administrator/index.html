@@ -15,10 +15,15 @@
   </header>
 
   <section id="dataWorkspace" class="data-workspace" hidden aria-label="Participant data viewer">
-    <div class="data-heading"><h1>Participant data</h1><div class="data-actions"><button id="dataRefresh" class="ghost-btn">Refresh</button><button id="dataFolder" class="ghost-btn">Open folder</button><button id="dataExportAll" class="primary-btn" title="Results, shots and timeline for every participant in one Excel workbook">Export results</button></div></div>
+    <div class="data-heading"><h1>Participant data</h1><div class="data-actions"><button id="dataRefresh" class="ghost-btn">Refresh</button><button id="dataFolder" class="ghost-btn">Open folder</button><button id="dataExportAll" class="primary-btn">Export results</button></div></div>
+    <details class="data-options"><summary>Export scope and index options</summary>
+      <label>Include <select id="exportScope"><option value="all">All participants</option><option value="participant">Selected participant</option><option value="visit">Selected visit</option><option value="dates">Recording modification dates (UTC)</option></select></label>
+      <span id="exportDates" hidden><label>From <input id="exportFrom" type="date"></label> <label>Through <input id="exportThrough" type="date"></label></span>
+      <button id="previewResults" class="ghost-btn">Preview row counts</button><button id="rebuildIndex" class="ghost-btn">Rebuild index</button>
+    </details>
     <p id="dataLive" class="data-live" hidden></p>
     <div class="data-storage"><span id="dataStatus" role="status"></span><a id="dataDownload" class="primary-btn" hidden>Download export</a><small id="dataPath"></small><p id="dataError" class="error-text" role="alert" hidden></p></div>
-    <div class="data-layout"><aside class="data-sidebar"><label for="dataSearch">Find a participant</label><input id="dataSearch" type="search" placeholder="Participant ID or name"><div id="dataProfiles"></div></aside><article id="dataProfile" class="data-profile"><h2>Select a participant</h2></article></div>
+    <div class="data-layout"><aside class="data-sidebar"><label for="dataSearch">Find a participant</label><input id="dataSearch" type="search" placeholder="Participant ID"><div id="dataProfiles"></div></aside><article id="dataProfile" class="data-profile"><h2>Select a participant</h2></article></div>
   </section>
   <main class="workspace" id="workspace">
     <section class="view-pane pane">
@@ -35,7 +40,10 @@
 
     <aside class="control-pane pane">
       <div class="pane-head compact"><h1>Test session</h1><span id="stateBadge" class="badge">IDLE</span></div>
-      <div id="setupWelcome" class="setup-welcome">Review test order and timing in Settings.</div>
+      <section id="setupWelcome" class="setup-welcome" aria-labelledby="setupTitle">
+        <h2 id="setupTitle">Session plan</h2><ol id="plannedTests" class="planned-tests"></ol>
+        <p id="plannedBreaks"></p><button id="reviewSetup" class="ghost-btn">Review setup</button>
+      </section>
       <section id="tutorialPanel" class="step-card" hidden aria-label="Participant walkthrough">
         <div class="step-card-head"><span id="tutorialStep" class="eyebrow">PARTICIPANT WALKTHROUGH</span><span id="tutorialAudio" class="step-tag" hidden></span></div>
         <h2 id="tutorialTitle">Setup, calibration and practice</h2>
@@ -62,7 +70,7 @@
         <div class="step-controls"><button id="tutorialRestartPractice" class="ghost-btn">Restart practice</button><button id="tutorialFinishPractice" class="primary-btn">Finish practice</button></div>
       </section>
       <section id="breakPanel" class="break-panel" hidden><div><span class="eyebrow">BREAK</span><strong id="breakTimer" class="countdown">00:00</strong></div><p id="breakHelp" hidden></p><div class="break-actions"><button id="startBreak" class="primary-btn">Start break</button><button id="skipBreak" class="ghost-btn">Skip break</button></div></section>
-      <section class="task-card">
+      <section class="task-card" id="currentTask" hidden>
         <div class="task-card-head"><div><span class="eyebrow">CURRENT TASK</span><h2 id="condition">No condition selected</h2></div><span id="remaining" class="countdown">—</span></div>
         <div class="run-stats"><div><span class="eyebrow">TEST ACTIVE TIME</span><strong id="elapsed">00:00</strong></div><div><span class="eyebrow">AMMO</span><strong id="ammo">20 / 20</strong></div><div><span class="eyebrow">SHOTS</span><strong id="shots">0</strong></div><div><span class="eyebrow">HITS</span><strong id="hits">0</strong></div><div><span class="eyebrow">HEAD</span><strong id="headHits">0</strong></div><div><span class="eyebrow">BODY</span><strong id="bodyHits">0</strong></div><div><span class="eyebrow">LIMB</span><strong id="limbHits">0</strong></div><div><span class="eyebrow">COVER</span><strong id="coverHits">0</strong></div><div><span class="eyebrow">MISSES</span><strong id="misses">0</strong></div><div><span class="eyebrow">TARGETS DOWN</span><strong id="targetKills">0</strong></div><div><span class="eyebrow">DAMAGE</span><strong id="damageDealt">0</strong></div><div><span class="eyebrow">RELOADS</span><strong id="reloads">0</strong></div><div><span class="eyebrow">DRY FIRES</span><strong id="dryFires">0</strong></div><div><span class="eyebrow">ACCURACY</span><strong id="accuracy">—</strong></div></div>
         <div id="armStatus" class="arm-status"><span class="status-dot"></span><span>Waiting for participant</span></div>
@@ -75,7 +83,6 @@
 
       <section class="blocks-panel panel-section"><div class="section-title"><h2>Session runs</h2><span id="blockSummary" class="subtle">—</span></div><div class="blocks"><table class="runs-table"><thead><tr><th>Condition</th><th>Status</th><th>Hits</th><th>Shots</th></tr></thead><tbody id="blocks"></tbody></table></div></section>
       <section class="panel-section"><p id="saveStatus" class="save-status" role="status">No recording yet.</p><details><summary>Readiness &amp; diagnostics</summary><div id="readinessList" class="readiness-list"></div></details></section>
-      <section class="notes-panel panel-section"><div class="section-title"><h2>Session notes</h2><button id="saveNote" class="link-btn">Add note</button></div><textarea id="noteText" maxlength="2000" rows="2" placeholder="Record an operator observation…"></textarea><ol id="noteTimeline" class="note-timeline" aria-label="Saved session notes"></ol></section>
       <section class="abort-panel"><button id="abortButton" class="danger-btn" disabled>Abort participant session</button><span id="recordingPath" class="subtle">Recording path unavailable</span></section>
     </aside>
   </main>
@@ -84,9 +91,16 @@
     <form id="startForm" class="modal intake-modal" novalidate>
       <button type="button" class="close-btn" id="closeDialog" aria-label="Close participant entry">×</button>
       <h2 id="intakeTitle">New participant</h2>
-      <label class="field-label">Participant name (optional)<input id="participantName" maxlength="120" autocomplete="off" placeholder="Name or test alias"></label>
-      <label class="field-label">Participant number / ID<input id="participantInput" required maxlength="40" autocomplete="off" placeholder="e.g. P-014"></label>
-      <label class="field-label">Initial observations<textarea id="initialNotes" maxlength="2000" rows="3"></textarea></label>
+      <label class="field-label" for="participantPicker">Participant ID</label>
+      <select id="participantPicker" required aria-describedby="calibrationStatus"><option value="">Choose a participant ID</option></select>
+      <p id="calibrationStatus" class="subtle calibration-status" role="status"></p>
+      <details id="profileSources" hidden><summary>Calibration sources</summary><p id="sourceRevisions" class="subtle"></p></details>
+      <details id="assignmentCheck">
+        <summary>Check an assigned condition order</summary>
+        <label class="field-label">Assignment sheet row<input id="assignedRow" autocomplete="off" placeholder="ID, WE_MT, NE_MT, WE_FT, NE_FT" aria-describedby="assignmentStatus"></label>
+        <p id="assignmentStatus" class="subtle" role="status"></p>
+        <label id="deviationField" class="field-label" hidden>Reason for using the configured order<select id="deviationReason"><option value="">Choose a reason</option><option value="assignment-correction">Correction to the assignment</option><option value="schedule-change">Schedule change</option></select></label>
+      </details>
       <div id="startError" class="form-error" role="alert" hidden></div>
       <div class="modal-actions"><button type="button" class="ghost-btn" id="cancelDialog">Cancel</button><button class="primary-btn" type="submit" id="createParticipant">Create recording</button></div>
     </form>
@@ -94,33 +108,45 @@
   <div id="settingsDialog" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <section class="modal"><button type="button" class="close-btn" id="closeSettings" aria-label="Close settings">×</button>
       <h2 id="settingsTitle">Settings</h2>
-      <h3>Test order</h3>
+      <section class="timing-settings" aria-labelledby="timingSettingsTitle">
+      <h3 id="timingSettingsTitle">Session plan</h3>
       <ol id="conditionOrder" class="order-list" aria-label="Test order"></ol><p id="orderStatus" class="subtle" role="status"></p>
       <p id="orderLocked" class="subtle" hidden>Order locked during this session.</p>
-      <h3>Saved setups</h3><label class="field-label">Preset name<input id="presetName" maxlength="60" placeholder="e.g. Morning rehearsal"></label><div class="secondary-actions wrap"><button id="savePreset" class="ghost-btn">Save setup</button><select id="presetSelect" aria-label="Saved setups"></select><button id="loadPreset" class="ghost-btn">Load</button><button id="deletePreset" class="ghost-btn">Delete</button></div>
-      <section class="timing-settings" aria-labelledby="timingSettingsTitle">
-        <h3 id="timingSettingsTitle">Durations</h3>
-        <div class="timing-settings-grid">
-          <section class="timing-group" aria-labelledby="testDurationsTitle"><h4 id="testDurationsTitle">Test durations</h4><div id="durationEditors"></div></section>
-          <section class="timing-group" aria-labelledby="phaseDurationsTitle"><h4 id="phaseDurationsTitle">Practice &amp; breaks</h4><form id="phaseTimingForm"><div class="phase-fields"><label class="field-label">Practice (s)<input id="practiceSeconds" type="number" min="0" max="3600" step="1" required></label><label class="field-label">Every break (s)<input id="breakSeconds" type="number" min="0" max="3600" step="1" required></label></div><button id="applyPhaseTiming" class="ghost-btn">Save practice &amp; breaks</button></form></section>
-        </div>
+      <section class="timing-group" aria-labelledby="phaseDurationsTitle"><h4 id="phaseDurationsTitle">Practice &amp; breaks</h4><form id="phaseTimingForm"><div class="phase-fields"><label class="field-label">Practice (s)<input id="practiceSeconds" type="number" min="0" max="3600" step="1" required></label><label class="field-label">Every break (s)<input id="breakSeconds" type="number" min="0" max="3600" step="1" required></label></div><span id="phaseSaveStatus" class="subtle" role="status"></span></form></section>
       </section>
-      <h3>Game window</h3><div class="secondary-actions"><button id="windowed" class="ghost-btn">Windowed</button><button id="fullscreen" class="ghost-btn">Fullscreen</button></div>
-      <label class="field-label">Preview refresh rate<select id="previewRate"><option value="5">5 fps · lower load</option><option value="10" selected>10 fps · balanced</option><option value="4.8">20 fps · smoother preview</option><option value="30">30 fps · highest load</option></select></label>
+      <h3>Saved setups</h3><label class="field-label">Preset name<input id="presetName" maxlength="60" placeholder="e.g. Morning rehearsal"></label><div class="secondary-actions wrap"><button id="savePreset" class="ghost-btn">Save setup</button><select id="presetSelect" aria-label="Saved setups"></select><button id="loadPreset" class="ghost-btn">Load</button><button id="deletePreset" class="ghost-btn">Delete</button></div>
+      <h3>Participant window</h3>
+      <div class="secondary-actions"><button id="displayCheck" class="ghost-btn">Check display &amp; audio</button></div>
+      <label class="check-label"><input id="captions" type="checkbox"> Show narration captions</label><div class="secondary-actions"><button id="windowed" class="ghost-btn">Windowed</button><button id="fullscreen" class="ghost-btn">Fullscreen</button></div>
+      <label class="field-label">Preview refresh rate<select id="previewRate"><option value="5">5 fps · lower load</option><option value="10" selected>10 fps · balanced</option><option value="20">20 fps · smoother preview</option><option value="30">30 fps · highest load</option></select></label>
       <label class="check-label"><input id="reduceMotion" type="checkbox"> Reduce interface motion</label>
       <h3>Outside camera</h3><label class="field-label">Zoom distance (metres)<input id="cameraDistance" type="range" min="1.5" max="20" step="0.1" value="4.8"></label><button id="resetCamera" class="ghost-btn">Reset camera</button>
       <p id="settingsError" class="form-error" role="alert" hidden></p>
+      <section class="dataset-settings" aria-labelledby="datasetTitle">
+        <h3 id="datasetTitle">Participant data</h3>
+        <button type="button" id="openDatasetRemoval" class="remove-all-btn" disabled>Remove all participant data…</button>
+        <p id="datasetStatus" class="subtle" role="status"></p>
+      </section>
     </section>
   </div>
+  <dialog id="datasetDialog" class="modal" aria-labelledby="datasetDialogTitle" aria-describedby="datasetWarning">
+    <h2 id="datasetDialogTitle">Permanently remove all participant data?</h2>
+    <p id="datasetWarning" class="modal-sub">This erases this station’s recordings, results, saved participant calibrations and saved exports. No backup is made. Copies downloaded elsewhere are outside this station.</p>
+    <label class="field-label">Type CONFIRM exactly<input id="datasetConfirmation" autocomplete="off" spellcheck="false" autocapitalize="off"></label>
+    <p id="datasetFeedback" class="subtle" role="status"></p>
+    <div class="modal-actions">
+      <button type="button" id="cancelDatasetRemoval" class="ghost-btn" autofocus>Cancel</button>
+      <button type="button" id="confirmDatasetRemoval" class="remove-all-btn" disabled>Remove</button>
+    </div>
+  </dialog>
   <div id="stopTestDialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="stopTestTitle" hidden>
     <section class="modal"><h2 id="stopTestTitle">Finish this test early?</h2><p class="modal-sub">Results so far will be saved. Choose Pause to resume later.</p><p id="stopTestError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button id="cancelStopTest" class="ghost-btn">Keep test</button><button id="confirmStopTest" class="primary-btn">Stop this test</button></div></section>
   </div>
   <div id="manualDialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="manualTitle" hidden>
     <section class="modal"><h2 id="manualTitle">Use manual mode for this participant?</h2><p class="modal-sub">Skip the walkthrough and practice for this session. Calibration saves automatically. You’ll arm tests, start breaks and confirm the final form.</p><p id="manualError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button id="cancelManual" class="ghost-btn">Keep walkthrough</button><button id="confirmManual" class="primary-btn">Use manual mode</button></div></section>
   </div>
-  <div id="abortDialog" class="overlay" hidden><form id="abortForm" class="modal" novalidate><button type="button" class="close-btn" id="closeAbort">×</button><h2>Abort participant session?</h2><p class="modal-sub">Aborting ends this recording and cancels the remaining tests.</p><label class="field-label">Reason<textarea id="abortReason" rows="3" required></textarea></label><div id="abortError" class="form-error" hidden></div><div class="modal-actions"><button type="button" class="ghost-btn" id="cancelAbort">Keep running</button><button class="danger-btn" type="submit">Abort session</button></div></form></div>
-  <div id="exceptionDialog" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="exceptionTitle"><form id="exceptionForm" class="modal"><h2 id="exceptionTitle">Skip this test?</h2><p id="exceptionHelp" class="modal-sub"></p><label id="repeatChoice" class="field-label" hidden>Test to repeat<select id="repeatCondition"></select></label><label class="field-label">Reason<textarea id="exceptionReason" required maxlength="2000" rows="3"></textarea></label><p id="exceptionError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button type="button" id="cancelException" class="ghost-btn">Cancel</button><button id="confirmException" class="primary-btn">Confirm</button></div></form></div>
-  <div id="recordingsDialog" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="recordingsTitle"><section class="modal recordings-modal"><button id="closeRecordings" class="close-btn" aria-label="Close recordings">×</button><h2 id="recordingsTitle">Recordings &amp; session review</h2><div class="secondary-actions"><button id="refreshRecordings" class="ghost-btn">Refresh list</button><button id="openDataFolder" class="ghost-btn">Open data folder</button></div><p id="archiveStatus" class="subtle" role="status"></p><div class="recording-layout"><div id="recordingList" class="recording-list" aria-label="Local recordings"></div><div><div id="recordingReview" class="recording-review"><p>Select a recording to review its attempts and notes.</p></div><div class="secondary-actions"><button id="downloadReview" class="ghost-btn" disabled>Download review CSV</button><button id="exportRecording" class="primary-btn" disabled>Export raw ZIP</button></div></div></div><p id="recordingError" class="form-error" role="alert" hidden></p></section></div>
+  <div id="abortDialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="abortTitle" hidden><form id="abortForm" class="modal" novalidate><button type="button" class="close-btn" id="closeAbort" aria-label="Close abort confirmation">×</button><h2 id="abortTitle">Abort participant session?</h2><p class="modal-sub">Aborting ends this recording and cancels the remaining tests.</p><div id="abortError" class="form-error" role="alert" hidden></div><div class="modal-actions"><button type="button" class="ghost-btn" id="cancelAbort">Keep running</button><button id="confirmAbort" class="danger-btn" type="submit">Abort session</button></div></form></div>
+  <div id="exceptionDialog" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="exceptionTitle"><form id="exceptionForm" class="modal"><h2 id="exceptionTitle">Skip this test?</h2><p id="exceptionHelp" class="modal-sub"></p><label id="repeatChoice" class="field-label" hidden>Test to repeat<select id="repeatCondition"></select></label><label class="field-label">Reason<textarea id="exceptionReason" required maxlength="256" rows="3" aria-describedby="reasonLength"></textarea></label><span class="subtle" id="reasonLength">256 characters available</span><p id="exceptionError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button type="button" id="cancelException" class="ghost-btn">Cancel</button><button id="confirmException" class="primary-btn">Confirm</button></div></form></div>
   <script src="workflows.js"></script>
   <script src="data-viewer.js"></script>
   <script src="app.js"></script>

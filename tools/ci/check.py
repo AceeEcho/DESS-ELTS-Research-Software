@@ -69,7 +69,7 @@ def run():
     commands = [
         ["tools/dependencies/verify_openvr.py"], ["tools/dependencies/verify_unity_packages.py"],
     ]
-    for folder in ("validation", "config", "bootstrap", "dependencies", "build", "logging"):
+    for folder in ("validation", "config", "bootstrap", "dependencies", "build", "logging", "data"):
         commands.append(["-m", "unittest", "discover", "-s", "tools/" + folder, "-p", "test_*.py"])
     for args in commands:
         subprocess.run([sys.executable, "-X", "utf8", *args], cwd=ROOT, check=True)

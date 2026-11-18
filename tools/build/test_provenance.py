@@ -45,7 +45,7 @@ class BuildProvenanceTests(unittest.TestCase):
             config.parent.mkdir(parents=True)
             config.write_text('{"machine":{"dataRoot":"data/synthetic"}}', encoding="utf-8")
             finalize(root, {"mode": "synthetic-development", "studyReady": False, "version": "fixture"})
-            products = [".run-1.reservation", "run-1/events.ndjson", "run-1/participant.json", "collection.sqlite", "collection.sqlite-wal", "collection.sqlite-shm",
+            products = [".participant-store.lock", ".run-1.reservation", "run-1/events.ndjson", "run-1/participant.json", "collection.sqlite", "collection.sqlite-wal", "collection.sqlite-shm",
                         "exports/elts-results-20261105-120000-" + "c" * 6 + ".xlsx", "exports/raw-run-1-" + "d" * 6 + ".zip", "run-1/test-checkpoint-WE_FT-attempt-01.json",
                         "run-1/test-checkpoint-WE_FT-attempt-02.json.pending", "exports/run-1-" + "a" * 32 + ".zip",
                         "run-1/tutorial-completion-" + "a" * 8 + ".json", "run-1/synthetic-calibration-" + "e" * 8 + ".json",
@@ -59,6 +59,10 @@ class BuildProvenanceTests(unittest.TestCase):
             injected.write_bytes(b"not recording data")
             with self.assertRaises(ValueError): verify(root)
             injected.unlink()
+            misplaced = root / "data/synthetic/run-1/.participant-store.lock"
+            misplaced.touch()
+            with self.assertRaises(ValueError): verify(root)
+            misplaced.unlink()
             outside = root / "other/run-1/events.ndjson"
             outside.parent.mkdir(parents=True)
             outside.write_text("wrong output directory", encoding="utf-8")

@@ -27,7 +27,7 @@ so review the calibration workspace's mounting/registration after a role change.
 
 For the main app, set `weaponTriggerSerial` in `config/local.json` to the exact
 gun tracker serial. An empty or absent value disables the physical trigger unless
-`START-ELTS.cmd` finds a weapon serial in the latest saved calibration profile.
+`START-ELTS.cmd` finds a weapon serial in the saved station room settings.
 An explicit machine serial takes precedence over that profile. Restart/rebuild
 with `START-ELTS.cmd` after changing the binding. No device index is persisted and
 no other tracker is used when the selected one disconnects.

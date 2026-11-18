@@ -29,7 +29,7 @@ namespace Elts.Operator
         public DesktopPlayController(DevelopmentSessionPanel session, DevelopmentView view, VisualElement root)
         {
             this.session=session;this.view=view;this.root=root;
-            Model=new DesktopInputModel(view.Configuration);
+            Model=new DesktopInputModel(()=>view.Configuration);
             Resources.Load<VisualTreeAsset>("ELTS/DesktopPlay").CloneTree(root);
             overlay=root.Q<VisualElement>("desktopPlay");dashboard=root.Q<VisualElement>("sessionPanel");
             image=root.Q<Image>("playImage");reticle=root.Q<VisualElement>("playReticle");

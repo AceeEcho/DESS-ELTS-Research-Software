@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "maxUtf16Units": 256,
+  "cases": [
+    {
+      "unit": "x",
+      "repeat": 0,
+      "accepted": false
+    },
+    {
+      "unit": " ",
+      "repeat": 4,
+      "accepted": false
+    },
+    {
+      "unit": "x",
+      "repeat": 256,
+      "accepted": true
+    },
+    {
+      "unit": "x",
+      "repeat": 257,
+      "accepted": false
+    },
+    {
+      "unit": "\ud83d\udd39",
+      "repeat": 128,
+      "accepted": true
+    },
+    {
+      "unit": "\ud83d\udd39",
+      "repeat": 129,
+      "accepted": false
+    }
+  ]
+}

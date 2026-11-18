@@ -38,7 +38,7 @@ namespace Elts.Operator
             Bind("acceptCalibration", () => Act(AcceptCalibrationFixture));
             Bind("redoCalibration", () => Act(() => {
                 calibration.Redo(); calibrationJson = null;
-                Label("calibrationReview", "Fixture discarded. Adjust inputs and generate again.");
+                Label("calibrationReview", "Ready to check again.");
             }));
         }
 
@@ -48,13 +48,13 @@ namespace Elts.Operator
             calibrationJson = null;
             calibrationWithinLimits = false;
             AcceptedCalibrationPath = null;
-            Label("calibrationReview", "No fixture captured.");
+            Label("calibrationReview", "Awaiting calibration.");
         }
 
         private void AdvanceWithCalibration()
         {
             if (engine!.State == SessionState.Calibration && calibration.State != CalibrationWizardState.Accepted)
-                throw new InvalidOperationException("Review and accept a synthetic calibration fixture before practice.");
+                throw new InvalidOperationException("Accept the calibration before practice.");
             engine.Advance();
             root.Q<Foldout>("calibrationWizard").value = engine.State == SessionState.Calibration;
         }
@@ -136,10 +136,7 @@ namespace Elts.Operator
             };
             calibrationJson = JsonConvert.SerializeObject(record, Formatting.Indented);
             calibration.BeginCapture(); calibration.Review();
-            Label("calibrationReview", $"Pivot {pivot.SampleCount} poses: {pivot.RmsResidualMeters*1000:F3} mm RMS. " +
-                $"Corner {corner.BottomRightConsistencyMeters*1000:F3} mm, {rawAngle:F3}°. " +
-                $"3×3 mean {verification.MeanDegrees:F4}°, max {verification.MaxDegrees:F4}°.\n" +
-                (calibrationWithinLimits ? "Within provisional limits. Review, accept or redo." : "Outside provisional limits. Redo required."));
+            Label("calibrationReview", calibrationWithinLimits ? "Ready to accept." : "Please repeat the calibration check.");
         }
 
         private void AcceptCalibrationFixture()
@@ -153,11 +150,11 @@ namespace Elts.Operator
             using (var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
             using (var writer = new StreamWriter(output, new UTF8Encoding(false))) writer.Write(calibrationJson);
             string note="Synthetic calibration fixture accepted: " + Path.GetFileName(path) + " sha256=" + Hash(calibrationJson) + "; measured=false; studyReady=false";
-            if(SeparateAdministrator)StationNote(note);else engine.AddNote(note);
+            RecordSessionDetail(note);
             if (engine.State == SessionState.Failed) throw new IOException("Calibration note could not be logged; fixture retained for inspection.");
             calibration.Accept("Computed fixture checked against recorded provisional thresholds.");
             AcceptedCalibrationPath = path;
-            Label("calibrationReview", "Development fixture accepted and saved. Startup rig configuration remains active. Continue to practice. Study unavailable.");
+            Label("calibrationReview", "Calibration saved.");
         }
 
         private void RefreshCalibrationControls()

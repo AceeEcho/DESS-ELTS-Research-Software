@@ -11,13 +11,13 @@ try {
     $child = Join-Path $fixture 'fixture.ps1'
     @'
 param($LogPath, $Scenario)
-if ($Scenario -eq 'ready') { Set-Content -LiteralPath $LogPath 'ELTS_ADMINISTRATOR_READY http://127.0.0.1:18764/#fixture' }
+if ($Scenario -eq 'ready') { Set-Content -LiteralPath $LogPath 'ELTS_ADMINISTRATOR_READY' }
 if ($Scenario -eq 'failure') { Set-Content -LiteralPath $LogPath 'ELTS_VIEW_INIT_FAIL System.ArgumentException: Development game settings are outside their safe synthetic ranges.' }
 if ($Scenario -ne 'exit') { Start-Sleep -Seconds 3 }
 exit 7
 '@ | Set-Content -LiteralPath $child
     # A previous player's success must not satisfy a silent new startup.
-    Set-Content (Join-Path $fixture 'old-player.log') 'ELTS_ADMINISTRATOR_READY http://127.0.0.1:18764/#old'
+    Set-Content (Join-Path $fixture 'old-player.log') 'ELTS_ADMINISTRATOR_READY'
     foreach ($scenario in @('ready','failure','exit','silent')) {
         $log = Join-Path $fixture ($scenario + '.log')
         $arguments = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$child,$log,$scenario)

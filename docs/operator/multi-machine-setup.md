@@ -2,7 +2,9 @@
 
 ## Just install and run
 
-On a Windows x64 computer, you can use a downloaded ZIP without installing Git:
+For a rehearsal on Windows x64, use the prebuilt package and its **PREPARE-REHEARSAL.cmd** launcher. [Run the packaged rehearsal](../../README.md#run-the-packaged-rehearsal)
+
+To install from source on a computer without Git, follow these steps.
 
 1. Open [the ELTS repository](https://github.com/AceeEcho/DESS-ELTS-Research-Software), select **main**, and choose **Code > Download ZIP**.
 2. Right-click the download and choose **Extract All**. Use a writable local folder outside OneDrive, such as a folder under your user account. Open the extracted folder that contains `README.md` and `START-ELTS.cmd`. Files marked "(Dev Only)" are for developers; you can ignore them.

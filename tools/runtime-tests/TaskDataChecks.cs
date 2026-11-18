@@ -28,6 +28,7 @@ internal static class TaskDataChecks
     }
     public static void Run(string root)
     {
+        CheckAnalysisScreen(root);
         var result=Fixture();var a=result["attempts"][0];
         Check((double)a["shotsPerSecond"]==0.8 && (double)a["hitsPerSecond"]==0.4 && (double)a["missesPerSecond"]==0.4,"Rates exclude ten-second pause");
         Check((double)a["accuracyPercent"]==50,"Accuracy uses accepted shots");
@@ -70,7 +71,7 @@ internal static class TaskDataChecks
         File.WriteAllText(Path.Combine(folder,"events.ndjson"),Event("BlockMetadata",0).ToString(Newtonsoft.Json.Formatting.None)+"\n"+Event("BlockSkipped",1).ToString(Newtonsoft.Json.Formatting.None));
         Check((string)TaskDataReview.Read(folder)["attempts"][0]["status"]=="Started","Trailing valid JSON without newline is excluded");
         string exportRoot=Path.Combine(root,"metric-collection");var collection=new ParticipantCollection(exportRoot);
-        collection.SaveParticipant("00123","Private Name");
+        collection.SaveParticipant("00123");
         collection.Import(folder,"00123","visit-A",result.ToString());
         string other=Path.Combine(root,"second-participant");Directory.CreateDirectory(other);File.WriteAllText(Path.Combine(other,"events.ndjson"),"");
         collection.Import(other,"=SUM(1,2)","",result.ToString());
@@ -88,7 +89,7 @@ internal static class TaskDataChecks
             XNamespace ns="http://schemas.openxmlformats.org/spreadsheetml/2006/main";
             XDocument Sheet(int number){using(var input=zip.GetEntry("xl/worksheets/sheet"+number+".xml").Open())return XDocument.Load(input);}
             XDocument book;using(var input=zip.GetEntry("xl/workbook.xml").Open())book=XDocument.Load(input);
-            Check(String.Join(",",book.Descendants(ns+"sheet").Select(s=>(string)s.Attribute("name")))=="Results,Shots,Timeline,Metric guide","Results workbook sheets");
+            Check(String.Join(",",book.Descendants(ns+"sheet").Select(s=>(string)s.Attribute("name")))=="Results,Shots,Timeline,Metric guide,Recordings,Handoff","Results workbook includes the source manifest");
             var results=Sheet(1);
             Check(results.Descendants(ns+"row").Count()==5,"Results has every participant's attempts in one sheet");
             Check(Sheet(2).Descendants(ns+"row").Count()==5 && Sheet(3).Descendants(ns+"row").Count()==7,"Shots and timeline cover every participant");
@@ -99,9 +100,53 @@ internal static class TaskDataChecks
             Check(results.Descendants(ns+"autoFilter").Count()==1 && results.Descendants(ns+"pane").Count()==1,"Workbook filters and frozen headers");
             foreach(var entry in zip.Entries.Where(e=>e.FullName.EndsWith(".xml") || e.FullName.EndsWith(".rels")))using(var input=entry.Open())XDocument.Load(input);
         }
+        string owner;
+        using(var db=new CollectionSqlite(collection.DatabasePath))
+            owner=db.Query("SELECT id FROM participants WHERE code=?","00123")[0]["id"];
+        Check(collection.PreviewExport("visit",owner,"visit-A","","").StartsWith("2 result rows"),"Visit export preview has only the matching attempts");
+        using(var scoped=ZipFile.OpenRead(collection.ExportResults("visit",owner,"visit-A")))
+        using(var input=scoped.GetEntry("xl/worksheets/sheet5.xml").Open())
+        {
+            string manifest=new StreamReader(input).ReadToEnd();
+            Check(manifest.Contains("visit-A") && !manifest.Contains("=SUM"),"Scoped manifest identifies only the selected visit");
+        }
         // Keep a fictional example for independent spreadsheet-reader inspection.
         string examples=Path.Combine(Environment.CurrentDirectory,"test-results");Directory.CreateDirectory(examples);
         File.Copy(workbook,Path.Combine(examples,"task-metrics-fixture.xlsx"),true);
         Console.WriteLine("PASS: task metrics, SQL views and Excel workbook checks");
+    }
+    private static void CheckAnalysisScreen(string root)
+    {
+        var collection=new ParticipantCollection(Path.Combine(root,"analysis-screen"));
+        string Add(string name,bool close,params JObject[] events)
+        {
+            string folder=Path.Combine(collection.Root,name);
+            Directory.CreateDirectory(folder);
+            File.WriteAllLines(Path.Combine(folder,"events.ndjson"),events.Select(e=>e.ToString(Newtonsoft.Json.Formatting.None)));
+            if(close)File.WriteAllText(Path.Combine(folder,"session-summary.json"),"{\"schemaVersion\":\"elts.session-summary.v2\",\"complete\":true,\"error\":null}");
+            collection.Import(folder,"7","shared-visit",TaskDataReview.Read(folder).ToString());
+            using(var db=new CollectionSqlite(collection.DatabasePath))return db.Query("SELECT id FROM sessions WHERE directory=?",folder).Single()["id"];
+        }
+        string standard=Add("standard",true,Event("BlockMetadata",0),Event("BlockStarted",1),Event("BlockEnded",301));
+        string flexible=Add("flexible",true,Event("BlockDurationChanged",0,new JObject{["developmentTiming"]=true}),Event("BlockMetadata",1),Event("BlockStarted",1),Event("BlockEnded",301));
+        string interrupted=Add("interrupted",false,Event("BlockMetadata",0),Event("BlockStarted",1));
+        string skipped=Add("skipped",true,Event("BlockSkipped",0));
+        using(var db=new CollectionSqlite(collection.DatabasePath))
+        {
+            Dictionary<string,string> Row(string id)=>db.Query("SELECT analysisEligibility,analysisReason FROM task_results WHERE sessionId=?",id).Single();
+            Check(Row(standard)["analysisEligibility"]=="Needs analysis","A standard interval requires independent offline analysis");
+            Check(Row(flexible)["analysisReason"].Contains("flexible"),"A timing change before metadata excludes the interval");
+            Check(Row(interrupted)["analysisReason"].Contains("closure"),"Incomplete recordings are excluded across attempts");
+            Check(Row(skipped)["analysisReason"].Contains("skipped"),"A skipped attempt has its own exclusion reason");
+            Check(db.Query("SELECT visitEligibility FROM visit_analysis").Single()["visitEligibility"]=="Partially excluded","Mixed visits retain their eligible-for-review recordings");
+            collection.SetVerification(standard,"Passed","check-time","fixture");
+            Check(Row(standard)["analysisEligibility"]=="Needs analysis","A passing checksum does not certify schemas, counts or timing");
+            collection.SetVerification(standard,"Failed","check-time","fixture");
+            Check(Row(standard)["analysisReason"].Contains("checksum") && db.Query("SELECT visitEligibility FROM visit_analysis").Single()["visitEligibility"]=="Excluded","A failed checksum immediately blocks the attempt, recording and visit");
+        }
+        using(var archive=ZipFile.OpenRead(collection.ExportResults()))
+            foreach(int sheet in new[]{1,5})
+                using(var xml=new StreamReader(archive.GetEntry("xl/worksheets/sheet"+sheet+".xml").Open()))
+                    Check(xml.ReadToEnd().Contains("A recording file failed checksum verification."),"The workbook carries the same exclusion as SQL and Data");
     }
 }

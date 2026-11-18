@@ -40,22 +40,27 @@ namespace Elts.Operator
             if(code!=0){string message=Text(sqlite3_errmsg(handle));Dispose();throw new IOException("Cannot open collection database: "+message);}
             Check(sqlite3_busy_timeout(handle,5000));
             Execute("PRAGMA foreign_keys=ON");
+            Execute("PRAGMA synchronous=FULL");
         }
         public List<Dictionary<string,string>> Query(string sql,params string[] values)
+            => new List<Dictionary<string,string>>(Rows(sql, values));
+
+        // Keep the prepared statement alive only while its consumer is reading.
+        // The workbook writer can consume millions of rows without a second copy.
+        public IEnumerable<Dictionary<string,string>> Rows(string sql,params string[] values)
         {
             Check(sqlite3_prepare_v2(handle,Utf8(sql),-1,out var statement,IntPtr.Zero));
             try
             {
                 for(int i=0;i<values.Length;i++) { var bytes=Utf8(values[i]);Check(sqlite3_bind_text(statement,i+1,bytes,bytes.Length-1,new IntPtr(-1))); }
-                var rows=new List<Dictionary<string,string>>();int code;
+                int code;
                 while((code=sqlite3_step(statement))==100)
                 {
                     var row=new Dictionary<string,string>();
                     for(int i=0;i<sqlite3_column_count(statement);i++)row[Text(sqlite3_column_name(statement,i))]=Text(sqlite3_column_text(statement,i));
-                    rows.Add(row);
+                    yield return row;
                 }
                 if(code!=101)Check(code);
-                return rows;
             }
             finally { sqlite3_finalize(statement); }
         }

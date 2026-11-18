@@ -11,7 +11,8 @@
 The Unity player opens the [administrator dashboard](operator-dashboard.md), with
 task navigation, focused controls and two persistent emulated camera views.
 Arrange a permutation of `WE_MT`, `NE_MT`, `WE_FT`, and `NE_FT` in **⚙ Settings**,
-then enter a participant ID under **New participant**. The staged session and scenario templates and effective
+then select a saved ID under **New participant**; the calibration saved under
+that ID is applied before the recording is created. The staged session and scenario templates and effective
 configuration hash are shown before creation. Template choices remain in the
 validated configuration pipeline; this panel does not read arbitrary JSON.
 
@@ -42,7 +43,7 @@ the primary count. Target expiration is a v2 `Despawned` lifecycle record and
 does not score. Rendering consumes the raw acquisition snapshot separately from
 logging; no render prediction can rewrite a recorded pose.
 
-**Abort participant session** requires a reason and is available throughout an unfinished session.
+**Abort participant session** asks the operator to confirm and is available throughout an unfinished session.
 Only a running block emits `BlockAborted`. At or beyond a block deadline the
 engine first records its exact normal end, preserving monotonic event ordering.
 A valid **Repeat a test…** closes the earlier recording, reserves a distinct

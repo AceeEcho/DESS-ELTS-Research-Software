@@ -6,7 +6,8 @@ import tempfile
 import unittest
 import uuid
 from pathlib import Path
-from tools.config.stage import build_bundle, check_staged, sha256_bytes, stage
+from tools.config.calibration_profile import PARTICIPANT_FORMAT, participant_offsets, room_identity
+from tools.config.stage import build_bundle, canonical, check_staged, sha256_bytes, stage
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -65,16 +66,20 @@ class StageTests(unittest.TestCase):
             }.items():
                 for actual, component in zip(rig["display"][key], expected, strict=True):
                     self.assertAlmostEqual(actual, component)
+            # Participant offsets are applied at runtime, never baked into the build.
+            # The same expected values are checked in ParticipantCalibrationTests.cs.
+            offsets = participant_offsets(profile)
             for key, expected in {
                 "headEyeOffsetM": [1, 0, -2],
                 "weaponMuzzleOffsetM": [2, 0, 0],
                 "weaponBoreLocalDirection": [0, 0, 1],
             }.items():
-                for actual, component in zip(rig[key], expected, strict=True):
+                self.assertEqual(rig[key], baseline["rig"][key])
+                for actual, component in zip(offsets[key], expected, strict=True):
                     self.assertAlmostEqual(actual, component)
             self.assertEqual(rig["screenBottomHeightAboveFloorM"], 1)
             self.assertEqual(rig["calibration"]["calibrationId"],
-                             "synthetic-profile-" + sha256_bytes(latest.read_bytes()))
+                             "synthetic-room-" + sha256_bytes(canonical(room_identity(profile))))
             self.assertEqual(rig["trackerSerials"], baseline["rig"]["trackerSerials"])
             self.assertFalse(effective["studyReady"])
             self.assertEqual(build_bundle(root)[0], baseline)
@@ -85,6 +90,42 @@ class StageTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Cannot apply calibration profile Latest save.json"):
                 stage(root, use_calibration_profile=True)
             self.assertEqual(output.read_bytes(), previous)
+
+    def test_participant_calibration_supplies_room_only(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = fixture_root(Path(temp))
+            profiles = root / "Calibration Environment/profiles"
+            profiles.mkdir(parents=True)
+            profile = json.loads((ROOT / "Calibration Environment/defaults.json").read_text())
+            profile["screen"].update(width=2, height=1)
+            def save(number, eye):
+                profile["head"]["eye"] = eye
+                (profiles / f"participant-{number}.json").write_text(json.dumps({
+                    "format": PARTICIPANT_FORMAT, "participantId": number, "name": "",
+                    "savedUtc": "2026-01-01T00:00:00+00:00", "calibration": profile}))
+            save(1, [0, 0, -0.1])
+            first, _ = build_bundle(root, use_calibration_profile=True)
+            self.assertAlmostEqual(first["rig"]["display"]["lowerRightM"][0] - first["rig"]["display"]["lowerLeftM"][0], 2)
+            # A new participant with the same screen must not change the staged build.
+            save(2, [0, 0.05, -0.12])
+            self.assertEqual(build_bundle(root, use_calibration_profile=True)[0], first)
+            (profiles / "participant-3.json").write_text(json.dumps({"format": "other", "calibration": profile}))
+            with self.assertRaisesRegex(ValueError, "participant-3.json"):
+                build_bundle(root, use_calibration_profile=True)
+
+    def test_explicit_station_room_wins_over_newer_participant_profile(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = fixture_root(Path(temp))
+            profiles = root / "Calibration Environment/profiles"
+            profiles.mkdir(parents=True)
+            example = json.loads((ROOT / "Calibration Environment/defaults.json").read_text())
+            room = {key: example[key] for key in ("version", "coordinateSystem", "screen")}
+            room.update(head={"serial": ""}, weapon={"serial": ""})
+            (profiles.parent / "station-room.json").write_text(json.dumps(room))
+            initial, _ = build_bundle(root, use_calibration_profile=True)
+            example["screen"]["width"] += .25
+            (profiles / "participant-2.json").write_text(json.dumps(example))
+            self.assertEqual(build_bundle(root, use_calibration_profile=True)[0], initial)
 
     def test_check_accepts_source_or_saved_profile_staging_only(self):
         with tempfile.TemporaryDirectory() as temp:

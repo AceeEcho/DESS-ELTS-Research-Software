@@ -10,21 +10,29 @@ pending; availability of other test/metrology equipment must still be confirmed.
 
 1. Extract the complete ZIP into a writable local directory. Paths with spaces
    are supported. Keep the player and its adjacent folders together.
-2. Open `player/ELTS-Synthetic.exe`. Unity and .NET SDK installation are not needed
-   to run this packaged player. Use a Windows x64 machine with a graphics driver;
-   this package has only been exercised on the development machine.
-3. The player opens the administrator dashboard in your browser and the
-   participant window. Run a session exactly as in the user guide: **⚙ Settings**,
-   **New participant** (use invented test IDs only; at least 2 GB free space is
-   required), then **Begin walkthrough** or **Manual mode · skip walkthrough**.
-   Calibration is a generated synthetic fixture, not a measured calibration.
+2. Double-click **PREPARE-REHEARSAL.cmd** once to create fictional participant **0**
+   and launch ELTS. Subsequent launches use **START-ELTS.cmd**. Both use the same
+   private development directory under `%LOCALAPPDATA%/ELTS/DevelopmentRehearsal`
+   by default. Set `ELTS_STATION_HOME` to another absolute directory to use a restored station.
+   Only explicit preparation creates the example. A regular start after removing
+   participant data opens an empty station. **ADD-REHEARSAL-ID.cmd** opens a number
+   picker for another fictional participant. It suggests the first unused ID.
+   Click **Add ID** and select it from the dashboard. The package requires no
+   Unity Editor or .NET SDK.
+3. In the browser dashboard, open **Settings**, choose the plan, then select **New
+   participant**, choose **0**, and create the recording. At least 2 GB free space
+   is required. Choose **Begin walkthrough** or **Manual mode**. The example uses
+   fictional development settings.
 4. Scenarios last 300 seconds each by default. The mouse fires on click-and-release;
-   **Add note** writes an annotation; **Stop test** ends an attempt early and
+   **Stop test** ends an attempt early and
    **Repeat a test…** reserves a new attempt. **Abort participant session** ends
    the session; it never silently resumes.
-5. Use **Data** to review the recording and export results.
+5. Use **Data** to review the recording and export results. For a fresh rehearsal,
+   finish or abort the current recording and open **Settings**. Choose **Remove
+   all participant data…**, type `CONFIRM` exactly, then choose **Remove**.
+   The reset erases data in the selected rehearsal station without making a backup.
 6. Close the player normally and let its recording operation finish. Keep the
-   resulting `player/data/synthetic/` files together. Incomplete writer closure
+   recordings together in the station folder shown by **Data**. Incomplete writer closure
    is an error requiring inspection, not usable complete evidence.
 
 Real two-display assignment, pose tracking and controller behavior are separate
@@ -32,27 +40,31 @@ pending checks. Accepted fixture output does not replace the startup rig
 configuration. More detail: [calibration](docs/calibration.md),
 [sessions](docs/session.md), and [mock protocol](docs/elts-session.md).
 
-## Verify the package and try the included sample
+## Verify the package or a rehearsal recording
 
-These optional checks require Python 3.10–3.14, with no extra Python packages.
-Run from the extracted package root. On Windows, `py -3` may replace `python`.
+These optional checks use Python 3.10–3.14. From the extracted package folder:
 
 ```powershell
-python tools/build/package.py --verify .
-python -m tools.logging.verify_run samples/synthetic-run
-python analysis/run_ingest.py samples/synthetic-run --calibration analysis/fixtures/synthetic-calibration.json --output ../synthetic-analysis.json
+py -3 tools/build/package.py --verify .
 ```
 
-The included sample is generated from known geometry with a manual clock. It
-contains four 300-second logical blocks, samples, targets, shots and simulated
-protocol events. It does not demonstrate 20 minutes of real-time acquisition.
-The analysis file is written outside the package so the original input stays
-unchanged. Use the rendering/replay tools' path field to load the absolute path
-to `samples/synthetic-run` for recorded replay.
+To check a recording you created, open **Data**, find its recording folder and
+pass that folder to the verifier:
+
+```powershell
+py -3 -m tools.logging.verify_run "C:/path/to/recording"
+```
+
+When `package-info.json` lists an optional `sampleRun`, the included sample
+can also be inspected independently:
+
+```powershell
+py -3 analysis/run_ingest.py samples/synthetic-run --calibration analysis/fixtures/synthetic-calibration.json --output ../synthetic-analysis.json
+```
 
 `PACKAGE-MANIFEST.sha256` binds the player, documentation, tools, evidence and
 sample files. Verification permits only expected recording, reservation and
-calibration filenames below `player/data/synthetic/`, plus disposable analysis/tool
+calibration filenames below the player’s configured data directory, plus disposable analysis/tool
 Python bytecode caches. Changing packaged
 code, configuration or sample data fails integrity verification. Hashes detect
 changes; they are not signatures or research/safety approval.
@@ -76,9 +88,5 @@ Do not hand-edit the packaged effective configuration or its hashes. Never treat
 synthetic geometry as measured calibration.
 
 The source checkout's `scripts/package-development.ps1` assembles an already
-verified development build. The package recipe requires the build's staged
-`dataRoot` to be `data/synthetic` (so recordings land in `player/data/synthetic/`)
-and refuses a build that already holds recordings. The default `config/local.json`
-uses `collection data`, so set `"dataRoot": "data/synthetic"` in that file and
-rebuild with `scripts/build.ps1` before packaging. Study provisioning and `package-study.ps1` remain
+verified development build. Packaging rejects player folders containing existing participant data. The package manifest records the build’s configured relative data directory. Study provisioning and `package-study.ps1` remain
 blocked until their separate approvals and physical prerequisites are satisfied.

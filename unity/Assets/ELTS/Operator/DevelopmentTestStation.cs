@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using Elts.Config;
 using Elts.Geometry;
 using Elts.Session;
 using Newtonsoft.Json;
@@ -34,7 +36,10 @@ namespace Elts.Operator
         [SerializeField, Range(15,120)] private int participantFramesPerSecond=60;
         private int previousFrameRate,previousVSync;
         private bool ownsFramePacing;
-        private int previewHeight;
+        private string? discoveryPath;
+        private Label displayCheckLabel=null!;
+        private Coroutine? displayCheck;
+        private long lastCollectionRevision = -1;
         private bool capturePending;
         private int windowWidth=1100,windowHeight=700;
         private DevelopmentSessionPanel session=null!;
@@ -53,6 +58,18 @@ namespace Elts.Operator
         private float orbitYaw=DevelopmentView.DefaultOrbitYaw,orbitPitch=DevelopmentView.DefaultOrbitPitch,orbitDistance=DevelopmentView.DefaultOrbitDistance,nextState;
         private readonly List<RunRow> blocks=new List<RunRow>();
         private string knownRun="";
+        // Saved participant calibrations shown on the start form. The folder is
+        // rescanned off the frame thread so a save in the Calibration Environment
+        // appears without restarting ELTS.
+        private const float CalibrationScanIntervalSeconds=2f;
+        private ParticipantCalibration.Inventory calibrationInventory = new ParticipantCalibration.Inventory();
+        private long calibrationDatasetVersion, profileRevision;
+        private StationPerformance? performance;
+
+        private IReadOnlyList<(int Id,bool Available,bool ScreenMatches,string Revision)> calibrations=Array.Empty<(int,bool,bool,string)>();
+        private bool calibrationDirectoryUnavailable;
+        private Task<IReadOnlyList<(int Id,bool Available,bool ScreenMatches,string Revision)>>? calibrationScan;
+        private float nextCalibrationScan;
         private sealed class RunRow
         {
             public string condition="",attempt="",status="Running";
@@ -91,12 +108,9 @@ namespace Elts.Operator
             Elts.Development.DevelopmentBanner.ShowInPlayer=false;
             session.EnableSeparateAdministrator();session.InitializeCollection();view.ParticipantOnly=true;
             view.ParticipantCamera.targetTexture=null;
-            previewHeight=Mathf.RoundToInt(previewWidth*0.625f);
-            outsideTexture=new RenderTexture(previewWidth,previewHeight,24,RenderTextureFormat.ARGB32){name="Administrator outside view"};outsideTexture.Create();
-            view.OperatorCamera.targetTexture=outsideTexture;
+            SizePreview(previewWidth);
             // Render the administrator camera only when producing a preview frame.
             view.OperatorCamera.enabled=false;
-            capture=new Texture2D(previewWidth,previewHeight,TextureFormat.RGB24,false);
             // UIDocuments beneath another UIDocument must share its panel. Keep
             // this independent root on its own participant-only panel instead.
             uiHost=new GameObject("Participant interface — no administrator controls");
@@ -108,14 +122,24 @@ namespace Elts.Operator
             ui.RegisterCallback<GeometryChangedEvent>(_=>CancelClick());
             Resources.Load<VisualTreeAsset>("ELTS/ParticipantView").CloneTree(ui);
             prompt=ui.Q("participantPrompt");title=ui.Q<Label>("participantTitle");subtitle=ui.Q<Label>("participantSubtitle");reticle=ui.Q<Label>("participantReticle");ammo=ui.Q<Label>("participantAmmo");
+            displayCheckLabel=new Label("Participant display · audio check");
+            displayCheckLabel.AddToClassList("station-display-check");
+            displayCheckLabel.style.display=DisplayStyle.None;
+            ui.Q("participantSurface").Add(displayCheckLabel);
             tutorialView=new ParticipantTutorialView(ui,session,view);
             session.StationPublishPose(session.Desktop.Model.Head,session.Desktop.Model.Weapon);
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-eltsMeasureStation") >= 0)
+                performance = new StationPerformance();
             server=new AdministratorServer(Path.Combine(Application.streamingAssetsPath,"administrator"));
             // A local discovery file lets test tools locate this instance without
             // hardcoding ports. Its capability is rotated on each launch.
-            string discovery=Path.Combine(Application.temporaryCachePath,"elts-administrator.json");
-            File.WriteAllText(discovery,JsonConvert.SerializeObject(new{url=server.Url,pid=Process.GetCurrentProcess().Id}));
-            Debug.Log("ELTS_ADMINISTRATOR_READY "+server.Url);
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-eltsTestDiscovery") >= 0)
+            {
+                int pid = Process.GetCurrentProcess().Id;
+                discoveryPath = Path.Combine(Path.GetTempPath(), "elts-administrator-" + pid + ".json");
+                File.WriteAllText(discoveryPath, JsonConvert.SerializeObject(new { url = server.Url, pid }));
+            }
+            Debug.Log("ELTS_ADMINISTRATOR_READY");
         }
         private IEnumerator Start()
         {
@@ -159,6 +183,7 @@ namespace Elts.Operator
         private void Update()
         {
             if(server==null || ui.panel==null)return;
+            performance?.Frame(server.RequestedPreviewWidth > 0);
             var keyboard=Keyboard.current;
             if(keyboard!=null && (keyboard.f11Key.wasPressedThisFrame ||
                 (keyboard.enterKey.wasPressedThisFrame && (keyboard.leftAltKey.isPressed || keyboard.rightAltKey.isPressed))))
@@ -175,14 +200,50 @@ namespace Elts.Operator
                 catch(Exception exception){command.Complete(JsonConvert.SerializeObject(new{ok=false,message=exception.Message}));}
             }
             session.StationTick();
+            RefreshCalibrationInventory();
             ReadParticipantInput();
             // DevelopmentView.Update renders the latest pose later in this frame.
             // Avoid rebuilding scene presentation twice per participant frame.
             UpdateParticipantPrompt();UpdateRunRows();
             if(Time.unscaledTime>=nextState)
-            {nextState=Time.unscaledTime+1f/Mathf.Max(10,previewFramesPerSecond);server.PublishState(StateJson());}
+            {
+                nextState=Time.unscaledTime+1f/Mathf.Max(10,previewFramesPerSecond);
+                if (lastCollectionRevision != session.CollectionRevision)
+                {
+                    lastCollectionRevision = session.CollectionRevision;
+                    server.PublishCollection(JsonConvert.SerializeObject(new { revision=lastCollectionRevision, details=session.CollectionState }));
+                }
+                server.PublishState(StateJson(includeProfiles:false));
+            }
         }
-        private static bool IsDataAction(string action)=>new[]{"removeParticipant","removeRun","refreshData","viewParticipant","viewDataRows","exportResults","exportSessionRaw","openDataFolder","listRecordings","reviewRecording","exportRecording"}.Contains(action);
+        private void RefreshCalibrationInventory()
+        {
+            if (session.DatasetVersion != calibrationDatasetVersion)
+            {
+                // A scan started before the wipe must never repopulate the ID picker.
+                calibrationDatasetVersion = session.DatasetVersion;
+                calibrationInventory = new ParticipantCalibration.Inventory();
+                calibrationScan = null;
+                PublishProfiles(Array.Empty<(int,bool,bool,string)>());
+                nextCalibrationScan = 0;
+                server?.ClearDownloads();
+            }
+            if(calibrationScan!=null)
+            {
+                if(!calibrationScan.IsCompleted)return;
+                calibrationDirectoryUnavailable = calibrationScan.IsFaulted;
+                if(calibrationScan.Status==TaskStatus.RanToCompletion)PublishProfiles(calibrationScan.Result);
+                else { _=calibrationScan.Exception; PublishProfiles(Array.Empty<(int,bool,bool,string)>()); }
+                calibrationScan=null;
+            }
+            if(Time.unscaledTime<nextCalibrationScan)return;
+            nextCalibrationScan=Time.unscaledTime+CalibrationScanIntervalSeconds;
+            string directory=session.CalibrationProfileDirectory;
+            var rig = view.Configuration.Rig;
+            var inventory = calibrationInventory;
+            calibrationScan=Task.Run(()=>inventory.Scan(directory, rig));
+        }
+        private static bool IsDataAction(string action)=>new[]{"removeParticipant","removeRun","refreshData","viewParticipant","viewDataRows","previewResults","verifyRecording","exportResults","exportSessionRaw","openDataFolder"}.Contains(action);
         public void ApplyCommand(JObject command)
         {
             string action=(string?)command["action"]??"";
@@ -196,8 +257,10 @@ namespace Elts.Operator
             switch(action)
             {
                 case "startParticipant":
-                    session.StationStartParticipant((string?)command["participant"]??"",command["conditionOrder"]?.ToObject<string[]>()??session.StationOrder,
-                        (string?)command["participantName"]??"",(string?)command["initialNotes"]??"");break;
+                    var assignment = command["assignment"] as JObject;
+                    session.StationStartParticipant((string?)command["participant"]??"",
+                        command["conditionOrder"]?.ToObject<string[]>()??session.StationOrder,
+                        (string?)assignment?["participant"],assignment?["order"]?.ToObject<string[]>(),(string?)assignment?["reason"]??"");break;
                 case "arm": session.StationArm();CancelClick();break;
                 case "disarm": session.StationDisarm();CancelClick();break;
                 case "pause": session.StationPause();CancelClick();break;
@@ -218,14 +281,11 @@ namespace Elts.Operator
                 case "generateCalibration":case "redoCalibration":case "acceptCalibration":
                 case "startPractice":case "restartPractice":case "finishPractice":
                     session.StationPreparationAction(action);CancelClick();break;
-                case "listRecordings":case "reviewRecording":case "exportRecording":
-                    session.StationArchiveAction(action,(string?)command["id"]??"");break;
-                case "removeParticipant":case "removeRun":case "refreshData":case "viewParticipant":case "viewDataRows":case "exportResults":case "exportSessionRaw":
+                case "wipeDataset":case "removeParticipant":case "removeRun":case "refreshData":case "viewParticipant":case "viewDataRows":case "previewResults":case "verifyRecording":case "exportResults":case "exportSessionRaw":
                     session.CollectionAction(command);break;
                 case "openDataFolder":session.StationOpenDataFolder();break;
                 case "next": session.StationNext();CancelClick();break;
-                case "abort": session.StationAbort((string?)command["reason"]??"");CancelClick();break;
-                case "note": session.StationNote((string?)command["text"]??"");break;
+                case "abort": session.StationAbort();CancelClick();break;
                 case "resetView":
                     view.ResetOperatorView();orbitYaw=DevelopmentView.DefaultOrbitYaw;orbitPitch=DevelopmentView.DefaultOrbitPitch;orbitDistance=DevelopmentView.DefaultOrbitDistance;break;
                 case "viewOrbit":
@@ -233,11 +293,36 @@ namespace Elts.Operator
                     view.SetOperatorOrbit(orbitYaw,orbitPitch,orbitDistance);break;
                 case "windowed": SetFullscreen(false);break;
                 case "fullscreen": SetFullscreen(true);break;
+                case "captions": tutorialView.ShowCaptions=(bool?)command["enabled"]==true;break;
+                case "displayCheck":
+                    if (!session.StationCanStartParticipant) throw new InvalidOperationException("Finish the current visit first.");
+                    if (displayCheck==null) displayCheck=StartCoroutine(CheckDisplayAndAudio());
+                    break;
                 case "previewRate": previewFramesPerSecond=Mathf.Clamp((int)Finite(command,"fps",10),1,30);break;
                 default:throw new ArgumentException("Unknown administrator action.");
             }
             session.SynchronizeTutorial();
         }
+        private IEnumerator CheckDisplayAndAudio()
+        {
+            displayCheckLabel.style.display=DisplayStyle.Flex;
+            // A short, quiet tone confirms playback on the participant computer.
+            const int sampleRate=22050, samples=6615;
+            var wave=new float[samples];
+            for(int i=0;i<samples;i++)
+            {
+                float fade=Mathf.Min(1f, Mathf.Min(i,samples-1-i)/220f);
+                wave[i]=.12f*fade*Mathf.Sin(2*Mathf.PI*440*i/sampleRate);
+            }
+            var tone=AudioClip.Create("Station audio check",samples,1,sampleRate,false);
+            tone.SetData(wave,0);
+            var audio=gameObject.AddComponent<AudioSource>();
+            audio.spatialBlend=0;audio.PlayOneShot(tone);
+            yield return new WaitForSecondsRealtime(2);
+            displayCheckLabel.style.display=DisplayStyle.None;
+            Destroy(audio);Destroy(tone);displayCheck=null;
+        }
+
         private void SetFullscreen(bool fullscreen)
         {
             CancelClick();
@@ -342,7 +427,16 @@ namespace Elts.Operator
                 if(engine.State==SessionState.Aborted || engine.State==SessionState.Failed)row.status="Stopped";
             }
         }
-        public string StateJson()
+        private void PublishProfiles(IReadOnlyList<(int Id,bool Available,bool ScreenMatches,string Revision)> next)
+        {
+            if (calibrations.SequenceEqual(next)) return;
+            calibrations = next;
+            server?.PublishProfiles(JsonConvert.SerializeObject(new {revision=++profileRevision, items=ProfileItems()}));
+        }
+
+        private object ProfileItems() => calibrations.Select(c => new {id=c.Id, available=c.Available, screenMatches=c.ScreenMatches, revision=c.Revision}).ToArray();
+
+        public string StateJson(bool includeProfiles=true)
         {
             var engine=session.Engine;
             return JsonConvert.SerializeObject(new{
@@ -364,20 +458,44 @@ namespace Elts.Operator
                 ammo=session.StationAmmo,magazineCapacity=session.StationMagazineCapacity,
                 tracking=new{head=Pose(view.RawHead),weapon=Pose(view.RawWeapon)},
                 camera=new{yaw=orbitYaw,pitch=orbitPitch,distance=orbitDistance},viewVersion=imageVersion,
-                fullscreen=Screen.fullScreen,previewFps=previewFramesPerSecond,
+                captions=tutorialView.ShowCaptions,fullscreen=Screen.fullScreen,previewFps=previewFramesPerSecond,
                 synthetic=true,canNext=!session.IsBusy && (engine?.State==SessionState.BlockEnded || (engine?.State==SessionState.Break && engine.RemainingSeconds<=0)),
-                tools=session.StationToolsState, tutorial=session.TutorialState, data=session.CollectionState, downloadId=server?.RegisterExport(session.CollectionExportPath)??""
+                calibrationDirectoryUnavailable, roomRevision=view.Configuration.Rig.CalibrationId,
+                profileRevision, participantCalibrations=includeProfiles ? ProfileItems() : null,
+                performance=performance?.Snapshot(),
+                tools=session.StationToolsState, tutorial=session.TutorialState, data=session.CollectionStatus,
+                datasetRemoval=session.DatasetRemoval, downloadId=server?.RegisterExport(session.CollectionExportPath)??""
             });
         }
         private static object Pose(RigidPose? pose)=>new{
             valid=pose.HasValue,position=pose.HasValue?new[]{pose.Value.Position.X,pose.Value.Position.Y,pose.Value.Position.Z}:null,
             rotation=pose.HasValue?new[]{pose.Value.Orientation.X,pose.Value.Orientation.Y,pose.Value.Orientation.Z,pose.Value.Orientation.W}:null};
+        private void SizePreview(int width)
+        {
+            if (outsideTexture != null && outsideTexture.width == width) return;
+            int height = Mathf.RoundToInt(width * .625f);
+            var previous = outsideTexture;
+            outsideTexture = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32) {name="Administrator outside view"};
+            outsideTexture.Create();
+            view.OperatorCamera.targetTexture = outsideTexture;
+            if (previous != null) { previous.Release(); Destroy(previous); }
+            if (capture != null) Destroy(capture);
+            capture = new Texture2D(width, height, TextureFormat.RGB24, false);
+        }
+
         private IEnumerator CaptureOutsideView()
         {
             while(server!=null)
             {
+                int requestedWidth = server.RequestedPreviewWidth;
+                if (requestedWidth == 0)
+                {
+                    yield return new WaitForSecondsRealtime(.2f);
+                    continue;
+                }
                 yield return new WaitForEndOfFrame();
                 if(capturePending){yield return null;continue;}
+                SizePreview(Math.Min(previewWidth, requestedWidth));
                 view.RefreshOperatorScreen();
                 var request=new RenderPipeline.StandardRequest{destination=outsideTexture};
                 if(RenderPipeline.SupportsRenderRequest(view.OperatorCamera,request))RenderPipeline.SubmitRenderRequest(view.OperatorCamera,request);
@@ -396,7 +514,7 @@ namespace Elts.Operator
                     var previous=RenderTexture.active;
                     try {
                         RenderTexture.active=outsideTexture;
-                        capture.ReadPixels(new Rect(0,0,previewWidth,previewHeight),0,0,false);
+                        capture.ReadPixels(new Rect(0,0,capture.width,capture.height),0,0,false);
                         server.PublishImage(capture.EncodeToJPG(previewJpegQuality));imageVersion++;
                     } finally {RenderTexture.active=previous;}
                 }
@@ -411,6 +529,10 @@ namespace Elts.Operator
                 QualitySettings.vSyncCount=previousVSync;
             }
             StopAllCoroutines();server?.Dispose();server=null;
+            if(discoveryPath!=null)
+            {
+                try { File.Delete(discoveryPath); } catch(IOException) { /* A reader may still hold it during shutdown. */ }
+            }
             UnityEngine.Cursor.visible=true;
             Elts.Development.DevelopmentBanner.ShowInPlayer=true;
             if(uiHost!=null)Destroy(uiHost);if(settings!=null)Destroy(settings);

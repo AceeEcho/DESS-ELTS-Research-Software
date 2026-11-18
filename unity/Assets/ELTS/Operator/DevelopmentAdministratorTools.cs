@@ -25,18 +25,8 @@ namespace Elts.Operator
     {
         private double stationBreakSeconds, stationPracticeSeconds;
         private string stationCheckpointId="", stationSaveStatus="No recording yet.";
-        private readonly List<StationNoteEntry> stationNotes=new List<StationNoteEntry>();
         private readonly List<StationTestCheckpoint> stationCheckpoints=new List<StationTestCheckpoint>();
-        private Task? archiveOperation;
-        private object[] stationRecordings=Array.Empty<object>();
-        private object? stationReview;
-        private string archiveMessage="", exportPath="";
 
-        public sealed class StationNoteEntry
-        {
-            public double seconds;
-            public string text="";
-        }
         /// <summary>Durable save marker for one test. Results are calculated once, from the
         /// recording's events, so the checkpoint deliberately stores no counts of its own.</summary>
         public sealed class StationTestCheckpoint
@@ -51,7 +41,7 @@ namespace Elts.Operator
 
         public object StationToolsState => new {
             breakSeconds=stationBreakSeconds, practiceSeconds=stationPracticeSeconds,
-            saveStatus=stationSaveStatus, checkpoints=stationCheckpoints, notes=stationNotes,
+            saveStatus=stationSaveStatus, latestCheckpoint=stationCheckpoints.LastOrDefault(),
             schedule=engine?.ScheduledConditions??StationOrder,
             queueIndex=engine?.CurrentBlockIndex??0,
             repeatable=engine?.FinishedConditions.ToArray()??Array.Empty<string>(),
@@ -71,8 +61,7 @@ namespace Elts.Operator
                 canAccept=!IsBusy && engine?.State==SessionState.Calibration && calibration.State==CalibrationWizardState.Review && calibrationWithinLimits,
                 canPractice=!IsBusy && engine?.State==SessionState.Calibration && calibration.State==CalibrationWizardState.Accepted
             },
-            readiness=StationReadiness(), recordings=stationRecordings, review=stationReview,
-            archiveBusy=archiveOperation!=null && !archiveOperation.IsCompleted, archiveMessage, exportPath
+            readiness=StationReadiness()
         };
 
         private object[] StationReadiness()
@@ -92,7 +81,7 @@ namespace Elts.Operator
                     detail=diskFreeBytes>0?(diskFreeBytes/(double)(1024*1024*1024)).ToString("F1")+" GB free at recording setup.":"Free space is checked when creating the recording (2 GB required)." },
                 new { name="Configuration",status="Ready",detail="Loaded and validated: "+view.Configuration.EffectiveSha256.Substring(0,12) },
                 new { name="Calibration",status=calibration.State==CalibrationWizardState.Accepted?"Ready":"Waiting",
-                    detail=calibration.State==CalibrationWizardState.Accepted?"Synthetic fixture accepted; startup rig configuration remains active.":"Complete the calibration steps inside the participant walkthrough." },
+                    detail=calibration.State==CalibrationWizardState.Accepted?"Calibration saved.":"Complete the calibration steps inside the participant walkthrough." },
                 new { name="Devices and displays",status="Emulated",detail="Controller: "+(mockLink?.State.ToString()??"not created")+". Display and SteamVR readiness are emulated; physical study readiness is unavailable." }
             };
         }
@@ -106,7 +95,7 @@ namespace Elts.Operator
                 throw new ArgumentException("Supply a duration for each of the four conditions.");
             foreach(double value in durations.Values)SessionEngine.ValidateDevelopmentDuration(value);
             // Validate the entire preset before changing any station setting.
-            Field("conditionOrder").value=String.Join(",",order);
+            preparedOrder=order.ToArray();
             foreach(var value in durations)stationDurations[value.Key]=value.Value;
             stationPracticeSeconds=practice;stationBreakSeconds=rest;
             lastMessage="Test setup applied.";
@@ -169,6 +158,9 @@ namespace Elts.Operator
         public void StationRepeat(string condition,string reason)
         {
             if(IsBusy || TestArmed || engine==null)throw new InvalidOperationException("Disarm and wait for saving before repeating a test.");
+            // Validate before reserving a new recording for a post-visit repeat.
+            if (String.IsNullOrWhiteSpace(reason) || reason.Trim().Length > 256)
+                throw new ArgumentException("Enter a reason of 1 to 256 characters.");
             if(engine.CanReopenForRepeat)
             {
                 if(!StationCanStartParticipant || !engine.FinishedConditions.Contains(condition) || String.IsNullOrWhiteSpace(reason))
@@ -192,7 +184,7 @@ namespace Elts.Operator
                 engine.SetDevelopmentPhaseDurations(stationPracticeSeconds,stationBreakSeconds);
                 if(engine.State==SessionState.Failed)throw new IOException(engine.Failure);
                 closing=false;
-                StationNote("Continuation of "+Path.GetFileName(previous)+"; reason: "+reason);
+                RecordSessionDetail("Continuation of "+Path.GetFileName(previous));
                 StartScenario();
                 RecordInputSource();StartAcquisition(view.Configuration);
                 stationSaveStatus="Recording repeated test in a new folder; earlier data retained.";
@@ -251,64 +243,12 @@ namespace Elts.Operator
             ?Path.Combine(Application.temporaryCachePath,"elts-automated-recordings",automatedRecordingRun)
             :view.Configuration.Machine.ResolveDataRoot(Path.Combine(Application.dataPath,".."));
 
-        public void StationArchiveAction(string action,string id="")
-        {
-            if(archiveOperation!=null && !archiveOperation.IsCompleted)throw new InvalidOperationException("Wait for recording review to finish.");
-            string rootPath=StationDataRoot;
-            string? activePath=recording?.IsOpen==true?recording.RunDirectory:null;
-            archiveMessage="Loading…";
-            if(action=="reviewRecording")stationReview=null;
-            if(action=="exportRecording")exportPath="";
-            archiveOperation=RunArchiveActionAsync(action,id,rootPath,activePath);
-        }
-
-        private async Task RunArchiveActionAsync(string action,string id,string rootPath,string? activePath)
-        {
-            try
-            {
-                if(action=="listRecordings")
-                {
-                    stationRecordings=await Task.Run(()=>Directory.Exists(rootPath)?Directory.GetDirectories(rootPath)
-                        .Where(path=>(File.GetAttributes(path)&FileAttributes.ReparsePoint)==0 && File.Exists(Path.Combine(path,"events.ndjson")))
-                        .OrderByDescending(Directory.GetLastWriteTimeUtc).Select(path=>(object)new {
-                            id=Path.GetFileName(path),finalized=File.Exists(Path.Combine(path,"session-summary.json")),
-                            active=String.Equals(path,activePath,StringComparison.OrdinalIgnoreCase),
-                            modifiedUtc=Directory.GetLastWriteTimeUtc(path).ToString("O") }).ToArray():Array.Empty<object>());
-                    archiveMessage=stationRecordings.Length+" local recordings.";
-                }
-                else
-                {
-                    string directory=ResolveRecording(rootPath,id);
-                    if(action=="reviewRecording")
-                    {
-                        stationReview=await Task.Run(()=>ReadRecordingReview(directory));
-                        archiveMessage="Review loaded. Counts are descriptive synthetic results.";
-                    }
-                    else if(action=="exportRecording")
-                    {
-                        if(String.Equals(directory,activePath,StringComparison.OrdinalIgnoreCase) || !File.Exists(Path.Combine(directory,"session-summary.json")))
-                            throw new InvalidOperationException("Finish the participant session before exporting the raw recording.");
-                        string outputDirectory=Path.Combine(rootPath,"exports");
-                        Directory.CreateDirectory(outputDirectory);
-                        if((File.GetAttributes(outputDirectory)&FileAttributes.ReparsePoint)!=0)throw new IOException("Export folder cannot be a link.");
-                        string destination=Path.Combine(outputDirectory,id+"-"+Guid.NewGuid().ToString("N")+".zip");
-                        await Task.Run(()=>ExportRecording(directory,destination));
-                        exportPath=destination;archiveMessage="Raw recording exported to "+destination;
-                    }
-                    else throw new ArgumentException("Unknown recording action.");
-                }
-            }
-            catch(Exception error){archiveMessage="Recording action failed: "+error.Message;}
-        }
-
-        private static string ResolveRecording(string rootPath,string id)
-        {
-            Elts.Logging.LoggingRunDirectory.ValidateRunId(id);
-            string directory=Path.Combine(rootPath,id);
-            if(!Directory.Exists(directory) || (File.GetAttributes(directory)&FileAttributes.ReparsePoint)!=0)
-                throw new IOException("Choose an existing recording directory.");
-            return directory;
-        }
+        // Automated tests write synthetic participant calibrations to their own folder.
+        private static readonly string automatedCalibrationRun = Guid.NewGuid().ToString("N");
+        /// <summary>Where participant calibrations saved by the Calibration Environment are read.</summary>
+        public string CalibrationProfileDirectory => Array.IndexOf(Environment.GetCommandLineArgs(),"-runTests")>=0
+            ?Path.Combine(Application.temporaryCachePath,"elts-automated-calibrations",automatedCalibrationRun)
+            :Elts.Config.MachineConfiguration.ResolveCalibrationProfiles(Path.Combine(Application.dataPath,".."));
 
         private static void ExportRecording(string directory,string destination)
         {
@@ -330,7 +270,6 @@ namespace Elts.Operator
             File.Move(pending,destination);
         }
 
-        private static object ReadRecordingReview(string directory) => TaskDataReview.Read(directory);
 
         public void StationOpenDataFolder()
         {

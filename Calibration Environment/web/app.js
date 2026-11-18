@@ -1,7 +1,9 @@
 import { METRES_PER_INCH, distanceFields, readDistance } from "./distance-fields.js";
+import { nextUnusedId, normalizedId, participantIdPicker } from "./participant-id.js";
 import { CalibrationScene } from "./scene.js";
 import { triggerIndicator } from "./trigger-indicator.js";
 import { installHeadCalibration } from "./head-calibration-ui.js";
+import { DIRECTION_LIMITS } from "./head-calibration.js";
 import {
     vec,
     rotation,
@@ -12,6 +14,9 @@ import {
     resolveObject,
     relativeAngles,
     screenPose,
+    screenDistance,
+    registrationTiltDegrees,
+    trackerToEye,
     recenteredRegistration,
 } from "./math.js";
 
@@ -20,8 +25,14 @@ const query = new URLSearchParams(location.search);
 const isScreen = query.has("screen");
 if (isScreen) document.body.classList.add("screen-only");
 const DRAFT_KEY = "elts-calibration-v1-draft";
+let datasetGeneration = "";
+// The browser retains only a random lookup key. The station owns draft contents
+// so its permanent reset can remove them even when this browser is closed.
+const DRAFT_ID_KEY = "elts-calibration-draft-id";
+let draftId = "", queuedDraft, draftWrite;
 let resetHeight; // Undefined in older drafts, initially uses screen-centre height.
 let resetDistance = 2; // Metres, stored with the local draft for repeatable resets.
+let resetReference = "eye"; // Older drafts are explicitly restored as head-centre measurements.
 let config,
     defaults,
     token,
@@ -33,7 +44,8 @@ let config,
 let head = { valid: false },
     weapon = { valid: false },
     modified = false,
-    profileName = "My calibration";
+    // The participant this draft belongs to; empty until saved or loaded.
+    participantId = "";
 let lastScreenState = 0,
     lastMonitor = 0,
     noticeTimer,
@@ -64,6 +76,7 @@ async function api(path, body) {
                   headers: {
                       "Content-Type": "application/json",
                       "X-Calibration-Token": token,
+                      "X-Dataset-Generation": datasetGeneration,
                   },
                   body: JSON.stringify(body),
               },
@@ -82,15 +95,24 @@ function set(path, value) {
     parts.reduce((object, key) => object[key], config)[key] = value;
 }
 function persistDraft() {
+    if (!draftId || isScreen) return;
+    queuedDraft = {id: draftId, config: structuredClone(config), participantId, resetDistance, resetHeight, resetReference};
+    if (!draftWrite) draftWrite = writeDrafts();
+    return draftWrite;
+}
+async function writeDrafts() {
     try {
-        localStorage.setItem(
-            DRAFT_KEY,
-            JSON.stringify({ config, profileName, resetDistance, resetHeight }),
-        );
-    } catch {
-        notice(
-            "Browser draft storage is unavailable. Save a profile to keep changes.",
-        );
+        while (queuedDraft) {
+            const next = queuedDraft;
+            queuedDraft = null;
+            await api("draft", next);
+        }
+        return true;
+    } catch (error) {
+        notice("Could not save the calibration draft. " + error.message);
+        return false;
+    } finally {
+        draftWrite = null;
     }
 }
 function syncScreen() {
@@ -98,7 +120,7 @@ function syncScreen() {
 }
 function changed(path = "") {
     modified = true;
-    $("save-state").textContent = "Unsaved profile changes";
+    $("save-state").textContent = "Unsaved calibration changes";
     // References depend on bindings, room registration and the fitted mount.
     for (const role of ["head", "weapon"])
         if (
@@ -123,8 +145,8 @@ function profileDistance(path, label, directions) {
     return distanceFields(path, label, get(path), directions);
 }
 
-function vector(path, label, angles = false) {
-    const names = angles
+function vector(path, label, angles = false, names = null) {
+    names ??= angles
         ? ["Pitch X", "Yaw Y", "Roll Z"]
         : ["X · right", "Y · up", "Z · back"];
     return `<div class="field-title">${label} (${angles ? "°" : "m"})</div><div class="vector">${names.map((name, i) => `<label for="f-${path}.${i}">${name}<input id="f-${path}.${i}" data-path="${path}.${i}" type="number" min="${angles ? -360 : -100}" max="${angles ? 360 : 100}" step="any" value="${Number(get(path)[i].toFixed(4))}"></label>`).join("")}</div>`;
@@ -134,6 +156,17 @@ function check(path, label) {
 }
 function section(title, body, help = "") {
     return `<section><h3>${title}</h3>${help ? `<p class="help">${help}</p>` : ""}${body}</section>`;
+}
+const TILT_NAMES = ["Pitch · nose up", "Yaw · turn left", "Roll · twist"];
+const TRACKER_TO_EYE = "head.trackerToEye";
+function openScreen() {
+    const opened = window.open(
+        "/?screen=1&session=" + encodeURIComponent(session),
+        "elts-calibration-screen-" + session,
+        "width=1280,height=720",
+    );
+    syncScreen();
+    return opened;
 }
 function mountSection(role) {
     return section(
@@ -150,14 +183,26 @@ function mountSection(role) {
             " to the tracker, in object-local axes. −Z is forward. Live object pose uses the inverse of this mounting transform.",
     );
 }
+function mountTilt(role) {
+    return vector(role + ".mount.rotation", "Tracker tilt on the " + (role === "head" ? "head" : "gun"), true, TILT_NAMES) +
+        `<button class="wide" data-action="align-${role}">Align ${role === "head" ? "head" : "gun"} forward to screen</button>`;
+}
+function headMountSection() {
+    return section(
+        "Where the tracker sits on the head",
+        vector("head.mount.position", "Centre of the head → centre of the tracker", false,
+            ["Right +", "Up +", "Behind +"]) + mountTilt("head"),
+        "These offsets locate the head centre. Changing that reference keeps the measured tracker-to-eye offset below. Tilt is how the tracker is turned relative to the head; use the head-direction guide to establish room alignment.",
+    );
+}
 function manualSection(role) {
     return section(
         "Manual test pose",
         vector(
             role + ".manual.position",
-            role === "head" ? "Head centre in room" : "Receiver centre in room",
-        ) + vector(role + ".manual.rotation", "Object rotation", true),
-        "Used only in Manual preview. Change these values to test offsets and perspective without equipment. Positive yaw turns left; positive pitch looks up.",
+            role === "head" ? "Head centre in room" : "Gun drawing centre in room",
+        ) + vector(role + ".manual.rotation", "Rotation", true),
+        "Used only in Manual preview, to try offsets without equipment. Positive yaw turns left; positive pitch looks up.",
     );
 }
 function binding(role) {
@@ -178,18 +223,6 @@ function renderSettings() {
                 `<details><summary>Screen angle &amp; size calculator</summary>${vector("screen.rotation", "Screen rotation", true)}<div class="single-row"><div class="field"><label for="diagonal">Diagonal (inches)</label><input id="diagonal" type="number" min="1" max="300" value="65"></div><div class="field"><label for="aspect">Aspect ratio</label><select id="aspect"><option value="1.7777777778">16:9</option><option value="1.6">16:10</option><option value="1.3333333333">4:3</option><option value="2.3333333333">21:9</option></select></div></div><button class="wide" data-action="diagonal">Calculate width &amp; height</button></details>`,
             "Enter the illuminated display area, excluding the bezel. Bottom height is the midpoint of the lower edge.",
         );
-        config.baseStations.forEach((base, i) => {
-            html += section(
-                `Base station ${i + 1}`,
-                check(`baseStations.${i}.enabled`, "Show this base station") +
-                    profileDistance(`baseStations.${i}.position.0`, "X · left / right", ["Right", "Left"]) +
-                    profileDistance(`baseStations.${i}.position.1`, "Y · centre height from floor", ["Above", "Below"]) +
-                    profileDistance(`baseStations.${i}.position.2`, "Z · front / back", ["Back", "Front"]) +
-                    vector(`baseStations.${i}.rotation`, "Orientation", true) +
-                    `<label class="field" for="base-device-${i}">Copy a live base station pose</label><select id="base-device-${i}" class="base-device" data-index="${i}"></select><button class="wide" data-action="base-${i}">Copy current station pose</button>`,
-                "Y is the base station centre height above the floor. These values place the model; they do not recalibrate SteamVR.",
-            );
-        });
         html += section(
             "Room &amp; display aids",
             `<div class="single-row">${field("room.width", "Room width", { min: 1, max: 30 })}${field("room.depth", "Room depth", { min: 1, max: 30 })}</div>` +
@@ -206,16 +239,20 @@ function renderSettings() {
             binding("head"),
             "Head and weapon must use different serial numbers. Select live input in Tracking.",
         );
-        html += mountSection("head");
+        html += headMountSection();
         html += section(
-            "Eye &amp; person",
-            `<div class="field-title">Viewing eye from head centre</div>` +
-                profileDistance("head.eye.0", "X · left / right", ["Right", "Left"]) +
-                profileDistance("head.eye.1", "Y · up / down", ["Up", "Down"]) +
-                profileDistance("head.eye.2", "Z · front / back", ["Back", "Front"]) +
-                profileDistance("person.height", "Participant height") +
+            "Viewing eye",
+            `<div class="field-title">Tracker centre → viewing eye</div>` +
+                distanceFields(`${TRACKER_TO_EYE}.0`, "X · left / right", trackerToEye(config).x, ["Right", "Left"]) +
+                distanceFields(`${TRACKER_TO_EYE}.1`, "Y · up / down", trackerToEye(config).y, ["Up", "Down"]) +
+                distanceFields(`${TRACKER_TO_EYE}.2`, "Z · front / back", trackerToEye(config).z, ["Back", "Front"]),
+            "Measure directly from the tracker centre to your viewing eye, or the midpoint between your eyes, with the headband fitted. Directions follow your head: a rear-mounted tracker puts the eye in Front. Use this same eye point when entering reset measurements.",
+        );
+        html += section(
+            "Person drawing",
+            profileDistance("person.height", "Participant height") +
                 field("person.radius", "Body radius", { min: 0.05, max: 0.6 }),
-            "Participant height sizes the body preview. Set the tracker mount and viewing-eye offsets separately for the actual headband fit.",
+            "These dimensions size the body preview. They do not determine the eye position.",
         );
         html += manualSection("head");
     } else if (tab === "weapon") {
@@ -250,7 +287,7 @@ function renderSettings() {
             "Tracking origin → room",
             vector("registration.position", "SteamVR origin in this room") +
                 vector("registration.rotation", "SteamVR axes rotation", true),
-            "Standing-origin registration is independent of base-station placement. Set this transform so measured tracker locations line up with your screen. Recheck after SteamVR room setup or recentering.",
+            "Set this transform so measured tracker locations line up with your screen; the head-direction guide sets it for you. Redo it after the base station moves, SteamVR room setup, or recentering.",
         );
         html += section(
             "Perspective &amp; freshness",
@@ -326,21 +363,6 @@ function updateDevices(force = false) {
             );
         select.value = config[role].serial;
     }
-    document.querySelectorAll(".base-device").forEach((select) => {
-        const old = select.value;
-        select.replaceChildren(new Option("Select live base station", ""));
-        devices
-            .filter((d) => d.kind === "base station")
-            .forEach((d) =>
-                select.add(
-                    new Option(
-                        `${d.serial} · ${d.valid ? "valid" : "unavailable"}`,
-                        d.serial,
-                    ),
-                ),
-            );
-        if (devices.some((d) => d.serial === old)) select.value = old;
-    });
     const list = $("device-list");
     if (list) {
         list.replaceChildren();
@@ -383,6 +405,9 @@ function formatVector(value, digits = 3) {
 }
 function updateMonitor(result) {
     if (!config) return;
+    const tilt = registrationTiltDegrees(config);
+    $("registration-warning").hidden = tilt <= DIRECTION_LIMITS.roomTiltWarningDeg;
+    $("registration-warning").textContent = `Tracking axes are tilted ${tilt.toFixed(1)}° from room up. Re-run Calibrate head directions. Position reset preserves the current alignment.`;
     currentPoses();
     $("reset-head").disabled = source !== "live" || !head.valid;
     $("calibrate-head").disabled = source !== "live" || !head.valid;
@@ -454,11 +479,15 @@ function updateMonitor(result) {
               formatVector(result.eye.toArray()) +
               " m · off-axis perspective"
             : "No valid head pose for perspective.";
+        const distance = result.eye ? screenDistance(config, result.eye) : null;
+        $("eye-distance-readout").textContent = distance === null
+            ? "Eye → screen: unavailable"
+            : `Eye → screen: ${distance.toFixed(3)} m · ${(distance / METRES_PER_INCH).toFixed(1)} in perpendicular to the display`;
         $("preview-message").hidden = result.previewValid;
         $("preview-message").textContent = result.graphicsUnavailable
             ? "3D graphics paused. Refresh the page and check browser graphics acceleration."
             : head.valid
-              ? "Eye must be in front of the screen, beyond the near clip."
+              ? "The calculated eye is on or behind the screen. Check the eye measurement and room alignment."
               : head.reason || "No valid head pose";
         $("graphics-error").hidden = !scene.roomContextLost;
         $("screen-status").textContent =
@@ -546,6 +575,12 @@ $("settings").addEventListener("change", (event) => {
             return notice("Height must be between 0.5 and 2.7 m and at least twice the body radius.");
         if (Math.abs(metres) > 100)
             return notice("The distance must be within 100 metres of the origin.");
+        if (path.startsWith(TRACKER_TO_EYE + ".")) {
+            const i = Number(path.slice(TRACKER_TO_EYE.length + 1));
+            config.head.eye[i] = config.head.mount.position[i] + metres;
+            changed("head.eye");
+            return;
+        }
         set(path, metres);
         changed(path);
         return;
@@ -571,6 +606,12 @@ $("settings").addEventListener("change", (event) => {
         input.value = before;
         return notice("Check clipping distances and person dimensions.");
     }
+    const headMountAxis = path.match(/^head\.mount\.position\.(\d)$/);
+    if (headMountAxis) {
+        // Re-express the same measured eye location after moving the head-centre
+        // reference. The tracker-to-eye vector must not change with that choice.
+        config.head.eye[headMountAxis[1]] += value - before;
+    }
     changed(path);
 });
 $("settings").addEventListener("click", async (event) => {
@@ -594,31 +635,6 @@ $("settings").addEventListener("click", async (event) => {
             await api("tracking", { enabled: false });
             setSource("manual");
             renderSettings();
-        } else if (action?.startsWith("base-")) {
-            const index = Number(action.slice(5)),
-                serial = $("base-device-" + index).value;
-            const fresh = currentFrame(),
-                device = fresh?.devices.find((d) => d.serial === serial);
-            if (
-                fresh?.status !== "connected" ||
-                !device?.valid ||
-                fresh.ageMs > config.view.staleMs
-            )
-                return notice(
-                    "Select a base station with a current valid pose.",
-                );
-            const p = compose(
-                pose(config.registration),
-                fromNative(device.matrix),
-            );
-            config.baseStations[index] = {
-                enabled: true,
-                position: p.p.toArray(),
-                rotation: degrees(p.q),
-            };
-            changed();
-            renderSettings();
-            notice("Copied base station pose into this profile.");
         }
     } catch (error) {
         notice(error.message);
@@ -643,18 +659,26 @@ document
     );
 // Keep the measured distance across reloads, including guide Apply.
 function showResetDistance() {
+    const referenceLabel = resetReference === "eye" ? "Viewing eye" : "Head centre";
+    $("reset-reference").value = resetReference;
     $("reset-distance-fields").innerHTML = distanceFields(
-        "reset-distance", "Reset distance from screen", resetDistance,
+        "reset-distance", `${referenceLabel} distance from screen`, resetDistance,
     );
     $("reset-height-fields").innerHTML = distanceFields(
-        "reset-height", "Head centre above floor at reset",
+        "reset-height", `${referenceLabel} above floor at reset`,
         resetHeight ?? screenPose(config).p.y,
     );
 }
+$("reset-reference").addEventListener("change", () => {
+    resetReference = $("reset-reference").value;
+    showResetDistance();
+    persistDraft();
+    notice("Enter distance and height measured from the selected point. Apply them with Reset position.");
+});
 $("reset-height-fields").addEventListener("change", () => {
     try {
         const height = readDistance("reset-height");
-        if (height > 10) throw new Error("Head height must be below approximately 32 feet 10 inches.");
+        if (height > 10) throw new Error("Height must be below approximately 32 feet 10 inches.");
         resetHeight = height;
         persistDraft();
     } catch (error) { notice(error.message); }
@@ -675,19 +699,22 @@ $("reset-head").onclick = () => {
         return notice("Connect a head tracker with a current valid pose first.");
     try {
         config.registration = recenteredRegistration(
-            config, head.object, readDistance("reset-distance"), readDistance("reset-height"),
+            config, head.object, readDistance("reset-distance"), readDistance("reset-height"), resetReference,
         );
         changed("registration");
         renderSettings();
-        notice("Head reset at the entered distance and floor height, facing the screen. Live movement continues from here.");
+        notice("Position reset at the entered measurements. Room alignment and head orientation are preserved.");
     } catch (error) { notice(error.message); }
 };
 $("weapon-forward").onclick = () => captureForward("weapon");
 installHeadCalibration({
     readState: () => ({ config, source, frame: currentFrame() }),
+    readResetMeasurements: () => ({ reference: resetReference,
+        distance: readDistance("reset-distance"), height: readDistance("reset-height") }),
     applyResult: (result) => {
         resetDistance = result.summary.distance;
-        resetHeight = readDistance("reset-height");
+        resetHeight = result.summary.height;
+        resetReference = result.summary.reference;
         showResetDistance();
         config.head.mount.rotation = result.mountRotation;
         config.registration = result.registration;
@@ -716,52 +743,84 @@ $("room-canvas").addEventListener("keydown", (event) => {
     scene.controls.update();
 });
 
+// Participant IDs are whole numbers only; keep this aligned with server.py.
+let savedParticipants = [];
+function participantLabel(id = participantId) {
+    return id ? `Participant ${id}` : "Unsaved participant";
+}
+const idPicker = participantIdPicker($("participant-id"));
+function savedParticipant(id) {
+    return savedParticipants.find((p) => String(p.id) === id);
+}
 async function refreshProfiles() {
     const state = await api("state");
+    savedParticipants = state.participants;
     $("profile-list").replaceChildren(
-        ...state.profiles.map((name) => new Option(name, name)),
+        ...savedParticipants.map(
+            (p) => new Option(participantLabel(String(p.id)) + (p.available === false ? " · Unreadable" : ""), p.id),
+        ),
     );
-    $("load-profile").disabled = !state.profiles.length;
-    if (state.profiles.includes(profileName))
-        $("profile-list").value = profileName;
+    if (savedParticipant(participantId))
+        $("profile-list").value = participantId;
+    else if (savedParticipants.some(p => p.available !== false))
+        $("profile-list").value = String(savedParticipants.find(p => p.available !== false).id);
+    updateProfileActions();
 }
+function updateProfileActions() {
+    const blocked = savedParticipant(idPicker.get())?.available === false;
+    $("save-profile").disabled = blocked;
+    $("unreadable-profile").hidden = !blocked;
+    const selection = savedParticipant($("profile-list").value);
+    $("load-profile").disabled = !selection || selection.available === false;
+}
+$("participant-id").addEventListener("change", updateProfileActions);
+$("profile-list").addEventListener("change", updateProfileActions);
 async function showProfiles() {
-    $("profile-name").value = profileName;
     $("profile-result").textContent = "";
     try {
         await refreshProfiles();
+        const next = nextUnusedId(savedParticipants);
+        $("next-participant").disabled = next === null;
+        idPicker.set(participantId || next || 0);
+        updateProfileActions();
         $("profiles-dialog").showModal();
+        idPicker.focus();
     } catch (e) {
         notice(e.message);
     }
 }
 $("profiles-button").onclick = showProfiles;
 $("save-button").onclick = showProfiles;
+$("next-participant").onclick = () => {
+    const next = nextUnusedId(savedParticipants);
+    if (next !== null) idPicker.set(next);
+    updateProfileActions();
+};
 $("save-profile").onclick = async () => {
     try {
-        const name = $("profile-name").value.trim();
+        const id = idPicker.get();
         if (
-            [...$("profile-list").options].some((o) => o.value === name) &&
+            savedParticipant(id) &&
             !confirm(
-                `Replace the saved profile “${name}” with the current settings?`,
+                `Replace the saved calibration for participant ${id} with the current settings?`,
             )
         )
             return;
-        await api("profile", { name, config });
-        profileName = name;
+        await api("participant", { participantId: Number(id), config });
+        participantId = id;
         modified = false;
         persistDraft();
-        $("save-state").textContent = "Saved · " + name;
+        $("save-state").textContent = "Saved · " + participantLabel();
         $("profile-result").textContent =
-            "Saved. The next START-ELTS launch will use the latest saved profile for synthetic rig geometry.";
+            `Saved. ELTS loads this calibration when participant ${id} is started.`;
         await refreshProfiles();
     } catch (error) {
         $("profile-result").textContent = error.message;
     }
 };
-function replaceConfig(next, name) {
+function replaceConfig(next, id = "") {
     config = next;
-    profileName = name;
+    participantId = id;
     scene.configure(config);
     changed();
     renderSettings();
@@ -770,18 +829,18 @@ $("load-profile").onclick = async () => {
     if (
         modified &&
         !confirm(
-            "Replace the current unsaved settings with the selected profile?",
+            "Replace the current unsaved settings with the selected participant's calibration?",
         )
     )
         return;
     try {
-        const name = $("profile-list").value;
-        replaceConfig(
-            await api("profile?name=" + encodeURIComponent(name)),
-            name,
+        const saved = await api(
+            "participant?id=" + encodeURIComponent($("profile-list").value),
         );
+        replaceConfig(saved.calibration, String(saved.participantId));
         modified = false;
-        $("save-state").textContent = "Loaded · " + name;
+        persistDraft();
+        $("save-state").textContent = "Loaded · " + participantLabel();
         $("profiles-dialog").close();
     } catch (error) {
         $("profile-result").textContent = error.message;
@@ -797,8 +856,9 @@ $("export-profile").onclick = async () => {
             a = document.createElement("a");
         a.href = url;
         a.download =
-            (profileName.replace(/[^a-zA-Z0-9 _-]/g, "_") ||
-                "Calibration profile") + ".json";
+            (participantId
+                ? "participant-" + participantId
+                : "calibration") + ".json";
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) {
@@ -820,20 +880,24 @@ $("import-file").onchange = async () => {
             )
         )
             return;
-        replaceConfig(
-            next,
-            file.name
-                .replace(/\.json$/i, "")
-                .replace(/[^a-zA-Z0-9 _-]/g, "_")
-                .slice(0, 64) || "Imported profile",
-        );
-        $("profile-name").value = profileName;
+        // Imported settings are not tied to a participant until saved under an ID.
+        replaceConfig(next);
+        idPicker.set(nextUnusedId(savedParticipants) ?? 0);
+        updateProfileActions();
         $("profile-result").textContent =
-            "Imported as an unsaved draft. Save to keep a named profile.";
+            "Imported as an unsaved draft. Choose a participant ID and save to keep it.";
     } catch (error) {
         $("profile-result").textContent = "Import failed: " + error.message;
     } finally {
         $("import-file").value = "";
+    }
+};
+$("save-room").onclick = async () => {
+    try {
+        await api("room", config);
+        $("profile-result").textContent = "Station room saved. Restart ELTS to use it.";
+    } catch (error) {
+        $("profile-result").textContent = error.message;
     }
 };
 $("reset-profile").onclick = () => {
@@ -843,18 +907,10 @@ $("reset-profile").onclick = () => {
         )
     )
         return;
-    replaceConfig(structuredClone(defaults), "My calibration");
-    $("profile-name").value = profileName;
+    replaceConfig(structuredClone(defaults));
     $("profiles-dialog").close();
 };
-$("open-screen").onclick = () => {
-    window.open(
-        "/?screen=1&session=" + encodeURIComponent(session),
-        "elts-calibration-screen-" + session,
-        "width=1280,height=720",
-    );
-    syncScreen();
-};
+$("open-screen").onclick = () => { openScreen(); };
 $("fullscreen").onclick = () =>
     document.fullscreenElement
         ? document.exitFullscreen()
@@ -909,14 +965,22 @@ function animate(now) {
 async function start() {
     try {
         const initial = await api("state");
+        datasetGeneration = initial.generation || "";
         token = initial.token;
         defaults = initial.defaults;
         config = structuredClone(defaults);
         try {
-            const draft = JSON.parse(localStorage.getItem(DRAFT_KEY));
+            draftId = localStorage.getItem(DRAFT_ID_KEY) || crypto.randomUUID().replaceAll("-", "");
+            localStorage.setItem(DRAFT_ID_KEY, draftId);
+            const legacy = JSON.parse(localStorage.getItem(DRAFT_KEY));
+            const stored = await api("draft?id=" + draftId);
+            const draft = stored || (legacy && (legacy.generation || "") === datasetGeneration ? legacy : null);
             if (draft?.config) {
                 config = await api("validate", draft.config);
-                profileName = draft.profileName || "My calibration";
+                // Existing values meant head centre. Never silently subtract
+                // the eye offset again by relabelling an older saved distance.
+                resetReference = draft.resetReference === "eye" ? "eye" : "head";
+                participantId = normalizedId(draft.participantId ?? "");
                 if (Number.isFinite(draft.resetDistance) &&
                     draft.resetDistance >= 0.25 && draft.resetDistance <= 10)
                     resetDistance = draft.resetDistance;
@@ -924,8 +988,11 @@ async function start() {
                     draft.resetHeight >= 0 && draft.resetHeight <= 10)
                     resetHeight = draft.resetHeight;
                 modified = true;
-                $("save-state").textContent = "Restored browser draft";
+                if (!stored && !isScreen && !await persistDraft())
+                    throw new Error("Could not migrate the previous calibration draft.");
+                $("save-state").textContent = "Restored calibration draft";
             }
+            if (!isScreen || stored || !draft) localStorage.removeItem(DRAFT_KEY);
         } catch {
             notice(
                 "The previous browser draft could not be loaded. Example setup restored.",
@@ -940,6 +1007,19 @@ async function start() {
         scene.configure(config);
         renderSettings();
         poll();
+        // Reset runs in the station's origin. Discard this tab's old profile on
+        // first contact, including when a suspended tab becomes visible again.
+        const checkDataset = async () => {
+            try {
+                const state = await api("dataset");
+                if (typeof state.generation === "string" && state.generation !== datasetGeneration) {
+                    try { localStorage.removeItem(DRAFT_KEY); } catch { /* Storage may be disabled. */ }
+                    location.reload();
+                }
+            } catch { /* A reset may temporarily hold the generation file exclusively. */ }
+        };
+        setInterval(checkDataset, 3000);
+        document.addEventListener("visibilitychange", () => { if (!document.hidden) checkDataset(); });
         if (!isScreen) setSource("live");
         requestAnimationFrame(animate);
         if (!isScreen) setInterval(syncScreen, 250);

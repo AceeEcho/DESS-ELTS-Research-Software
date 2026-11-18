@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Elts.Rendering;
+using Newtonsoft.Json;
 using Elts.Session;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -15,6 +16,9 @@ namespace Elts.Operator
         private readonly DevelopmentSessionPanel session;
         private readonly DevelopmentView view;
         private readonly VisualElement host,layer,canvas,content;
+        private readonly Dictionary<string,string> captions;
+        private readonly Label caption;
+        public bool ShowCaptions { get; set; }
         private readonly Label eyebrow,heading,instruction,detail,timer,footer,paused;
         private readonly List<VisualElement> extras=new List<VisualElement>();
         private readonly List<(VisualElement element, float delay)> reveals=new List<(VisualElement, float)>();
@@ -38,6 +42,8 @@ namespace Elts.Operator
             eyebrow=host.Q<Label>("tutorialEyebrow");heading=host.Q<Label>("tutorialHeading");
             instruction=host.Q<Label>("tutorialInstruction");detail=host.Q<Label>("tutorialDetail");
             timer=host.Q<Label>("tutorialTimer");footer=host.Q<Label>("tutorialFooter");paused=host.Q<Label>("tutorialPaused");
+            caption=host.Q<Label>("tutorialCaption");
+            captions=JsonConvert.DeserializeObject<Dictionary<string,string>>(Resources.Load<TextAsset>("ELTS/ParticipantTutorialCaptions").text);
             tracker=host.Q("tutorialTracker");cue=host.Q("tutorialCue");dock=host.Q("tutorialDock");
             for(int i=0;i<Chapters.Length;i++)
             {
@@ -109,6 +115,12 @@ namespace Elts.Operator
             if(running)eyebrow.text="SCENARIO";
             eyebrow.EnableInClassList("tutorial-hidden",String.IsNullOrEmpty(eyebrow.text));
             detail.EnableInClassList("tutorial-hidden",running || String.IsNullOrWhiteSpace(detail.text));
+            string spoken = "";
+            bool showCaption = ShowCaptions && !running && captions.TryGetValue(flow.Step.Script, out spoken);
+            caption.EnableInClassList("tutorial-hidden", !showCaption);
+            if (showCaption) caption.text=spoken;
+            instruction.EnableInClassList("tutorial-hidden", showCaption);
+            if (showCaption) detail.AddToClassList("tutorial-hidden");
             RefreshCue(flow,engine?.PracticePaused==true);
             PositionTargetCue();
             PositionAmmoHint();

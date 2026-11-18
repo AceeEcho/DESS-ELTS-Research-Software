@@ -1,0 +1,7 @@
+{
+  "name": "elts-dashboard-checks",
+  "private": true,
+  "dependencies": {
+    "playwright": "1.65.1"
+  }
+}

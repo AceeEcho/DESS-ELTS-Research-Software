@@ -24,11 +24,13 @@ const taskReview = {attempts:[{
 let rejectFolder = false;
 let current = {
   state: 'Idle', participant: '', runId: '', blockId: '', condition: '', canStartParticipant: true,
+  roomRevision: 'synthetic-room-1234567890abcdef',
+  participantCalibrations: [{ id: 0, available: true, screenMatches: false, revision: 'abcdef0123456789' }, { id: 7, available: false }],
   conditionOrder: conditions.slice(), testDurations: Object.fromEntries(conditions.map(c => [c, 300])),
   editableDurations: conditions.slice(), blocks: [], remainingSeconds: 0, activeSeconds: 0,
   tracking: {}, camera: { yaw: -32, pitch: 16, distance: 4.8 },
-  data: {ready:true, busy:false, path:'collection data', message:'Local collection ready', profiles:[{id:'profile1',code:'P-001',name:'Fictional participant',sessions:'2',modifiedUtc:'2026-09-11T12:00:00Z'}]},
-  tools: { practiceSeconds: 10, breakSeconds: 5, saveStatus: 'No recording yet.', notes: [], checkpoints: [],
+  data: {ready:true, busy:false, path:'collection data', message:'Local collection ready', profiles:[{id:'profile1',code:'P-001',sessions:'2',modifiedUtc:'2026-09-11T12:00:00Z'}]},
+  tools: { practiceSeconds: 10, breakSeconds: 5, saveStatus: 'No recording yet.', latestCheckpoint: null,
     schedule: conditions.slice(), queueIndex: 0, repeatable: [], readiness: [], calibration: {}, recordings: [] }
 };
 const server = http.createServer(async (req, res) => {
@@ -36,8 +38,12 @@ const server = http.createServer(async (req, res) => {
   if (req.url === '/api/command') {
     let data = ''; for await (const part of req) data += part;
     const command = JSON.parse(data); commands.push(command);
+    if (command.action === 'wipeDataset') current.datasetRemoval = {
+      request:command.request, state:'complete', version:1, message:'Participant data removed.'
+    };
     if(command.action === "openDataFolder" && rejectFolder){res.setHeader("Content-Type","application/json");res.end(JSON.stringify({ok:false,message:"Explorer could not open the folder."}));return;}
     if (command.action === 'viewOrbit') current.camera={yaw:command.yaw,pitch:command.pitch,distance:command.distance};
+    if (command.action === 'previewRate') current.previewFps = command.fps;
     if (command.action === 'resetView') current.camera={yaw:-32,pitch:16,distance:4.8};
     if (command.action === 'applySetup') {
       current.conditionOrder = command.conditionOrder; current.testDurations = command.durations;
@@ -65,10 +71,6 @@ const server = http.createServer(async (req, res) => {
       current.data.profile = null; current.data.rows = []; current.downloadId = '';
     }
     if (command.action === 'exportResults' || command.action === 'exportSessionRaw') current.downloadId=command.action==='exportResults'?'fixture-workbook':'fixture-raw';
-    if (command.action === 'listRecordings') current.tools.recordings = [{ id: 'synthetic-browser-test', finalized: true }];
-    if (command.action === 'reviewRecording') current.tools.review = { id: command.id, finalized: true,
-      attempts: [{ blockId: 'WE_FT-attempt-01', condition: 'WE_FT', status: 'Completed', hits: 2, shots: 3, activeSeconds: 300, scoreStatus: 'unavailable' }],
-      notes: [{ text: '<script>must remain text</script>' }], limitation: 'Synthetic browser fixture.' };
     res.setHeader('Content-Type', 'application/json'); res.end('{"ok":true}'); return;
   }
   if(req.url.startsWith('/api/download/')){res.setHeader('Content-Disposition','attachment; filename="'+(req.url.includes('workbook')?'fixture.xlsx':'fixture.zip')+'"');res.end('fixture bytes');return;}
@@ -90,8 +92,39 @@ const server = http.createServer(async (req, res) => {
   try {
     await page.goto(`http://127.0.0.1:${server.address().port}/#fixture`);
     await page.waitForFunction(() => document.getElementById('connectionText').textContent === 'Connected');
+    const textContract = JSON.parse(fs.readFileSync(path.join(root, 'tools/runtime-tests/fixtures/recording-text.json'), 'utf8'));
+    const limit = await page.locator('#exceptionReason').evaluate(el => el.maxLength);
+    assert.equal(limit, textContract.maxUtf16Units);
+    for (const item of textContract.cases) {
+      const value = item.unit.repeat(item.repeat);
+      assert.equal(Boolean(value.trim()) && value.length <= limit, item.accepted);
+    }
     await page.locator('#setupWelcome').waitFor({ state: 'visible' });
     assert.equal(await page.locator('#startDialog').isVisible(), false, 'Participant entry must not block setup');
+    await page.locator('#startParticipant').click();
+    const picker = page.getByLabel('Participant ID', {exact: true});
+    assert.equal(await picker.evaluate(el => el.tagName), 'SELECT');
+    assert.equal(await page.locator('#createParticipant').isDisabled(), true);
+    await picker.selectOption('7');
+    assert.match(await page.locator('#calibrationStatus').textContent(), /cannot be read/);
+    assert.equal(await page.locator('#createParticipant').isDisabled(), true);
+    await picker.selectOption('0');
+    assert.match(await page.locator('#calibrationStatus').textContent(), /different screen settings/);
+    await page.locator('#profileSources summary').click();
+    assert.match(await page.locator('#sourceRevisions').textContent(), /participant-0\.json.*abcdef012345.*1234567890ab/);
+    await page.locator('#profileSources summary').click();
+    assert.equal(await page.locator('#createParticipant').isEnabled(), true);
+    await page.locator('#assignmentCheck summary').click();
+    await page.locator('#assignedRow').fill('9, ' + conditions.join(', '));
+    assert.equal(await page.locator('#createParticipant').isEnabled(), false);
+    await page.locator('#assignedRow').fill('0, ' + conditions.join(', '));
+    assert.equal(await page.locator('#createParticipant').isEnabled(), true);
+    await page.locator('#assignedRow').fill('0, ' + conditions.slice().reverse().join(', '));
+    assert.equal(await page.locator('#createParticipant').isEnabled(), false);
+    await page.locator('#deviationReason').selectOption('schedule-change');
+    assert.equal(await page.locator('#createParticipant').isEnabled(), true);
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#startParticipant').evaluate(el => el === document.activeElement), true);
     // Use a loaded image: the placeholder alone cannot reproduce native image dragging.
     const renderedPreview=path.join(output,'library-floorplan-v3/administrator-default.png');
     const previewSource=fs.existsSync(renderedPreview)?'data:image/png;base64,'+fs.readFileSync(renderedPreview).toString('base64'):null;
@@ -121,6 +154,31 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.evaluate(() => window.previewNativeDrags), 0, 'Orbit gestures never start native image dragging');
     assert.equal(await page.evaluate(() => window.getSelection().toString()), '', 'Orbit gestures do not select overlay text');
     await page.locator('#settingsButton').click();
+    for (const fps of [5, 10, 20, 30]) {
+      await page.locator('#previewRate').selectOption(String(fps));
+      await wait(() => current.previewFps === fps);
+    }
+    await page.reload();
+    await page.locator('#settingsButton').click();
+    await page.waitForFunction(() => document.getElementById('previewRate').value === '30');
+    const wipes = () => commands.filter(c => c.action === 'wipeDataset');
+    await page.locator('#openDatasetRemoval').click();
+    for (const value of ['confirm', ' CONFIRM', 'CONFIRM ']) {
+      await page.locator('#datasetConfirmation').fill(value);
+      assert.equal(await page.locator('#confirmDatasetRemoval').isDisabled(), true);
+    }
+    await page.locator('#datasetConfirmation').fill('CONFIRM');
+    await page.keyboard.press('Enter');
+    assert.equal(wipes().length, 0, 'Typing confirmation alone cannot execute removal');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#datasetDialog').isVisible(), false);
+    await page.locator('#openDatasetRemoval').click();
+    assert.equal(await page.locator('#datasetConfirmation').inputValue(), '');
+    await page.locator('#datasetConfirmation').fill('CONFIRM');
+    await page.locator('#confirmDatasetRemoval').click();
+    await page.locator('#datasetDialog').waitFor({state:'hidden'});
+    assert.equal(wipes().length, 1);
+    assert.equal(wipes()[0].confirmation,'CONFIRM');
     await page.locator('#resetCamera').click();
     await wait(() => commands.some(c=>c.action==='resetView'));
     assert.deepEqual(current.camera,{yaw:-32,pitch:16,distance:4.8});
@@ -154,7 +212,7 @@ const server = http.createServer(async (req, res) => {
     await page.locator('#presetName').fill('Fixture preset'); await page.locator('#savePreset').click();
     assert.match(await page.locator('#presetSelect').textContent(), /Fixture preset/);
     await page.locator('#breakSeconds').fill('45'); await page.locator('#practiceSeconds').fill('20');
-    await page.locator('#applyPhaseTiming').click();
+    await page.locator('#practiceSeconds').press('Tab');
     await wait(() => current.tools.breakSeconds === 45);
     await page.locator('#presetSelect').selectOption('Fixture preset'); await page.locator('#loadPreset').click();
     await wait(() => current.tools.breakSeconds === 5);
@@ -220,7 +278,7 @@ const server = http.createServer(async (req, res) => {
     await page.locator('#startBreak').waitFor({ state: 'hidden' });
     assert.equal(commands.find(c => c.action === 'startBreak').blockId, 'WE_FT-attempt-01');
     assert.equal(await page.locator('#breakTimer').textContent(), '00:22');
-    assert.equal(await page.locator('#noteTimeline b').count(), 0, 'Notes are escaped');
+    assert.equal(await page.locator('#saveNote, #noteText, #abortReason').count(), 0, 'Operator notes and abort reason are absent');
     await page.screenshot({ path: path.join(output, 'administrator-break.png'), fullPage: true });
     await page.locator('#skipBreak').click();
     await wait(() => current.state === 'BlockReady');
@@ -395,9 +453,63 @@ const server = http.createServer(async (req, res) => {
     await restricted.addInitScript(() => Object.defineProperty(window, 'localStorage', {get(){throw new DOMException('Storage blocked','SecurityError');}}));
     await restricted.goto(`http://127.0.0.1:${server.address().port}/#fixture`);
     await restricted.waitForFunction(()=>document.getElementById('connectionText').textContent === 'Connected');
+    current.canStartParticipant = true;
+    await restricted.locator('#settingsButton').click();
+    await restricted.locator('#presetName').fill('Unpersisted setup');
+    await restricted.locator('#savePreset').click();
+    assert.match(await restricted.locator('#settingsError').textContent(), /could not save/);
+    assert.doesNotMatch(await restricted.locator('#orderStatus').textContent(), /Saved setup/);
+    assert.equal(await restricted.locator('#presetName').inputValue(), 'Unpersisted setup');
+    await restricted.locator('#closeSettings').click();
     await restricted.locator('#recordingsButton').click();
     assert.equal(await restricted.locator('#dataWorkspace').isVisible(),true,'Blocked browser preferences cannot disable controls');
     await restricted.close();
+    // A visible Data page requests its historical snapshot once per revision.
+    // This fixture intentionally omits the historical payload from the live API.
+    const revisionPage = await browser.newPage();
+    let detailRequests = 0, dataRevision = 2;
+    const indexedParticipant = {id:'fixture',code:'42',sessions:'1'};
+    await revisionPage.route('**/api/state*', route => route.fulfill({json:{...current,
+      data:{ready:true,busy:false,revision:dataRevision,message:'Rehearsal index ready'}}}));
+    await revisionPage.route('**/api/data', route => {
+      detailRequests++;
+      // Both updates carry the same recording ID and timestamp. Only the
+      // historical revision tells the browser that a new checkpoint exists.
+      const blocker = dataRevision===3 ? 'A recording file failed checksum verification.' : '';
+      const record = {id:'run',visitId:'visit',modifiedUtc:'2026-09-12T10:00:00Z',finalized:'1',
+        analysisEligibility:'Excluded',analysisReason:blocker || 'The attempt was skipped.',analysisBlocker:blocker,
+        visitEligibility:'Excluded',visitAnalysisReason:'1 of 1 recordings excluded. 0 require offline analysis.',
+        integrityStatus:blocker?'Failed':'Passed',
+        review:JSON.stringify({attempts:[{blockId:'test',condition:'Fixture',status:'Skipped',
+          analysisEligibility:'Excluded',analysisReason:'The attempt was skipped.'}],notes:[{text:'Checkpoint '+dataRevision},
+          {text:'Synthetic calibration fixture accepted: fixture 42 SHA-256 xxxxxxxxx'}]})};
+      const details = dataRevision < 4 ? {profiles:[indexedParticipant],
+        profile:{participant:indexedParticipant,sessions:[record]}} : {profiles:[],profile:null,rows:[]};
+      return route.fulfill({json:{revision:dataRevision,details}});
+    });
+    await revisionPage.goto(`http://127.0.0.1:${server.address().port}/#fixture`);
+    await revisionPage.waitForFunction(()=>document.getElementById('connectionText').textContent==='Connected');
+    assert.equal(detailRequests,0,'Live dashboard does not fetch history');
+    await revisionPage.locator('#recordingsButton').click();
+    await revisionPage.locator('[data-profile-id="fixture"]').waitFor();
+    await revisionPage.waitForTimeout(300);
+    assert.equal(detailRequests,1,'Unchanged live polls retain the same historical snapshot');
+    await revisionPage.locator('[data-profile-id="fixture"]').click();
+    await revisionPage.getByText('Checkpoint 2',{exact:true}).waitFor();
+    assert.match(await revisionPage.locator('#taskHeading').innerText(),/The attempt was skipped/);
+    await revisionPage.getByText('Standard 300-second analysis · Excluded',{exact:true}).click();
+    assert.match(await revisionPage.locator('#dataProfile').innerText(),/1 of 1 recordings excluded/);
+    assert.equal(await revisionPage.getByText('Calibration accepted.',{exact:true}).count(),1);
+    assert.doesNotMatch(await revisionPage.locator('#dataProfile').innerText(),/fixture accepted|SHA-256/);
+    dataRevision++;
+    await revisionPage.getByText('Checkpoint 3',{exact:true}).waitFor();
+    assert.match(await revisionPage.locator('#taskHeading').innerText(),/failed checksum verification/);
+    assert.equal(await revisionPage.getByText('Checkpoint 2',{exact:true}).count(),0);
+    assert.equal(detailRequests,2,'An open review updates once for its changed revision');
+    dataRevision++;
+    await revisionPage.getByText('Select a participant',{exact:true}).waitFor();
+    assert.equal(await revisionPage.locator('#dataRawRows').count(),0,'A removed review cannot remain selected');
+    await revisionPage.close();
     assert.deepEqual(errors, [], 'Dashboard has no browser errors');
     console.log('PASS: administrator browser interactions, stable held clicks/live polling, cached large reviews, graph inspection, partial/missing values and mobile layout');
   } catch (error) {

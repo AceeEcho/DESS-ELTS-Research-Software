@@ -22,7 +22,7 @@
             <div class="header-actions">
                 <span id="save-state">Example setup</span
                 ><button id="profiles-button">Profiles &amp; export</button
-                ><button id="save-button" class="primary">Save profile</button>
+                ><button id="save-button" class="primary">Save calibration</button>
             </div>
         </header>
         <div class="status-bar">
@@ -109,11 +109,17 @@
                                 <button id="head-forward">
                                     Set looking forward
                                 </button>
+                                <label for="reset-reference">Measure distance and height from</label>
+                                <select id="reset-reference">
+                                    <option value="eye">Viewing eye / eye midpoint</option>
+                                    <option value="head">Head centre</option>
+                                </select>
                                 <div id="reset-distance-fields"></div>
                                 <div id="reset-height-fields"></div>
-                                <button id="reset-head" class="primary" disabled>Reset head in front of screen</button>
-                                <p class="help">Enter the head centre’s distance from the screen and height above the floor. Face the screen, then reset.</p>
+                                <button id="reset-head" class="primary" disabled>Reset position</button>
+                                <p class="help">Centre the selected point in front of the TV. Enter its perpendicular distance from the glass and height above the floor. Reset changes position only; use the direction guide to set room alignment.</p>
                                 <button id="calibrate-head" disabled>Calibrate head directions…</button>
+                                <p id="registration-warning" class="help" role="status" hidden></p>
                             </article>
                             <article class="pose-card weapon-card">
                                 <h3>
@@ -151,6 +157,7 @@
                             View through the physical screen from the configured
                             eye.
                         </p>
+                        <p id="eye-distance-readout">Eye → screen: unavailable</p>
                     </section>
                 </div>
                 <p class="workspace-note">
@@ -183,22 +190,21 @@
                     ×
                 </button>
             </form>
-            <h2 id="profiles-title">Calibration profiles</h2>
+            <h2 id="profiles-title">Participant calibrations</h2>
             <p>
-                Profiles stay in this app’s own folder. Saving never applies
-                them to ELTS.
+                Save under the participant’s ID number. ELTS loads this
+                calibration when that participant ID is started.
             </p>
-            <label for="profile-name">Profile name</label
-            ><input
-                id="profile-name"
-                value="My calibration"
-                maxlength="64"
-            /><button id="save-profile" class="primary">
-                Save to profile folder
-            </button>
-            <label for="profile-list">Saved profiles</label
+            <fieldset>
+                <legend>Participant ID</legend>
+                <div id="participant-id" class="digit-picker"></div>
+                <button id="next-participant" type="button" class="text-button">Use next unused ID</button>
+            </fieldset>
+            <p id="unreadable-profile" role="status" hidden>This ID has an unreadable calibration. Choose another ID.</p>
+            <button id="save-profile" class="primary">Save calibration</button>
+            <label for="profile-list">Saved participants</label
             ><select id="profile-list"></select
-            ><button id="load-profile">Load selected profile</button>
+            ><button id="load-profile">Load selected calibration</button>
             <div class="dialog-divider"></div>
             <div class="dialog-actions">
                 <button id="export-profile">Export JSON</button
@@ -210,6 +216,7 @@
                     hidden
                 />
             </div>
+            <button id="save-room">Use these screen settings for the station</button>
             <button id="reset-profile" class="text-button">
                 Restore example setup
             </button>

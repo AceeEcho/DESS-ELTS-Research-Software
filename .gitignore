@@ -64,3 +64,4 @@ GEMINI.md
 .github/agents/
 .github/prompts/
 .github/skills/
+/tools/browser-tests/node_modules/

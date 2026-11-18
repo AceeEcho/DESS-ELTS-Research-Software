@@ -45,6 +45,8 @@ namespace Elts.Operator
         private readonly ConcurrentQueue<PendingCommand> commands=new ConcurrentQueue<PendingCommand>();
         private volatile bool stopped;
         private byte[] state=Encoding.UTF8.GetBytes("{\"busy\":true,\"state\":\"Starting\"}");
+        private byte[] collection=Encoding.UTF8.GetBytes("{}");
+        private byte[] profiles=Encoding.UTF8.GetBytes("{\"revision\":0,\"items\":[]}");
         private byte[] picture=Array.Empty<byte>();
         public string Token {get;}=Guid.NewGuid().ToString("N");
         public string Origin {get;}
@@ -57,6 +59,11 @@ namespace Elts.Operator
             if(path!=lastExport){lastExport=path;lastExportId=Guid.NewGuid().ToString("N");exports[lastExportId]=path;}
             return lastExportId;
         }
+        public void ClearDownloads()
+        {
+            exports.Clear();
+            lastExport = lastExportId = "";
+        }
 
         public AdministratorServer(string directory)
         {
@@ -68,8 +75,27 @@ namespace Elts.Operator
             worker=new Thread(Serve){IsBackground=true,Name="ELTS administrator loopback"};worker.Start();
         }
         public void PublishState(string json)=>Volatile.Write(ref state,Encoding.UTF8.GetBytes(json));
+        public void PublishCollection(string json)=>Volatile.Write(ref collection,Encoding.UTF8.GetBytes(json));
+        public void PublishProfiles(string json)=>Volatile.Write(ref profiles,Encoding.UTF8.GetBytes(json));
         public void PublishImage(byte[] jpeg)=>Volatile.Write(ref picture,jpeg);
         public bool TryTakeCommand(out PendingCommand command)=>commands.TryDequeue(out command);
+        // Only render preview frames while an authenticated dashboard has requested them recently.
+        // Keep the largest recently visible pane when two dashboards share a player.
+        private readonly long[] previewRequests = new long[3];
+        public int RequestedPreviewWidth
+        {
+            get
+            {
+                long now = Stopwatch.GetTimestamp();
+                for (int tier = 2; tier >= 0; tier--)
+                {
+                    long request = Interlocked.Read(ref previewRequests[tier]);
+                    if (request != 0 && now - request < 2 * Stopwatch.Frequency)
+                        return tier == 2 ? Int32.MaxValue : (tier == 1 ? 960 : 640);
+                }
+                return 0;
+            }
+        }
         private int connections;
         private void Serve()
         {
@@ -137,7 +163,17 @@ namespace Elts.Operator
                     }
                     return;
                 }
-                if(route=="/api/state"){Respond(stream,200,"application/json",Volatile.Read(ref state));return;}
+                if(route=="/api/state")
+                {
+                    if (!request[1].Contains("preview=0"))
+                    {
+                        int tier = request[1].Contains("preview=small") ? 0 : request[1].Contains("preview=medium") ? 1 : 2;
+                        Interlocked.Exchange(ref previewRequests[tier], Stopwatch.GetTimestamp());
+                    }
+                    Respond(stream,200,"application/json",Volatile.Read(ref state));return;
+                }
+                if(route=="/api/profiles"){Respond(stream,200,"application/json",Volatile.Read(ref profiles));return;}
+                if(route=="/api/data"){Respond(stream,200,"application/json",Volatile.Read(ref collection));return;}
                 if(route=="/api/view.jpg")
                 {var image=Volatile.Read(ref picture);Respond(stream,image.Length==0?204:200,"image/jpeg",image);return;}
                 string? file=route=="/"?"index.html":route=="/styles.css"?"styles.css":route=="/app.js"?"app.js":route=="/workflows.js"?"workflows.js":route=="/data-viewer.js"?"data-viewer.js":null;

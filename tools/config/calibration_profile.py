@@ -1,5 +1,24 @@
-"""Map dashboard geometry into the synthetic ELTS rig contract."""
+"""Map dashboard geometry into the synthetic ELTS rig contract.
+
+Room-level screen geometry is staged into the build. Head/weapon offsets belong to
+one participant and are applied by the Unity runtime when that participant
+starts (ParticipantCalibration.cs); participant_offsets mirrors that conversion
+so the two implementations can be checked against the same expected values.
+"""
 import math
+
+# Keep aligned with "Calibration Environment/server.py".
+PARTICIPANT_FORMAT = "elts-participant-calibration-v1"
+COORDINATE_SYSTEM = "RH_X-right_Y-up_Z-toward-viewer_metres_YXZ-degrees"
+
+
+def unwrap(saved):
+    """Return the dashboard configuration from a participant file or a legacy profile."""
+    if isinstance(saved, dict) and "format" in saved:
+        if saved["format"] != PARTICIPANT_FORMAT:
+            raise ValueError("Unsupported participant calibration format")
+        return saved["calibration"]
+    return saved
 
 
 def _number(value):
@@ -41,10 +60,20 @@ def _tracker_local(role, point, *, direction=False):
     return _unity(_rotate(point, mount["rotation"], inverse=True))
 
 
-def apply_profile(rig, profile, profile_hash):
+def _check_version(profile):
     if (type(profile["version"]) is not int or profile["version"] != 1
-            or profile["coordinateSystem"] != "RH_X-right_Y-up_Z-toward-viewer_metres_YXZ-degrees"):
+            or profile["coordinateSystem"] != COORDINATE_SYSTEM):
         raise ValueError("Unsupported dashboard profile version or coordinate system")
+
+
+def room_identity(profile):
+    """The values staged into the build; a change here requires a rebuild."""
+    return {"screen": profile["screen"], "weaponSerial": profile["weapon"].get("serial", "")}
+
+
+def apply_room(rig, profile, room_hash):
+    """Stage the shared screen rectangle. Participant offsets stay at source values."""
+    _check_version(profile)
     screen = profile["screen"]
     width, height = _number(screen["width"]), _number(screen["height"])
     if not 0.001 <= width <= 100 or not 0.001 <= height <= 100:
@@ -59,11 +88,17 @@ def apply_profile(rig, profile, profile_hash):
         offset = _rotate(local, screen["rotation"])
         rig["display"][key] = _unity([a + b for a, b in zip(bottom, offset)])
     rig["screenBottomHeightAboveFloorM"] = screen["bottom"]
-    rig["headEyeOffsetM"] = _tracker_local(profile["head"], profile["head"]["eye"])
+    rig["calibration"]["calibrationId"] = "synthetic-room-" + room_hash
+
+
+def participant_offsets(profile):
+    """Tracker-local eye, muzzle and bore in Unity axes for one participant."""
+    _check_version(profile)
     weapon = profile["weapon"]
-    rig["weaponMuzzleOffsetM"] = _tracker_local(weapon, weapon["muzzle"])
     bore = _rotate([0, 0, -1], weapon["bore"])
-    rig["weaponBoreLocalDirection"] = _tracker_local(weapon, bore, direction=True)
-    # The bore already incorporates the dashboard's correction.
-    rig["weaponZeroQuaternionXyzw"] = [0, 0, 0, 1]
-    rig["calibration"]["calibrationId"] = "synthetic-profile-" + profile_hash
+    return {
+        "headEyeOffsetM": _tracker_local(profile["head"], profile["head"]["eye"]),
+        "weaponMuzzleOffsetM": _tracker_local(weapon, weapon["muzzle"]),
+        # The bore already incorporates the dashboard's correction.
+        "weaponBoreLocalDirection": _tracker_local(weapon, bore, direction=True),
+    }

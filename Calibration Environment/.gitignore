@@ -1,4 +1,7 @@
 /profiles/*.json
 /profiles/*.tmp
+/profiles/.dataset-generation
 /.venv/
 /test-results/
+/station-room.json
+/station-room.tmp

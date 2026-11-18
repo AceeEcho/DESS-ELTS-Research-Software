@@ -303,7 +303,8 @@ namespace Elts.Operator.Tests
                     { var chip=document.rootVisualElement.Q("tutorialPaused");if(chip!=null)chip.style.visibility=Visibility.Hidden; }
                 station.ApplyCommand(new JObject { ["action"]="applySetup",["conditionOrder"]=new JArray("NE_FT","WE_FT","NE_MT","WE_MT"),
                     ["durations"]=new JObject{["NE_FT"]=1,["WE_FT"]=1,["NE_MT"]=1,["WE_MT"]=1},["practiceSeconds"]=10,["breakSeconds"]=2 });
-                station.ApplyCommand(new JObject { ["action"]="startParticipant",["participant"]="tutorial-integration" });
+                ParticipantCalibrationFixture.Save(session,4105);
+                station.ApplyCommand(new JObject { ["action"]="startParticipant",["participant"]="4105" });
                 float deadline=Time.realtimeSinceStartup+60;
                 while(session.Engine?.State!=SessionState.Calibration && Time.realtimeSinceStartup<deadline)
                 {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
@@ -484,7 +485,7 @@ namespace Elts.Operator.Tests
                 Assert.That(session.StationCanStartParticipant,Is.True);
                 Assert.That(File.ReadAllText(Path.Combine(run,"events.ndjson")),Is.EqualTo(before),"form receipt does not rewrite closed sensor data");
                 var receipt=JObject.Parse(File.ReadAllText(Directory.GetFiles(run,"tutorial-completion-*.json").Single()));
-                Assert.That((string)receipt["participantId"],Is.EqualTo("tutorial-integration"));
+                Assert.That((string)receipt["participantId"],Is.EqualTo("4105"));
                 Assert.That((bool)receipt["allFourScenariosCompleted"],Is.True);
                 var events=before.Split(new[]{'\r','\n'},StringSplitOptions.RemoveEmptyEntries).Select(JObject.Parse).ToArray();
                 Assert.That(events.Count(e=>(string)e["eventType"]=="TutorialSimulatedEltsStart"),Is.EqualTo(1));

@@ -26,21 +26,24 @@ function closeVector(a, b) {
     a.toArray().forEach((v, i) => close(v, b.toArray()[i]));
 }
 
-test("Head reset handles tilted screens, mount offsets and an existing registration", () => {
+test("Eye position reset handles tilted screens and mounts without changing room or head rotation", () => {
     const config = structuredClone(defaults);
     config.screen.rotation = [12, 35, -8];
     config.registration = { position: [1, -2, 0.4], rotation: [7, 50, -3] };
     config.head.mount.rotation = [20, -30, 8];
     const raw = pose({ position: [0.3, 1.8, -1], rotation: [15, 80, 2] });
     const current = compose(compose(pose(config.registration), raw), inverse(pose(config.head.mount)));
+    const previousRotation = [...config.registration.rotation];
     config.registration = recenteredRegistration(config, current, 2);
     const reset = compose(compose(pose(config.registration), raw), inverse(pose(config.head.mount)));
     const screen = screenPose(config);
-    closeVector(reset.p, point(screen, [0, 0, 2]));
-    close(Math.abs(reset.q.dot(screen.q)), 1);
+    closeVector(point(reset, config.head.eye), point(screen, [0, 0, 2]));
+    close(Math.abs(reset.q.dot(current.q)), 1);
+    assert.deepEqual(config.registration.rotation, previousRotation);
     const repeated = recenteredRegistration(config, reset, 2);
     closeVector(pose(repeated).p, pose(config.registration).p);
     assert.throws(() => recenteredRegistration(config, reset, NaN));
+    assert.throws(() => recenteredRegistration(config, reset, 2, 1.7, "tracker"));
 });
 
 test("Tracker-on-object inversion recovers a translated and rotated object", () => {

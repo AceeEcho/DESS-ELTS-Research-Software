@@ -1,0 +1,76 @@
+{
+  "inputs": [
+    {
+      "text": "0",
+      "id": 0
+    },
+    {
+      "text": "000000",
+      "id": 0
+    },
+    {
+      "text": "3",
+      "id": 3
+    },
+    {
+      "text": " 007 ",
+      "id": 7
+    },
+    {
+      "text": "999999",
+      "id": 999999
+    },
+    {
+      "text": "1000000",
+      "id": null
+    },
+    {
+      "text": "3a",
+      "id": null
+    },
+    {
+      "text": "1e3",
+      "id": null
+    },
+    {
+      "text": "",
+      "id": null
+    },
+    {
+      "text": "-1",
+      "id": null
+    },
+    {
+      "text": "3.0",
+      "id": null
+    },
+    {
+      "text": "\u0663",
+      "id": null
+    }
+  ],
+  "records": [
+    {
+      "fileId": 0,
+      "fields": {
+        "participantId": 0
+      },
+      "valid": true
+    },
+    {
+      "fileId": 999999,
+      "fields": {
+        "participantId": 999999,
+        "name": "legacy fixture only"
+      },
+      "valid": true
+    },
+    {
+      "fileId": 12,
+      "fields": {
+        "participantId": 13
+      },
+      "valid": false
+    }
+  ]
+}

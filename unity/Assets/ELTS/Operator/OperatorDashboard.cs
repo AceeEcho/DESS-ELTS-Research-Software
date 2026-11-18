@@ -26,7 +26,7 @@ namespace Elts.Operator
             new Module("preparation","Preparation"),
             new Module("calibration","Calibration"),
             new Module("run","Practice and blocks"),
-            new Module("notes","Notes and markers"),
+            new Module("notes","Synchronization"),
             new Module("recordings","Recordings and replay"),
             new Module("devices","Devices and diagnostics"),
             new Module("checkpoints","Administrator checkpoints")
@@ -145,9 +145,9 @@ namespace Elts.Operator
             Show(Q<Button>("startBlock"),state.State==SessionState.BlockReady || state.State==SessionState.BlockRunning);
             Show(Q<Button>("endBlock"),state.State==SessionState.BlockRunning);
             moduleSummaries["preparation"].text=Q<TextField>("participant").value;
-            moduleSummaries["calibration"].text=state.Calibrated?"Development fixture accepted":"Fixture review pending";
+            moduleSummaries["calibration"].text=state.Calibrated?"Calibration saved":"Awaiting calibration review";
             moduleSummaries["run"].text=phase+(state.State.HasValue?" · "+Math.Min(4,state.BlockIndex+1)+" of 4":"");
-            moduleSummaries["notes"].text=String.IsNullOrWhiteSpace(Q<TextField>("note").value)?"Timestamped observations":"Draft kept here";
+            moduleSummaries["notes"].text="Provisional sync markers";
             moduleSummaries["recordings"].text=state.WriterOpen?"Recording open":state.RunDirectory.Length>0?"Recording closed":"No recording yet";
             moduleSummaries["devices"].text="Synthetic sources · mock link";
             moduleSummaries["checkpoints"].text=Workspace.Checkpoints.Count==0?"Add local reminders":Workspace.Checkpoints.Count(item=>item.Completed)+" of "+Workspace.Checkpoints.Count+" marked";

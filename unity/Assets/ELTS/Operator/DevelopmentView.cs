@@ -29,6 +29,7 @@ namespace Elts.Operator
         private const double MaximumFrameDeltaSeconds = 0.1;
         private static readonly Color Scarlet = new Color(233f/255f,8f/255f,2f/255f), Amber = new Color(1,0.65f,0.15f);
         private DevelopmentConfiguration configuration = null!;
+        private DevelopmentConfiguration stagedConfiguration = null!;
         private ScreenPlane screen;
         private Camera participant = null!, operatorCamera = null!;
         private GameObject head = null!, weapon = null!, eyeMarker = null!;
@@ -104,6 +105,14 @@ namespace Elts.Operator
         public bool ReplayPlaying => transport?.IsPlaying ?? false;
         public ScreenPlane DisplayPlane => screen;
         public DevelopmentConfiguration Configuration => configuration;
+        /// <summary>
+        /// Uses one participant's saved eye/weapon offsets from now on. The screen and
+        /// room stay as staged, so no scene geometry needs rebuilding. Call only
+        /// between sessions.
+        /// </summary>
+        public void ApplyParticipantCalibration(ParticipantCalibration calibration)
+            => configuration=stagedConfiguration.WithParticipantCalibration(calibration);
+        public void ClearParticipantCalibration() => configuration=stagedConfiguration;
         public DevelopmentGameSettings GameSettings => activeGameSettings;
         public bool SessionControlsVisible { get; set; }
         /// <summary>
@@ -128,7 +137,7 @@ namespace Elts.Operator
         {
             try
             {
-                configuration=DevelopmentConfiguration.LoadDirectory(Path.Combine(Application.streamingAssetsPath,"config-generated"));
+                configuration=stagedConfiguration=DevelopmentConfiguration.LoadDirectory(Path.Combine(Application.streamingAssetsPath,"config-generated"));
                 gameSettings.ApplyPopulation(configuration.Scenario);
                 gameSettings.Validate();
                 activeGameSettings=gameSettings.Copy();

@@ -1,7 +1,7 @@
 // Guided direction alignment for the independent preview. These editable limits
 // reject unclear gestures; they are not physical accuracy or acceptance criteria.
 import * as T from "./vendor/build/three.module.js";
-import { compose, degrees, inverse, screenPose, resetHeadPose, vec } from "./math.js";
+import { compose, degrees, inverse, screenPose, resetReferencePoint, resetTargetPosition, vec } from "./math.js";
 
 export const DIRECTION_LIMITS = Object.freeze({
     captureDelayMs: 3000,
@@ -20,6 +20,7 @@ export const DIRECTION_LIMITS = Object.freeze({
     maxCrossAxisDeg: 15,
     maxForwardDifferenceDeg: 12,
     maxReturnDistanceM: 0.25,
+    roomTiltWarningDeg: 2,
 });
 
 export const DIRECTION_STEPS = [
@@ -61,7 +62,7 @@ export function averageStablePoses(samples, limits = DIRECTION_LIMITS) {
     return { p, q };
 }
 
-export function solveHeadDirections(config, samples, distance, limits = DIRECTION_LIMITS, headHeight) {
+export function solveHeadDirections(config, samples, distance, limits = DIRECTION_LIMITS, height, reference = "eye") {
     for (const { key } of DIRECTION_STEPS)
         if (!samples[key]) throw new Error("Capture every step before applying directions.");
     if (!Number.isFinite(distance) || distance < 0.25 || distance > 10)
@@ -105,19 +106,30 @@ export function solveHeadDirections(config, samples, distance, limits = DIRECTIO
         throw new Error("Return closer to your original centre position and capture the last step again.");
 
     const screen = screenPose(config);
-    const registrationQ = screen.q.clone().multiply(nativeBasis.clone().invert());
+    // The room stays level even if the TV is pitched or rolled. Only its
+    // horizontal facing sets the neutral head heading; standing-up is gravity.
+    const roomBack = vec([0, 0, 1]).applyQuaternion(screen.q);
+    roomBack.y = 0;
+    if (roomBack.lengthSq() < 1e-8)
+        throw new Error("A horizontal screen has no forward heading for this direction guide.");
+    roomBack.normalize();
+    const roomRight = up.clone().cross(roomBack).normalize();
+    const roomHeading = new T.Quaternion().setFromRotationMatrix(new T.Matrix4().makeBasis(roomRight, up, roomBack));
+    const registrationQ = roomHeading.clone().multiply(nativeBasis.clone().invert());
     // q_roomTracker = q_head * q_mount; solve mount rotation from forward pose.
-    const mountQ = screen.q.clone().invert().multiply(registrationQ).multiply(centre.q);
+    const mountQ = roomHeading.clone().invert().multiply(registrationQ).multiply(centre.q);
     const mount = { p: vec(config.head.mount.position), q: mountQ };
     const rawHead = compose(centre, inverse(mount));
-    const targetHead = resetHeadPose(config, distance, headHeight);
-    const registration = compose(targetHead, inverse(rawHead));
+    const rotatedHead = compose({ p: vec([0, 0, 0]), q: registrationQ }, rawHead);
+    const target = resetTargetPosition(config, distance, height);
+    const registration = { q: registrationQ,
+        p: target.sub(resetReferencePoint(config, rotatedHead, reference)) };
     return {
         registration: { position: registration.p.toArray(), rotation: degrees(registration.q) },
         mountRotation: degrees(mountQ),
         summary: {
             leftTurn: leftAngles[1], rightTurn: -rightAngles[1], lookUp: upAngles[0],
-            sidewaysSpan: moveLeft.p.distanceTo(moveRight.p), distance,
+            sidewaysSpan: moveLeft.p.distanceTo(moveRight.p), distance, height, reference,
         },
     };
 }

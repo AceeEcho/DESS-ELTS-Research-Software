@@ -11,17 +11,17 @@ using System.Xml;
 namespace Elts.Operator
 {
     /// <summary>Small native XLSX exporter for the offline Windows player. No
-    /// Excel installation is needed. Text is always an inline string, so participant
-    /// names, identifiers and notes can never become spreadsheet formulas.</summary>
+    /// Excel installation is needed. Identifiers and free text are written as
+    /// inline strings so a spreadsheet cannot interpret them as formulas.</summary>
     internal static class CollectionWorkbook
     {
         internal sealed class Sheet
         {
-            public readonly string Name;public readonly string[] Columns;public readonly string[][] Rows;
-            public Sheet(string name,string[] columns,string[][] rows){Name=name;Columns=columns;Rows=rows;}
+            public readonly string Name;public readonly string[] Columns;public readonly IEnumerable<string[]> Rows;
+            public Sheet(string name,string[] columns,IEnumerable<string[]> rows){Name=name;Columns=columns;Rows=rows;}
         }
         private const string Main="http://schemas.openxmlformats.org/spreadsheetml/2006/main";
-        private static readonly HashSet<string> TextColumns=new HashSet<string>{"participantCode","participantName","visitId","sessionId","blockId","condition","status","reason","metricsVersion","scoreStatus","outcome","referenceTargetId","referencePolicy","Metric","Unit","Definition"};
+        private static readonly HashSet<string> TextColumns=new HashSet<string>{"participantCode","visitId","sessionId","runId","blockId","condition","status","reason","metricsVersion","scoreStatus","outcome","referenceTargetId","referencePolicy","Metric","Unit","Definition"};
         public static void Write(string destination,IReadOnlyList<Sheet> sheets)
         {
             string pending=destination+".pending";
@@ -59,7 +59,6 @@ namespace Elts.Operator
         }
         private static void WriteSheet(XmlWriter w,Sheet sheet)
         {
-            if(sheet.Rows.Length>1048575)throw new IOException("Excel row limit exceeded. Export the SQLite database to retain the full collection.");
             bool guide=sheet.Name=="Metric guide";
             w.WriteStartElement("worksheet",Main);
             w.WriteStartElement("sheetViews");w.WriteStartElement("sheetView");w.WriteAttributeString("workbookViewId","0");Empty(w,"pane","ySplit","1","topLeftCell","A2","activePane","bottomLeft","state","frozen");w.WriteEndElement();w.WriteEndElement();
@@ -70,18 +69,20 @@ namespace Elts.Operator
                 Empty(w,"col","min",(c+1).ToString(),"max",(c+1).ToString(),"width",width,"customWidth","1");
             }
             w.WriteEndElement();w.WriteStartElement("sheetData");
-            for(int r=0;r<=sheet.Rows.Length;r++)
+            int r=0;
+            foreach (string[] row in new[] { sheet.Columns.Select(Header).ToArray() }.Concat(sheet.Rows))
             {
+                if(r>=1048576)throw new IOException("Excel row limit exceeded. Choose a narrower export scope.");
                 w.WriteStartElement("row");w.WriteAttributeString("r",(r+1).ToString());
                 if(r==0){w.WriteAttributeString("ht","38");w.WriteAttributeString("customHeight","1");}
                 else if(guide)
                 {
-                    w.WriteAttributeString("ht",GuideRowHeight(sheet.Rows[r-1]).ToString(CultureInfo.InvariantCulture));
+                    w.WriteAttributeString("ht",GuideRowHeight(row).ToString(CultureInfo.InvariantCulture));
                     w.WriteAttributeString("customHeight","1");
                 }
                 for(int c=0;c<sheet.Columns.Length;c++)
                 {
-                    string text=r==0?Header(sheet.Columns[c]):sheet.Rows[r-1][c];
+                    string text=row[c];
                     if(text.Length==0)continue; // SQL NULL stays blank, not zero.
                     if(text.Length>32767)throw new IOException("Excel cell limit exceeded. Use the database export for full text.");
                     w.WriteStartElement("c");w.WriteAttributeString("r",Column(c)+(r+1));
@@ -92,8 +93,9 @@ namespace Elts.Operator
                     w.WriteEndElement();
                 }
                 w.WriteEndElement();
+                r++;
             }
-            w.WriteEndElement();Empty(w,"autoFilter","ref","A1:"+Column(sheet.Columns.Length-1)+(sheet.Rows.Length+1));w.WriteEndElement();
+            w.WriteEndElement();Empty(w,"autoFilter","ref","A1:"+Column(sheet.Columns.Length-1)+r);w.WriteEndElement();
         }
 
         private static double GuideRowHeight(string[] row)

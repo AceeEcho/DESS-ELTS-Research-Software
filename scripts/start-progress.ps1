@@ -2,6 +2,26 @@
 # Status is informational: it never changes startup decisions or authorizes hardware.
 $script:EltsStartupWindow = $null
 
+# The support file contains fixed stage labels, elapsed times, and a build digest.
+# Never persist exception messages, local paths or the private dashboard address here.
+$script:EltsStartupPhases = [Collections.Generic.List[object]]::new()
+$script:EltsPhaseClock = [Diagnostics.Stopwatch]::StartNew()
+$script:EltsActivePhase = $null
+$script:EltsBuildDigest = $null
+$script:EltsBuildDecision = 'Not checked'
+
+function Write-EltsStartupSummary {
+    param([string]$Result)
+    $summary = [ordered]@{
+        result = $Result
+        buildFingerprint = $script:EltsBuildDigest
+        buildDecision = $script:EltsBuildDecision
+        phases = @($script:EltsStartupPhases.ToArray())
+        nextAction = if ($Result -eq 'failure') { 'Read the failed stage in the local startup window, correct the reported issue, then run START-ELTS.cmd again.' } else { '' }
+    }
+    $summary | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $script:EltsRepositoryRoot 'diagnostics/start-summary.json') -Encoding UTF8
+}
+
 function Start-EltsStartupWindow {
     param([string]$LogPath, [int]$RefreshMilliseconds = 200, [int]$SuccessCloseSeconds = 3)
     $state = [hashtable]::Synchronized(@{
@@ -123,6 +143,14 @@ function Start-EltsStartupWindow {
 
 function Set-EltsStartupStatus {
     param([string]$Title, [string]$Detail, [ValidateSet('working','success','failure')][string]$Result = 'working')
+    if ($script:EltsActivePhase) {
+        $script:EltsStartupPhases.Add([ordered]@{ stage = $script:EltsActivePhase; milliseconds = $script:EltsPhaseClock.ElapsedMilliseconds; result = $(if ($Result -eq 'failure') {'failed'} else {'completed'}) })
+    }
+    $script:EltsActivePhase = $Title
+    $script:EltsPhaseClock.Restart()
+    if ($Result -ne 'working') {
+        try { Write-EltsStartupSummary $Result } catch { Write-Warning 'Startup summary could not be written.' }
+    }
     Write-Host ("${Title}: $Detail")
     if ($script:EltsStartupWindow) {
         $state = $script:EltsStartupWindow.State

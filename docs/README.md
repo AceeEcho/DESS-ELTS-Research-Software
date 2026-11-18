@@ -20,7 +20,7 @@ The folders below are grouped by who reads them.
 | [Architecture](developer/architecture.md) | See how configuration, tracking, sessions, rendering and logging fit together |
 | [Developer quick start](developer/quick-start.md) | Build, test and verify from the command line |
 | [Toolchain](developer/toolchain.md) | Check pinned tool versions and what setup installs |
-| [Development package](developer/development-package.md) | Package a development player with its provenance |
+| [Development package](developer/development-package.md) | Run or verify the Windows rehearsal package |
 | [Operator design language](developer/operator-design-language.md) | Keep the dashboard and participant screens visually consistent |
 | [`modules/`](developer/modules/) | Read one page per subsystem, from `analysis.md` to `windows-build.md` |
 | [VIVE gun trigger](developer/modules/vive-trigger.md) | Bind the gun tracker's trigger and see how its presses are recorded |

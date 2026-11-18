@@ -538,7 +538,8 @@ input[type="checkbox"] {
 .preview-wrap p[hidden] {
     display: none;
 }
-#eye-readout {
+#eye-readout,
+#eye-distance-readout {
     font-size: 11px;
     color: var(--muted);
     margin-top: 8px;
@@ -626,6 +627,21 @@ dialog p {
     color: var(--muted);
     margin-bottom: 18px;
 }
+#profiles-dialog fieldset {
+    margin: 18px 0 0;
+    padding: 0;
+    border: 0;
+}
+.digit-picker {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: 6px;
+}
+.digit-picker select {
+    width: 100%;
+    min-width: 0;
+}
 dialog label {
     margin: 18px 0 6px;
 }
@@ -676,6 +692,7 @@ dialog .primary {
 .screen-only .readouts,
 .screen-only .preview-heading,
 .screen-only #eye-readout,
+.screen-only #eye-distance-readout,
 .screen-only .workspace-note {
     display: none;
 }

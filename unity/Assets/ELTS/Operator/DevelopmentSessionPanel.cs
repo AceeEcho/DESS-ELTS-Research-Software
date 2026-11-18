@@ -58,7 +58,7 @@ namespace Elts.Operator
 
         public SessionEngine? Engine => engine;
         public VisualElement PanelRoot => root;
-        public bool IsBusy => operation != null || quitInProgress;
+        public bool IsBusy => operation != null || quitInProgress || removingDataset;
         public void SetDiagnosticRenderTarget(RenderTexture target) { panelSettings.targetTexture=target; }
 
         private void Awake()
@@ -84,9 +84,8 @@ namespace Elts.Operator
             Bind("startBlock", () => Act(() => engine!.StartBlock()));
             Bind("endBlock", () => Act(() => engine!.EndBlock()));
             Bind("fire", () => Act(() => scenario!.Fire(acquisition?.Snapshot?.Weapon.Pose,acquisition?.Snapshot?.Head.Pose)));
-            Bind("abort", () => Act(() => engine!.Abort(Field("abortReason").value)));
+            Bind("abort", () => Act(() => engine!.Abort()));
             Bind("rerun", () => Begin(RerunAsync));
-            Bind("addNote", () => Act(() => { engine!.AddNote(Field("note").value); Field("note").value=""; Label("notesFeedback","Note saved in the active recording."); }));
             Bind("syncMarker", () => Act(() => engine!.EmitProvisionalSyncMarker("operator-button")));
             Bind("viewTools", () => SetVisible(false));
             var neMode = root.Q<DropdownField>("neLinkMode");
@@ -136,15 +135,22 @@ namespace Elts.Operator
             catch(Exception exception) { lastMessage=exception.Message; }
         }
 
-        private async Task CreateSessionAsync()
+        private Task CreateSessionAsync()
+        {
+            var mode = (DevelopmentNeLinkMode)Enum.Parse(typeof(DevelopmentNeLinkMode), root.Q<DropdownField>("neLinkMode").value);
+            return CreateSessionAsync(Field("participant").value.Trim(), Field("conditionOrder").value.Split(',').Select(x => x.Trim()),
+                root.Q<DropdownField>("inputSource").value == DesktopInputOption, mode);
+        }
+
+        private async Task CreateSessionAsync(string identifier, IEnumerable<string> order, bool desktopInput, DevelopmentNeLinkMode linkMode)
         {
             if(engine != null && engine.State != SessionState.SessionComplete
                 && engine.State != SessionState.Aborted && engine.State != SessionState.Failed)
                 throw new InvalidOperationException("Finish or abort the current session first.");
             var config=view.Configuration;
-            usingDesktopInput=root.Q<DropdownField>("inputSource").value==DesktopInputOption;
-            runId=LoggingRunDirectory.ValidateRunId(Field("participant").value.Trim());
-            var plan=new SessionPlan(runId, Field("conditionOrder").value.Split(',').Select(value=>value.Trim()),
+            usingDesktopInput=desktopInput;
+            runId=LoggingRunDirectory.ValidateRunId(identifier);
+            var plan=new SessionPlan(runId, order,
                 allowDevelopmentOnlyDurationOverride:SeparateAdministrator);
             await CloseRecordingAsync();
             try
@@ -152,6 +158,7 @@ namespace Elts.Operator
                 clock??=new SharedMonotonicClock();
                 sequence=new SessionEventSequence();
                 string dataRoot=StationDataRoot;
+                datasetLease??=new ParticipantDataset(dataRoot);
                 diskFreeBytes=await Task.Run(()=>new DriveInfo(Path.GetPathRoot(dataRoot)!).AvailableFreeSpace);
                 if(diskFreeBytes<MinimumDiskBytes) throw new IOException("At least 2 GB free disk space is required.");
                 // A packaged build identity maps to its complete revision in
@@ -165,8 +172,7 @@ namespace Elts.Operator
                 if(!await recording.ReserveAndStartAsync(runId)) throw new IOException("Cannot create recording in "+dataRoot+": "+recording.LastStartError);
                 await SaveParticipantIdentityAsync();
                 mockLink = new MockEltsLink(new SimulatedEltsController(clock));
-                var linkOptions = new SessionEltsLinkOptions((DevelopmentNeLinkMode)Enum.Parse(typeof(DevelopmentNeLinkMode),
-                    root.Q<DropdownField>("neLinkMode").value), applicationVersion:Application.version);
+                var linkOptions = new SessionEltsLinkOptions(linkMode, applicationVersion:Application.version);
                 var sessionLink = new SessionEltsLinkAdapter(clock, sequence, recording, mockLink, linkOptions);
                 engine=new SessionEngine(clock,sequence,plan,
                     new SessionTiming(SeparateAdministrator?stationPracticeSeconds:config.Session.PracticeDurationSeconds,
@@ -245,12 +251,14 @@ namespace Elts.Operator
                 if(SeparateAdministrator)stationSaveStatus="SAVE FAILED: recording closure is incomplete; inspect retained files.";
                 throw new IOException("Recording closure failed; retained files require inspection.");
             }
-            if(SeparateAdministrator)await SyncCollectionRecording();
-            if(SeparateAdministrator && recording?.RunDirectory!=null && engine!=null &&
+            bool closed=SeparateAdministrator && recording?.RunDirectory!=null &&
+                File.Exists(Path.Combine(recording.RunDirectory,"session-summary.json"));
+            if(SeparateAdministrator)await SyncCollectionRecording(closed);
+            if(closed && engine!=null &&
                 !stationSaveStatus.StartsWith("SAVE FAILED",StringComparison.Ordinal) &&
-                File.Exists(Path.Combine(recording.RunDirectory,"session-summary.json")) &&
                 (engine.State==SessionState.SessionComplete || engine.State==SessionState.Aborted))
-                stationSaveStatus="Recording finalized · all accepted data retained. Open Recordings to review or export.";
+                stationSaveStatus=collectionPendingDirectory.Length>0?"Recording closed. Open Data and refresh the index.":
+                    "Recording finalized · all accepted data retained. Open Data to review or export.";
         }
 
         private void Update()
@@ -331,7 +339,6 @@ namespace Elts.Operator
             root.Q<Button>("fire").SetEnabled(!IsBusy && engine?.State==SessionState.BlockRunning);
             root.Q<Button>("abort").SetEnabled(!IsBusy && engine!=null && !closing);
             root.Q<Button>("rerun").SetEnabled(!IsBusy && engine?.CanRerun==true);
-            root.Q<Button>("addNote").SetEnabled(!IsBusy && engine!=null && !closing);
             root.Q<Button>("syncMarker").SetEnabled(!IsBusy && engine!=null && !closing);
             root.Q<DropdownField>("neLinkMode").SetEnabled(!IsBusy && (engine==null || closing));
             root.Q<Button>("reconnectLink").SetEnabled(!IsBusy && engine!=null && !closing);
@@ -358,15 +365,21 @@ namespace Elts.Operator
             try
             {
                 if(operation!=null) await operation;
+                if(removingDataset && collectionOperation!=null) await collectionOperation;
                 engine?.Abort("application_shutdown");
                 await CloseRecordingAsync();
             }
             catch(Exception exception) { Debug.LogError("ELTS_SESSION_CLOSE_FAIL "+exception.Message); }
+            finally
+            {
+                if(collectionOperation!=null) await collectionOperation;
+                datasetLease?.Dispose();
+            }
             if(panelSettings!=null) Destroy(panelSettings);
         }
         private bool OnWantsToQuit()
         {
-            if(quitAllowed || (acquisition==null && recording?.IsOpen!=true && operation==null)) return true;
+            if(quitAllowed || (acquisition==null && recording?.IsOpen!=true && operation==null && !removingDataset)) return true;
             if(!quitInProgress) FlushBeforeQuit();
             return false;
         }
@@ -377,6 +390,7 @@ namespace Elts.Operator
             try
             {
                 if(operation!=null) await operation;
+                if(removingDataset && collectionOperation!=null) await collectionOperation;
                 engine?.Abort("application_shutdown");
                 await CloseRecordingAsync();
                 quitAllowed=true;

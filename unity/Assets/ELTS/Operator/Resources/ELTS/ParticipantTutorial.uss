@@ -149,3 +149,5 @@
 .tutorial-hero-art { width: 260px; height: 260px; }
 .tutorial-hero-caption { font-size: 30px; color: #a8b3bf; margin-top: 24px; }
 .tutorial-thanks-message { font-size: 56px; margin-top: 28px; }
+
+.tutorial-caption { font-size: 30px; color: #f5f3ee; white-space: normal; -unity-text-align: middle-center; background-color: #181c20; padding: 9px 18px; }

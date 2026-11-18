@@ -680,7 +680,7 @@ namespace Elts.Session
         /// Operator abort is available throughout an unfinished session. Only an active
         /// block emits BlockAborted; setup and phase aborts preserve that distinction.
         /// </summary>
-        public void Abort(string reason)
+        public void Abort(string reason = "Operator ended the session")
         {
             if (String.IsNullOrWhiteSpace(reason)) throw new ArgumentException("An abort reason is required.", nameof(reason));
             ExpireCurrentPhase();

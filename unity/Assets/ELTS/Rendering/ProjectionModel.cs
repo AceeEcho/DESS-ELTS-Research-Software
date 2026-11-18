@@ -22,9 +22,11 @@ namespace Elts.Rendering
             RenderNumbers.RequireFinite(eye, nameof(eye));
             if (!(screen.Width > 0) || !(screen.Height > 0)) throw new ArgumentException("A constructed screen plane is required.");
             double distance = Vector3d.Dot(screen.Origin - eye, screen.Normal);
-            if (!RenderNumbers.Finite(nearMarginMeters) || nearMarginMeters < 0 || distance <= nearMarginMeters + 0.001)
-                throw new ArgumentException("Eye must be in front of the screen, beyond the configured near margin.");
-            Near = distance - nearMarginMeters;
+            if (!RenderNumbers.Finite(nearMarginMeters) || nearMarginMeters < 0 || !(distance > 0))
+                throw new ArgumentException("Eye must be in front of the screen and the near margin must be non-negative.");
+            // Keep clipping in front of the screen when the usual margin no
+            // longer fits. The real eye distance still determines perspective.
+            Near = Math.Max(distance - nearMarginMeters, distance * 0.5);
             if (!RenderNumbers.Finite(farMeters) || farMeters <= distance) throw new ArgumentException("Far plane must be behind the screen.");
             Far = farMeters; Eye = eye; Right = screen.U; Up = screen.V; Forward = screen.Normal;
             Vector3d offset = screen.Origin - eye;

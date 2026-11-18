@@ -14,10 +14,12 @@
   let imageLoading = false;
   let intakeShown = false, submitting = false, orbitPending = false, orbitDirty = false;
   let orbitLocalUntil = 0;
+  let abortRunId = "", settingsOpener = null;
   let testActionBusy = false, stopBlockId = '', stopRunId = '';
   const durationDrafts = new Set(), durationSaves = new Map(), durationFeedback = new Map();
   let state = null, order = conditions.slice(), pollBusy = false, viewVersion = null;
   let workflows, dataViewer;
+  let profileCache = {revision:-1, items:[]};
   let refreshIdle = Promise.resolve();
   let orbit = { yaw: -32, pitch: 16, distance: 4.8 }, dragging = false, lastPoint = null;
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -53,6 +55,10 @@
     dataViewer?.render(state);
   const phase = state.phase || state.state || 'idle';
   const running = /running|armed|ready|waiting/i.test(`${phase} ${state.state || ''}`);
+  $('displayCheck').disabled = !state.canStartParticipant;
+  $('captions').checked = !!state.captions;
+  $('currentTask').hidden = !state.participant;
+  if (state.previewFps != null && document.activeElement !== $('previewRate')) $('previewRate').value = String(state.previewFps);
   $('participant').textContent = state.participant || '—';
   $('runId').textContent = state.runId ? `Run ${state.runId}` : 'No run';
   $('phaseText').textContent = titleCase(phase);
@@ -95,15 +101,15 @@
   $('disarmButton').hidden = !state.armed;
   $('recordingPath').textContent = state.recordingPath || 'Recording path unavailable';
   $('startParticipant').disabled = state.canStartParticipant !== true;
-  $('createParticipant').disabled = submitting || state.canStartParticipant !== true;
+  if (!$('startDialog').hidden) updateCalibrationLookup();
+  else $('createParticipant').disabled = submitting || state.canStartParticipant !== true;
   $('conditionOrder').querySelectorAll('button').forEach(button => { button.disabled = state.canStartParticipant !== true; });
   if (!intakeShown) { order = (state.conditionOrder?.length ? state.conditionOrder : conditions).slice(); intakeShown = true; }
-  $('saveNote').disabled = !state.participant || !!state.busy || state.canStartParticipant;
   renderBlocks();
   renderDurations();
   workflows?.render(state);
   renderTracking();
-  renderImage();
+  if (!$('workspace').hidden) renderImage();
   }
   function renderTracking() {
     const tracking = state?.tracking || {};
@@ -136,40 +142,51 @@
   pollBusy = true;
   let finishRefresh;
   refreshIdle = new Promise(resolve => { finishRefresh = resolve; });
-  try { const response = await fetch(`/api/state${token ? `?token=${encodeURIComponent(token)}` : ''}`, { headers: { 'X-Elts-Token': token }, cache: 'no-store' });
+  const panePixels = $('viewport').clientWidth * window.devicePixelRatio;
+  const preview = $('workspace').hidden ? '0' : panePixels <= 640 ? 'small' : panePixels <= 960 ? 'medium' : '1';
+  try { const response = await fetch('/api/state?preview=' + preview, { headers: { 'X-Elts-Token': token }, cache: 'no-store' });
   if (!response.ok) throw new Error(`State request failed (${response.status}).`);
-  state = await response.json();
+  const next = await response.json();
+  if (Number.isInteger(next.profileRevision)) {
+    if (next.profileRevision !== profileCache.revision) {
+      const response = await fetch('/api/profiles', {headers:{'X-Elts-Token':token}, cache:'no-store'});
+      if (!response.ok) throw new Error('Could not load saved participant IDs.');
+      profileCache = await response.json();
+    }
+    next.participantCalibrations = profileCache.items;
+  }
+  state = next;
   setConnection(true);
   render(); }
     catch (error) { setConnection(false);
   $('phaseText').textContent = 'Unavailable';
-  ['armButton','disarmButton','nextButton','abortButton','startParticipant','createParticipant','saveNote','pauseButton','resumeButton','stopTestButton','confirmStopTest'].forEach(id => { $(id).disabled = true; }); workflows?.offline(); }
+  ['armButton','disarmButton','nextButton','abortButton','startParticipant','createParticipant','pauseButton','resumeButton','stopTestButton','confirmStopTest'].forEach(id => { $(id).disabled = true; }); workflows?.offline(); }
     finally { pollBusy = false; finishRefresh(); }
   }
-  function initializeDurations() {
-    for (const condition of conditions) {
-      const form = document.createElement('div'); form.className = 'duration-editor';
-      const label = document.createElement('label'); label.className = 'field-label'; label.textContent = `${condition} · seconds`;
-      const input = document.createElement('input'); input.type = 'number'; input.min = '1'; input.max = '3600'; input.step = '1'; input.required = true; input.id = `duration-${condition}`;
-      label.append(input);
-      const status = document.createElement('span'); status.className = 'duration-save-status'; status.id = `durationStatus-${condition}`; status.setAttribute('role', 'status');
-      input.setAttribute('aria-describedby', status.id);
-      form.append(label, status); $('durationEditors').append(form);
-      input.addEventListener('input', () => {
-        durationDrafts.add(condition); durationFeedback.set(condition, 'Unsaved change');
-      });
-      // Number inputs commit their value on blur; Enter makes that commit explicit.
-      input.addEventListener('keydown', event => {
-        if (event.key === 'Enter') { event.preventDefault(); input.blur(); }
-      });
-      input.addEventListener('change', async () => {
-        if (!input.reportValidity() || durationSaves.has(condition)) return;
-        const seconds = Number(input.value); durationSaves.set(condition, seconds); durationFeedback.set(condition, 'Saving…'); input.disabled = true;
-        $('settingsError').hidden = true;
-        try { await command('setDuration', {condition, seconds}); await refresh(); }
-        catch (error) { durationSaves.delete(condition); durationFeedback.set(condition, 'Not saved'); input.disabled = false; notifyError($('settingsError'), error); }
-      });
-    }
+  function createDurationEditor(condition) {
+    const form = document.createElement('div'); form.className = 'duration-editor';
+    const label = document.createElement('label'); label.className = 'field-label'; label.textContent = 'Seconds';
+    const input = document.createElement('input'); input.type = 'number'; input.min = '1'; input.max = '3600'; input.step = '1'; input.required = true; input.id = `duration-${condition}`;
+    input.setAttribute('aria-label', `${condition} duration in seconds`);
+    label.append(input);
+    const status = document.createElement('span'); status.className = 'duration-save-status'; status.id = `durationStatus-${condition}`; status.setAttribute('role', 'status');
+    input.setAttribute('aria-describedby', status.id);
+    form.append(label, status);
+    input.addEventListener('input', () => {
+      durationDrafts.add(condition); durationFeedback.set(condition, 'Unsaved change');
+    });
+    // Number inputs commit their value on blur; Enter makes that commit explicit.
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Enter') { event.preventDefault(); input.blur(); }
+    });
+    input.addEventListener('change', async () => {
+      if (!input.reportValidity() || durationSaves.has(condition)) return;
+      const seconds = Number(input.value); durationSaves.set(condition, seconds); durationFeedback.set(condition, 'Saving…'); input.disabled = true;
+      $('settingsError').hidden = true;
+      try { await command('setDuration', {condition, seconds}); await refresh(); }
+      catch (error) { durationSaves.delete(condition); durationFeedback.set(condition, 'Not saved'); input.disabled = false; notifyError($('settingsError'), error); }
+    });
+    return form;
   }
   function renderDurations() {
     for (const condition of conditions) {
@@ -198,23 +215,90 @@
     finally { testActionBusy = false; render(); }
   }
   function renderOrder() { workflows?.renderOrder(); }
+  // A copied assignment row carries the ID as well as the order, so a row
+  // for another participant cannot be accepted through an accidental paste.
+  function readAssignment(participant) {
+    const raw = $('assignedRow').value.trim();
+    if (!raw) return { valid: true, message: 'Paste the ID and four condition codes from the assignment sheet.' };
+    const [id, ...assignedOrder] = raw.toUpperCase().split(/[\s,;]+/);
+    if (!/^[0-9]{1,6}$/.test(id) || String(Number(id)) !== participant)
+      return { valid: false, message: 'The row must start with the selected participant ID.' };
+    if (assignedOrder.length !== 4 || new Set(assignedOrder).size !== 4 ||
+        !assignedOrder.every(code => conditions.includes(code)))
+      return { valid: false, message: 'Include each of the four condition codes once.' };
+    const differs = assignedOrder.some((code, index) => code !== order[index]);
+    const reason = differs ? $('deviationReason').value : '';
+    return { valid: !differs || !!reason, differs, assignment: { participant, order: assignedOrder, reason },
+      message: differs ? 'Different from Settings. Correct the configured order or select the reason to use it.'
+        : 'Assignment matches Settings.' };
+  }
+  let pickerSignature = '';
+  function updateCalibrationLookup() {
+    const picker = $('participantPicker');
+    const profiles = state?.participantCalibrations || [];
+    const signature = JSON.stringify(profiles);
+    if (signature !== pickerSignature) {
+      const selected = picker.value;
+      picker.replaceChildren(new Option('Choose a participant ID', ''));
+      for (const profile of profiles) picker.add(new Option(String(profile.id), String(profile.id)));
+      picker.value = profiles.some(profile => String(profile.id) === selected) ? selected : '';
+      pickerSignature = signature;
+    }
+    const profile = profiles.find(entry => String(entry.id) === picker.value);
+    const available = !!profile && profile.available !== false && !state.calibrationDirectoryUnavailable;
+    $('calibrationStatus').textContent = state?.calibrationDirectoryUnavailable
+      ? 'The calibration folder could not be read. Check access and try again.'
+      : profiles.length === 0 ? 'No saved IDs. Save an ID in the calibration workspace or run PREPARE-REHEARSAL.cmd in the development package.'
+      : !profile ? 'Select the ID saved in the Calibration Environment.'
+      : !available ? 'This calibration cannot be read. Choose another ID or review the saved profile in the calibration workspace.'
+      : profile.screenMatches === false ? 'This ID was saved with different screen settings. The station screen will be used.'
+      : 'Calibration ready.';
+    $('calibrationStatus').classList.toggle('is-missing', !!state?.calibrationDirectoryUnavailable || (!!profile && !available));
+    $('profileSources').hidden = !available || !profile.revision;
+    if (!$('profileSources').hidden) {
+      const room = (state.roomRevision || 'Unavailable').replace(/^synthetic-room-([0-9a-f]{12})[0-9a-f]+$/, 'Station room $1');
+      $('sourceRevisions').textContent = `participant-${profile.id}.json · revision ${profile.revision.slice(0, 12)}. Room revision · ${room}.`;
+    }
+    const checked = readAssignment(picker.value);
+    $('assignmentStatus').textContent = checked.message;
+    $('deviationField').hidden = !checked.differs;
+    $('createParticipant').disabled = submitting || !available || !checked.valid || state?.canStartParticipant !== true;
+  }
   function openDialog() {
-  renderOrder();
-  $('participantInput').value = '';
-  $('participantName').value = ''; $('initialNotes').value = '';
-  $('startError').hidden = true;
-  $('startDialog').hidden = false;
-  $('participantInput').focus(); }
+    renderOrder();
+    $('participantPicker').value = '';
+    $('profileSources').open = false;
+    $('assignmentCheck').open = false;
+    $('assignedRow').value = '';
+    $('deviationReason').value = '';
+    $('startError').hidden = true;
+    $('startDialog').hidden = false;
+    updateCalibrationLookup();
+    $('participantPicker').focus();
+  }
   function closeDialog() { $('startDialog').hidden = true; $('startParticipant').focus(); }
-  function openAbort() { $('abortReason').value = '';
-  $('abortError').hidden = true;
-  $('abortDialog').hidden = false;
-  $('abortReason').focus(); }
-  function closeAbort() { $('abortDialog').hidden = true; }
+  function openAbort() {
+    abortRunId = state?.runId || '';
+    $('abortError').hidden = true;
+    $('abortDialog').hidden = false;
+    $('cancelAbort').focus();
+  }
+  function closeAbort() {
+    $('abortDialog').hidden = true;
+    $('abortButton').focus();
+  }
+  function openSettings(event) {
+    settingsOpener = event.currentTarget;
+    renderOrder();
+    $('settingsDialog').hidden = false;
+    $('closeSettings').focus();
+  }
   function wire() {
     workflows = window.createAdministratorWorkflows({ $, command, refresh, getState: () => state, getOrder: () => order,
-      setOrder: value => { order = value; }, escapeHtml, formatTime });
-    initializeDurations();
+      setOrder: value => { order = value; }, createDurationEditor, escapeHtml, formatTime });
+    workflows.renderOrder();
+    $('displayCheck').addEventListener('click', () => command('displayCheck').catch(e => notifyError($('settingsError'), e)));
+    $('captions').addEventListener('change', () => command('captions', {enabled:$('captions').checked}).catch(e => notifyError($('settingsError'), e)));
     $('pauseButton').addEventListener('click', () => testAction('pause').catch(() => {}));
     $('resumeButton').addEventListener('click', () => testAction('resume').catch(() => {}));
     $('stopTestButton').addEventListener('click', () => {
@@ -231,14 +315,31 @@
     $('startParticipant').addEventListener('click', openDialog);
   $('closeDialog').addEventListener('click', closeDialog);
   $('cancelDialog').addEventListener('click', closeDialog);
-  $('startForm').addEventListener('submit', async (event) => { event.preventDefault();
-  const participant = $('participantInput').value.trim();
-  if (!participant) { $('startError').textContent = 'Participant ID is required.';
-  $('startError').hidden = false;
-  return; } if (submitting) return; submitting = true; $('createParticipant').disabled = true;
-  try { await command('startParticipant', { participant, participantName: $('participantName').value.trim(), initialNotes: $('initialNotes').value.trim(), conditionOrder: order });
-  closeDialog();
-  await refresh(); } catch (error) { notifyError($('startError'), error); } finally { submitting = false; $('createParticipant').disabled = state?.canStartParticipant !== true; } });
+  $('assignedRow').addEventListener('input', () => { $('deviationReason').value = ''; updateCalibrationLookup(); });
+  $('deviationReason').addEventListener('change', updateCalibrationLookup);
+  $('participantPicker').addEventListener('change', () => {
+    $('deviationReason').value = '';
+    $('startError').hidden = true;
+    updateCalibrationLookup();
+  });
+  $('startForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    updateCalibrationLookup();
+    if ($('createParticipant').disabled) return;
+    const participant = $('participantPicker').value;
+    submitting = true;
+    $('createParticipant').disabled = true;
+    try {
+      await command('startParticipant', { participant, conditionOrder: order, assignment: readAssignment(participant).assignment });
+      closeDialog();
+      await refresh();
+    } catch (error) {
+      notifyError($('startError'), error);
+    } finally {
+      submitting = false;
+      updateCalibrationLookup();
+    }
+  });
   $('armButton').addEventListener('click', async () => { try { await command(state?.armed ? 'disarm' : 'arm');
   await refresh(); } catch (error) { $('armStatus').lastElementChild.textContent = error.message; } });
   $('disarmButton').addEventListener('click', async () => { try { await command('disarm');
@@ -248,21 +349,20 @@
   $('abortButton').addEventListener('click', openAbort);
   $('closeAbort').addEventListener('click', closeAbort);
   $('cancelAbort').addEventListener('click', closeAbort);
-  $('abortForm').addEventListener('submit', async (event) => { event.preventDefault();
-  const reason = $('abortReason').value.trim();
-  if (!reason) { $('abortError').textContent = 'A reason is required.';
-  $('abortError').hidden = false;
-  return; } try { await command('abort', { reason });
-  closeAbort();
-  await refresh(); } catch (error) { notifyError($('abortError'), error); } });
-  $('saveNote').addEventListener('click', async () => { const text = $('noteText').value.trim();
-  if (!text) return;
-  try { await command('note', { text });
-  $('noteText').value = ''; $('noteText').setCustomValidity(''); } catch (error) { $('noteText').setCustomValidity(error.message);
-  $('noteText').reportValidity(); } });
-  $('saveNote').disabled = !state?.participant;
-  $('settingsButton').addEventListener('click', () => { renderOrder(); $('settingsDialog').hidden = false; $('closeSettings').focus(); });
-  $('closeSettings').addEventListener('click', () => { $('settingsDialog').hidden = true; $('settingsButton').focus(); });
+  $('abortForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    if ($('confirmAbort').disabled) return;
+    $('confirmAbort').disabled = true;
+    try {
+      await command('abort', {runId: abortRunId});
+      closeAbort();
+      await refresh();
+    } catch (error) { notifyError($('abortError'), error); }
+    finally { $('confirmAbort').disabled = false; }
+  });
+  $('settingsButton').addEventListener('click', openSettings);
+  $('reviewSetup').addEventListener('click', openSettings);
+  $('closeSettings').addEventListener('click', () => { $('settingsDialog').hidden = true; (settingsOpener || $('settingsButton')).focus(); });
   $('previewRate').addEventListener('change', () => command('previewRate', { fps: Number($('previewRate').value) }).catch(error => notifyError($('settingsError'), error)));
   $('reduceMotion').checked = preference.get('elts-admin-reduced-motion') === 'true';
   document.body.classList.toggle('reduce-motion', $('reduceMotion').checked);
@@ -323,17 +423,22 @@
   const next = Math.max(.3, Math.min(.65, current + (event.key === 'ArrowLeft' ? .02 : -.02)));
   document.documentElement.style.setProperty('--pane', `${next * 100}%`);
   preference.set('elts-admin-pane', next); });
-  document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { closeDialog();
-  closeAbort(); $('stopTestDialog').hidden = true; $('manualDialog').hidden = true; $('settingsDialog').hidden = true; $('exceptionDialog').hidden = true; $('recordingsDialog').hidden = true; $('settingsButton').focus(); }
-  // Keep keyboard navigation inside the topmost open modal.
-  if (event.key === 'Tab') {
+  document.addEventListener('keydown', event => {
+    if (document.querySelector('dialog[open]')) return;
     const dialog = [...document.querySelectorAll('.overlay:not([hidden])')].at(-1);
     if (!dialog) return;
-    const fields = [...dialog.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea,select')];
+    if (event.key === 'Escape') {
+      const cancel = dialog.querySelector('[id^="cancel"], [id^="close"]');
+      if (cancel) { event.preventDefault(); cancel.click(); }
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const fields = [...dialog.querySelectorAll('button,input,textarea,select,[tabindex]')]
+      .filter(field => field.tabIndex >= 0 && !field.disabled && field.getClientRects().length);
     const first = fields[0], last = fields.at(-1);
-    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-  } });
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+  });
   }
   if (savedPane >= .3 && savedPane <= .65) document.documentElement.style.setProperty('--pane', `${savedPane * 100}%`);
   wire();

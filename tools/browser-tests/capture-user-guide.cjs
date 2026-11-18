@@ -37,18 +37,26 @@ const demoReview = { attempts: [{
     centerOffsetMm: i % 5 === 0 ? 24.5 : 4,
     edgeClearanceMm: i % 5 === 0 ? 14.5 : 0, referenceTargetId: 'demo-target-' + i
   }))
-}], notes: [{ text: 'Fictional guide data only. Not apparatus measurements or study results.' }] };
+}], notes: [] };
+const profileItems = [{ id: 1, available: true, screenMatches: true }];
+const details = {profiles:[{id:'demo-profile',code:'1',sessions:'1',modifiedUtc:'2026-09-21T12:00:00Z'}]};
 let current = {
   state: 'Idle', participant: '', runId: '', blockId: '', condition: '', canStartParticipant: true,
+  profileRevision: 1,
   conditionOrder: conditions.slice(), testDurations: Object.fromEntries(conditions.map(c => [c, 300])),
   editableDurations: conditions.slice(), blocks: [], remainingSeconds: 0, activeSeconds: 0,
   tracking: {}, camera: { yaw: 145, pitch: 20, distance: 4 },
-  data:{ready:true,busy:false,path:'collection data',message:'Local collection refreshed.',profiles:[{id:'demo-profile',code:'DEMO-001',name:'Demonstration participant',sessions:'1',modifiedUtc:'2026-09-11T12:00:00Z'}]},
-  tools: { practiceSeconds: 10, breakSeconds: 120, saveStatus: 'No recording yet.', notes: [], checkpoints: [],
-    schedule: conditions.slice(), queueIndex: 0, repeatable: [], readiness: [], calibration: {}, recordings: [] }
+  data:{revision:1,ready:true,busy:false,path:'collection data',message:'Local collection refreshed.'},
+  tools: { practiceSeconds: 10, breakSeconds: 120, saveStatus: 'No recording yet.', latestCheckpoint: null,
+    schedule: conditions.slice(), queueIndex: 0, repeatable: [], readiness: [] }
 };
 const server = http.createServer(async (req, res) => {
   if (req.url.split('?')[0] === '/api/state') { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(current)); return; }
+  if (req.url === '/api/profiles' || req.url === '/api/data') {
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(req.url === '/api/profiles' ? {revision:1, items:profileItems} : {revision:current.data.revision, details}));
+    return;
+  }
   if (req.url === '/api/command') {
     let data = ''; for await (const part of req) data += part;
     const command = JSON.parse(data); commands.push(command);
@@ -62,14 +70,12 @@ const server = http.createServer(async (req, res) => {
     if (command.action === 'setDuration') current.testDurations[command.condition] = command.seconds;
     if (command.action === 'startBreak') { current.state = 'Break'; current.remainingSeconds = 22; current.tools.canStartBreak = false; }
     if (command.action === 'skipBreak') { current.state = 'BlockReady'; current.tools.canSkipBreak = false; }
-    if (command.action === 'viewParticipant') current.data.profile = {
-      participant: current.data.profiles[0],
-      sessions: [{ id: 'demo-session', modifiedUtc: '2026-09-21T12:00:00Z', finalized: '1', review: JSON.stringify(demoReview) }]
-    };
-    if (command.action === 'listRecordings') current.tools.recordings = [{ id: 'DEMO-001-example', finalized: true }];
-    if (command.action === 'reviewRecording') current.tools.review = { id: command.id, finalized: true,
-      attempts: [{ blockId: 'WE_FT-attempt-01', condition: 'WE_FT', status: 'Completed', hits: 2, shots: 3, activeSeconds: 300, scoreStatus: 'unavailable' }],
-      notes: [{ text: 'Demonstration only: participant ready.' }], limitation: 'Fictional guide example; not research results.' };
+    if (command.action === 'viewParticipant') {
+      details.profile = {participant: details.profiles[0],
+        sessions: [{id:'demo-session', visitId:'demo-visit', modifiedUtc:'2026-09-21T12:00:00Z',
+          finalized:'1', integrityStatus:'Unchecked', review:JSON.stringify(demoReview)}]};
+      current.data.revision++;
+    }
     res.setHeader('Content-Type', 'application/json'); res.end('{"ok":true}'); return;
   }
   const name = req.url === '/' ? 'index.html' : req.url.slice(1);
@@ -80,17 +86,17 @@ const server = http.createServer(async (req, res) => {
 
 (async () => {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  const browser = await chromium.launch({ channel: process.env.ELTS_TEST_BROWSER || 'chrome', headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1050 }, deviceScaleFactor: 1 });
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   // State comes through the same HTTP interface as the desktop application.
   async function settle() { await page.waitForTimeout(500); }
-  async function shot(name, selector) {
+  async function shot(name, selector, directory = output) {
     if (process.argv.includes('--data-only') && !['01-dashboard', '13-data-viewer', '14-timeline', '15-shots'].includes(name)) return;
     const target = selector ? page.locator(selector) : page;
     if (selector) await target.scrollIntoViewIfNeeded();
     await settle();
-    await target.screenshot({ path: path.join(output, name + '.png') });
+    await target.screenshot({ path: path.join(directory, name + '.png') });
   }
   try {
     await page.goto(`http://127.0.0.1:${server.address().port}/#guide-demo`);
@@ -101,27 +107,37 @@ const server = http.createServer(async (req, res) => {
     await shot('03-timing', '.timing-settings');
     await page.locator('#closeSettings').click();
     await page.locator('#startParticipant').click();
-    await page.locator('#participantName').fill('Demonstration participant');
-    await page.locator('#participantInput').fill('DEMO-001');
-    await page.locator('#initialNotes').fill('Guide example only. Ready for a synthetic rehearsal.');
+    // The illustrated recording starts with a saved calibration ID.
+    await page.locator('#participantPicker').selectOption('1');
     await shot('04-participant', '#startForm');
     await page.locator('#cancelDialog').click();
-    Object.assign(current, { state: 'Calibration', participant: 'DEMO-001', runId: 'DEMO-001-example',
+    Object.assign(current, { state: 'BlockReady', participant: '1', runId: '1-example',
       condition: 'WE_FT', blockId: 'WE_FT-attempt-01', durationSeconds: 300, canAbort: true,
-      canStartParticipant: false, recordingPath: 'collection data / DEMO-001-example' });
-    current.tools.calibration = { canGenerate: true, review: 'Generate the synthetic fixture to review it.' };
+      canStartParticipant: false, recordingPath: 'collection data / 1-example' });
     current.tools.saveStatus = 'Recording active.';
-    await settle();
-    current.state = 'Practice'; current.remainingSeconds = 10;
-    current.tools.calibration = {}; current.tools.canRestartPractice = true; current.tools.canFinishPractice = true;
-    await settle();
-    current.state = 'BlockReady'; current.canArm = true; current.remainingSeconds = 300;
-    current.tools.canFinishPractice = false; current.tools.canRestartPractice = false; current.tools.canSkipTest = true;
+    Object.assign(current, {
+      state: 'Calibration',
+      tutorial: {
+        started: true, stage: 'HeadCalibration', step: '03', title: 'Head-tracker calibration',
+        instruction: 'Stand upright. Look straight ahead at the dot.',
+        primaryLabel: 'Capture direction 2 of 7', canPrimary: true,
+        canRedo: true, canPause: true, canReplay: true, audioAvailable: true,
+      },
+    });
+    await page.locator('#tutorialPanel').waitFor({ state: 'visible' });
+    await shot('dashboard-walkthrough', '#tutorialPanel', path.join(root, 'docs/images/readme'));
+    delete current.tutorial;
+    current.state = 'BlockReady';
+    current.canArm = true; current.remainingSeconds = 300;
+    current.tools.canSkipTest = true;
     await settle(); await shot('07-arm', '.task-card');
     Object.assign(current, { state: 'BlockRunning', canArm: false, canPause: true, canStop: true,
       remainingSeconds: 255, activeSeconds: 45, shots: 0, hits: 0 });
     current.tools.canSkipTest = false;
     await settle(); await shot('08-running', '.task-card');
+    await page.locator('#abortButton').click();
+    await shot('12-abort-session', '#abortForm');
+    await page.locator('#cancelAbort').click();
     Object.assign(current, { state: 'BlockPaused', canPause: false, canResume: true });
     await settle(); await shot('09-paused', '.task-card');
     Object.assign(current, { state: 'BlockEnded', canResume: false, canStop: false, remainingSeconds: 0 });
@@ -145,6 +161,13 @@ const server = http.createServer(async (req, res) => {
     await page.locator('[data-detail-tab="shots"]').click();
     await page.locator('#shotOutcome').selectOption('Miss');
     await shot('15-shots', '#taskExplorer');
+    await page.locator('#recordingsButton').click();
+    Object.assign(current, { state: 'Idle', participant: '', runId: '', canAbort: false, canStartParticipant: true });
+    await page.setViewportSize({ width: 1440, height: 1050 });
+    await page.locator('#settingsButton').click();
+    await page.locator('#openDatasetRemoval').click();
+    await page.locator('#datasetConfirmation').fill('CONFIRM');
+    await shot('16-confirm-data-removal', '#datasetDialog');
     assert.deepEqual(errors, []);
     console.log('PASS: requested user-guide screenshots from current dashboard assets.');
   } finally { await browser.close(); server.close(); }

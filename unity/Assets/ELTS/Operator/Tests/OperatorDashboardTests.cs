@@ -52,9 +52,9 @@ namespace Elts.Operator.Tests
                 Assert.That(root.Q<Button>("checkpoint-label-"+id),Is.SameAs(rowLabel),"Editing must update the existing row");
                 Assert.That(rowLabel.text,Does.Contain(longTitle));
                 Assert.That(rowLabel.resolvedStyle.whiteSpace,Is.EqualTo(WhiteSpace.Normal));
-                dashboard.SelectModule("notes");root.Q<TextField>("note").value="Unsent administrator observation";
-                dashboard.SelectModule("checkpoints");dashboard.SelectModule("notes");
-                Assert.That(root.Q<TextField>("note").value,Is.EqualTo("Unsent administrator observation"));
+                dashboard.SelectModule("notes");
+                Assert.That(root.Q<Button>("syncMarker"), Is.Not.Null);
+                Assert.That(root.Q<TextField>("note"), Is.Null);
                 dashboard.SelectModule("checkpoints");Submit(root.Q<Button>("removeCheckpoint"));
                 Assert.That(dashboard.Workspace.Checkpoints,Is.Empty);
                 Submit(root.Q<Button>("undoCheckpoint"));

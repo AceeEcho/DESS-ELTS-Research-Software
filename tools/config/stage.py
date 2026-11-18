@@ -1,6 +1,6 @@
 """Validate and stage the synthetic configuration bundle.
 
-Development startup may overlay geometry from the latest saved dashboard profile.
+Development startup may overlay screen geometry from the latest saved calibration.
 Outputs are generated under
 Unity's StreamingAssets directory and are written atomically. No live/local
 file is modified; config/local.json is an optional machine overlay constrained
@@ -22,7 +22,7 @@ from tempfile import NamedTemporaryFile
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from tools.validation.schema import ValidationError, validate_file  # noqa: E402
-from tools.config.calibration_profile import apply_profile  # noqa: E402
+from tools.config.calibration_profile import apply_room, room_identity, unwrap  # noqa: E402
 
 SCHEMAS = {"runtime": "runtime.schema.json", "rig": "rig.schema.json", "scenario": "scenario.schema.json", "session": "session.schema.json", "local": "local.schema.json"}
 STAGED_SCHEMAS = ("effective.schema.json", *SCHEMAS.values())
@@ -140,18 +140,28 @@ def _validate_local(local: dict) -> None:
 
 
 def _apply_latest_profile(root: Path, rig: dict, machine: dict) -> None:
-    directory = _safe_path(root, "Calibration Environment/profiles")
-    profiles = [
-        _safe_path(root, path.relative_to(root).as_posix())
-        for path in directory.glob("*.json")
-        if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9 _-]{0,63}\.json", path.name) and path.is_file()
-    ]
-    if not profiles:
-        return
-    path = max(profiles, key=lambda item: (item.stat().st_mtime_ns, item.name))
+    home = os.environ.get("ELTS_STATION_HOME")
+    if home and not Path(home).is_absolute():
+        raise ValueError("ELTS_STATION_HOME must be an absolute directory.")
+    station = Path(home) if home else root
+    path = _safe_path(station, "Calibration Environment/station-room.json")
+    if not path.is_file():
+        # Until the calibration workspace saves a station room, keep legacy installations usable.
+        directory = _safe_path(station, "Calibration Environment/profiles")
+        profiles = [
+            _safe_path(station, item.relative_to(station).as_posix())
+            for item in directory.glob("*.json")
+            if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9 _-]{0,63}\.json", item.name) and item.is_file()
+        ]
+        if not profiles:
+            return
+        path = max(profiles, key=lambda item: (item.stat().st_mtime_ns, item.name))
     try:
-        profile, raw = _load_json(path)
-        apply_profile(rig, profile, sha256_bytes(raw))
+        saved, _ = _load_json(path)
+        profile = unwrap(saved)
+        # Only room-level geometry is staged; per-participant eye/weapon offsets
+        # are loaded by the runtime when that participant ID starts.
+        apply_room(rig, profile, sha256_bytes(canonical(room_identity(profile))))
         # An explicit machine binding wins; otherwise use the saved weapon serial.
         serial = profile["weapon"].get("serial", "")
         if serial and not machine.get("weaponTriggerSerial"):
@@ -163,7 +173,7 @@ def _apply_latest_profile(root: Path, rig: dict, machine: dict) -> None:
         _validate_rig(rig)
     except (KeyError, TypeError, ValueError, OverflowError, OSError) as error:
         raise ValueError(f"Cannot apply calibration profile {path.name}: {error}") from error
-    print(f"Using calibration profile for synthetic ELTS: {path.name}")
+    print(f"Using screen geometry from calibration: {path.name}")
 
 
 def build_bundle(root: Path, *, use_calibration_profile: bool = False) -> tuple[dict, dict]:
@@ -251,7 +261,7 @@ def stage(root: Path, output: Path | None = None, check: bool = False, *,
 def check_staged(root: Path, output: Path | None = None) -> bool:
     """Check generated output without writing, accepting either legitimate staging.
 
-    START-ELTS stages the latest saved calibration profile, while tests and plain
+    START-ELTS stages the latest saved calibration's screen, while tests and plain
     staging use the source rig. Both are correct outputs of current source, so a
     check matches either one. Returns True when the saved-profile staging matched.
     """

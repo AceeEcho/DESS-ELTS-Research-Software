@@ -20,14 +20,18 @@ namespace Elts.Operator
         public const double LateralTravelMetres = 0.5;
         public const double VerticalTravelMetres = 0.35;
         public const double MaximumFrameStepSeconds = 0.1;
-        private readonly DevelopmentConfiguration config;
+        // Read on every rebuild: a participant's calibration can replace the rig offsets.
+        private readonly Func<DevelopmentConfiguration> configuration;
         private Vector3 offset;
         public Vector2 Aim { get; private set; } = new Vector2(0.5f, 0.5f);
         public RigidPose Head { get; private set; }
         public RigidPose Weapon { get; private set; }
 
         public DesktopInputModel(DevelopmentConfiguration config)
-        { this.config = config ?? throw new ArgumentNullException(nameof(config)); Rebuild(); }
+            : this(Constant(config ?? throw new ArgumentNullException(nameof(config)))) { }
+        public DesktopInputModel(Func<DevelopmentConfiguration> configuration)
+        { this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration)); Rebuild(); }
+        private static Func<DevelopmentConfiguration> Constant(DevelopmentConfiguration value) => () => value;
 
         public void Reset() { offset = Vector3.zero; Aim = new Vector2(0.5f, 0.5f); Rebuild(); }
         public void SetAim(Vector2 normalizedBottomLeft)
@@ -50,7 +54,7 @@ namespace Elts.Operator
         }
         private void Rebuild()
         {
-            var rig = config.Rig;
+            var rig = configuration().Rig;
             var screen = rig.Display;
             var eye = screen.Origin + screen.U * (screen.Width*0.5+offset.x)
                 + screen.V * (screen.Height*0.5+offset.y) - screen.Normal * (InitialEyeDistanceMetres-offset.z);

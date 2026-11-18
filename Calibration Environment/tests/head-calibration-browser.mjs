@@ -2,13 +2,14 @@
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { mkdir } from "node:fs/promises";
 import assert from "node:assert/strict";
+import { installDraftFixture } from "./draft-fixture.mjs";
 import * as T from "../web/vendor/build/three.module.js";
 import { compose, pose } from "../web/math.js";
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE_PATH
     ? pathToFileURL(process.env.PLAYWRIGHT_MODULE_PATH).href : "playwright");
 const output = new URL("../test-results/", import.meta.url);
 await mkdir(output, { recursive: true });
-const browser = await chromium.launch({ headless: true,
+const browser = await chromium.launch({ headless: true, channel: "chromium",
     args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 const page = await browser.newPage({ viewport: { width: 1500, height: 1000 } });
 const errors = [];
@@ -28,9 +29,10 @@ await page.route("**/api/tracking", (route) => {
         sequence, ageMs: stale ? 2000 : 0, devices: [{ serial: "TEST-HEAD", kind: "tracker", connected: true,
             valid: true, matrix }] } });
 });
-const draft = () => page.evaluate(() => JSON.parse(localStorage.getItem("elts-calibration-v1-draft")).config);
+const drafts = await installDraftFixture(page);
+const draft = async () => (await drafts.waitFor(value => !!value.config)).config;
 try {
-    await page.goto("http://127.0.0.1:8766");
+    await page.goto(process.env.CALIBRATION_BASE_URL || "http://127.0.0.1:8766");
     await page.waitForFunction(() => document.querySelector("#head-quality").textContent === "Live");
     const before = await draft();
     const screenCentreY = "1.676";
@@ -71,16 +73,19 @@ try {
     await page.locator("#direction-distance-inches").fill("8");
     await page.locator("#direction-apply").click();
     await page.waitForFunction(() => !document.querySelector("#direction-dialog").open);
-    await page.waitForFunction((expected) => document.querySelector("#head-position").textContent.includes(expected), `${screenCentreY} / 1.727`);
+    await page.waitForFunction(() => document.querySelector("#eye-distance-readout").textContent.includes("1.727 m"));
+    await page.waitForFunction((expected) => document.querySelector("#head-position").textContent.includes(expected), `${screenCentreY} / 1.817`);
     const after = await draft();
     assert.notDeepEqual(after.head.mount.rotation, before.head.mount.rotation);
     assert.deepEqual(after.head.mount.position, before.head.mount.position);
     assert.equal(after.head.reference, null);
     matrix = trackerMatrix(0.4, [0, 30, 0]);
-    await page.waitForFunction((expected) => document.querySelector("#head-position").textContent.includes(expected), `0.400 / ${screenCentreY} / 1.727`);
+    await page.waitForFunction((expected) => document.querySelector("#head-position").textContent.includes(expected), `0.400 / ${screenCentreY} / 1.817`);
     await page.waitForFunction(() => document.querySelector("#head-angles").textContent.includes("30.0°"));
     await page.locator("#reset-head").click();
-    await page.waitForFunction((expected) => document.querySelector("#head-position").textContent.includes(expected), `${screenCentreY} / 1.727`);
+    await page.waitForFunction(() => document.querySelector("#eye-distance-readout").textContent.includes("1.727 m"));
+    assert.deepEqual((await draft()).registration.rotation, after.registration.rotation, "Ordinary reset keeps the solved axes");
+    assert.ok((await page.locator("#head-angles").textContent()).includes("30.0°"), "Position reset preserves head yaw");
     assert.deepEqual(errors, []);
     console.log("PASS: cancel, stale capture, repeated sample rejection, seven guided captures, explicit Apply, preserved offsets, live movement and yaw after alignment, no page errors.");
 } finally { await browser.close(); }

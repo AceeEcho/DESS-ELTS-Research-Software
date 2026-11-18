@@ -14,10 +14,11 @@ See the [Texas Tech visual identity guide](https://www.ttu.edu/brand/visual-iden
 The `ELTSDesktop` player opens a browser administrator dashboard and a separate
 participant game window. A fresh station opens the dashboard without forcing
 participant entry. First use the gear icon to arrange tests and configure timing;
-then choose **New participant** and enter the participant number/ID, optional name
-or test alias, and initial observations.
-The existing timestamped `OperatorNote` stream stores these details before arming;
-names and observations are not saved in browser preferences or used as folder names.
+then choose **New participant** and select the participant ID from the numeric picker.
+The inventory refreshes in the background and revalidates changed files. An unreadable
+calibration shows a recovery action. A screen mismatch is visible before recording.
+Intake revalidates the selected file and applies its participant settings. The run
+retains its pseudonymous ID, visit, calibration source digest and applied settings.
 Reloading the dashboard during a session does not create another recording.
 
 The gear icon opens settings for condition order, windowed/fullscreen mode, preview
@@ -69,7 +70,7 @@ break; nothing arms or starts automatically.
 tracking and observed rate, setup-time disk space, configuration and fixture status.
 Controller/display/SteamVR substitutions remain explicitly labeled as emulated.
 
-Each shooting test has its own duration under **Settings → Test durations**, in
+Each shooting test has its own duration under **Settings → Session plan**, in
 seconds from 1 to 3600 (default 300). A committed value saves automatically before
 creating the recording, before that test starts, or while that test is paused. Upcoming tests can be edited
 while another is running. A new total duration must exceed the active time already
@@ -126,9 +127,8 @@ and SHA-256 checksums. A per-test checkpoint is useful recovery evidence but is 
 replacement for this final integrity summary. The analysis reader still requires a
 successfully finalized raw recording.
 
-The **Session notes** timeline shows accepted timestamped observations. The small
-**Data** button switches to the participant collection while administration keeps
-running. Search by participant ID or name, select a session, inspect its tests and
+The **Data** button switches to the participant collection while administration keeps
+running. Search by participant ID, select a session, inspect its tests and
 notes, or page through original JSON records.
 
 The collection folder and SQLite database are initialized on dashboard startup.
@@ -187,7 +187,7 @@ The following sections describe the embedded Unity workbench, which remains
 available for development and existing runtime tests.
 
 The Unity dashboard groups the existing synthetic testing controls into preparation,
-calibration, practice and blocks, notes, recordings, devices, and administrator
+calibration, practice and blocks, synchronization, recordings, devices, and administrator
 checkpoints. The session action stays below the focused task; participant and
 apparatus previews remain beside it. Use Unity **6000.3.23f1 LTS** for source work.
 
@@ -210,13 +210,12 @@ build/<new-empty-folder>`; the output directory must be empty for a new build.
 3. Generate, review and accept the development fixture. Continue through practice,
    breaks and blocks using the session action. **Go to current task** returns to
    the relevant controls without forcing navigation while you are editing elsewhere.
-4. Use Notes for timestamped observations and provisional sync markers. Draft text
-   survives switching tasks during the current application run.
+4. Use Synchronization for a provisional sync marker.
 5. Use Recordings to open the output folder or existing rendering and replay tools.
    Previous recordings remain intact when starting a rerun.
 
-Abort requires a reason. The dashboard calls the existing session controller;
-session timing, event ordering, logging and scoring remain owned by that controller.
+Confirming abort calls the session controller immediately.
+Session timing, event ordering, logging and scoring remain owned by that controller.
 See [session runtime](session.md) for these invariants.
 
 ## Arrange your workspace
@@ -240,7 +239,7 @@ are stored in `operator-workspace-v1.json` under Unity's `Application.persistent
 They are local to the Windows user, separate from raw recording output. Writes are
 debounced and atomically replaced. Invalid saved data is preserved; Workspace
 settings offers explicit recovery that archives the unreadable file before saving
-fresh settings. Unsaved recording-note drafts are not retained across application restarts.
+fresh settings.
 
 ## Extend the interface
 
@@ -270,7 +269,7 @@ review/export and continuation in a separate recording. The standalone session a
 logging checks cover the shared timer, attempt identities, two-queue save boundaries
 and injected durable-flush failure. `tools/browser-tests/administrator.cjs` exercises
 real dashboard assets against a synthetic HTTP fixture, including pointer/keyboard
-dragging, cancellation, presets, timing, escaped notes, CSV download and mobile layout.
+dragging, cancellation, presets, timing, CSV download and mobile layout.
 Run it with Node and Playwright available (`node tools/browser-tests/administrator.cjs`);
 Chrome is the default browser, with `ELTS_TEST_BROWSER` available to choose another
 installed Playwright browser channel.

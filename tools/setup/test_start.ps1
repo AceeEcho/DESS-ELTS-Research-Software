@@ -92,6 +92,26 @@ try {
     try { Invoke-EltsDevelopmentStart } catch { Assert ($_.Exception.Message -eq 'fixture setup failed') 'Wrong setup failure' }
     Assert (($calls -join ',') -eq 'setup') 'Apps opened after failed setup'
     Assert ($statuses[$statuses.Count - 1] -eq 'Preparing this computer') 'Setup failure must not report a later startup stage'
+    & {
+        . (Join-Path $repo 'scripts/start-dev-tools.ps1')
+        $previousStation = $env:ELTS_STATION_HOME
+        try {
+            $script:EltsRepositoryRoot = Join-Path $fixture 'Local/ELTS'
+            $env:ELTS_STATION_HOME = $script:EltsRepositoryRoot
+            foreach ($folder in @('unity/Assets','unity/Packages','unity/ProjectSettings','config/local',
+                    'schemas','tools/config','tools/build','tools/bootstrap','scripts')) {
+                New-Item -ItemType Directory -Force (Join-Path $script:EltsRepositoryRoot $folder) | Out-Null
+            }
+            $asset = Join-Path $script:EltsRepositoryRoot 'unity/Assets/test.txt'
+            Set-Content -LiteralPath $asset 'first'
+            $first = Get-EltsStartupFingerprint
+            Set-Content -LiteralPath $asset 'other'
+            $changed = Get-EltsStartupFingerprint
+            Assert ($first -ne $changed) 'An installation under a Local folder must detect edited asset contents'
+            Set-Content -LiteralPath (Join-Path $script:EltsRepositoryRoot 'config/local/tools.json') 'temporary cache'
+            Assert ((Get-EltsStartupFingerprint) -eq $changed) 'Local setup cache must not invalidate the build'
+        } finally { $script:EltsRepositoryRoot = $fixture; $env:ELTS_STATION_HOME = $previousStation }
+    }
     Write-Host 'PASS: 7 startup scenarios without Git, including paths with spaces and failure propagation.'
 } finally {
     Set-Location $originalLocation

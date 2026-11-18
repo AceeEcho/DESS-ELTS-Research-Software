@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { averageStablePoses, solveHeadDirections, DIRECTION_LIMITS } from "../web/head-calibration.js";
-import { compose, inverse, point, pose, rotation, screenPose } from "../web/math.js";
+import { compose, inverse, point, pose, rotation, screenPose, screenDistance, registrationTiltDegrees } from "../web/math.js";
 
 const defaults = JSON.parse(readFileSync(new URL("../defaults.json", import.meta.url)));
 function fixture() {
@@ -25,7 +25,7 @@ function fixture() {
 }
 function near(a, b, tolerance = 1e-7) { assert.ok(Math.abs(a - b) < tolerance, `${a} differs from ${b}`); }
 
-test("Direction guide solves a rotated mount and room; subsequent motion follows screen axes", () => {
+test("Direction guide solves the mount while keeping room-up level for a tilted screen", () => {
     const { config, samples, mount, headPose } = fixture();
     const before = JSON.stringify(config);
     const result = solveHeadDirections(config, samples, 2.4);
@@ -33,11 +33,24 @@ test("Direction guide solves a rotated mount and room; subsequent motion follows
     near(rotation(result.mountRotation).angleTo(mount.q), 0);
     const registration = pose(result.registration), screen = screenPose(config);
     const recovered = compose(compose(registration, samples.centre), inverse(mount));
-    near(recovered.p.distanceTo(point(screen, [0, 0, 2.4])), 0);
-    near(recovered.q.angleTo(screen.q), 0);
+    near(point(recovered, config.head.eye).distanceTo(point(screen, [0, 0, 2.4])), 0);
+    near(registrationTiltDegrees({ registration: result.registration }), 0);
     const moved = compose(compose(registration, headPose(0.4, [0, 30, 0])), inverse(mount));
-    near(moved.p.distanceTo(point(screen, [0.4, 0, 2.4])), 0);
-    near(moved.q.angleTo(screen.q.clone().multiply(rotation([0, 30, 0]))), 0);
+    near(moved.p.y, recovered.p.y);
+    near(moved.p.distanceTo(recovered.p), 0.4);
+    near(moved.q.angleTo(recovered.q.clone().multiply(rotation([0, 30, 0]))), 0);
+});
+
+test("Direction guide anchors the selected eye or head reference at the measured height and distance", () => {
+    for (const reference of ["eye", "head"]) {
+        const { config, samples, mount } = fixture();
+        const result = solveHeadDirections(config, samples, 1.7, undefined, 1.62, reference);
+        const recovered = compose(compose(pose(result.registration), samples.centre), inverse(mount));
+        const anchor = reference === "eye" ? point(recovered, config.head.eye) : recovered.p;
+        near(anchor.y, 1.62);
+        near(screenDistance(config, anchor), 1.7);
+        near(registrationTiltDegrees({ registration: result.registration }), 0);
+    }
 });
 
 test("Reject swapped gestures, small movements, wrong pitch and inconsistent neutral poses", () => {

@@ -12,6 +12,7 @@
         <ui:VisualElement name="tutorialCue" class="tutorial-cue" picking-mode="Ignore" />
         <ui:VisualElement class="tutorial-dock-text" picking-mode="Ignore">
           <ui:Label name="tutorialInstruction" class="tutorial-instruction" />
+          <ui:Label name="tutorialCaption" class="tutorial-caption tutorial-hidden" />
           <ui:Label name="tutorialDetail" class="tutorial-detail" />
         </ui:VisualElement>
       </ui:VisualElement>

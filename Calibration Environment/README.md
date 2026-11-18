@@ -1,7 +1,7 @@
 # Calibration Environment
 
-A separate, local workspace for arranging the screen, trackers, person, gun and
-base stations, editing mounting offsets, and inspecting head-position perspective.
+A separate, local workspace for arranging the screen, trackers, person and gun,
+editing mounting offsets, and inspecting head-position perspective.
 It does not launch Unity, edit ELTS configuration, create participant sessions, or
 send apparatus commands.
 
@@ -14,7 +14,8 @@ send apparatus commands.
 3. The dashboard connects to live tracking automatically. For a hardware-free
    preview choose **Manual preview** in Tracking. Included dimensions are examples;
    replace them with your measurements.
-4. Use **Profiles & export** to save a named profile or import/export JSON.
+4. Use **Save calibration** to save under the participant's ID number, or **Profiles & export** to load a saved participant or
+   import/export JSON.
 5. Close the launcher with Ctrl+C or run **STOP-CALIBRATION.cmd** in this folder.
    The stop command verifies this app and this project copy before requesting shutdown.
 
@@ -31,18 +32,16 @@ SteamVR, internet connection, or build step. Three.js is bundled locally.
 2. Set the screen's position and pitch/yaw/roll if needed. Its default position
    defines the room's X/Z reference. The bottom-edge measurement is the midpoint
    of the lower edge; screen tilt rotates the centre around that point.
-3. Enter each base station's position in feet and inches. **Y is the height of
-   the station centre above the floor.** Use X and Z to place it left or right
-   and in front of or behind the room origin. Orientation uses degrees and
-   profiles store positions in metres. When SteamVR supplies a valid station
-   pose, **Copy current station pose** converts it through the current
-   tracking-origin registration.
-4. Set room dimensions and display aids. Drag the overview to orbit, right-drag
+3. Set room dimensions and display aids. Drag the overview to orbit, right-drag
    to pan, and scroll to zoom. Room/front/side/top buttons reset the camera angle.
    Focus the 3D view and use arrow keys to orbit or +/− to zoom.
 
-Base-station placement here changes the drawing and saved profile. It does not
-change SteamVR's tracking solution or stand in for tracking-origin registration.
+The base station's position is not entered anywhere. SteamVR locates it itself,
+and the head-direction guide records how the tracking space lines up
+with the screen. Place the station high with a clear view of both trackers,
+mount it firmly, and do not move it after calibrating; if it moves, run the
+head-direction guide again. Saved profiles still carry an
+unused `baseStations` entry so older files load unchanged.
 
 ## Head and weapon offsets
 
@@ -55,24 +54,30 @@ input is never displayed as released. See [main-app trigger setup](../docs/devel
 Each tracked object has independent three-axis position and three-axis rotation
 offsets. Profiles store distances in **metres** and angles in **degrees**:
 
-| Setting | Meaning |
-| --- | --- |
-| Head object origin | Centre of the schematic head |
-| Weapon object origin | Centre of the rifle receiver |
-| Tracker centre on object | Vector from the object origin to the tracker centre, in object-local axes |
-| Tracker orientation on object | Orientation of the tracker axes relative to the object axes |
-| Viewing eye | Offset from head centre to the selected eye or midpoint between eyes. Enter each axis in feet and inches and select its direction. |
-| Muzzle | Vector from receiver centre to the muzzle |
-| Bore correction | Rotation applied to the weapon's local forward direction |
-| Participant height / model size | Visual dimensions. Enter standing height in feet and inches under **Head → Eye & person**. Profiles store metres. |
+All offsets use the object's own axes: +X right, +Y up, +Z back toward the
+participant (−Z is forward).
 
-For a rear-mounted tracker, enter the measured offset from head centre to
-tracker centre under **Head → Tracker mounting offset**. In the head's local axes,
-+Z points back, +Y points up, and +X points right. Enter the viewing-eye offset
-from that same head centre. A centred tracker behind the head has positive Z,
-while the eye midpoint in front of the head has negative Z. Measure both with
-the headband fitted. Standing height sizes the body preview and cannot determine
-the tracker-to-eye distance or the headband's mounting angle.
+| Where | Setting | Measure |
+| --- | --- | --- |
+| Head | Where the tracker sits on the head | From the centre of the head to the centre of the tracker; plus the tracker's tilt on the head |
+| Head | Tracker centre → viewing eye | Directly from the tracker centre to the selected eye or the midpoint between the eyes, in feet and inches with a direction |
+| Weapon | Weapon tracker | Select the device for the schematic weapon preview. |
+| Weapon | Tracker mounting offset | Set the offset and orientation for the simulated model. |
+| Weapon | Muzzle & bore | Configure the schematic model and simulated ray. |
+| Head | Participant height / body radius | Body preview only. Enter standing height in feet and inches. |
+
+Profiles store distances in **metres** and angles in **degrees**. The gun is still
+stored relative to the schematic model’s origin.
+
+With the headband fitted, measure directly from the tracker centre to the viewing
+eye (or eye midpoint) under **Head → Viewing eye**. Directions follow the head,
+not the puck: +X right, +Y up, +Z back. For a rear-mounted tracker, the eye is in
+**Front**. The head-centre mount translation locates the schematic head drawing;
+editing it preserves the direct tracker-to-eye measurement. Profiles retain the
+existing fields: the direct vector is `head.eye - head.mount.position`, expressed
+in head axes. Existing profiles therefore keep the same rendered eye position.
+Standing height sizes the body preview and cannot determine the tracker-to-eye
+distance or the headband's mounting angle.
 
 The yellow tracker models and local XYZ axes help check mounting relationships.
 The teal ray shows head direction; the amber ray shows the configured bore.
@@ -111,12 +116,16 @@ changes the recovered object pose while retaining the observed tracker pose.
    you can select a different serial under **Head** or **Weapon**. The
    same tracker cannot be assigned to both. Bindings persist by serial, not by
    a device index that can change between launches.
-   For a quick preview, face the screen and click **Reset head in front of screen**
-   in the Head pose card. Enter **Head centre above floor at reset** in feet and inches. This maps the current head pose to that measured height,
-   facing the screen, at the distance entered in feet and inches (initially about 6 ft 6.74 in). It changes the
-   shared tracking-origin registration and clears forward references; mounting
-   offsets and raw poses are preserved. It requires a fresh valid live pose.
-   This convenient preview reset is not a measured physical calibration.
+   In the Head pose card, choose whether distance and height are measured from
+   the **Viewing eye / eye midpoint** or **Head centre**. Centre that point in
+   front of the TV, enter its perpendicular distance from the display and its
+   height above the floor, then click **Reset position**. New drafts use the eye;
+   older browser drafts retain the head-centre reference. Reset translates the
+   shared registration and clears forward references. It preserves room rotation,
+   head rotation, mounting offsets and raw poses, and requires a fresh live pose.
+   Nodding or rolling during reset cannot tilt the room. The **Eye → screen**
+   readout shows the calculated perpendicular distance to compare with the
+   physical measurement; it is not an independent measurement.
 5. Configure **Tracking origin → room**: the position and rotation of SteamVR's
    standing-origin frame in this room. Check against known measured locations.
    Moving a base-station drawing does not perform this registration.
@@ -126,7 +135,7 @@ changes the recovered object pose while retaining the observed tracker pose.
    This changes mount rotation only; translation still requires measurement.
 7. Hold a known forward direction and click **Set looking forward** / **Set weapon
    forward**. The monitor now reports rotation relative to that captured reference.
-   This readout zero does **not** rotate the geometry or change the bore correction.
+   This readout zero does **not** rotate the geometry or change the barrel aim correction.
 8. Save your profile. Recheck registration, offsets and forward references after
    moving equipment, changing SteamVR room setup, or restarting/recentering tracking.
 
@@ -146,7 +155,9 @@ Keep the tracker in its final head mounting throughout the guide:
 4. Move left, then right of the original centre while facing the same forward
    direction (do not turn to look at the screen centre).
 5. Return to centre and face forward.
-6. Review the captured movements, choose the preview distance in feet and inches, and **Apply directions**.
+6. Review the captured movements and the selected point's screen distance in feet
+   and inches, then **Apply directions**. The guide uses the eye/head reference
+   and floor height entered in the Head pose card when the guide was opened.
 
 Each capture gives a three-second preparation countdown, then collects about one
 second of distinct live samples. Hold still during capture. Lost/stale tracking,
@@ -154,11 +165,14 @@ repeated frames, or excessive movement require a retry. Use **Back** to recaptur
 an earlier step; later samples are then discarded. Cancel leaves settings intact.
 
 Sideways movement determines room yaw using SteamVR's standing-frame up axis.
+Screen pitch or roll does not redefine room up. A tracking-axis tilt warning
+indicates that the direction guide should be repeated; position reset deliberately
+preserves existing alignment, including an old incorrect tilt.
 The forward pose determines the head tracker mounting rotation; left/right/up
 turns check that the resulting axes agree with the requested gestures. The final
-centre pose is placed at the entered head-centre height and chosen preview distance.
+centre pose places the selected measurement point at the entered height and distance.
 Apply changes the shared room registration and head mounting rotation, clears
-dependent forward references, and updates the browser draft. It preserves measured
+dependent forward references, and updates this browser's station draft. It preserves measured
 mount translations, eye/muzzle offsets, raw tracking and weapon mounting settings.
 The changed registration also moves any live weapon in the room. Save the profile
 to retain the alignment in a named file.
@@ -210,8 +224,9 @@ position. The virtual floor uses **Room width** and **Room depth**, extends
 behind the screen, and stays at room Y=0. Floor-standing objects rest on that
 same plane. Screen bottom height and visible dimensions determine where the
 physical display cuts through this virtual room. Screen tilt does not tilt the floor.
-The reset distance and head-centre height are retained in the browser draft.
-Older drafts initially show screen-centre height, so enter the measured head height.
+The reset distance, floor height and selected measurement reference are retained
+in the draft. Older drafts keep their head-centre reference; drafts with
+no saved height initially show screen-centre height, so enter a measured value.
 Move the manual head position or a valid live head tracker to inspect
 parallax. Head direction is visible in the overview; it does not rotate the TV.
 
@@ -223,29 +238,48 @@ physical alignment, use fullscreen on the configured display and check for
 browser or OS overscan and scaling.
 The fullscreen toolbar appears on pointer hover at the bottom left; Escape exits.
 
-The preview is unavailable if the eye is behind/too close to the screen or the
-head pose is invalid. The amber dot marks the bore/screen-plane intersection;
+The near clipping plane moves closer when needed to stay before the display.
+This changes clipping only; the measured eye position still determines perspective.
+The preview is unavailable if the eye is on/behind the screen or the head pose
+is invalid. Close viewing also magnifies any eye-position calibration error;
+use the perpendicular eye-distance readout to check its inputs. The amber dot marks the bore/screen-plane intersection;
 it is not a scored shot or a simulated physical projectile.
 
-## Profiles and ELTS startup
+## Participant calibrations and ELTS
 
-- **Save profile** writes an atomic JSON file in this folder's `profiles/`. Saving
-  over an existing name asks for confirmation. Profiles are ignored by Git.
-- A separate browser draft recovers unsaved settings after refresh. The header
-  distinguishes a draft from a saved profile. Refresh reconnects live input;
+- **Save calibration** opens a six-digit picker for IDs from 0 to 999999.
+  Choose each digit or click **Use next unused ID**. Leading zeros normalize on save. It writes
+  `profiles/participant-<ID>.json` atomically. Saving over an existing ID asks
+  for confirmation. An unreadable file reserves its ID and appears as **Unreadable**.
+  Select another ID to save. Profiles are ignored by Git.
+- When an operator starts that participant ID in the ELTS dashboard, ELTS reads
+  this file and applies the participant's tracker-local
+  eye, muzzle and bore settings. No ELTS restart is needed after saving. ELTS
+  will not start an ID that has no saved calibration. The recording notes the
+  file name, SHA-256 and the settings used for that visit.
+- The station stores each browser's unsaved draft under `profiles/`. The browser
+  keeps its opaque draft ID. Refresh restores the draft and reconnects live input;
   choose Manual preview explicitly for hardware-free use.
 - Import validates structure, dimensions, finite values, reference quaternions,
   distinct tracker bindings and the coordinate-system identifier before applying.
-- On the next **START-ELTS.cmd**, the most recently modified saved profile
-  supplies screen geometry and tracker-local eye, muzzle and bore settings to
-  the synthetic development build. Save the profile you want to use, then
-  restart ELTS. With no saved profiles, the launcher uses the default synthetic rig.
-- Browser drafts and exported JSON outside `profiles/` stay local to their
-  respective workflows. Live tracking registration, device bindings, forward
+- Screen geometry is shared room setup. On the next **START-ELTS.cmd**, the
+  selected station room supplies screen settings and the equipment binding to the
+  synthetic development build. Saving another participant with the same screen
+  does not trigger a rebuild. If a participant's saved screen differs from the
+  running build, ELTS keeps the build's screen and says so in the dashboard and
+  recording. Use **Use these screen settings for the station** to change the room,
+  then restart ELTS. The first participant save preserves the existing legacy room or
+  adopts the displayed room on a new station. Later participant saves keep that room.
+- **Remove all participant data…** in ELTS Settings erases the station's drafts
+  and invalidates open calibration tabs. An older browser-local draft is discarded
+  when that browser next opens after a reset. Exported JSON saved outside the
+  station stays at its chosen destination. Live tracking registration, device bindings, forward
   references and preview settings are dashboard-only. ELTS retains synthetic
   inputs and development calibration status.
-- If startup reports a profile error, correct and save that profile, or move it
-  out of `profiles/` to let the launcher select the next most recent save.
+- If startup reports a room settings error, explicitly save the station room from
+  the calibration workspace and restart ELTS.
+  Older name-based profiles in `profiles/` are still read for screen geometry;
+  import one and save it under a participant ID to use it for a participant.
 - This app uses **right-handed X-right, Y-up, Z-toward-viewer** coordinates, with
   **−Z forward**. Angles are pitch X, yaw Y, roll Z in **YXZ** Euler order.
   Positive yaw turns left; positive pitch looks up. Euler readouts become
@@ -269,9 +303,10 @@ it is not a scored shot or a simulated physical projectile.
 Developer checks (from this folder):
 
 ```powershell
-node --test tests/geometry.test.mjs tests/head-calibration.test.mjs tests/perspective-audit.test.mjs tests/trigger-indicator.test.mjs
+npm test
 py -3 -m unittest discover -s tests -p 'test_*.py'
-# Optional desktop browser checks require Playwright and the running local server.
+# Browser checks require Playwright, its full Chromium browser, and a local server.
+# Set CALIBRATION_BASE_URL for an isolated test server (defaults to port 8766).
 node tests/browser-check.mjs
 node tests/head-calibration-browser.mjs
 node tests/head-reset-browser.mjs

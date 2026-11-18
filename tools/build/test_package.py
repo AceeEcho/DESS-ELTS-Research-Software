@@ -1,9 +1,11 @@
 """Integrity/portability regressions; fixture executables are never launched."""
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import patch
 from pathlib import Path
 
@@ -48,6 +50,11 @@ class PackageTests(unittest.TestCase):
         self.assertTrue(self.output.with_suffix(".zip").is_file())
         info = verify_package(self.output)
         self.assertFalse(info["studyReady"])
+        example=json.loads((self.output / "samples/participant-0.json").read_text(encoding="utf-8"))
+        self.assertEqual(example["participantId"],0)
+        self.assertNotIn("name",example)
+        self.assertTrue((self.output/"PREPARE-REHEARSAL.cmd").is_file())
+        self.assertTrue((self.output/"START-ELTS.cmd").is_file())
         self.assertTrue((self.output / "analysis/run_ingest.py").is_file())
         self.assertEqual((self.output / "player/ELTS-Synthetic.exe").read_bytes(), b"unit-test-only-not-executable")
         # A copied package must resolve the shared validator without this
@@ -58,6 +65,77 @@ class PackageTests(unittest.TestCase):
             text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(result.stdout)["result"], "pass")
+
+    @unittest.skipUnless(os.name == "nt", "Windows package launchers require PowerShell")
+    def test_extracted_launchers_share_storage_and_only_prepare_seeds_example(self):
+        self.create()
+        with tempfile.TemporaryDirectory(prefix="ELTS extracted rehearsal ") as scratch:
+            work = Path(scratch)
+            with zipfile.ZipFile(self.output.with_suffix(".zip")) as archive:
+                archive.extractall(work)
+            launcher = work / self.output.name / "start-rehearsal.ps1"
+            local = work / "temporary local app data"
+            local.mkdir()
+            station = local / "ELTS/DevelopmentRehearsal"
+            profile = station / "Calibration Environment/profiles/participant-0.json"
+            # Check the production launcher without running the unit-test EXE.
+            script = """
+                $ErrorActionPreference = 'Stop'
+                function Start-Process {
+                    param($FilePath, $WorkingDirectory)
+                    if (-not (Test-Path -LiteralPath $FilePath -PathType Leaf)) { throw 'Missing player' }
+                    if ((Split-Path -Parent $FilePath) -ne $WorkingDirectory) { throw 'Incorrect player directory' }
+                    if ($env:ELTS_STATION_HOME -ne $env:EXPECTED_STATION) { throw 'Incorrect station home' }
+                }
+                if ($env:PICK_EXAMPLE) {
+                    # Operate the real native picker on its UI thread.
+                    Add-Type -AssemblyName System.Windows.Forms
+                    $observed = @{ suggestion = -1 }
+                    $timer = [Windows.Forms.Timer]::new()
+                    $timer.Interval = 80
+                    $timer.add_Tick({
+                        $form = [Windows.Forms.Application]::OpenForms | Select-Object -First 1
+                        if (!$form) { return }
+                        $timer.Stop()
+                        $number = $form.Controls | Where-Object { $_ -is [Windows.Forms.NumericUpDown] }
+                        $observed.suggestion = [int]$number.Value
+                        $number.Value = [int]$env:PICK_EXAMPLE
+                        $form.AcceptButton.PerformClick()
+                    })
+                    $timer.Start()
+                    try { & $env:REHEARSAL_LAUNCHER -ChooseParticipantId }
+                    finally { $timer.Dispose() }
+                    if ($observed.suggestion -ne 1) { throw ("Unexpected next unused ID: " + $observed.suggestion) }
+                } else {
+                    & $env:REHEARSAL_LAUNCHER -PrepareExample:($env:PREPARE_EXAMPLE -eq 'yes')
+                }
+            """
+            def launch(prepare=False, override=None, pick=""):
+                result = subprocess.run(
+                    ["powershell.exe", "-NoProfile", "-STA", "-NonInteractive", "-Command", script],
+                    env={**os.environ, "LOCALAPPDATA": str(local), "EXPECTED_STATION": str(override or station),
+                         "ELTS_STATION_HOME": str(override) if override else "", "PICK_EXAMPLE": pick,
+                         "REHEARSAL_LAUNCHER": str(launcher), "PREPARE_EXAMPLE": "yes" if prepare else "no"},
+                    capture_output=True, text=True, timeout=30)
+                self.assertEqual(result.returncode, 0, result.stderr)
+            launch()
+            self.assertFalse(profile.exists())
+            launch(prepare=True)
+            self.assertEqual(json.loads(profile.read_text(encoding="utf-8"))["participantId"], 0)
+            launch(pick="42001")
+            extra = profile.with_name("participant-42001.json")
+            self.assertEqual(json.loads(extra.read_text(encoding="utf-8"))["participantId"], 42001)
+            self.assertTrue((work / self.output.name / "ADD-REHEARSAL-ID.cmd").is_file())
+            profile.write_text("existing example edited by the operator", encoding="utf-8")
+            launch(prepare=True)
+            self.assertEqual(profile.read_text(encoding="utf-8"), "existing example edited by the operator")
+            profile.unlink()
+            launch()
+            self.assertFalse(profile.exists())
+            restored = work / "restored station"
+            launch(prepare=True, override=restored)
+            self.assertTrue((restored / "Calibration Environment/profiles/participant-0.json").is_file())
+            self.assertFalse(profile.exists())
 
     def test_source_copy_package_requires_binary_bound_evidence(self):
         with patch("tools.build.provenance.shutil.which", return_value=None):

@@ -1,20 +1,16 @@
 /* Administrator workflows share the existing authenticated command bridge.
  * UI preferences contain test settings only, never participant details or notes. */
-window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder, setOrder, escapeHtml, formatTime }) => {
+window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder, setOrder, createDurationEditor, escapeHtml, formatTime }) => {
   const presetKey = 'elts-admin-test-presets-v1';
   const motion = () => !document.body.classList.contains('reduce-motion') && !matchMedia('(prefers-reduced-motion: reduce)').matches;
   let setupBusy = false, actionBusy = false, drag = null, scrollFrame = 0;
-  let phaseDirty = false, exceptionContext = null, selectedRecording = '', lastReview = '';
+  let phaseDirty = false, phaseSaving = false, exceptionContext = null;
+  let removalRequest = '', removalContext, online = false;
   let presets = {};
   try { presets = JSON.parse(localStorage.getItem(presetKey) || '{}'); } catch { /* A bad preference cannot block testing. */ }
   if (!presets || typeof presets !== 'object' || Array.isArray(presets)) presets = {};
   const error = (id, value) => { $(id).textContent = value.message || String(value); $(id).hidden = false; };
   const html = (id, value) => { if ($(id).innerHTML !== value) $(id).innerHTML = value; };
-  function readableNote(value) {
-    const text = String(value || '');
-    if (text.startsWith('Synthetic calibration fixture accepted: ')) return 'Synthetic calibration fixture reviewed, accepted and saved.';
-    return text;
-  }
   const setup = () => ({ conditionOrder: getOrder().slice(), durations: { ...getState().testDurations },
     practiceSeconds: getState().tools.practiceSeconds, breakSeconds: getState().tools.breakSeconds });
 
@@ -60,7 +56,8 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
       let tile = [...list.children].find(child => child.dataset.condition === condition);
       if (!tile) {
         tile = document.createElement('li'); tile.className = 'order-item'; tile.dataset.condition = condition;
-        tile.innerHTML = `<button type="button" class="grab-handle" aria-label="Reorder ${escapeHtml(condition)} with the up and down arrow keys" title="Drag or use ↑ / ↓ to reorder"><span aria-hidden="true">⠿</span></button><span class="order-num"></span><strong>${escapeHtml(condition)}</strong>`;
+        tile.innerHTML = `<button type="button" class="grab-handle" aria-label="Reorder ${escapeHtml(condition)} with the up and down arrow keys" title="Drag or use ↑ / ↓ to reorder"><span aria-hidden="true">⠿</span></button><span class="order-num"></span><strong>${escapeHtml(condition)}<small>${condition.endsWith('_FT') ? 'Fixed targets' : 'Moving targets'}</small></strong>`;
+        tile.append(createDurationEditor(condition));
       }
       if (list.children[index] !== tile) list.insertBefore(tile, list.children[index] || null);
       tile.querySelector('.grab-handle').disabled = !getState()?.canStartParticipant || setupBusy;
@@ -155,31 +152,53 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
       `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
     $('presetSelect').value = selected;
   }
-  function persistPresets() {
-    try { localStorage.setItem(presetKey, JSON.stringify(presets)); renderPresets(); }
-    catch (e) { error('settingsError', new Error('This browser could not save presets. ' + e.message)); }
+  function persistPresets(next) {
+    $('settingsError').hidden = true;
+    try { localStorage.setItem(presetKey, JSON.stringify(next)); }
+    catch (e) { error('settingsError', new Error('This browser could not save presets. ' + e.message)); $('orderStatus').textContent = ''; return false; }
+    presets = next;
+    renderPresets();
+    return true;
   }
   $('savePreset').addEventListener('click', () => {
     const name = $('presetName').value.trim();
     if (!name) { error('settingsError', new Error('Enter a name for this setup.')); return; }
     // Only the server's applied values are saved, never unsaved input drafts.
-    Object.defineProperty(presets, name, { value: setup(), configurable: true, enumerable: true, writable: true });
-    persistPresets(); $('presetSelect').value = name; $('orderStatus').textContent = `Saved setup “${name}”.`;
+    if (!persistPresets({ ...presets, [name]: setup() })) return; $('presetSelect').value = name; $('orderStatus').textContent = `Saved setup “${name}”.`;
   });
   $('loadPreset').addEventListener('click', () => {
     const value = presets[$('presetSelect').value];
     if (value) applySetup(value);
   });
-  $('deletePreset').addEventListener('click', () => { delete presets[$('presetSelect').value]; persistPresets(); });
-  ['practiceSeconds', 'breakSeconds'].forEach(id => $(id).addEventListener('input', () => { phaseDirty = true; }));
-  $('phaseTimingForm').addEventListener('submit', async event => {
-    event.preventDefault(); $('applyPhaseTiming').disabled = true;
+  $('deletePreset').addEventListener('click', () => { const next = { ...presets }; delete next[$('presetSelect').value]; persistPresets(next); });
+  const phaseInputs = [$('practiceSeconds'), $('breakSeconds')];
+  function phaseValues() { return phaseInputs.map(input => input.value); }
+  async function savePhases() {
+    if (phaseSaving || !phaseDirty || !$('phaseTimingForm').reportValidity()) return;
+    const [practice, rest] = phaseValues();
+    phaseSaving = true;
+    $('settingsError').hidden = true;
+    $('phaseSaveStatus').textContent = 'Saving…';
+    let saved = false;
     try {
-      await command('setPhaseDurations', { practiceSeconds: Number($('practiceSeconds').value), breakSeconds: Number($('breakSeconds').value) });
-      phaseDirty = false; await refresh();
-    } catch (e) { error('settingsError', e); }
-    finally { $('applyPhaseTiming').disabled = false; }
+      await command('setPhaseDurations', {practiceSeconds:Number(practice), breakSeconds:Number(rest)});
+      // Keep a newer edit if the operator tabbed to the next field during this save.
+      phaseDirty = phaseValues().join() !== [practice, rest].join();
+      await refresh();
+      $('phaseSaveStatus').textContent = phaseDirty ? 'Unsaved change' : 'Saved';
+      saved = true;
+    } catch (e) { error('settingsError', e); $('phaseSaveStatus').textContent = 'Not saved'; }
+    finally {
+      phaseSaving = false;
+      if (saved && phaseDirty && !phaseInputs.includes(document.activeElement)) savePhases();
+    }
+  }
+  phaseInputs.forEach(input => {
+    input.addEventListener('input', () => { phaseDirty = true; $('phaseSaveStatus').textContent = 'Unsaved change'; });
+    input.addEventListener('change', savePhases);
+    input.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); input.blur(); } });
   });
+  $('phaseTimingForm').addEventListener('submit', event => { event.preventDefault(); savePhases(); });
   async function action(name, payload = {}) {
     if (actionBusy) return;
     actionBusy = true; $('testControlError').hidden = true;
@@ -217,12 +236,15 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
       : 'The new attempt runs next. Earlier results are kept.';
     $('repeatChoice').hidden = kind !== 'repeatTest';
     $('repeatCondition').innerHTML = (state.tools.repeatable || []).map(c => `<option>${escapeHtml(c)}</option>`).join('');
-    $('exceptionReason').value = ''; $('exceptionError').hidden = true;
+    $('exceptionReason').value = ''; $('reasonLength').textContent = '256 characters available'; $('exceptionError').hidden = true;
     $('exceptionDialog').hidden = false; $('exceptionReason').focus();
   }
   $('skipTest').addEventListener('click', () => openException('skipTest'));
   $('repeatTest').addEventListener('click', () => openException('repeatTest'));
-  $('cancelException').addEventListener('click', () => { $('exceptionDialog').hidden = true; });
+  $('cancelException').addEventListener('click', () => { $('exceptionDialog').hidden = true; $(exceptionContext?.kind || 'skipTest').focus(); });
+  $('exceptionReason').addEventListener('input', () => {
+    $('reasonLength').textContent = (256 - $('exceptionReason').value.length) + ' characters available';
+  });
   $('exceptionForm').addEventListener('submit', async event => {
     event.preventDefault(); const reason = $('exceptionReason').value.trim();
     if (!reason || !exceptionContext) return;
@@ -234,44 +256,54 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
     finally { $('confirmException').disabled = false; }
   });
 
-  async function archiveAction(name, id = '') {
-    $('recordingError').hidden = true;
-    try { await command(name, { id }); await refresh(); }
-    catch (e) { error('recordingError', e); }
+  function removalControls(state) {
+    const result = state?.datasetRemoval;
+    if (removalRequest && result?.request === removalRequest) {
+      $('datasetFeedback').textContent = result.message;
+      if (result.state === 'error' || result.state === 'complete') {
+        removalRequest = '';
+        $('datasetConfirmation').value = '';
+        $('datasetStatus').textContent = result.message;
+        if (result.state === 'complete') $('datasetDialog').close();
+      }
+    }
+    const allowed = online && state?.canStartParticipant && !state.data?.busy && !removalRequest;
+    $('openDatasetRemoval').disabled = !allowed;
+    const sameDataset = removalContext && removalContext.runId === (state?.runId || '') &&
+      removalContext.version === (result?.version || 0);
+    $('confirmDatasetRemoval').disabled = !allowed || !sameDataset || $('datasetConfirmation').value !== 'CONFIRM';
+    $('datasetConfirmation').disabled = !!removalRequest;
+    $('cancelDatasetRemoval').disabled = !!removalRequest;
   }
-
-  $('closeRecordings').addEventListener('click', () => { $('recordingsDialog').hidden = true; $('recordingsButton').focus(); });
-  $('refreshRecordings').addEventListener('click', () => archiveAction('listRecordings'));
-  $('openDataFolder').addEventListener('click', () => archiveAction('openDataFolder'));
-  $('recordingList').addEventListener('click', event => {
-    const button = event.target.closest('[data-recording]'); if (!button) return;
-    selectedRecording = button.dataset.recording; archiveAction('reviewRecording', selectedRecording);
+  $('openDatasetRemoval').addEventListener('click', () => {
+    const state = getState();
+    removalContext = {runId: state.runId || '', version: state.datasetRemoval?.version || 0};
+    $('datasetConfirmation').value = '';
+    $('datasetFeedback').textContent = '';
+    removalControls(getState());
+    $('datasetDialog').showModal();
   });
-  $('exportRecording').addEventListener('click', () => archiveAction('exportRecording', selectedRecording));
-  $('downloadReview').addEventListener('click', () => {
-    const review = getState().tools.review; if (!review || review.id !== selectedRecording) return;
-    const columns = ['condition', 'blockId', 'status', 'hits', 'shots', 'activeSeconds', 'reason', 'scoreStatus'];
-    // Quote every cell and neutralize spreadsheet formulas in operator-authored text.
-    const cell = value => '"' + String(value ?? '').replace(/^[=+@-]/, "'$&").replaceAll('"', '""') + '"';
-    const rows = [columns, ...review.attempts.map(attempt => columns.map(column => attempt[column]))];
-    const blob = new Blob(['\uFEFF' + rows.map(row => row.map(cell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob), link = document.createElement('a');
-    link.href = url; link.download = `${review.id}-review.csv`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  $('cancelDatasetRemoval').addEventListener('click', () => $('datasetDialog').close());
+  $('datasetDialog').addEventListener('cancel', event => { if (removalRequest) event.preventDefault(); });
+  $('datasetConfirmation').addEventListener('input', () => removalControls(getState()));
+  $('confirmDatasetRemoval').addEventListener('click', async () => {
+    if ($('confirmDatasetRemoval').disabled || removalRequest) return;
+    removalRequest = crypto.randomUUID();
+    $('datasetFeedback').textContent = 'Requesting removal…';
+    removalControls(getState());
+    try {
+      await command('wipeDataset', {...removalContext, confirmation: $('datasetConfirmation').value, request: removalRequest});
+      await refresh();
+    } catch (e) {
+      removalRequest = '';
+      $('datasetConfirmation').value = '';
+      $('datasetFeedback').textContent = e.message;
+      removalControls(getState());
+    }
   });
-  function renderArchive(tools) {
-    $('archiveStatus').textContent = tools.archiveMessage || 'Choose Refresh list to find local recordings.';
-    html('recordingList', (tools.recordings || []).map(recording => `<button class="recording-card ${recording.id === selectedRecording ? 'selected' : ''}" data-recording="${escapeHtml(recording.id)}" ${tools.archiveBusy ? 'disabled' : ''}><strong>${escapeHtml(recording.id)}</strong><span>${recording.active ? 'Recording now' : recording.finalized ? 'Finalized' : 'Incomplete / recovery required'}</span></button>`).join('') || '<p class="subtle">No recordings found.</p>');
-    const review = tools.review, current = review && review.id === selectedRecording;
-    $('downloadReview').disabled = !current || tools.archiveBusy;
-    $('exportRecording').disabled = !current || !review.finalized || tools.archiveBusy;
-    $('refreshRecordings').disabled = !!tools.archiveBusy;
-    const signature = current ? JSON.stringify(review) : '';
-    if (!current || signature === lastReview) return;
-    lastReview = signature;
-    html('recordingReview', `<h3>${escapeHtml(review.id)}</h3><p>${review.finalized ? 'Recording finalized' : 'Recording incomplete or still open'}</p><div class="blocks"><table class="runs-table"><thead><tr><th>Attempt</th><th>Status</th><th>Hits</th><th>Shots</th><th>Active time</th></tr></thead><tbody>${review.attempts.map(attempt => `<tr><td>${escapeHtml(attempt.blockId)}</td><td>${escapeHtml(attempt.status)}${attempt.reason ? `<small class="attempt-label">${escapeHtml(attempt.reason)}</small>` : ''}</td><td>${attempt.status === 'Skipped' ? '—' : attempt.hits}</td><td>${attempt.status === 'Skipped' ? '—' : attempt.shots}</td><td>${attempt.status === 'Skipped' ? '—' : formatTime(attempt.activeSeconds)}</td></tr>`).join('')}</tbody></table></div><h3>Saved notes</h3><ol class="note-timeline">${review.notes.map(note => `<li><span>${escapeHtml(readableNote(note.text))}</span></li>`).join('') || '<li>No operator notes.</li>'}</ol><p class="subtle">${escapeHtml(review.limitation)}</p>`);
-  }
-
   function render(state) {
+    online = true;
+    removalControls(state);
     if (!state?.tools) return;
     const tools = state.tools, tutorial = state.tutorial;
     if (drag && !state.canStartParticipant) finishDrag(true);
@@ -280,6 +312,10 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
       renderOrder();
     }
     $('setupWelcome').hidden = !state.canStartParticipant;
+    if (state.canStartParticipant) {
+      html('plannedTests', state.conditionOrder.map(code => `<li><strong>${escapeHtml(code)}</strong> ${formatTime(state.testDurations?.[code] ?? 300)}</li>`).join(''));
+      $('plannedBreaks').textContent = `Practice ${formatTime(tools.practiceSeconds)} · Breaks ${formatTime(tools.breakSeconds)}`;
+    }
     $('orderLocked').hidden = state.canStartParticipant;
     renderTutorial(state, tutorial);
     $('practicePanel').hidden = !tutorial?.canRestartPractice && tutorial?.stage !== 'PracticeRunning';
@@ -301,25 +337,25 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
     $('skipTest').disabled = actionBusy || !tools.canSkipTest;
     $('repeatTest').disabled = actionBusy || !tools.canRepeat || !tools.repeatable?.length;
     $('saveStatus').textContent = tools.saveStatus;
-    const latestSave = tools.checkpoints?.at(-1);
+    const latestSave = tools.latestCheckpoint;
     if (tools.saveStatus.startsWith('Saved ') && latestSave?.savedUtc) {
       const time = new Date(latestSave.savedUtc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       $('saveStatus').textContent = `${latestSave.condition} saved at ${time} · ${latestSave.status}`;
     }
     $('saveStatus').classList.toggle('save-failed', /failed/i.test(tools.saveStatus));
     html('readinessList', tools.readiness.map(item => `<div class="readiness-item"><div><strong>${escapeHtml(item.name)}</strong><span class="readiness-${item.status.toLowerCase()}">${escapeHtml(item.status)}</span></div><p>${escapeHtml(item.detail)}</p></div>`).join(''));
-    html('noteTimeline', tools.notes.map(note => `<li><time>${formatTime(note.seconds)}</time><span>${escapeHtml(readableNote(note.text))}</span></li>`).join(''));
     if (!phaseDirty) { $('practiceSeconds').value = tools.practiceSeconds; $('breakSeconds').value = tools.breakSeconds; }
-    $('applyPhaseTiming').disabled = !!state.busy;
+    phaseInputs.forEach(input => { input.disabled = !!state.busy; });
     $('loadPreset').disabled = setupBusy || !state.canStartParticipant;
     $('savePreset').disabled = setupBusy || !state.canStartParticipant;
-    renderArchive(tools);
   }
   function offline() {
+    online = false;
+    removalControls(null);
     finishDrag(true);
     $('conditionOrder').querySelectorAll('button').forEach(button => { button.disabled = true; });
     ['tutorialPrimary', 'tutorialManual', 'confirmManual', 'tutorialRedo', 'tutorialPause', 'tutorialResume', 'tutorialReplay', 'tutorialStopDemo', 'tutorialRepeatDemo',
-      'tutorialRestartPractice', 'tutorialFinishPractice', 'startBreak', 'skipBreak', 'skipTest', 'repeatTest', 'applyPhaseTiming', 'loadPreset', 'savePreset', 'exportRecording', 'refreshRecordings']
+      'tutorialRestartPractice', 'tutorialFinishPractice', 'startBreak', 'skipBreak', 'skipTest', 'repeatTest', 'practiceSeconds', 'breakSeconds', 'loadPreset', 'savePreset']
       .forEach(id => { $(id).disabled = true; });
   }
   function renderTutorial(state, tutorial) {

@@ -11,3 +11,5 @@
 .participant-ammo.participant-ammo-teaching { border-width: 2px; border-color: #96b3c9; background-color: #25333e; color: #f5f3ee; }
 
 .participant-prompt { border-top-width:3px; border-top-color:#e90802; }
+
+.station-display-check { position:absolute; top:8%; left:12%; right:12%; padding:20px; background-color:#16191d; color:white; font-size:36px; -unity-text-align:middle-center; }

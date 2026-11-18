@@ -14,7 +14,6 @@ const COLORS = {
     head: 0x167b84,
     weapon: 0xb36922,
     tracker: 0xf4be50,
-    base: 0x6a6e95,
 };
 const unitBox = new T.BoxGeometry(1, 1, 1);
 function box(group, size, position, color) {
@@ -185,17 +184,6 @@ export class CalibrationScene {
         this.scene.add(this.headTracker);
         this.weaponTracker = trackerModel();
         this.scene.add(this.weaponTracker);
-        this.bases = [0, 1].map(() => {
-            const group = new T.Group();
-            box(group, [0.11, 0.12, 0.1], [0, 0, 0], COLORS.base);
-            box(group, [0.075, 0.075, 0.01], [0, 0, -0.055], 0x252b39);
-            group.add(new T.AxesHelper(0.26));
-            this.scene.add(group);
-            return group;
-        });
-        this.baseStands = this.bases.map(() =>
-            box(this.scene, [0.025, 1, 0.025], [0, 0.5, 0], 0xa4a5a5),
-        );
         this.headRay = line(this.scene, COLORS.head);
         this.weaponRay = line(this.scene, COLORS.weapon);
         this.headMountLine = line(this.scene, COLORS.head);
@@ -213,8 +201,6 @@ export class CalibrationScene {
             ["person", "Person", this.person],
             ["headTracker", "Head tracker", this.headTracker],
             ["weaponTracker", "Weapon tracker", this.weaponTracker],
-            ["base0", "Base station 1", this.bases[0]],
-            ["base1", "Base station 2", this.bases[1]],
         ].map(([id, text, object]) => {
             const el = document.createElement("span");
             el.textContent = text;
@@ -319,19 +305,6 @@ export class CalibrationScene {
         );
         this.torso.position.y = (config.person.height - 0.4) / 2;
         this.gun.scale.setScalar(config.weapon.length / 0.9);
-        config.baseStations.forEach((base, i) => {
-            const object = this.bases[i];
-            object.visible = base.enabled;
-            object.position.fromArray(base.position);
-            object.quaternion.copy(rotation(base.rotation));
-            this.baseStands[i].visible = base.enabled;
-            this.baseStands[i].position.set(
-                base.position[0],
-                base.position[1] / 2,
-                base.position[2],
-            );
-            this.baseStands[i].scale.y = Math.max(0.001, base.position[1]);
-        });
         this.scene.traverse((object) => {
             if (object instanceof T.AxesHelper)
                 object.visible = config.view.axes;

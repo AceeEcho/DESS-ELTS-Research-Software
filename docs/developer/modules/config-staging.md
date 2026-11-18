@@ -9,8 +9,8 @@ strict schema, applies cross-field geometry and machine-path checks, and emits
 and `machine`.
 
 `START-ELTS.cmd` enables the optional
-[dashboard profile handoff](../../../Calibration%20Environment/README.md#profiles-and-elts-startup).
-The staged rig's calibration ID records the saved profile's SHA-256.
+[dashboard profile handoff](../../../Calibration%20Environment/README.md#participant-calibrations-and-elts).
+The staged rig identifies the shared screen configuration by digest. The calibration workspace creates `station-room.json` beside its profiles directory. Earlier installations use their most recent profile until the room is first saved.
 
 The effective JSON is canonical UTF-8 with sorted keys, compact separators, and
 one LF newline. Its SHA-256 is recorded in the manifest along with raw source

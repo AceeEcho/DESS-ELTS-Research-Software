@@ -10,12 +10,18 @@ internal static class CollectionChecks
     private static int passed;
     private static void Check(bool value,string message){if(!value)throw new Exception(message);passed++;}
     private static bool Throws<T>(Action action) where T:Exception {try{action();}catch(T){return true;}return false;}
-    public static void Main()
+    public static void Main(string[] args)
     {
+        if(args.SequenceEqual(new[]{"--benchmark-review"}))
+        {
+            ReviewPollingBenchmark.Run();
+            return;
+        }
         string root=Path.Combine(Path.GetTempPath(),"ELTS SQL checks "+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(root);
         try
         {
             TaskDataChecks.Run(root);
+            DatasetRemovalChecks.Run(root,Check);
             // A version-3 database copied every raw line. Initialization drops that copy.
             string legacyRoot=Path.Combine(root,"legacy collection");Directory.CreateDirectory(legacyRoot);
             using(var db=new CollectionSqlite(Path.Combine(legacyRoot,"collection.sqlite")))
@@ -24,15 +30,68 @@ internal static class CollectionChecks
                 db.Execute("CREATE TABLE participants (id TEXT PRIMARY KEY, code TEXT NOT NULL UNIQUE COLLATE NOCASE, name TEXT NOT NULL, createdUtc TEXT NOT NULL)");
                 db.Execute("CREATE TABLE sessions (id TEXT PRIMARY KEY, participantId TEXT NOT NULL REFERENCES participants(id), directory TEXT NOT NULL UNIQUE, modifiedUtc TEXT NOT NULL, finalized INTEGER NOT NULL DEFAULT 0, review TEXT NOT NULL DEFAULT '{}')");
                 db.Execute("CREATE TABLE records (sessionId TEXT, stream TEXT, offset INTEGER, json TEXT)");db.Execute("CREATE TABLE stream_progress (sessionId TEXT, stream TEXT, offset INTEGER)");
+                db.Execute("INSERT INTO participants VALUES ('legacy-p','007','Fictional old name','old-date')");
+                db.Execute("INSERT INTO sessions(id,participantId,directory,modifiedUtc) VALUES ('legacy-s','legacy-p','old-run','old-date')");
                 db.Execute("PRAGMA user_version=3");
             }
             new ParticipantCollection(legacyRoot).Initialize();
             using(var db=new CollectionSqlite(Path.Combine(legacyRoot,"collection.sqlite")))
             {
                 Check(db.Query("SELECT name FROM sqlite_master WHERE name IN ('records','stream_progress')").Count==0,"Raw line copy removed from older databases");
-                Check(db.Query("PRAGMA user_version")[0]["user_version"]=="5","Database upgraded to version 5");
+                Check(db.Query("PRAGMA user_version")[0]["user_version"]==ParticipantCollection.SchemaVersion.ToString(),"Database upgraded to current version");
+                Check(db.Query("SELECT id FROM sessions WHERE participantId='legacy-p'").Single()["id"]=="legacy-s","Migration retains existing participant and recording identities");
+                Check(db.Query("SELECT visitId FROM sessions").Single()["visitId"]=="legacy-s","A pre-visit recording can be exported as its own visit");
+                Check(db.Query("SELECT name FROM pragma_table_info('participants') WHERE name='name'").Count==0,"Migration removes old names from the schema");
+                var schema=db.Query("PRAGMA schema_version")[0]["schema_version"];
+                new ParticipantCollection(legacyRoot).Initialize();
+                Check(db.Query("PRAGMA schema_version")[0]["schema_version"]==schema,"Repeated initialization performs no DDL");
                 Check(db.Query("SELECT name FROM pragma_table_info('sessions') WHERE name='visitId'").Count==1,"Older sessions table gains the visit column");
             }
+
+            string incremental=Path.Combine(root,"incremental"),incRun=Path.Combine(incremental,"sample");
+            Directory.CreateDirectory(incRun);
+            string eventsPath=Path.Combine(incRun,"events.ndjson");
+            File.WriteAllText(eventsPath,"{}\n");
+            var index=new ParticipantCollection(incremental);
+            Check(RecordingIndex.Refresh(index).Indexed==1,"Initial refresh indexes a new run");
+            var unchanged=RecordingIndex.Refresh(index);
+            Check(unchanged.Indexed==0 && unchanged.Unchanged==1,"Unchanged refresh skips the review reader");
+            File.AppendAllText(eventsPath,"{}\n");
+            Check(RecordingIndex.Refresh(index).Indexed==1 && RecordingIndex.Refresh(index,true).Indexed==1,"Source changes and forced rebuild reindex");
+            var hashes=new Newtonsoft.Json.Linq.JObject();
+            foreach(string name in new[]{"samples.ndjson","events.ndjson","targets.ndjson"})
+            {
+                string file=Path.Combine(incRun,name);
+                if(!File.Exists(file))File.WriteAllText(file,"");
+                hashes[name]=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(file))).ToLowerInvariant();
+            }
+            string supplementary=Path.Combine(incRun,"device.csv");File.WriteAllText(supplementary,"time,reading\n");
+            var extra=new Newtonsoft.Json.Linq.JObject{["device.csv"]=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(supplementary))).ToLowerInvariant()};
+            string summary=Path.Combine(incRun,"session-summary.json");
+            File.WriteAllText(summary,new Newtonsoft.Json.Linq.JObject{
+                ["schemaVersion"]="elts.session-summary.v2",["complete"]=true,["checksumsSha256"]=hashes,
+                ["supplementaryChecksumsSha256"]=extra}.ToString());
+            RecordingIndex.Refresh(index);
+            string checkedSession;
+            using(var db=new CollectionSqlite(index.DatabasePath))checkedSession=db.Query("SELECT id FROM sessions").Single()["id"];
+            Check(RecordingIndex.VerifyRecording(index,checkedSession).StartsWith("Verified 4 file checksums"),"Explicit integrity check compares every stream and supplementary file");
+            using(var db=new CollectionSqlite(index.DatabasePath))
+                Check(db.Query("SELECT integrityStatus,integrityCheckedUtc FROM sessions").Single()["integrityStatus"]=="Passed","Successful check is recorded independently of closure");
+            File.AppendAllText(supplementary,"0,1\n");
+            RecordingIndex.Refresh(index);
+            using(var db=new CollectionSqlite(index.DatabasePath))
+                Check(db.Query("SELECT integrityStatus FROM sessions").Single()["integrityStatus"]=="Unchecked","An edited supplementary file invalidates verification");
+            File.AppendAllText(eventsPath,"{}\n");
+            Check(Throws<IOException>(()=>RecordingIndex.VerifyRecording(index,checkedSession)),"Integrity check detects a changed stream after closure");
+            using(var db=new CollectionSqlite(index.DatabasePath))
+                Check(db.Query("SELECT integrityStatus FROM sessions").Single()["integrityStatus"]=="Failed","Failed check is recorded even for a closed session");
+            File.AppendAllText(eventsPath,"{}\n");
+            RecordingIndex.Refresh(index);
+            using(var db=new CollectionSqlite(index.DatabasePath))
+                Check(db.Query("SELECT integrityStatus FROM sessions").Single()["integrityStatus"]=="Unchecked","Refresh invalidates a check when indexed inputs change");
+            string future=Path.Combine(root,"future");Directory.CreateDirectory(future);
+            using(var db=new CollectionSqlite(Path.Combine(future,"collection.sqlite")))db.Execute("PRAGMA user_version=999");
+            Check(Throws<IOException>(()=>new ParticipantCollection(future).Initialize()),"Unknown future database is refused");
 
             var collection=new ParticipantCollection(Path.Combine(root,"collection data"));collection.Initialize();
             Check(File.Exists(collection.DatabasePath),"Database created before recording");
@@ -40,14 +99,14 @@ internal static class CollectionChecks
             const string line="{\"eventType\":\"OperatorNote\",\"payload\":{\"text\":\"雪 ' \\\" <script>\"}}";
             foreach(string dir in new[]{first,second,third}){Directory.CreateDirectory(dir);File.WriteAllText(Path.Combine(dir,"events.ndjson"),line+"\n",new UTF8Encoding(false));}
             File.AppendAllText(Path.Combine(first,"events.ndjson"),"{\"partial\":");
-            collection.SaveParticipant("P-01","Zoë '雪'");
+            collection.SaveParticipant("P-01");
             collection.Import(first,"P-01","","{}");collection.Import(second,"p-01","","{}");collection.Import(third,"P-02","","{}");
-            collection.SaveParticipant("p-01","");
+            collection.SaveParticipant("p-01");
             string id,firstSession;
             using(var db=new CollectionSqlite(collection.DatabasePath))
             {
                 Check(db.Query("SELECT * FROM participants").Count==2,"Stable case-insensitive unique profiles");
-                Check(db.Query("SELECT name FROM participants WHERE code='P-01'")[0]["name"]=="Zoë '雪'","Unicode and SQL quotes round trip; a blank later name keeps the saved one");
+                Check(db.Query("SELECT name FROM pragma_table_info('participants') WHERE name='name'").Count==0,"Collection contains no participant name field");
                 Check(db.Query("SELECT name FROM sqlite_master WHERE name IN ('records','stream_progress')").Count==0,"Raw lines are never copied into the database");
                 Check(db.Query("PRAGMA integrity_check")[0]["integrity_check"]=="ok","SQLite integrity");
                 id=db.Query("SELECT id FROM participants WHERE code=?","P-01")[0]["id"];
@@ -76,6 +135,13 @@ internal static class CollectionChecks
             using(var client=new HttpClient())
             {
                 string download=server.RegisterExport(exported);
+                server.PublishCollection("{\"revision\":8,\"details\":{\"rows\":[]}}");
+                Check((int)client.GetAsync(server.Origin+"/api/data").Result.StatusCode==403,"Historical data requires the station token");
+                using(var details=new HttpRequestMessage(HttpMethod.Get,server.Origin+"/api/data"))
+                {
+                    details.Headers.Add("X-Elts-Token",server.Token);
+                    Check(client.Send(details).Content.ReadAsStringAsync().Result.Contains("\"revision\":8"),"Historical payload is published independently");
+                }
                 Check((int)client.GetAsync(server.Origin+"/api/download/"+download).Result.StatusCode==403,"Download requires session token");
                 var response=client.GetAsync(server.Origin+"/api/download/"+download+"?token="+server.Token).Result;
                 Check(response.IsSuccessStatusCode,"Registered export downloads");
@@ -84,7 +150,7 @@ internal static class CollectionChecks
             }
 
             // A profile saved at intake survives refreshes of other recordings.
-            collection.SaveParticipant("P-03","Not yet recorded");collection.Import(third,"P-02","","{}");
+            collection.SaveParticipant("P-03");collection.Import(third,"P-02","","{}");
             using(var db=new CollectionSqlite(collection.DatabasePath))Check(db.Query("SELECT * FROM participants WHERE code='P-03'").Count==1,"Intake profile kept before its first import");
 
             string runId;
@@ -106,7 +172,6 @@ internal static class CollectionChecks
             using(var db=new CollectionSqlite(collection.DatabasePath))
             {
                 Check(db.Query("SELECT * FROM participants WHERE code='P-01'").Count==0 && db.Query("SELECT * FROM sessions").Count==1,"Participant deletion persists after restart and preserves other participants");
-                Check(db.Query("SELECT * FROM participants WHERE name=?","Zoë '雪'").Count==0,"Participant removal deletes the saved name");
                 Check(db.Query("PRAGMA foreign_key_check").Count==0,"Deletion preserves foreign keys");
                 Check(db.Query("PRAGMA integrity_check")[0]["integrity_check"]=="ok","Deletion preserves database integrity");
             }

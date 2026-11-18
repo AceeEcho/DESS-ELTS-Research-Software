@@ -34,6 +34,28 @@ namespace Elts.Operator.Tests
             finally{UnityEngine.Object.DestroyImmediate(go);}
         }
         [UnityTest]
+        public IEnumerator CloseViewingKeepsPhysicalAngularSizeThroughActualCameraMatrices()
+        {
+            var go=new GameObject("Close window projection camera");var camera=go.AddComponent<Camera>();
+            try
+            {
+                var screen=new ScreenPlane(new Vector3d(-.72,-.405,0),new Vector3d(1,0,0),new Vector3d(0,1,0),1.44,.81);
+                foreach(double distance in new[]{.1,.02,.001})
+                {
+                    OffAxisCamera.Apply(camera,new OffAxisProjection(screen,new Vector3d(0,0,-distance),.05,100));
+                    var matrix=camera.projectionMatrix*camera.worldToCameraMatrix;
+                    var left=matrix*new Vector4(-.5f,0,5,1);
+                    var right=matrix*new Vector4(.5f,0,5,1);
+                    double width=(right.x/right.w-left.x/left.w)*screen.Width/2;
+                    double angle=2*Math.Atan(width/(2*distance));
+                    Assert.That(angle,Is.EqualTo(2*Math.Atan(.5/(distance+5))).Within(.000001));
+                    Assert.That(camera.nearClipPlane,Is.GreaterThan(0).And.LessThan((float)distance));
+                }
+                yield return null;
+            }
+            finally{UnityEngine.Object.DestroyImmediate(go);}
+        }
+        [UnityTest]
         public IEnumerator RuntimeControlsPreserveRawPosesAndCameraIsolation()
         {
             var go=new GameObject("Development view control test");var view=go.AddComponent<DevelopmentView>();

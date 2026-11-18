@@ -102,9 +102,7 @@ namespace Elts.Operator.Tests
                 Submit(root.Q<Button>("advance"));
                 Assert.That(panel.Engine.State,Is.EqualTo(SessionState.Practice));
                 panel.Dashboard.SelectModule("notes",false);
-                root.Q<TextField>("note").value="Toolkit event path exercised";
-                Submit(root.Q<Button>("addNote"));
-                root.Q<TextField>("abortReason").value="synthetic UI test finished";
+                Submit(root.Q<Button>("syncMarker"));
                 Submit(root.Q<Button>("abort"));
                 Assert.That(panel.Engine.State,Is.EqualTo(SessionState.Aborted));
                 yield return null;

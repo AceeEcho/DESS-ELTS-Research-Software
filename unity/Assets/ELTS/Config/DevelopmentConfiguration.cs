@@ -48,6 +48,20 @@ namespace Elts.Config
             Machine = new MachineConfiguration((JObject)root["machine"]);
         }
 
+        private DevelopmentConfiguration(DevelopmentConfiguration source, RigConfiguration rig)
+        {
+            EffectiveSha256 = source.EffectiveSha256; SourceRawSha256 = source.SourceRawSha256;
+            Runtime = source.Runtime; Rig = rig; Scenario = source.Scenario; Session = source.Session; Machine = source.Machine;
+        }
+
+        /// <summary>
+        /// The staged configuration with one participant's saved eye/weapon offsets.
+        /// <see cref="EffectiveSha256"/> still identifies the staged bundle; the
+        /// participant file's own SHA-256 is carried by <see cref="RigConfiguration.CalibrationId"/>.
+        /// </summary>
+        public DevelopmentConfiguration WithParticipantCalibration(ParticipantCalibration calibration)
+            => new DevelopmentConfiguration(this, (calibration ?? throw new ArgumentNullException(nameof(calibration))).ApplyTo(Rig));
+
         public void RequireStudyReadiness()
         {
             throw new InvalidOperationException("Study mode is unavailable in this synthetic development build.");
@@ -188,6 +202,20 @@ namespace Elts.Config
         public string HeadSerial { get; }
         public string WeaponSerial { get; }
         public string CalibrationId { get; }
+        private RigConfiguration(RigConfiguration source, Vector3d eye, Vector3d muzzle, Vector3d bore, string calibrationId)
+        {
+            RigId = source.RigId; Display = source.Display; ScreenBottomHeightAboveFloorM = source.ScreenBottomHeightAboveFloorM;
+            HeadSerial = source.HeadSerial; WeaponSerial = source.WeaponSerial;
+            if (!eye.IsFinite || !muzzle.IsFinite) JsonContract.Fail("participant offsets must be finite");
+            if (!(Math.Abs(bore.Length - 1) <= 1e-9)) JsonContract.Fail("bore direction must be unit length");
+            HeadEyeOffsetM = eye; WeaponMuzzleOffsetM = muzzle; WeaponBoreLocalDirection = bore;
+            // A saved bore already includes the dashboard's correction (as in staging).
+            WeaponZero = Quaterniond.Identity;
+            CalibrationId = calibrationId;
+        }
+        /// <summary>Same screen and trackers with one participant's tracker-local offsets (metres).</summary>
+        public RigConfiguration WithParticipantOffsets(Vector3d eye, Vector3d muzzle, Vector3d bore, string calibrationId)
+            => new RigConfiguration(this, eye, muzzle, bore, calibrationId);
         internal RigConfiguration(JObject value)
         {
             RigId = (string)value["rigId"];
@@ -292,16 +320,31 @@ namespace Elts.Config
         /// A standalone copied player uses its own installation directory instead.
         /// </summary>
         public string ResolveDataRoot(string installationDirectory)
+            => Path.GetFullPath(Path.Combine(ProjectRoot(installationDirectory), DataRoot));
+        /// <summary>
+        /// Folder where the Calibration Environment saves participant calibrations,
+        /// found the same way as <see cref="ResolveDataRoot"/>.
+        /// </summary>
+        public static string ResolveCalibrationProfiles(string installationDirectory)
+            => Path.GetFullPath(Path.Combine(ProjectRoot(installationDirectory), "Calibration Environment", "profiles"));
+        private static string ProjectRoot(string installationDirectory)
         {
+            // A configured station keeps its writable data across extracted app versions.
+            string home = Environment.GetEnvironmentVariable("ELTS_STATION_HOME");
+            if (!String.IsNullOrWhiteSpace(home))
+            {
+                if (!Path.IsPathFullyQualified(home)) throw new ArgumentException("ELTS_STATION_HOME must be an absolute directory.");
+                return Path.GetFullPath(home);
+            }
             var installation = new DirectoryInfo(Path.GetFullPath(installationDirectory));
             for (var candidate = installation; candidate != null; candidate = candidate.Parent)
             {
                 // Repository markers work for ordinary clones and Git worktrees alike.
                 if (File.Exists(Path.Combine(candidate.FullName, "config", "toolchain.json")) &&
                     File.Exists(Path.Combine(candidate.FullName, "unity", "ProjectSettings", "ProjectVersion.txt")))
-                    return Path.GetFullPath(Path.Combine(candidate.FullName, DataRoot));
+                    return candidate.FullName;
             }
-            return Path.GetFullPath(Path.Combine(installation.FullName, DataRoot));
+            return installation.FullName;
         }
         internal MachineConfiguration(JObject value)
         {

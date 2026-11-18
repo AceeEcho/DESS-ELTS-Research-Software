@@ -47,3 +47,5 @@ motion paused until the viewer explicitly enables it.
 The code separates vector/projection helpers, drawing primitives, time-based scenario generation, participant projection, scene composition, and controls. It uses a small canvas-based perspective renderer with depth-sorted faces, so it works offline without a GPU library. Overlapping transparent geometry can show sorting artifacts at unusual viewing angles.
 
 `build.mjs` wraps the fragment with a minimal standalone theme to create `index.html`. After editing, run `node build.mjs` in this directory (Node.js is needed only to rebuild, not to view). All paths are relative to the builder's location.
+
+Run `node elts-simulation/build.mjs --check` from the repository root to check that the offline illustration matches its source. The operator launch and recording workflow is maintained in the station README.

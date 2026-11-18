@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Elts.Config;
+using Elts.Geometry;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -49,6 +50,11 @@ internal static class ConfigChecks
     }
     private static void Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--profile-inventory")
+        {
+            ProfileInventoryBenchmark.Run(Path.GetFullPath(args[1]));
+            return;
+        }
         if (args.Length != 1) throw new ArgumentException("Pass the staged config directory.");
         string source = Path.GetFullPath(args[0]);
         DevelopmentConfiguration config = DevelopmentConfiguration.LoadDirectory(source);
@@ -152,6 +158,115 @@ internal static class ConfigChecks
             // The unique temporary root was created above; it never names source or user data.
             Directory.Delete(temporary, true);
         }
+        ParticipantCalibrationChecks(source);
         Console.WriteLine("PASS: " + passed + " configuration checks");
+    }
+
+    private static bool Near(Vector3d actual, double x, double y, double z) =>
+        Math.Abs(actual.X - x) < 1e-9 && Math.Abs(actual.Y - y) < 1e-9 && Math.Abs(actual.Z - z) < 1e-9;
+
+    /// <summary>Synthetic participant files only; nothing here is a measured calibration.</summary>
+    private static void ParticipantCalibrationChecks(string staged)
+    {
+        string root = Path.GetFullPath(staged);
+        while (!File.Exists(Path.Combine(root, "Calibration Environment", "defaults.json")))
+            root = Path.GetDirectoryName(root) ?? throw new InvalidOperationException("Run from inside the repository.");
+        JObject profile = JObject.Parse(File.ReadAllText(Path.Combine(root, "Calibration Environment", "defaults.json")));
+
+        var corpus = JObject.Parse(File.ReadAllText(Path.Combine(root, "Calibration Environment", "tests", "participant-ids.json")));
+        foreach (var item in corpus["inputs"]!)
+        {
+            string text = (string)item["text"]!;
+            bool parsed = ParticipantCalibration.TryParseId(text, out int id);
+            Assert(item["id"]!.Type == JTokenType.Null ? !parsed : parsed && id == (int)item["id"]!,
+                "shared participant ID example: " + text);
+        }
+        foreach (var item in corpus["records"]!)
+        {
+            int fileId = (int)item["fileId"]!;
+            var record = (JObject)item["fields"]!.DeepClone();
+            record["format"] = ParticipantCalibration.Format;
+            record["savedUtc"] = "";
+            record["calibration"] = profile.DeepClone();
+            byte[] json = Encoding.UTF8.GetBytes(record.ToString());
+            if ((bool)item["valid"]!)
+                Assert(ParticipantCalibration.Parse(json, fileId).ParticipantId == fileId, "shared participant record accepted");
+            else
+                Reject(() => ParticipantCalibration.Parse(json, fileId), "shared renamed participant record rejected");
+        }
+
+        // Same inputs and expected values as tools/config/test_stage.py.
+        profile["screen"]!["width"] = 2; profile["screen"]!["height"] = 1; profile["screen"]!["x"] = 2;
+        profile["screen"]!["z"] = -3; profile["screen"]!["bottom"] = 1; profile["screen"]!["rotation"] = new JArray(0, 90, 0);
+        profile["head"]!["eye"] = new JArray(1, 2, 3);
+        profile["head"]!["mount"] = JObject.FromObject(new { position = new[] { 1, 1, 1 }, rotation = new[] { 0, 0, 90 } });
+        profile["weapon"]!["muzzle"] = new JArray(0, 1, -2); profile["weapon"]!["bore"] = new JArray(0, 90, 0);
+        profile["weapon"]!["mount"] = JObject.FromObject(new { position = new[] { 0, 1, 0 }, rotation = new[] { 0, 90, 0 } });
+        byte[] Saved(int id, string name = "Alias", string format = ParticipantCalibration.Format, int? recordedId = null) =>
+            new UTF8Encoding(false).GetBytes(new JObject { ["format"] = format, ["participantId"] = recordedId ?? id, ["name"] = name,
+                ["savedUtc"] = "2026-01-01T00:00:00+00:00", ["calibration"] = profile }.ToString());
+
+        var calibration = ParticipantCalibration.Parse(Saved(12), 12);
+        Assert(calibration.ParticipantId == 12, "legacy participant profile loads by ID");
+        Assert(Near(calibration.HeadEyeOffsetM, 1, 0, -2), "eye offset matches Python conversion");
+        Assert(Near(calibration.WeaponMuzzleOffsetM, 2, 0, 0), "muzzle offset matches Python conversion");
+        Assert(Near(calibration.WeaponBoreLocalDirection, 0, 0, 1), "bore direction matches Python conversion");
+        Assert(Near(calibration.LowerLeftM, 2, 1, 2) && Near(calibration.LowerRightM, 2, 1, 4) && Near(calibration.UpperLeftM, 2, 2, 2),
+            "screen corners match Python conversion");
+        Reject(() => ParticipantCalibration.Parse(Saved(12, recordedId: 13), 12), "file renamed to another participant rejected");
+        Reject(() => ParticipantCalibration.Parse(Saved(12, format: "other"), 12), "unknown file format rejected");
+        Assert(ParticipantCalibration.Parse(Saved(12, name: "legacy field"), 12).ParticipantId == 12, "legacy name is ignored");
+        Reject(() => ParticipantCalibration.Parse(new byte[] { 0x7b }, 12), "truncated file rejected");
+
+        // A different saved screen is reported, but the staged screen is kept.
+        var config = DevelopmentConfiguration.LoadDirectory(staged);
+        Assert(!calibration.ScreenMatches(config.Rig), "different saved screen detected");
+        var withParticipant = config.WithParticipantCalibration(calibration);
+        Assert(withParticipant.Rig.Display.Origin.Equals(config.Rig.Display.Origin) && withParticipant.EffectiveSha256 == config.EffectiveSha256,
+            "staged screen and bundle identity are kept");
+        Assert(Near(withParticipant.Rig.HeadEyeOffsetM, 1, 0, -2), "participant eye offset replaces staged offset");
+
+        // A rig whose screen matches receives the participant's offsets and nothing else.
+        JObject rigJson = (JObject)JObject.Parse(File.ReadAllText(Path.Combine(staged, "effective-config.json")))["rig"]!;
+        rigJson["display"]!["lowerLeftM"] = new JArray(2, 1, 2); rigJson["display"]!["lowerRightM"] = new JArray(2, 1, 4);
+        rigJson["display"]!["upperLeftM"] = new JArray(2, 2, 2); rigJson["screenBottomHeightAboveFloorM"] = 1;
+        var matching = new RigConfiguration(rigJson);
+        Assert(calibration.ScreenMatches(matching), "matching saved screen detected");
+        var applied = calibration.ApplyTo(matching);
+        Assert(Near(applied.HeadEyeOffsetM, 1, 0, -2) && Near(applied.WeaponBoreLocalDirection, 0, 0, 1), "offsets applied to matching rig");
+        Assert(applied.HeadSerial == matching.HeadSerial && applied.Display.Origin.Equals(matching.Display.Origin), "screen and trackers unchanged");
+        Assert(applied.CalibrationId == "synthetic-participant-12-" + calibration.Sha256, "calibration ID names participant file hash");
+        Assert(applied.WeaponZero.W == 1, "saved bore already includes zero correction");
+
+        string directory = Path.Combine(Path.GetTempPath(), "elts-participant-calibrations-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(directory);
+            File.WriteAllBytes(Path.Combine(directory, "participant-12.json"), Saved(12));
+            File.WriteAllBytes(Path.Combine(directory, "participant-3.json"), Saved(3, name: ""));
+            File.WriteAllBytes(Path.Combine(directory, "participant-4.json"), Saved(5));
+            File.WriteAllText(Path.Combine(directory, "Older named profile.json"), profile.ToString());
+            var inventory = new ParticipantCalibration.Inventory();
+            var listed = inventory.Scan(directory, matching);
+            Assert(listed.Count == 3 && listed[0] == (3,true,true,Hash(Saved(3, name: ""))) && listed[1] == (4,false,false,"") && listed[2] == (12,true,true,Hash(Saved(12))), "inventory sorted with unreadable profiles marked");
+            File.WriteAllBytes(Path.Combine(directory, "participant-4.json"), Saved(4, name: "changed"));
+            Assert(inventory.Scan(directory, matching)[1] == (4,true,true,Hash(Saved(4, name: "changed"))), "repaired file appears in existing inventory");
+            bool missing = false;
+            try { ParticipantCalibration.Load(directory, 9); }
+            catch (FileNotFoundException exception) { missing = exception.Message.StartsWith("No saved calibration for participant 9", StringComparison.Ordinal); }
+            Assert(missing, "missing participant calibration explains what to do");
+        }
+        finally { Directory.Delete(directory, true); }
+
+        string clone = Path.Combine(Path.GetTempPath(), "elts-profiles-path-" + Guid.NewGuid().ToString("N"), "project with spaces");
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(clone, "config")); Directory.CreateDirectory(Path.Combine(clone, "unity", "ProjectSettings"));
+            File.WriteAllText(Path.Combine(clone, "config", "toolchain.json"), "{}");
+            File.WriteAllText(Path.Combine(clone, "unity", "ProjectSettings", "ProjectVersion.txt"), "");
+            Assert(MachineConfiguration.ResolveCalibrationProfiles(Path.Combine(clone, "build", "start-elts-x")) ==
+                Path.Combine(clone, "Calibration Environment", "profiles"), "built player finds calibration profiles at project root");
+        }
+        finally { Directory.Delete(Path.GetDirectoryName(clone)!, true); }
     }
 }

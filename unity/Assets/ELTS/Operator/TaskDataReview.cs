@@ -12,6 +12,9 @@ namespace Elts.Operator
     internal static class TaskDataReview
     {
         public const string Version="elts.task-metrics.v1";
+        public const string AnalysisScreenVersion="standard-interval.v1";
+        public const string NeedsAnalysis="Needs analysis";
+        public const string OfflineChecks="Run the offline analysis to validate schemas, counts and timing across the recording.";
         public static readonly string[] SummaryColumns={"blockId","condition","status","activeSeconds","hits","shots","misses","headHits","bodyHits","limbHits","coverHits","targetKills","damageDealt","magazineCapacity","reloads","dryFires","hitsPerSecond","shotsPerSecond","missesPerSecond","accuracyPercent","meanShotErrorDeg","p95ShotErrorDeg","meanShotOffsetMm","meanMissOffsetMm","aimErrorVarianceDeg2","meanAimErrorDeg","meanAimSpeedDegPerSecond","aimSpeedVariabilityDegPerSecond","aimPathDeg","aimObservedSeconds","aimCoveragePercent","aimObservations","validAimObservations","shotGeometryCount","reason","metricsVersion","scoreStatus"};
         public static readonly string[] SecondColumns={"second","exposureSeconds","hits","shots","misses","coverHits","hitsPerSecond","shotsPerSecond","missesPerSecond","meanAimErrorDeg"};
         public static readonly string[] ShotColumns={"shotNumber","activeSeconds","monotonicTicks","outcome","magazineBefore","magazineAfter","targetId","hitRegion","damage","remainingHealth","coverId","referenceTargetId","referencePolicy","angularErrorDeg","centerOffsetMm","edgeClearanceMm","targetRadiusMm"};
@@ -34,7 +37,8 @@ namespace Elts.Operator
             new[]{"aimCoveragePercent / aimObservedSeconds","% / s","Accepted observation-pair time / active task time. Low coverage limits motion statistics. Frame cadence differs from full raw tracker cadence."},
             new[]{"meanAimErrorDeg","deg","Official ELTS aim error: arithmetic mean target-center angular error over valid observations with a visible forward target. The analysis tool's rawSampleMeanAimErrorDegrees is a cross-check with a different target policy, not a substitute."},
             new[]{"shotGeometryCount / validAimObservations / aimObservations","count","Coverage counts. Null/blank values are unavailable, never substituted with zero."},
-            new[]{"metricsVersion / scoreStatus","provenance","elts.task-metrics.v1; descriptive synthetic review only, not integrity-verified analysis or a validated study score."}
+            new[]{"metricsVersion / scoreStatus","provenance","elts.task-metrics.v1; descriptive synthetic review only, not integrity-verified analysis or a validated study score."},
+            new[]{"analysisEligibility / analysisReason","standard 300-second interval","Excluded identifies a known disqualifying recording or timing fact. Needs analysis requires the offline verifier and analysis reader. A successful file checksum alone cannot establish eligibility."}
         };
 
         public static JObject Read(string directory)
@@ -45,6 +49,19 @@ namespace Elts.Operator
             var summary=File.Exists(summaryPath)?JObject.Parse(File.ReadAllText(summaryPath)):null;
             var result=Build(ReadCompleteEvents(Path.Combine(directory,"events.ndjson")));
             result["id"]=Path.GetFileName(directory);result["summary"]=summary;result["finalized"]=summary!=null;
+            if(summary!=null && ((string?)summary["schemaVersion"]!="elts.session-summary.v2" ||
+                !JToken.DeepEquals(summary["complete"],new JValue(true)) || summary["error"]?.Type!=JTokenType.Null))
+                result["analysisBlocker"]="The closure summary is incomplete or uses an unsupported schema.";
+            // A checkpoint is published under its final name only after a durable save.
+            // It can survive an interruption before session-summary.json exists.
+            var last=Directory.EnumerateFiles(directory,"test-checkpoint-*.json")
+                .Where(path=>(File.GetAttributes(path)&FileAttributes.ReparsePoint)==0)
+                .OrderByDescending(File.GetLastWriteTimeUtc).ThenBy(path=>path,StringComparer.Ordinal).FirstOrDefault();
+            if(last!=null)
+            {
+                var checkpoint=JObject.Parse(File.ReadAllText(last));
+                result["lastCheckpoint"]=new JObject{["condition"]=checkpoint["condition"],["savedUtc"]=checkpoint["savedUtc"],["status"]=checkpoint["status"]};
+            }
             return result;
         }
 
@@ -67,10 +84,16 @@ namespace Elts.Operator
         public static JObject Build(IEnumerable<JObject> events)
         {
             var attempts=new Dictionary<string,Attempt>();var notes=new JArray();
+            var timing=new Dictionary<string,AnalysisInterval>();
             foreach(var item in events)
             {
                 string type=(string?)item["eventType"]??"";var p=item["payload"] as JObject??new JObject();
                 string block=(string?)p["blockId"]??"";long ticks=(long?)item["monotonicTicks"]??0;
+                if(block.Length>0 && AnalysisInterval.IsMarker(type))
+                {
+                    if(!timing.TryGetValue(block,out var interval))timing[block]=interval=new AnalysisInterval();
+                    interval.Observe(type,(long?)item["monotonicTicks"],p);
+                }
                 if(type=="OperatorNote")notes.Add(new JObject{["ticks"]=ticks,["text"]=p["text"]?.DeepClone()});
                 if(type=="BlockMetadata" || type=="BlockSkipped")
                 {
@@ -79,8 +102,53 @@ namespace Elts.Operator
                 }
                 if(attempts.TryGetValue(block,out var attempt))attempt.Accept(type,ticks,p);
             }
-            return new JObject{["metricsVersion"]=Version,["attempts"]=new JArray(attempts.Values.Select(a=>a.Finish())),["notes"]=notes,
+            var rows=new JArray();
+            foreach(var entry in attempts)
+            {
+                var row=entry.Value.Finish();
+                string reason=timing.TryGetValue(entry.Key,out var interval)?interval.ExclusionReason():"Attempt has no start or end marker.";
+                row["analysisEligibility"]=reason.Length==0?NeedsAnalysis:"Excluded";
+                row["analysisReason"]=reason.Length==0?OfflineChecks:reason;
+                rows.Add(row);
+            }
+            // Include historical intervals that predate BlockMetadata. Their
+            // absence from descriptive Results does not exclude them from ingest.
+            bool candidate=timing.Values.Any(interval=>interval.ExclusionReason().Length==0);
+            var reasons=timing.Values.Select(interval=>interval.ExclusionReason()).Distinct().ToArray();
+            string recordingReason=candidate?OfflineChecks:reasons.Length==0?"No task interval was recorded.":String.Join(" ",reasons);
+            return new JObject{["metricsVersion"]=Version,["attempts"]=rows,["notes"]=notes,
+                ["analysisEligibility"]=candidate?NeedsAnalysis:"Excluded",["analysisReason"]=recordingReason,
                 ["limitation"]="Descriptive synthetic review. Raw streams and checksums remain authoritative; no physical validation or study score."};
+        }
+
+        // This is a conservative screen using the marker rules in ingest_run.
+        // A candidate still needs authoritative validation of all raw products.
+        private sealed class AnalysisInterval
+        {
+            private long? start,end;
+            private bool skipped,aborted,flexible,paused,duplicate;
+            public static bool IsMarker(string type)=>type=="BlockStarted" || type=="BlockEnded" || type=="BlockSkipped" ||
+                type=="BlockAborted" || type=="BlockDurationChanged" || type=="BlockPaused" || type=="BlockResumed";
+            public void Observe(string type,long? ticks,JObject payload)
+            {
+                if(type=="BlockStarted"){duplicate|=start.HasValue;start=ticks;}
+                if(type=="BlockEnded"){duplicate|=end.HasValue;end=ticks;}
+                skipped|=type=="BlockSkipped";aborted|=type=="BlockAborted";
+                paused|=type=="BlockPaused" || type=="BlockResumed";
+                flexible|=(type=="BlockStarted" || type=="BlockEnded" || type=="BlockDurationChanged") &&
+                          JToken.DeepEquals(payload["developmentTiming"],new JValue(true));
+            }
+            public string ExclusionReason()
+            {
+                if(skipped)return "The attempt was skipped.";
+                if(aborted)return "The attempt was aborted.";
+                if(duplicate)return "The attempt has duplicate start or end markers.";
+                if(paused)return "The attempt was paused or resumed.";
+                if(flexible)return "The attempt used flexible development timing.";
+                if(!start.HasValue || !end.HasValue)return "The attempt has no complete start/end interval.";
+                if((decimal)end.Value-start.Value!=300L*TimeSpan.TicksPerSecond)return "The interval is not exactly 300 seconds.";
+                return "";
+            }
         }
 
         private sealed class Moments

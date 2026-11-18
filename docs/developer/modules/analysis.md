@@ -1,5 +1,7 @@
 # Synthetic analysis ingest
 
+The reader streams complete records from the recording directory. A temporary SQLite file holds the values needed for exact medians and duplicate-ID checks. It closes and removes that file after each report, including failed runs.
+
 `analysis/src/elts_analysis` provides a standard-library-only, read-only ingest for completed ELTS logging v1 runs. It consumes `samples.ndjson`, `events.ndjson`, `targets.ndjson`, and `session-summary.json`; it refuses missing, incomplete, tampered, or unsupported schema-version inputs. Raw products are never rewritten. The derived report records each raw product's absolute source path, byte count, SHA-256, the calibration SHA-256, and the session provenance copied from the closure summary. Summary counts and all three product hashes are checked before parsing.
 
 Run it from the repository root with the bundled or system Python (the source package is intentionally not installed):

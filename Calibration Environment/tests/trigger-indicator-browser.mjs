@@ -2,6 +2,7 @@
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { mkdir } from "node:fs/promises";
 import assert from "node:assert/strict";
+import { installDraftFixture } from "./draft-fixture.mjs";
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE_PATH
     ? pathToFileURL(process.env.PLAYWRIGHT_MODULE_PATH).href : "playwright");
 const browser = await chromium.launch({ headless: true, args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
@@ -14,6 +15,7 @@ const errors = [];
 try {
     for (const [name, width, height] of [["desktop", 1440, 1000], ["mobile", 390, 844]]) {
         const page = await browser.newPage({ viewport: { width, height } });
+        await installDraftFixture(page);
         page.on("pageerror", error => errors.push(error.message));
         await page.addInitScript(config => localStorage.setItem("elts-calibration-v1-draft", JSON.stringify({ config })), initial.defaults);
         let pressed = false, ageMs = 0;

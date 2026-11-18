@@ -4,13 +4,14 @@ import { DIRECTION_LIMITS, DIRECTION_STEPS, averageStablePoses, solveHeadDirecti
 
 // The wizard keeps captures private until Apply. Closing or cancelling never
 // changes the active room registration, mount, or saved profile.
-export function installHeadCalibration({ readState, applyResult, notify }) {
+export function installHeadCalibration({ readState, readResetMeasurements, applyResult, notify }) {
     const $ = (id) => document.getElementById(id);
     const dialog = $("direction-dialog");
     let step = 0, samples = {}, solution = null, original = null, signature = "", timer = null;
+    let measurements = null;
     const fingerprint = ({ config, source }) => JSON.stringify({
         source, serial: config.head.serial, weaponSerial: config.weapon.serial,
-        screen: config.screen, mount: config.head.mount, registration: config.registration,
+        screen: config.screen, mount: config.head.mount, eye: config.head.eye, registration: config.registration,
     });
     function stopCapture() {
         clearInterval(timer);
@@ -59,15 +60,14 @@ export function installHeadCalibration({ readState, applyResult, notify }) {
         try {
             liveSample();
             original = structuredClone(readState().config);
+            measurements = readResetMeasurements();
             signature = fingerprint(readState());
             samples = {};
             step = 0;
             solution = null;
             $("direction-distance-row").innerHTML = distanceFields(
-                "direction-distance", "Preview distance from screen", 2,
+                "direction-distance", `${measurements.reference === "eye" ? "Viewing eye" : "Head centre"} distance from screen`, measurements.distance,
             );
-            for (const unit of ["feet", "inches"])
-                $(`direction-distance-${unit}`).value = $(`reset-distance-${unit}`).value;
             render();
             dialog.showModal();
         } catch (error) { notify(error.message); }
@@ -97,7 +97,7 @@ export function installHeadCalibration({ readState, applyResult, notify }) {
                     stopCapture();
                     samples[DIRECTION_STEPS[step].key] = captured;
                     if (step === DIRECTION_STEPS.length - 1)
-                        solution = solveHeadDirections(original, samples, readDistance("direction-distance"), undefined, readDistance("reset-height"));
+                        solution = solveHeadDirections(original, samples, readDistance("direction-distance"), undefined, measurements.height, measurements.reference);
                     step++;
                     render();
                 } else if (now - readyAt > DIRECTION_LIMITS.timeoutMs) {
@@ -118,7 +118,7 @@ export function installHeadCalibration({ readState, applyResult, notify }) {
     $("direction-apply").onclick = () => {
         try {
             liveSample();
-            const result = solveHeadDirections(original, samples, readDistance("direction-distance"), undefined, readDistance("reset-height"));
+            const result = solveHeadDirections(original, samples, readDistance("direction-distance"), undefined, measurements.height, measurements.reference);
             applyResult(result);
             dialog.close();
             notify("Head directions applied. Move and turn to check the preview, then save your profile.");

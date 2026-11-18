@@ -23,7 +23,7 @@
       "strategy": {
         "matrix": {
           "os": [
-            "ubuntu-latest",
+            "ubuntu-24.04",
             "windows-latest"
           ]
         }
@@ -57,7 +57,7 @@
     },
     "interface-checks": {
       "name": "Operator, calibration and analysis checks",
-      "runs-on": "ubuntu-latest",
+      "runs-on": "ubuntu-24.04",
       "timeout-minutes": 15,
       "steps": [
         {

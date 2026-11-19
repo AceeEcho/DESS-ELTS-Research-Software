@@ -40,6 +40,8 @@ namespace Elts.Operator
         private const double RetrySeconds = 2, SerialRefreshSeconds = 2;
         private readonly TrackedDevicePose_t[] poses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
         private readonly string?[] serials = new string?[OpenVR.k_unMaxTrackedDeviceCount];
+        /// <summary>True where SteamVR presents the device as hand-held (a tracker set to "Held in hand", or a controller).</summary>
+        private readonly bool[] handHeld = new bool[OpenVR.k_unMaxTrackedDeviceCount];
         private bool ownsRuntime;
         private double retryAt, serialsAt;
         public bool Connected { get; private set; }
@@ -84,6 +86,21 @@ namespace Elts.Operator
             return result;
         }
 
+        /// <summary>
+        /// Connected hand-held devices, in a stable order. The gun tracker must be
+        /// "Held in hand" for its trigger to be read, so this is how the gun is
+        /// told from the head tracker when no serial is configured.
+        /// </summary>
+        public IReadOnlyList<string> HandHeldSerials()
+        {
+            var result = new List<string>();
+            if (!Connected) return result;
+            for (int index = 0; index < serials.Length; index++)
+                if (serials[index] != null && handHeld[index] && poses[index].bDeviceIsConnected) result.Add(serials[index]!);
+            result.Sort(StringComparer.Ordinal);
+            return result;
+        }
+
         public LiveTrackerSample Sample(string serial)
         {
             if (String.IsNullOrEmpty(serial)) return LiveTrackerSample.Missing("", "not assigned");
@@ -107,14 +124,14 @@ namespace Elts.Operator
             string universe = "";
             for (uint index = 0; index < OpenVR.k_unMaxTrackedDeviceCount; index++)
             {
-                serials[index] = null;
+                serials[index] = null; handHeld[index] = false;
                 var kind = system.GetTrackedDeviceClass(index);
                 if (kind != ETrackedDeviceClass.Controller && kind != ETrackedDeviceClass.GenericTracker) continue;
                 var error = ETrackedPropertyError.TrackedProp_Success;
                 text.Clear();
                 system.GetStringTrackedDeviceProperty(index, ETrackedDeviceProperty.Prop_SerialNumber_String, text, 128, ref error);
                 if (error != ETrackedPropertyError.TrackedProp_Success || text.Length == 0) continue;
-                serials[index] = text.ToString();
+                serials[index] = text.ToString(); handHeld[index] = kind == ETrackedDeviceClass.Controller;
                 ulong id = system.GetUint64TrackedDeviceProperty(index, ETrackedDeviceProperty.Prop_CurrentUniverseId_Uint64, ref error);
                 if (error == ETrackedPropertyError.TrackedProp_Success && id != 0) universe = id.ToString(CultureInfo.InvariantCulture);
             }

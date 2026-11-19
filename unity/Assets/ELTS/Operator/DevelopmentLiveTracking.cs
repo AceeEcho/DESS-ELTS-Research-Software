@@ -90,7 +90,11 @@ namespace Elts.Operator
         private string LiveStationFolder => Path.GetDirectoryName(CalibrationProfileDirectory) ?? CalibrationProfileDirectory;
         private string LiveCalibrationPath => Path.Combine(LiveStationFolder, "station-tracking.json");
         private string LiveSettingsPath => Path.Combine(LiveStationFolder, "live-tracking.json");
-        private string LiveGunSerial => view.Configuration.Machine.WeaponTriggerSerial;
+        private string ConfiguredGunSerial => view.Configuration.Machine.WeaponTriggerSerial ?? "";
+        /// <summary>Found from SteamVR, or taken from the saved station fit, when no serial is configured.</summary>
+        private string liveDetectedGunSerial = "";
+        /// <summary>The gun tracker: the configured serial when there is one, otherwise the hand-held tracker SteamVR reports.</summary>
+        private string LiveGunSerial => ConfiguredGunSerial.Length > 0 ? ConfiguredGunSerial : liveDetectedGunSerial;
 
         /// <summary>Tracked poses are driving the station in place of the mouse.</summary>
         public bool LiveTrackingActive => SeparateAdministrator && liveReader != null && liveEnabled && liveModel != null;
@@ -112,6 +116,8 @@ namespace Elts.Operator
                 {
                     // Only while no participant is in progress: how to turn the trackers on.
                     if (!StationCanStartParticipant) return "";
+                    // A mouse-only station with no SteamVR and no saved fit has nothing to be told.
+                    if (!liveReader.Connected && liveStation == null) return "";
                     if (!liveEnabled) return "MOUSE INPUT · F10 switches to the trackers";
                     return "LIVE TRACKING · " + (liveNotice.Length > 0 ? liveNotice : "station not calibrated") + " · F6 calibrates the station";
                 }
@@ -145,6 +151,8 @@ namespace Elts.Operator
             liveHealth = new SteamVrHealthWatch();
             liveStation = LiveStationCalibration.Load(LiveCalibrationPath, out string calibrationMessage);
             liveNotice = settingsMessage.Length > 0 ? settingsMessage : calibrationMessage;
+            // Until SteamVR answers, assume the gun tracker the station fit was saved with.
+            if (ConfiguredGunSerial.Length == 0 && liveStation != null) liveDetectedGunSerial = liveStation.GunSerial;
             AdoptStationCalibration();
         }
 
@@ -163,6 +171,21 @@ namespace Elts.Operator
             view.SetLiveEyeOffset(LiveTrackingActive ? liveEye : null);
         }
 
+        /// <summary>
+        /// With no serial configured, the gun is the tracker SteamVR presents as
+        /// hand-held: the role its trigger needs anyway. A tracker already chosen is
+        /// kept while it stays connected.
+        /// </summary>
+        private void ResolveGunSerial()
+        {
+            if (ConfiguredGunSerial.Length > 0 || liveReader == null || !liveReader.Connected) return;
+            var handHeld = liveReader.HandHeldSerials();
+            if (handHeld.Count == 0 || handHeld.Contains(liveDetectedGunSerial)) return;
+            liveDetectedGunSerial = handHeld[0];
+            // A different gun tracker than the saved fit: say so before anyone aims with it.
+            if (liveProcedure == null && StationCanStartParticipant) AdoptStationCalibration();
+        }
+
         /// <summary>Read SteamVR first each frame, so this reader holds the connection the trigger reader then shares.</summary>
         private void PollLiveTrackers()
         {
@@ -172,10 +195,16 @@ namespace Elts.Operator
             if (now >= liveHeadResolveAt || liveHeadSerial.Length == 0)
             {
                 liveHeadResolveAt = now + 1;
+                ResolveGunSerial();
+                // The head tracker is the other one; prefer a tracker that is not hand-held.
+                var handHeld = liveReader.HandHeldSerials();
                 liveHeadSerial = liveSettings.headSerial.Length > 0 ? liveSettings.headSerial
-                    : liveReader.ConnectedSerials().FirstOrDefault(serial => serial != LiveGunSerial) ?? "";
+                    : liveReader.ConnectedSerials().Where(serial => serial != LiveGunSerial)
+                        .OrderBy(serial => handHeld.Contains(serial) ? 1 : 0).FirstOrDefault() ?? "";
             }
-            liveGun = liveReader.Sample(LiveGunSerial);
+            liveGun = LiveGunSerial.Length == 0 && liveReader.Connected
+                ? LiveTrackerSample.Missing("", "not found: set the gun tracker to Held in hand in SteamVR > Manage Trackers")
+                : liveReader.Sample(LiveGunSerial);
             liveHead = liveReader.Sample(liveHeadSerial);
             liveFrames.Add(new LiveFrame(now, liveGun.Pose, liveHead.Pose));
             int stale = 0;
@@ -305,7 +334,7 @@ namespace Elts.Operator
 
         private void SetLiveEnabled(bool enabled)
         {
-            if (liveReader == null) throw new InvalidOperationException("Live tracking is unavailable. Set weaponTriggerSerial in config/local.json and restart.");
+            if (liveReader == null) throw new InvalidOperationException("Live tracking is unavailable in this run.");
             liveEnabled = enabled;
             view.SetLiveEyeOffset(LiveTrackingActive ? liveEye : null);
             lastMessage = enabled ? (liveModel != null ? "Live trackers are driving the aim." : "Live tracking is on, but the station is not calibrated yet (F6).")
@@ -325,7 +354,9 @@ namespace Elts.Operator
         private void BeginLiveProcedure(string kind, bool fromTutorial)
         {
             if (liveReader == null)
-                throw new InvalidOperationException("Live tracking is unavailable. Set weaponTriggerSerial in config/local.json to the gun tracker's serial and restart.");
+                throw new InvalidOperationException("Live tracking is unavailable in this run.");
+            if (LiveGunSerial.Length == 0 && liveReader.Connected)
+                throw new InvalidOperationException("No gun tracker found. In SteamVR > Manage Trackers set the gun tracker to Held in hand, then try again.");
             if (liveProcedure != null) throw new InvalidOperationException("A tracking step is already running. Press Esc on the participant window to cancel it.");
             if (!liveReader.Connected) throw new InvalidOperationException("SteamVR is not connected: " + liveReader.Status + ".");
             if (engine != null && !closing && (engine.State == SessionState.BlockRunning || engine.State == SessionState.BlockPaused))

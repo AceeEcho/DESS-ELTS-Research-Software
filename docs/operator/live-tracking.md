@@ -32,9 +32,11 @@ base station's position is never entered, and no printed parts are needed.
    [SteamVR health report](../../tools/diagnostics/README.md) first: it reads
    SteamVR's own log and flags a tracker whose learned calibration has gone bad.
 3. **Gun tracker.** In SteamVR **Manage Trackers** it must be **Held in hand**
-   (left or right), as for the [trigger](../developer/modules/vive-trigger.md). Its
-   serial must be `weaponTriggerSerial` in `config/local.json`. The other
-   connected tracker is taken as the head tracker.
+   (left or right), as for the [trigger](../developer/modules/vive-trigger.md).
+   ELTS takes the hand-held tracker as the gun and the other connected tracker
+   as the head. Nothing has to be typed in. (`weaponTriggerSerial` in
+   `config/local.json` is optional and only needed to force a particular
+   tracker; that file is not copied between machines.)
 4. **Screen.** Start ELTS with **START-ELTS.cmd**, move the participant window to
    the TV and press **F11**. The dots are placed as fractions of the window, so
    the window must fill the screen.
@@ -165,7 +167,8 @@ left out keeps its default. The names and meanings are in `LiveTrackingSettings`
 
 | What you see | What to do |
 | --- | --- |
-| **F6** does nothing, or the dashboard says live tracking is unavailable | Set `weaponTriggerSerial` in `config/local.json`, start SteamVR, restart ELTS |
+| The dashboard says **Start SteamVR** | Start SteamVR on this machine and wait a few seconds |
+| The gun shows **not found** | In SteamVR **Manage Trackers** set the gun tracker to **Held in hand** |
 | *The gun tracker was not tracked* on a capture | Turn the tracker's face toward the base station; check nothing blocks it |
 | *The gun moved during the squeeze* | Settle on the dot first, then squeeze gently; or press **Space** with a second person |
 | Trigger pulls do nothing during a step | The trigger is unavailable: check **Held in hand** in SteamVR; use **Space** meanwhile |

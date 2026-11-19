@@ -58,7 +58,7 @@
     if (!status) return;
     const available = !!(live && live.available);
     if (!available) {
-      status.textContent = 'Live tracking is off. Set weaponTriggerSerial in config/local.json, start SteamVR and restart ELTS.';
+      status.textContent = 'Live tracking is off in this run.';
     } else {
       const parts = [live.active ? 'Trackers are driving the aim' : !live.enabled ? 'Mouse is driving the aim' : live.calibrated ? 'Trackers ready' : 'Station not calibrated'];
       parts.push(`SteamVR: ${live.steamVr}`, `gun ${live.gun}`, `head ${live.head}`);

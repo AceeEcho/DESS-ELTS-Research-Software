@@ -86,7 +86,7 @@ With the walkthrough, the first test arms after the readiness message. The parti
 
 The participant window then says **Shoot to begin**. The participant clicks and releases, or pulls the gun trigger if one is set up, to start the test; that starting shot is not counted. Before they start, **DISARM TEST** cancels arming.
 
-During the test, the participant aims with the mouse and clicks/releases (or pulls a configured gun trigger) to fire one round. See [VIVE gun trigger](../../README.md#-install-and-run) for setting up the trigger. The magazine holds 20 rounds and does not reload automatically; press R to reload. W/S moves forward/back, A/D moves left/right, Q/E moves down/up, and Home resets the virtual pose. The synthetic targets have three health: head/body/limb hits deal 3/2/1 damage. The dashboard shows region hits, cover hits, misses, and targets down.
+During the test, the participant aims with the mouse and clicks/releases (or pulls a configured gun trigger) to fire one round. See [VIVE gun trigger](../../README.md#-install-and-run) for setting up the trigger. The magazine holds 20 rounds and reloads itself 2.5 seconds after it runs empty; R still reloads sooner. W/S moves forward/back, A/D moves left/right, Q/E moves down/up, and Home resets the virtual pose. The synthetic targets have three health: head/body/limb hits deal 3/2/1 damage. The dashboard shows region hits, cover hits, misses, and targets down.
 
 To resize the participant window, drag its edges. F11 or Alt+Enter toggles fullscreen; Escape returns to the previous window size. Switching windows does **not** pause the timer.
 

@@ -55,11 +55,15 @@ namespace Elts.Operator.Tests
             => Assert.That(WindowsTrackerSimulatorTransport.IsSimulatorInstance(id), Is.EqualTo(expected));
 
         [Test]
-        public void WindowsPlayerRequiresAnExplicitWellFormedSimulatorPort()
+        public void WindowsPlayerDefaultsToCom4AndHonorsExplicitOverrides()
         {
             const string option = "-eltsTrackerSimulatorCom";
+            const string off = "-eltsTrackerSimulatorOff";
             Assert.That(WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { "-eltsWindowed" }), Is.Null);
-            Assert.That(WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { option, "com4" }), Is.EqualTo("COM4"));
+            Assert.That(WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { "-eltsWindowed" }, useDefault: true), Is.EqualTo("COM4"));
+            Assert.That(WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { option, "com5" }, useDefault: true), Is.EqualTo("COM5"));
+            Assert.That(WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { off }, useDefault: true), Is.Null);
+            Assert.Throws<ArgumentException>(() => WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { off, option, "COM4" }));
             Assert.Throws<ArgumentException>(() => WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { option }));
             Assert.Throws<ArgumentException>(() => WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { option, "auto" }));
             Assert.Throws<ArgumentException>(() => WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { option, "COM4", option, "COM5" }));

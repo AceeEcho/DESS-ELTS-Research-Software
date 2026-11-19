@@ -95,7 +95,7 @@ const server = http.createServer(async (req, res) => {
     await page.goto(`http://127.0.0.1:${server.address().port}/#fixture`);
     await page.waitForFunction(() => document.getElementById('connectionText').textContent === 'Connected');
     const usbStatus = page.locator('#trackerSimulatorStatus');
-    assert.equal(await usbStatus.isVisible(), false, 'USB status is hidden on a normal launch');
+    assert.equal(await usbStatus.isVisible(), false, 'USB status is hidden when the sender is disabled');
     current.trackerSimulator = 'USB tracker · COM4 · Simulator disconnected';
     await usbStatus.waitFor({ state: 'visible' });
     assert.equal(await usbStatus.textContent(), current.trackerSimulator);

@@ -429,11 +429,12 @@ namespace Elts.Operator
         private void ConfigureTrackerSimulator()
         {
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-            // Tests inject their own peer. Only an explicit launch of the development player can open USB.
+            // Tests inject their own peer. The GUI development player tries the verified simulator on COM4.
             if (Application.isEditor || !Debug.isDebugBuild) return;
             try
             {
-                var port = WindowsTrackerSimulatorTransport.ReadSelectedPort(Environment.GetCommandLineArgs());
+                var port = WindowsTrackerSimulatorTransport.ReadSelectedPort(
+                    Environment.GetCommandLineArgs(), useDefault: !Application.isBatchMode);
                 if (port == null) return;
                 UseTrackerSimulator(new WindowsTrackerSimulatorTransport(port));
                 trackerSimulatorPort = port;

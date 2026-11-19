@@ -44,8 +44,9 @@ the final WE/NE study decision.
 
 ## Windows development player with the isolated Jetson simulator
 
-The USB sender is off by default. Keep the tracker movement outputs isolated
-while the player talks to the simulated receiver.
+The Windows development player tries the Jetson simulator on `COM4` by default.
+It opens the port only when Windows reports the matching Jetson USB identity.
+Keep tracker movement outputs isolated while using this integration.
 
 On cadet, start the mock receiver and wait for
 `Ready on /dev/ttyGS0 with simulated outputs`.
@@ -55,18 +56,20 @@ cd /home/cade/ELTS_Code && python3 -B -m usb_lifecycle_mock.pty_mock --usb
 ```
 
 On Windows, confirm the present CDC-ACM port belongs to USB VID `0955` and
-PID `7020`. Use `COM4` only if that is the current assignment. Start ELTS from
-the repository root with:
+PID `7020`. Run `START-ELTS.cmd` as usual if Windows assigns that device `COM4`.
+For a different verified port, pass it at startup. For example:
 
 ```powershell
-.\START-ELTS.cmd -TrackerSimulatorCom COM4
+.\START-ELTS.cmd -TrackerSimulatorCom COM5
 ```
 
-For a Windows development build with this feature, pass `-eltsTrackerSimulatorCom COM4`
-to `ELTS-Synthetic.exe`. The administrator run panel shows the selected port and
-sender status. The port can be open while the tracker is idle. The sender
+Pass `-TrackerSimulatorOff` to the launcher to disable USB for that launch.
+When opening `ELTS-Synthetic.exe` directly, the equivalent flags are
+`-eltsTrackerSimulatorCom COM5` and `-eltsTrackerSimulatorOff`.
+The administrator run panel shows the selected port and sender status.
+The port can be open while the tracker is idle. The sender
 negotiates a fresh run only on a live WE entry. A lost connection cannot resume
-that segment. Omit the launch option on the next startup to leave USB disabled.
+that segment. The automated Unity bench still requires an explicit port.
 
 ### Automated bench test
 

@@ -13,6 +13,7 @@ $script:failSetup = $false
 $script:failBuild = $false
 $script:fingerprint = 'source-one'
 $script:expectedTrackerPort = $null
+$script:expectedTrackerOff = $false
 $script:statuses = New-Object 'System.Collections.Generic.List[string]'
 function Set-EltsStartupStatus {
     param($Title, $Detail, $Result)
@@ -38,8 +39,9 @@ function Start-EltsVisibleApp {
         if ($script:expectedTrackerPort) {
             Assert ($trackerIndex -ge 0 -and $Arguments[$trackerIndex + 1] -ceq $script:expectedTrackerPort) 'Explicit simulator port lost at launch'
         } else {
-            Assert ($trackerIndex -lt 0) 'Ordinary startup must leave USB disabled'
+            Assert ($trackerIndex -lt 0) 'Without an override the player must choose its own default port'
         }
+        Assert (($Arguments -contains '-eltsTrackerSimulatorOff') -eq $script:expectedTrackerOff) 'The USB off switch must reach the player only when requested'
         $script:calls.Add('dashboard')
         $process = New-Object PSObject
         $process | Add-Member ScriptMethod Dispose {}
@@ -84,6 +86,10 @@ try {
     Invoke-EltsDevelopmentStart -TrackerSimulatorCom com4
     Assert (($calls -join ',') -eq 'verify,dashboard') 'The simulator choice must reuse the same cached player'
     $script:expectedTrackerPort = $null
+    $calls.Clear(); $script:expectedTrackerOff = $true
+    Invoke-EltsDevelopmentStart -TrackerSimulatorOff
+    Assert (($calls -join ',') -eq 'verify,dashboard') 'The USB off switch must reuse the same cached player'
+    $script:expectedTrackerOff = $false
     $calls.Clear()
     $blocked = $false
     try { Invoke-EltsDevelopmentStart -TrackerSimulatorCom auto } catch { $blocked = $_.Exception.Message -match 'explicit Windows COM' }

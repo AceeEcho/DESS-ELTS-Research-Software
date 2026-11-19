@@ -33,11 +33,16 @@ namespace Elts.Operator
             this.observeRead = observeRead;
         }
 
-        internal static string? ReadSelectedPort(string[] arguments)
+        internal static string? ReadSelectedPort(string[] arguments, bool useDefault = false)
         {
             const string option = "-eltsTrackerSimulatorCom";
             int index = Array.IndexOf(arguments, option);
-            if (index < 0) return null;
+            if (Array.IndexOf(arguments, "-eltsTrackerSimulatorOff") >= 0)
+            {
+                if (index >= 0) throw new ArgumentException("Choose either a simulator COM port or the USB off switch.");
+                return null;
+            }
+            if (index < 0) return useDefault ? "COM4" : null;
             if (index + 1 >= arguments.Length || Array.LastIndexOf(arguments, option) != index)
                 throw new ArgumentException("Supply exactly one COM port with " + option + ".");
             return NormalizePort(arguments[index + 1]);

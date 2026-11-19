@@ -102,7 +102,10 @@ function Wait-EltsPlayerReady {
 }
 
 function Invoke-EltsDevelopmentStart {
-    param([string]$TrackerSimulatorCom)
+    param([string]$TrackerSimulatorCom, [switch]$TrackerSimulatorOff)
+    if ($TrackerSimulatorCom -and $TrackerSimulatorOff) {
+        throw 'Choose either a simulator COM port or -TrackerSimulatorOff.'
+    }
     if ($TrackerSimulatorCom -and $TrackerSimulatorCom -notmatch '\ACOM[1-9][0-9]{0,4}\z') {
         throw 'Select an explicit Windows COM port with -TrackerSimulatorCom, for example COM4.'
     }
@@ -197,6 +200,7 @@ function Invoke-EltsDevelopmentStart {
     Write-Host "Player log: $playerLog"
     $playerArguments = @('-eltsWindowed','-screen-fullscreen','0','-screen-width','1280','-screen-height','720','-logFile',$playerLog)
     if ($TrackerSimulatorCom) { $playerArguments += @('-eltsTrackerSimulatorCom', $TrackerSimulatorCom.ToUpperInvariant()) }
+    if ($TrackerSimulatorOff) { $playerArguments += '-eltsTrackerSimulatorOff' }
     $process = Start-EltsVisibleApp $player $playerArguments (Split-Path -Parent $player)
     try {
         Set-EltsStartupStatus 'Initializing the participant view' 'Waiting for the game scene and administrator server. An initialization error will appear here; first launches may take longer.'

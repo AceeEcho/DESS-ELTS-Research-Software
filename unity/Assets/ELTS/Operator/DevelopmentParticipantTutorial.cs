@@ -57,8 +57,9 @@ namespace Elts.Operator
             tutorialDemo?.Stop();tutorialDemo=null;tutorialInteraction=null;
             tutorialNarration?.Stop();
             tutorial=new ParticipantTutorial(RecordTutorialChange);
-            // Under live tracking the head step is one standing capture; see HeadCalibrationCount.
-            if(LiveTrackingActive)tutorial.UseHeadCalibrationSteps(1);
+            // Live tracking was calibrated at the station (F6) before this participant arrived,
+            // so the walkthrough does not calibrate again. F7 still offers a shooter's own aim dots.
+            if(LiveTrackingActive)tutorial.SkipCalibrationSteps();
             tutorialHistory.Clear();tutorialPracticeAttempt=0;previousTutorialStage=TutorialStage.NotStarted;tutorialDotVisible=false;
         }
         private void RecordTutorialChange(string name,TutorialStage stage)
@@ -84,6 +85,9 @@ namespace Elts.Operator
 
         private bool TutorialCalibrationStep=>tutorial.Stage==TutorialStage.HeadCalibration || tutorial.Stage==TutorialStage.GunCalibration;
         private bool TutorialCanBegin=>!IsBusy && !closing && engine?.State==SessionState.Calibration && !tutorial.Started;
+        /// <summary>Skipping is offered before the walkthrough and at every step of it, up to the first test.</summary>
+        private bool TutorialCanSkip=>!IsBusy && !closing && tutorial.CanSkipToFirstScenario && (engine?.State==SessionState.Calibration ||
+            engine?.State==SessionState.Practice || engine?.State==SessionState.BlockReady);
         private bool TutorialCanCapture=>!IsBusy && !tutorial.Paused && tutorial.CueFinished && TutorialCalibrationStep && tutorialDotVisible && calibration.State==CalibrationWizardState.Idle;
         private bool TutorialCanAccept=>!IsBusy && !tutorial.Paused && tutorial.CueFinished && TutorialCalibrationStep && calibration.State==CalibrationWizardState.Review && calibrationWithinLimits;
         private string TutorialPrimaryAction => !tutorial.Started?"tutorialBegin":TutorialCalibrationStep?
@@ -93,7 +97,7 @@ namespace Elts.Operator
             (calibration.State==CalibrationWizardState.Idle?(tutorial.Stage==TutorialStage.HeadCalibration?
                 (tutorial.HeadCalibrationCount==1?"Capture standing position":
                     "Capture direction "+(tutorial.HeadCalibrationIndex+1)+" of "+tutorial.HeadCalibrationCount+" · "+tutorial.Step.Title):
-                LiveTrackingActive?"Start aim dots":"Check calibration"):
+                LiveTrackingActive?(LiveProcedureRunning?"Capture this dot (if the trigger does not)":"Start aim dots"):"Check calibration"):
                 "Accept review · continue"):tutorial.Step.OperatorAction;
         private bool TutorialPrimaryEnabled => !IsBusy && (TutorialCanBegin || TutorialCanCapture || TutorialCanAccept ||
             tutorial.CanContinue || (!tutorial.Paused && tutorial.CueFinished && tutorial.Stage==TutorialStage.PracticeReady) ||
@@ -114,7 +118,7 @@ namespace Elts.Operator
             canRestartPractice=!IsBusy && !tutorial.Paused && tutorial.CueFinished && (tutorial.Stage==TutorialStage.PracticeRunning || tutorial.Stage==TutorialStage.PracticeComplete),
             canFinishPractice=!IsBusy && tutorial.Stage==TutorialStage.PracticeRunning,
             practicePaused=engine?.PracticePaused==true,audioEnabled=tutorialNarration!=null,
-            manual=tutorial.Manual,canManual=TutorialCanBegin,
+            manual=tutorial.Manual,canManual=TutorialCanSkip,calibrationSteps=!tutorial.CalibrationStepsSkipped,
             audioAvailable=TutorialHasNarration,audioSlot=tutorial.Step.AudioSlot,
             status=TutorialOperatorStatus()
         };
@@ -150,6 +154,12 @@ namespace Elts.Operator
             {
                 case "tutorialBegin":
                     if(!TutorialCanBegin)throw new InvalidOperationException("The participant recording is not ready for the walkthrough.");
+                    if(tutorial.CalibrationStepsSkipped)
+                    {
+                        // The session still needs its accepted fixture record before practice; save it now, unasked.
+                        PrepareCalibrationFixture();AcceptCalibrationFixture();
+                        RecordSessionDetail("Walkthrough calibration steps omitted: live tracking uses the station calibration.");
+                    }
                     tutorial.Begin(revision);break;
                 case "tutorialManual":StartManualMode(revision);break;
                 case "tutorialContinue":tutorial.Continue(revision);break;
@@ -159,8 +169,11 @@ namespace Elts.Operator
                     else if(LiveTrackingActive)
                     {
                         // The participant aims at five dots and squeezes the trigger; the review
-                        // appears when the last dot is captured (CompleteTutorialLiveZero).
-                        BeginLiveProcedure("zero",true);RecordTutorialChange("TutorialLiveZeroStarted",tutorial.Stage);tutorial.InvalidateControls();
+                        // appears when the last dot is captured (CompleteTutorialLiveZero). While the
+                        // dots are showing, the same button captures one for a trigger that is not read.
+                        if(liveProcedure!=null)LiveProcedureInput("capture",Time.realtimeSinceStartupAsDouble);
+                        else {BeginLiveProcedure("zero",true);RecordTutorialChange("TutorialLiveZeroStarted",tutorial.Stage);}
+                        tutorial.InvalidateControls();
                     }
                     else {CaptureCalibrationFixture();RecordTutorialChange("TutorialFixtureCaptured",tutorial.Stage);tutorial.InvalidateControls();}
                     break;
@@ -205,27 +218,29 @@ namespace Elts.Operator
             if(engine.State==SessionState.Failed)throw new IOException(engine.Failure);
             SynchronizeTutorial();
         }
-        /// <summary>Manual mode: skip the guided walkthrough and practice and wait at the
-        /// first test. The same synthetic fixture is captured and saved as in the
-        /// walkthrough, so every recording carries identical calibration evidence.</summary>
+        /// <summary>Manual mode: skip the guided walkthrough and practice (all of it, or
+        /// whatever is left of one in progress) and wait at the first test. The same
+        /// synthetic fixture is captured and saved as in the walkthrough, so every
+        /// recording carries identical calibration evidence. Under live tracking the
+        /// participant's own aim dots are skipped too unless already accepted, so the
+        /// aim then rests on the station fit until an aim zero (F7) is run.</summary>
         private void StartManualMode(int revision)
         {
-            if(!TutorialCanBegin)throw new InvalidOperationException("The participant recording is not ready for manual mode.");
-            CaptureCalibrationFixture();
-            if(!calibrationWithinLimits)
-            {
-                ResetCalibration();
-                throw new InvalidOperationException("Calibration needs review. Open the walkthrough and try again.");
-            }
+            if(!TutorialCanSkip)throw new InvalidOperationException("The walkthrough can be skipped only before the first test.");
+            bool calibrating=engine!.State==SessionState.Calibration;
+            if(calibrating)PrepareCalibrationFixture();
             try
             {
-                AcceptCalibrationFixture();
+                // Aim dots or a simulated demonstration still showing belong to the skipped walkthrough.
+                liveProcedure=null;
+                if(tutorialDemo?.Active==true)tutorialDemo.Stop();
+                if(calibrating && calibration.State==CalibrationWizardState.Review)AcceptCalibrationFixture();
                 RecordSessionDetail("Manual mode: the operator skipped the participant walkthrough and practice.");
-                AdvanceWithCalibration();
-                engine!.FinishDevelopmentPractice();
+                if(calibrating)AdvanceWithCalibration();
+                if(engine.State==SessionState.Practice)engine.FinishDevelopmentPractice();
                 if(engine.State!=SessionState.BlockReady)throw new IOException(engine.Failure??"The first test could not be prepared.");
                 tutorial.StartManual(revision);
-                lastMessage="Manual mode. Arm the test when the participant is ready.";
+                lastMessage="Walkthrough skipped. Arm the test when the participant is ready.";
             }
             catch
             {
@@ -233,6 +248,18 @@ namespace Elts.Operator
                 if(engine!=null && engine.State!=SessionState.Failed && engine.State!=SessionState.Aborted)
                     engine.Abort("Manual mode setup failed.");
                 throw;
+            }
+        }
+        /// <summary>Brings the synthetic fixture to a review within limits, or already accepted,
+        /// from wherever the walkthrough left it. Nothing is stopped when it cannot.</summary>
+        private void PrepareCalibrationFixture()
+        {
+            if(calibration.State==CalibrationWizardState.Review && !calibrationWithinLimits)ResetCalibration();
+            if(calibration.State==CalibrationWizardState.Idle)CaptureCalibrationFixture();
+            if(calibration.State==CalibrationWizardState.Review && !calibrationWithinLimits)
+            {
+                ResetCalibration();
+                throw new InvalidOperationException("Calibration needs review. Open the walkthrough and try again.");
             }
         }
         private void CaptureTutorialHeadDirection(int revision)
@@ -361,6 +388,9 @@ namespace Elts.Operator
         private bool SubmitTutorialTrigger(string source, string edge, string trackerSerial)
         {
             if(!TutorialCanInteract || acquisition==null || !acquisition.TryCaptureForTrigger(out var pair) || !pair.IsValid)return false;
+            // A well-formed pair can still carry an untracked head or gun. Ignore the pull; never stop the session for it.
+            if(!pair.Head.HasValidPose || !pair.Weapon.HasValidPose)
+            { lastMessage="Trigger ignored: a tracker was not tracked at that moment.";return false; }
             RecordTutorialEvent(new SessionEvent(sequence!.Next(),pair.Timestamp,"TutorialInputTrigger",new[]{
                 LogField.String("blockId",tutorialInteraction!.InteractionId),LogField.String("scope",tutorialInteraction.Scope),
                 LogField.String("source",source),LogField.String("trackerSerial",String.IsNullOrEmpty(trackerSerial)?"none":trackerSerial),

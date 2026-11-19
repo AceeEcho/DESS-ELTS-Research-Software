@@ -280,7 +280,7 @@ const server = http.createServer(async (req, res) => {
     await page.waitForFunction(()=>!document.getElementById('tutorialPrimary').disabled);
     await page.locator('#tutorialPrimary').click();await wait(()=>current.tutorial.stage==='Reload');
     assert.equal(commands.find(c=>c.action==='tutorialContinue').tutorialRevision,2,'Completed action uses the correct step revision');
-    assert.equal(await page.locator('#tutorialManual').isHidden(),true,'Manual mode is offered only before the walkthrough starts');
+    assert.equal(await page.locator('#tutorialManual').isHidden(),true,'Skipping the walkthrough is offered only when the station allows it');
     Object.assign(current.tutorial,{started:false,stage:'NotStarted',step:'',revision:4,primaryAction:'tutorialBegin',
       primaryLabel:'Begin walkthrough',canPrimary:true,canManual:true});
     await page.locator('#tutorialManual').waitFor({state:'visible'});

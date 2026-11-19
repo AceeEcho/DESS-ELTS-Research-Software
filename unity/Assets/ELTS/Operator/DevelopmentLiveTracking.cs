@@ -234,27 +234,32 @@ namespace Elts.Operator
         /// <summary>
         /// Publishes this frame's tracked poses in place of the mouse-driven virtual
         /// tracker. An untracked head or gun is published as unavailable: the last
-        /// good pose is never held, so no shot can be scored on a stale pose.
+        /// good pose is never held, so no shot can be scored on a stale pose. The
+        /// head is published on its own when the gun is not tracked, so the picture
+        /// and the walkthrough's head step do not depend on a gun that is set down.
         /// </summary>
         public void PublishLivePoses()
         {
             RigidPose? head = null, weapon = null;
-            if (liveModel != null && liveHead.Pose.HasValue && liveGun.Pose.HasValue)
+            if (liveModel != null && liveHead.Pose.HasValue)
             {
                 var rig = view.Configuration.Rig; var screen = rig.Display;
                 var roomFromTracking = SightLineSolver.Compose(SightLineSolver.RoomFromScreen(screen), liveModel.ScreenFromTracking);
                 var headInRoom = SightLineSolver.Compose(roomFromTracking, liveHead.Pose.Value);
-                var eye = headInRoom.TransformPoint(rig.HeadEyeOffsetM);
-                // Through the point under the sights; when the gun points away from the glass, along the gun itself.
-                Vector3d direction = liveModel.TryGlassPoint(liveGun.Pose.Value, out double u, out double v, out _)
-                    ? screen.Origin + screen.U * u + screen.V * v - eye
-                    : roomFromTracking.TransformDirection(liveGun.Pose.Value.TransformDirection(liveModel.LineDirection));
-                if (direction.Length > 1e-6)
+                head = headInRoom;
+                if (liveGun.Pose.HasValue)
                 {
-                    // Same construction as the mouse rehearsal: muzzle at the eye, bore along the aim.
-                    var rotation = WeaponZeroSolver.Solve(rig.WeaponZero.Rotate(rig.WeaponBoreLocalDirection), direction);
-                    head = headInRoom;
-                    weapon = new RigidPose(eye - rotation.Rotate(rig.WeaponMuzzleOffsetM), rotation);
+                    var eye = headInRoom.TransformPoint(rig.HeadEyeOffsetM);
+                    // Through the point under the sights; when the gun points away from the glass, along the gun itself.
+                    Vector3d direction = liveModel.TryGlassPoint(liveGun.Pose.Value, out double u, out double v, out _)
+                        ? screen.Origin + screen.U * u + screen.V * v - eye
+                        : roomFromTracking.TransformDirection(liveGun.Pose.Value.TransformDirection(liveModel.LineDirection));
+                    if (direction.Length > 1e-6)
+                    {
+                        // Same construction as the mouse rehearsal: muzzle at the eye, bore along the aim.
+                        var rotation = WeaponZeroSolver.Solve(rig.WeaponZero.Rotate(rig.WeaponBoreLocalDirection), direction);
+                        weapon = new RigidPose(eye - rotation.Rotate(rig.WeaponMuzzleOffsetM), rotation);
+                    }
                 }
             }
             // A trigger observed next frame is scored on this publication: the pose from just before the pull was seen.

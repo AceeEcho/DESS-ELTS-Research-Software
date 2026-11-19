@@ -28,7 +28,7 @@ study readiness.
 
 **Begin walkthrough** captures and reviews the [synthetic calibration fixture](calibration.md)
 inside the [participant walkthrough](participant-tutorial.md) before practice;
-**Manual mode · skip walkthrough** generates and accepts it automatically. The
+**Skip walkthrough** generates and accepts it automatically. The
 results do not replace measured rig calibration. Practice and break durations come
 from staged development session configuration or the dashboard fields. With the
 walkthrough each scenario arms itself; in manual mode **ARM TEST** arms it. The

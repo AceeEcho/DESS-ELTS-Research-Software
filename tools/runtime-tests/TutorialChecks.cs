@@ -120,7 +120,20 @@ static class TutorialChecks
         Explain(manual);Check(manual.CanArm,"manual mode never opened the arm control");
         Reject(()=>manual.StartManual(manual.Revision),"manual mode restarted a started session");
         var guided=ThroughSetup();
-        Reject(()=>guided.StartManual(guided.Revision),"manual mode replaced a walkthrough in progress");
+        // Live tracking is calibrated at the station, so its walkthrough has no calibration steps.
+        var live=new ParticipantTutorial();live.SkipCalibrationSteps();live.Begin(live.Revision);
+        Explain(live);Explain(live);Explain(live);Continue(live);Continue(live);Explain(live);Continue(live);
+        Check(live.Stage==TutorialStage.Holding,"the head calibration step was shown under station calibration");
+        Continue(live);Check(live.Stage==TutorialStage.Targets,"the gun calibration step was shown under station calibration");
+        Explain(live);Continue(live);Explain(live);live.ObserveFire();Explain(live);Explain(live);live.ObserveReload();Explain(live);
+        Check(live.Stage==TutorialStage.PracticeReady && !live.HeadAccepted && !live.GunAccepted,"the controls steps changed without calibration steps");
+        Explain(live);live.PreparePractice(live.Revision);Explain(live);live.PracticeStarted(live.Revision);
+        Check(live.Stage==TutorialStage.PracticeRunning,"practice needed a calibration review that was never asked for");
+        Reject(()=>live.SkipCalibrationSteps(),"the walkthrough's steps changed after it started");
+        // A walkthrough in progress can be skipped from any step before the first scenario.
+        guided.StartManual(guided.Revision);
+        Check(guided.Manual && guided.Stage==TutorialStage.FirstReady && !guided.Paused,"a walkthrough in progress could not be skipped");
+        Reject(()=>guided.StartManual(guided.Revision),"the walkthrough was skipped twice");
         var rejected=new ParticipantTutorial((_,__)=>throw new InvalidOperationException("sink failed"));
         Reject(()=>rejected.Begin(0),"recording failure was ignored");Check(!rejected.Started,"failed record advanced tutorial");
         Console.WriteLine("PASS: "+checks+" tutorial progression checks");

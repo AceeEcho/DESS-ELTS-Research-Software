@@ -304,6 +304,78 @@ namespace Elts.Operator.Tests
         }
 
         [UnityTest]
+        public IEnumerator StationCalibratedWalkthroughReachesPracticeWithoutCalibrationSteps()
+        {
+            var host=new GameObject("No-calibration walkthrough fixture");
+            host.AddComponent<DevelopmentView>();var session=host.AddComponent<DevelopmentSessionPanel>();
+            var clock=new ManualSharedClock(DateTimeOffset.UtcNow);
+            typeof(DevelopmentSessionPanel).GetField("clock",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(session,clock);
+            var station=host.AddComponent<DevelopmentTestStation>();station.OpenAdministratorAutomatically=false;station.Controls=new Input();
+            try
+            {
+                for(int i=0;i<5;i++)yield return null;
+                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="4195"});
+                float limit=Time.realtimeSinceStartup+40;
+                while(session.Engine?.State!=SessionState.Calibration && Time.realtimeSinceStartup<limit)
+                {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                Assert.That(session.Engine?.State,Is.EqualTo(SessionState.Calibration),session.StationMessage);
+                // What live tracking chooses for every participant; no tracker is needed to exercise the path.
+                session.Tutorial.SkipCalibrationSteps();
+                Assert.That((bool)JObject.Parse(station.StateJson())["tutorial"]["calibrationSteps"],Is.False);
+                string run=session.StationRecordingPath;
+                while(session.Engine.State!=SessionState.Practice && Time.realtimeSinceStartup<limit)
+                {
+                    Assert.That(session.Tutorial.Stage,Is.Not.EqualTo(Elts.Session.TutorialStage.HeadCalibration).And.Not.EqualTo(Elts.Session.TutorialStage.GunCalibration));
+                    Assert.That(session.Engine.State,Is.EqualTo(SessionState.Calibration),session.StationMessage);
+                    ParticipantTutorialTests.AdvanceWalkthrough(session,station,false);clock.Advance(TimeSpan.FromSeconds(.1));yield return null;
+                }
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.Practice),session.StationMessage);
+                Assert.That(Directory.GetFiles(run,"synthetic-calibration-*.json").Length,Is.EqualTo(1),"The fixture record is saved without an operator review");
+                session.StationAbort();yield return null;
+                yield return WaitForSave(session);
+                Assert.That(File.ReadAllText(Path.Combine(run,"events.ndjson")),Does.Contain("Walkthrough calibration steps omitted"));
+            }
+            finally{UnityEngine.Object.DestroyImmediate(host);}
+        }
+
+        [UnityTest]
+        public IEnumerator WalkthroughInProgressCanBeSkippedToTheFirstTest()
+        {
+            var host=new GameObject("Mid-walkthrough skip fixture");
+            host.AddComponent<DevelopmentView>();var session=host.AddComponent<DevelopmentSessionPanel>();
+            var clock=new ManualSharedClock(DateTimeOffset.UtcNow);
+            typeof(DevelopmentSessionPanel).GetField("clock",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(session,clock);
+            var station=host.AddComponent<DevelopmentTestStation>();station.OpenAdministratorAutomatically=false;station.Controls=new Input();
+            try
+            {
+                for(int i=0;i<5;i++)yield return null;
+                station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="4196"});
+                float limit=Time.realtimeSinceStartup+30;
+                while(session.Engine?.State!=SessionState.Calibration && Time.realtimeSinceStartup<limit)
+                {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                Assert.That(session.Engine?.State,Is.EqualTo(SessionState.Calibration),session.StationMessage);
+                // Walk into the calibration chapter, then leave it part-way: head reviewed, gun step open.
+                while(session.Tutorial.Stage!=Elts.Session.TutorialStage.GunCalibration && Time.realtimeSinceStartup<limit)
+                {ParticipantTutorialTests.AdvanceWalkthrough(session,station,false,true);clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                Assert.That(session.Tutorial.Stage,Is.EqualTo(Elts.Session.TutorialStage.GunCalibration),session.StationMessage);
+                Assert.That((bool)JObject.Parse(station.StateJson())["tutorial"]["canManual"],Is.True,"Skipping is offered during the walkthrough");
+                string run=session.StationRecordingPath;
+                ParticipantTutorialTests.Command(station,session,"tutorialManual");
+                Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockReady),session.StationMessage);
+                Assert.That(session.Tutorial.Manual,Is.True);
+                Assert.That(session.Tutorial.Stage,Is.EqualTo(Elts.Session.TutorialStage.FirstReady));
+                Assert.That((bool)JObject.Parse(station.StateJson())["tutorial"]["canManual"],Is.False);
+                Assert.That(Directory.GetFiles(run,"synthetic-calibration-*.json").Length,Is.GreaterThanOrEqualTo(1),"The fixture is saved before the first test");
+                ParticipantTutorialTests.ArmAfterInstructions(session,station);yield return null;
+                Assert.That(session.TestArmed,Is.True,"The first test can be armed after skipping");
+                session.StationAbort();yield return null;
+                yield return WaitForSave(session);
+                Assert.That(File.ReadAllText(Path.Combine(run,"events.ndjson")),Does.Contain("TutorialSkippedForManualMode"));
+            }
+            finally{UnityEngine.Object.DestroyImmediate(host);}
+        }
+
+        [UnityTest]
         public IEnumerator ManualModeSkipsWalkthroughAndWaitsForEveryOperatorAction()
         {
             var host=new GameObject("Manual mode station fixture");

@@ -69,9 +69,9 @@ Practice is a timed movement/aim familiarization period with no scored shots.
 The administrator can restart it before the first test or finish it early.
 After the walkthrough, the first test arms following the readiness cue and the
 participant starts it with their trigger. Later scenarios start automatically.
-**Manual mode · skip walkthrough** (offered before the walkthrough starts, after a
-confirmation) captures and accepts the same synthetic fixture, skips practice and
-waits at the first test. The choice is recorded as `TutorialSkippedForManualMode`
+**Skip walkthrough** (offered before the walkthrough starts and at every step up to the
+first test, after a confirmation) captures and accepts the same synthetic fixture when it
+is not accepted yet, skips the remaining steps and practice, and waits at the first test. The choice is recorded as `TutorialSkippedForManualMode`
 with an operator note. In manual mode the operator arms every test and starts every
 break; nothing arms or starts automatically.
 **Readiness & diagnostics** shows writer health, sample drops, fresh synthetic

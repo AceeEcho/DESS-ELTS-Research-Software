@@ -216,7 +216,8 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
     const tutorial = getState()?.tutorial;
     if (tutorial?.canPrimary) action(tutorial.primaryAction).catch(() => {});
   });
-  // Manual mode cannot be undone for this participant, so it is confirmed first.
+  // Skipping the walkthrough (manual mode) is offered before it starts and at every
+  // step up to the first test. It cannot be undone for this participant, so it is confirmed first.
   $('tutorialManual').addEventListener('click', () => {
     if (!getState()?.tutorial?.canManual) return;
     $('manualError').hidden = true; $('manualDialog').hidden = false; $('cancelManual').focus();
@@ -383,8 +384,9 @@ window.createAdministratorWorkflows = ({ $, command, refresh, getState, getOrder
     $('tutorialPause').textContent = tutorial.stage === 'PracticeRunning' ? 'Pause practice' : 'Pause instruction';
     $('tutorialCalibrationReview').hidden = !tutorial.calibrationReview;
     $('tutorialCalibrationReview').textContent = tutorial.calibrationReview || '';
-    const checks = [['Head review', tutorial.headAccepted], ['Gun review', tutorial.gunAccepted],
-      ['Firing tried', tutorial.fired], ['Reload tried', tutorial.reloaded]];
+    // With live tracking the station is calibrated beforehand, so the walkthrough has no calibration reviews.
+    const reviews = tutorial.calibrationSteps === false ? [] : [['Head review', tutorial.headAccepted], ['Gun review', tutorial.gunAccepted]];
+    const checks = [...reviews, ['Firing tried', tutorial.fired], ['Reload tried', tutorial.reloaded]];
     // Manual mode skips these checks, so they are not shown as outstanding.
     const showChecks = tutorial.started && !tutorial.manual;
     $('tutorialChecks').hidden = !showChecks;

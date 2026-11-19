@@ -76,30 +76,32 @@ ring should sit under the sights everywhere. It is shown before a participant
 starts, during the walkthrough's target and practice scenes, and during tests;
 hide it when shooters must rely on the sights alone.
 
-## 2 · Each participant (about twenty seconds, inside the walkthrough)
+## 2 · Each participant (nothing to calibrate)
 
 Start the participant under **New participant** by typing any whole-number ID;
-nothing has to be saved in the calibration workspace first. Then run the
-walkthrough as usual. With live tracking the calibration chapter is:
+nothing has to be saved in the calibration workspace first. Then click
+**Begin walkthrough**.
 
-1. **Head step.** One capture while the participant stands on their mark looking
-   at the dot. The dashboard then shows where ELTS places their eye (distance from
-   the screen and height above the floor), which you can check with a tape.
-2. **Holding position**, as before.
-3. **Gun step.** Click **Start aim dots**. Five dots appear one at a time; the
-   participant aims at each and squeezes the trigger. ELTS then re-aims the sight
-   line for this shooter and places their eye, and the dashboard shows the result
-   (how far the aim moved, and how well the five dots agree). **Accept** it, or
-   **Redo capture** and click **Start aim dots** again.
+The station was calibrated in step 1, so the walkthrough does not calibrate
+again. Its head and gun calibration steps are left out: after the equipment
+check it shows the holding position and goes straight on to the practice target,
+firing, reloading and practice.
 
-Each participant starts from the saved station fit; one shooter's zero never
-carries over to the next.
+- Every participant aims on the saved station fit. One shooter's aim zero never
+  carries over to the next.
+- **Optional aim zero.** If one shooter's marker sits a steady distance off their
+  sights, press **F7** between tests: five dots, about twenty seconds. It re-aims
+  the sight line and places the eye for that shooter only.
+- **Skip walkthrough** on the dashboard goes straight to the first test, before
+  the walkthrough or from any step of it.
+- A trigger pull while a tracker is not tracked is ignored and reported on the
+  dashboard. It does not stop the session.
 
 > [!NOTE]
-> The recorded narration for these steps still describes the earlier procedure
-> (seven head directions, and holding still on one dot). The on-screen text is
-> current. New narration needs recording under the
-> [audio workflow](../participant-tutorial/audio-workflow.md).
+> The eye position comes from the person who calibrated the station. A head
+> tracker worn differently shifts the picture's perspective slightly; the point
+> on the glass under the sights does not depend on it. Run **F7** for a shooter
+> when that matters.
 
 ## 3 · During a session
 

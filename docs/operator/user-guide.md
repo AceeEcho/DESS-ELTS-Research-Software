@@ -80,7 +80,7 @@ study overview. All 39 narration clips are bundled. See the
 
 With the walkthrough, the first test arms after the readiness message. The participant uses **Shoot to begin** once. The later tests start automatically after their breaks and transition announcements.
 
-**Manual mode.** To skip the walkthrough, click **Manual mode · skip walkthrough** instead of **Begin walkthrough** and confirm. The synthetic calibration fixture is saved for you and practice is skipped. This cannot be undone for that participant, and nothing arms or starts on its own. Check the condition and duration in **Current task** and click **ARM TEST** when the participant is ready.
+**Manual mode.** To skip the walkthrough, click **Skip walkthrough** and confirm. The button is there before **Begin walkthrough** and at every walkthrough step up to the first test, so a walkthrough that is stuck can be left part-way. The synthetic calibration fixture is saved for you and practice is skipped. This cannot be undone for that participant, and nothing arms or starts on its own. Check the condition and duration in **Current task** and click **ARM TEST** when the participant is ready.
 
 ![Ready test showing its condition, duration and the large ARM TEST button.](images/user-guide/texas-tech/07-arm.png)
 

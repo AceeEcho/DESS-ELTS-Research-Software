@@ -170,7 +170,7 @@ After the overview the first scenario arms by itself. The participant sees **Sho
 
 <br>
 
-Instead of **Begin walkthrough**, click **Manual mode · skip walkthrough** and confirm. The synthetic calibration fixture is saved automatically, practice is skipped, and the first test waits for you. Nothing arms, starts a break or starts a test on its own in manual mode. The choice can't be undone for that participant.
+Click **Skip walkthrough** and confirm, either instead of **Begin walkthrough** or at any walkthrough step before the first test. The synthetic calibration fixture is saved automatically, practice is skipped, and the first test waits for you. Nothing arms, starts a break or starts a test on its own in manual mode. The choice can't be undone for that participant.
 
 Check the condition and duration in **Current task**, then click **ARM TEST** when the participant is ready. **DISARM TEST** cancels before they start.
 

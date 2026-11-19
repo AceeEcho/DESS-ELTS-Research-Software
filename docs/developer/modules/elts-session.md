@@ -41,3 +41,38 @@ dotnet run --project tools/runtime-tests/EltsSessionChecks.csproj "-p:Newtonsoft
 The check verifies only the synthetic adapter and mock controller. It does not
 verify Unity-Jetson communication, physical output, E-stop behavior, timing, or
 the final WE/NE study decision.
+
+## Windows USB bench with the isolated Jetson simulator
+
+The USB bench is a Unity PlayMode test. The regular player has no COM activation
+setting. The bench uses the app's normal committed scenario entry with synthetic
+inputs and a temporary test recording. Keep the tracker movement outputs
+isolated for this test.
+
+On cadet, start the mock receiver and wait for
+`Ready on /dev/ttyGS0 with simulated outputs`.
+
+```sh
+cd /home/cade/ELTS_Code && python3 -B -m usb_lifecycle_mock.pty_mock --usb
+```
+
+On Windows, confirm the present CDC-ACM port belongs to USB VID `0955` and
+PID `7020`. Use `COM4` only if that is the current assignment. From the repository
+root, run the following with the project's pinned Unity editor and an idle
+copy of the project staged for synthetic tests.
+
+```powershell
+$unity = 'C:\Program Files\Unity\Hub\Editor\6000.3.23f1\Editor\Unity.exe'
+$results = New-Item -ItemType Directory -Force 'test-results/tracker-usb-bench'
+& $unity -batchmode -noaudio -projectPath (Join-Path $PWD 'unity') -runTests `
+  -testPlatform PlayMode -testFilter 'WindowsTrackerSimulatorBench' `
+  -eltsTrackerSimulatorCom COM4 `
+  -testResults (Join-Path $results.FullName 'bench.xml') `
+  -logFile (Join-Path $results.FullName 'bench.log')
+```
+
+A passing test observes `HELLO → IDLE`, `START → ACTIVE`,
+`HEARTBEAT → ACTIVE`, and `STOP → IDLE` from the simulator. The test reports the
+selected port missing if Windows cannot match the live device. With the setting
+omitted, the bench is skipped. Stop the Jetson simulator with Ctrl+C after the
+test. These results cover the simulated gate and USB messages.

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Elts.Clock;
 using Elts.Config;
+using Elts.EltsLink;
 using Elts.Geometry;
 using Elts.Session;
 using Newtonsoft.Json.Linq;
@@ -35,16 +36,54 @@ namespace Elts.Operator.Tests
         [UnityTest]
         public IEnumerator InjectedTrackerPeerFollowsAdministratorStationLifecycle()
         {
+            var peer = new MockTrackerPeer();
+            yield return ExerciseTrackerStation(peer, null);
+            Assert.That(peer.EnableCount, Is.EqualTo(1));
+            Assert.That(peer.Active, Is.False);
+            Assert.That(peer.Frames.Select(line => (string)JObject.Parse(line)["type"]),
+                Is.EqualTo(new[] { "HELLO", "START", "STOP" }));
+        }
+
+#if UNITY_EDITOR_WIN
+        [TestCase(@"USB\VID_0955&PID_7020&MI_01\123", true)]
+        [TestCase(@"usb\vid_0955&pid_7020\123", true)]
+        [TestCase(@"USB\VID_0955&PID_7021&MI_01\123", false)]
+        [TestCase(@"USB\VID_0955&PID_70200\123", false)]
+        [TestCase(@"ROOT\VID_0955&PID_7020\123", false)]
+        public void WindowsTrackerBenchRequiresTheJetsonUsbIdentity(string id, bool expected)
+            => Assert.That(WindowsTrackerBenchTransport.IsSimulatorInstance(id), Is.EqualTo(expected));
+
+        [UnityTest]
+        public IEnumerator WindowsTrackerSimulatorBench()
+        {
+            const string option = "-eltsTrackerSimulatorCom";
+            var arguments = Environment.GetCommandLineArgs();
+            int index = Array.IndexOf(arguments, option);
+            if (index < 0) Assert.Ignore("Run the isolated Jetson simulator, then explicitly select its verified COM port.");
+            Assert.That(index + 1, Is.LessThan(arguments.Length), "Supply a port after " + option);
+            Assert.That(arguments.Count(argument => argument == option), Is.EqualTo(1));
+            Assert.That(Application.isBatchMode, Is.True, "Use batch mode so ELTS lab inputs remain detached.");
+            var port = new WindowsTrackerBenchTransport(arguments[index + 1]);
+            if (!port.SimulatorPresent()) Assert.Inconclusive("The selected present Jetson CDC-ACM interface was not found.");
+            yield return ExerciseTrackerStation(port, port.Acknowledgments.Contains);
+            foreach (string command in new[] { "HELLO", "START", "HEARTBEAT", "STOP" })
+                Assert.That(port.Acknowledgments.Contains(command), Is.True, command + " ACK");
+            Debug.Log("Tracker simulator ACKs: HELLO IDLE, START ACTIVE, HEARTBEAT ACTIVE, STOP IDLE.");
+        }
+#endif
+
+        private static IEnumerator ExerciseTrackerStation(ITrackerByteTransport transport, Func<string, bool> acknowledged)
+        {
             var host = new GameObject("Tracker simulator station fixture");
             host.AddComponent<DevelopmentView>();
             var session = host.AddComponent<DevelopmentSessionPanel>();
-            var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+            var manualClock = acknowledged == null ? new ManualSharedClock(DateTimeOffset.UnixEpoch) : null;
+            ISharedClock clock = (ISharedClock)manualClock ?? new SharedMonotonicClock();
             typeof(DevelopmentSessionPanel).GetField("clock", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(session, clock);
             var station = host.AddComponent<DevelopmentTestStation>();
             station.OpenAdministratorAutomatically = false;
             station.Controls = new Input();
-            var peer = new MockTrackerPeer();
-            session.UseTrackerSimulator(peer);
+            session.UseTrackerSimulator(transport);
             try
             {
                 for (int i = 0; i < 5; i++) yield return null;
@@ -53,24 +92,31 @@ namespace Elts.Operator.Tests
                     ["conditionOrder"] = new JArray("WE_FT", "NE_FT", "WE_MT", "NE_MT") });
                 float limit = Time.realtimeSinceStartup + 20;
                 while (session.Tutorial.Stage != TutorialStage.FirstReady && Time.realtimeSinceStartup < limit)
-                { ReviewFixtureWhenReady(session, station); clock.Advance(TimeSpan.FromSeconds(.1)); yield return null; }
+                { ReviewFixtureWhenReady(session, station); manualClock?.Advance(TimeSpan.FromSeconds(.1)); yield return null; }
                 Assert.That(session.Engine?.State, Is.EqualTo(SessionState.BlockReady), session.StationMessage);
                 Assert.That(session.TrackerSimulationStatus, Is.EqualTo("Simulator idle"));
                 ParticipantTutorialTests.ArmAfterInstructions(session, station);
-                Assert.That(peer.Frames, Is.Empty, "Arming has no wire effect");
+                if (transport is MockTrackerPeer mock) Assert.That(mock.Frames, Is.Empty, "Arming has no wire effect");
+                if (acknowledged != null) Assert.That(acknowledged("HELLO"), Is.False, "Arming has no wire effect");
                 Assert.That(session.StationParticipantTrigger(), Is.True);
                 limit = Time.realtimeSinceStartup + 5;
-                while (!peer.Active && Time.realtimeSinceStartup < limit) yield return null;
-                Assert.That(peer.EnableCount, Is.EqualTo(1));
-                Assert.That(peer.Active, Is.True);
+                while (session.TrackerSimulationStatus != "Simulator active" && Time.realtimeSinceStartup < limit) yield return null;
+                Assert.That(session.TrackerSimulationStatus, Is.EqualTo("Simulator active"));
                 Assert.That(session.Engine.State, Is.EqualTo(SessionState.BlockRunning));
 
+                if (acknowledged != null)
+                {
+                    // In bench mode the live scenario and worker share the real monotonic clock.
+                    limit = Time.realtimeSinceStartup + 5;
+                    while (!acknowledged("HEARTBEAT") && Time.realtimeSinceStartup < limit) yield return null;
+                    Assert.That(acknowledged("HEARTBEAT"), Is.True, "Simulator heartbeat ACK");
+                }
                 session.StationAbort();
                 limit = Time.realtimeSinceStartup + 10;
-                while ((peer.Active || session.IsBusy) && Time.realtimeSinceStartup < limit) yield return null;
-                Assert.That(peer.Active, Is.False);
-                Assert.That(peer.Frames.Select(line => (string)JObject.Parse(line)["type"]),
-                    Is.EqualTo(new[] { "HELLO", "START", "STOP" }));
+                while ((session.TrackerSimulationStatus != "Simulator idle" || session.IsBusy) &&
+                    Time.realtimeSinceStartup < limit) yield return null;
+                Assert.That(session.TrackerSimulationStatus, Is.EqualTo("Simulator idle"));
+                Assert.That(session.IsBusy, Is.False);
             }
             finally { UnityEngine.Object.DestroyImmediate(host); }
         }

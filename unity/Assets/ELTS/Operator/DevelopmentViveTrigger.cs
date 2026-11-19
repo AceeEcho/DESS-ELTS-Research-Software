@@ -18,18 +18,25 @@ namespace Elts.Operator
         {
             // Automated Unity runs use scripted inputs and must not read lab devices.
             if (Application.isBatchMode) return;
-            string serial = view.Configuration.Machine.WeaponTriggerSerial;
-            if (String.IsNullOrEmpty(serial)) return;
-            viveTrigger = new ViveTriggerReader(serial);
+            // weaponTriggerSerial in config/local.json is optional. That file is not shared between
+            // machines, so without it the gun is found as SteamVR's hand-held tracker (LiveGunSerial).
+            viveTrigger = new ViveTriggerReader(view.Configuration.Machine.WeaponTriggerSerial ?? "");
             vivePressGate = new TriggerPressGate(TimeSpan.FromSeconds(view.Configuration.Runtime.TriggerLockoutSeconds));
+            // The same tracker's pose drives live aiming; see DevelopmentLiveTracking.
+            InitializeLiveTracking();
         }
 
         private void PollViveTrigger()
         {
             if (viveTrigger == null || vivePressGate == null) return;
+            // Poses first: the pose reader then owns the SteamVR connection that the trigger reader shares.
+            PollLiveTrackers();
+            viveTrigger.UseSerial(LiveGunSerial);
             viveTrigger.Poll(Time.realtimeSinceStartupAsDouble);
+            UpdateLiveTracking();
             string context = runId + ":" + engine?.State + ":" + ParticipantInputPhase;
-            bool allowed = !IsBusy && !closing && engine != null &&
+            // A pull that captures a calibration dot must never also start a test or fire a shot.
+            bool allowed = !IsBusy && !closing && engine != null && liveProcedure == null &&
                 (TutorialCanInteract || (TestArmed && engine.State == SessionState.BlockReady && tutorial.CanStartScenario)
                  || CanDesktopFire);
             long ticks = clock?.Now.Ticks ?? 0;
@@ -40,7 +47,7 @@ namespace Elts.Operator
             {
                 if (!recording.TryRecord(new SessionEvent(sequence.Next(), clock.Now, "ViveTriggerState", new[] {
                     LogField.String("source",ViveTriggerReader.SourceIdentity),
-                    LogField.String("trackerSerial",view.Configuration.Machine.WeaponTriggerSerial),
+                    LogField.String("trackerSerial",LiveGunSerial.Length>0?LiveGunSerial:"none"),
                     LogField.Boolean("available",viveTrigger.Available), LogField.Boolean("pressed",viveTrigger.Pressed),
                     LogField.String("rawButtonsHex",viveTrigger.Buttons.ToString("X")),
                     LogField.NumberValue("packet",viveTrigger.Packet), LogField.Boolean("dispatchAllowed",allowed)})))
@@ -48,10 +55,12 @@ namespace Elts.Operator
                 else lastViveObservation = observation;
             }
             if (!vivePressGate.Observe(viveTrigger.Available, viveTrigger.Pressed, allowed, context, ticks)) return;
+            // Keep the raw tracker poses that belong to this pull beside the shot they produce.
+            LogLiveTrackerPoses(Time.realtimeSinceStartupAsDouble, "trigger");
             if (SeparateAdministrator)
-                StationParticipantTrigger(ViveTriggerReader.SourceIdentity, "rising", view.Configuration.Machine.WeaponTriggerSerial);
+                StationParticipantTrigger(ViveTriggerReader.SourceIdentity, "rising", LiveGunSerial);
             else
-                SubmitDesktopTrigger(ViveTriggerReader.SourceIdentity, "rising", view.Configuration.Machine.WeaponTriggerSerial);
+                SubmitDesktopTrigger(ViveTriggerReader.SourceIdentity, "rising", LiveGunSerial);
         }
     }
 }

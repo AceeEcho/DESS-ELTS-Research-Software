@@ -30,6 +30,24 @@ page.on("dialog", (dialog) => dialog.accept());
 const checks = [];
 try {
     await page.goto(process.env.CALIBRATION_BASE_URL || "http://127.0.0.1:8766");
+    // Gun tracker position is entered from the muzzle tip in feet and inches.
+    await page.getByRole("button", { name: "Weapon", exact: true }).click();
+    const mounting = page.locator("section").filter({ has: page.getByRole("heading", { name: "2 · Where the tracker sits on the gun", exact: true }) });
+    const x = mounting.getByRole("group", { name: "X · left / right" });
+    await x.getByLabel("Direction").selectOption({ label: "Left" });
+    await x.getByLabel("Feet").fill("0");
+    await x.getByLabel("Inches").fill("0.5");
+    await x.getByLabel("Inches").press("Tab");
+    const y = mounting.getByRole("group", { name: "Y · up / down" });
+    await y.getByLabel("Direction").selectOption({ label: "Above" });
+    await y.getByLabel("Feet").fill("0");
+    await y.getByLabel("Inches").fill("3.25");
+    await y.getByLabel("Inches").press("Tab");
+    const z = mounting.getByRole("group", { name: "Z · forward / back" });
+    await z.getByLabel("Direction").selectOption({ label: "Behind (toward you)" });
+    await z.getByLabel("Feet").fill("1");
+    await z.getByLabel("Inches").fill("2");
+    await z.getByLabel("Inches").press("Tab");
     assert.equal(await page.getByRole("heading", { name: "Base station 1" }).count(), 0);
     await page.getByRole("button", { name: "Tracking", exact: true }).click();
     await page.locator("#source-select").selectOption("manual");
@@ -128,6 +146,9 @@ try {
     const savedConfig = savedRecord.calibration;
     checks.push("Calibration saves under an exact numeric ID without a name");
     assert.equal(savedConfig.person.height, 74.5 * 0.0254);
+    const fromMuzzle = savedConfig.weapon.mount.position.map((v, i) => v - savedConfig.weapon.muzzle[i]);
+    [-0.5, 3.25, 14].forEach((inches, i) => assert.ok(Math.abs(fromMuzzle[i] - inches * 0.0254) < 1e-9));
+    checks.push("Muzzle-to-tracker distances save in metres; base station settings are gone");
     await page.getByRole("button", { name: "Head", exact: true }).click();
     assert.equal(await height.getByLabel("Feet").inputValue(), "6");
     assert.equal(await height.getByLabel("Inches").inputValue(), "2.5");

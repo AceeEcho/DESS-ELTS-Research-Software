@@ -8,6 +8,7 @@ The folders below are grouped by who reads them.
 | Document | Use it to |
 | --- | --- |
 | [User guide](operator/user-guide.md) | Run a participant session from the dashboard, step by step |
+| [Live tracking](operator/live-tracking.md) | Aim with the gun and head trackers: station calibration, each participant's aim step, keys |
 | [Troubleshooting](operator/troubleshooting.md) | Fix setup, startup, session, export, analysis and hardware problems |
 | [Setup on more than one computer](operator/multi-machine-setup.md) | Install with GitHub Desktop and keep several PCs in sync |
 | [Hardware follow-up](operator/hardware-follow-up.md) | See what physical validation and room measurements are still needed |

@@ -2902,8 +2902,13 @@ MonoBehaviour:
     bounceColor: {r: 0.9, g: 0.93, b: 1, a: 1}
     bounceIntensity: 0.55
     daylight: {r: 1, g: 0.96, b: 0.89, a: 1}
-    directionToLight: {x: -0.6, y: 1, z: -0.35}
+    directionToLight: {x: 0.75, y: 1, z: -0.35}
     lightIntensity: 1.3
+    windowBounce: {r: 0.88, g: 0.94, b: 1, a: 1}
+    windowIntensity: 16
+    windowReach: 10
+    shadowStrength: 0.42
+    ceilingGlow: 0.3
   gameSettings:
     magazineCapacity: 20
     activeTargetCount: 30

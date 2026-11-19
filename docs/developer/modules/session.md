@@ -11,8 +11,9 @@
 The Unity player opens the [administrator dashboard](operator-dashboard.md), with
 task navigation, focused controls and two persistent emulated camera views.
 Arrange a permutation of `WE_MT`, `NE_MT`, `WE_FT`, and `NE_FT` in **⚙ Settings**,
-then select a saved ID under **New participant**; the calibration saved under
-that ID is applied before the recording is created. The staged session and scenario templates and effective
+then type a numeric ID under **New participant**; a calibration saved under
+that ID is applied before the recording is created, and without one the staged
+station settings are used. The staged session and scenario templates and effective
 configuration hash are shown before creation. Template choices remain in the
 validated configuration pipeline; this panel does not read arbitrary JSON.
 
@@ -27,7 +28,7 @@ study readiness.
 
 **Begin walkthrough** captures and reviews the [synthetic calibration fixture](calibration.md)
 inside the [participant walkthrough](participant-tutorial.md) before practice;
-**Manual mode · skip walkthrough** generates and accepts it automatically. The
+**Skip walkthrough** generates and accepts it automatically. The
 results do not replace measured rig calibration. Practice and break durations come
 from staged development session configuration or the dashboard fields. With the
 walkthrough each scenario arms itself; in manual mode **ARM TEST** arms it. The

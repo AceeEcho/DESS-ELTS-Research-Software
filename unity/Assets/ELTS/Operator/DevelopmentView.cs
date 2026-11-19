@@ -65,6 +65,7 @@ namespace Elts.Operator
         private Color previousAmbientLight;
         private bool roomLightingOwned, authoredFloorWasActive;
         private Renderer[] trainingRoomRenderers=Array.Empty<Renderer>();
+        private GameObject? libraryWindowLights;
         private bool[] roomVisibilityBeforeTutorial=Array.Empty<bool>();
         private GameObject? tutorialFloor;
         private Color backgroundBeforeTutorial;
@@ -111,8 +112,20 @@ namespace Elts.Operator
         /// between sessions.
         /// </summary>
         public void ApplyParticipantCalibration(ParticipantCalibration calibration)
-            => configuration=stagedConfiguration.WithParticipantCalibration(calibration);
-        public void ClearParticipantCalibration() => configuration=stagedConfiguration;
+        { participantCalibration=calibration;RebuildConfiguration(); }
+        public void ClearParticipantCalibration() { participantCalibration=null;RebuildConfiguration(); }
+        /// <summary>
+        /// Live tracking: the aiming eye in head-tracker axes (metres) replaces the
+        /// configured eye offset. Null restores the configured one.
+        /// </summary>
+        public void SetLiveEyeOffset(Vector3d? eye) { liveEyeOffset=eye;RebuildConfiguration(); }
+        private ParticipantCalibration? participantCalibration;
+        private Vector3d? liveEyeOffset;
+        private void RebuildConfiguration()
+        {
+            var next=participantCalibration==null?stagedConfiguration:stagedConfiguration.WithParticipantCalibration(participantCalibration);
+            configuration=liveEyeOffset.HasValue?next.WithHeadEyeOffset(liveEyeOffset.Value):next;
+        }
         public DevelopmentGameSettings GameSettings => activeGameSettings;
         public bool SessionControlsVisible { get; set; }
         /// <summary>
@@ -182,6 +195,7 @@ namespace Elts.Operator
                 RenderSettings.ambientLight=trainingRoom.ambient;
                 var room=DevelopmentTrainingRoom.Create(transform,screen,configuration.Rig.VirtualFloorY,trainingRoom,ownedMaterials,targetMaterial,activeGameSettings,configuration.Scenario.TargetDistanceM);
                 trainingRoomRenderers=room.GetComponentsInChildren<Renderer>(true);
+                libraryWindowLights=room.Find(LibraryWindows.LightGroup).gameObject;
                 roomVisibilityBeforeTutorial=new bool[trainingRoomRenderers.Length];
                 screenPreview=new OperatorScreenPreview(transform,Material(Color.white));
                 body=MarkerPart(transform,"Participant silhouette · inferred from head",PrimitiveType.Capsule,Vector3.zero,Vector3.one,Material(new Color(.27f,.34f,.38f)));
@@ -209,6 +223,7 @@ namespace Elts.Operator
         {
             if(!Ready || enabled==TutorialSceneVisible)return;
             TutorialSceneVisible=enabled;
+            libraryWindowLights?.SetActive(!enabled);
             if(enabled)
             {
                 backgroundBeforeTutorial=participant.backgroundColor;

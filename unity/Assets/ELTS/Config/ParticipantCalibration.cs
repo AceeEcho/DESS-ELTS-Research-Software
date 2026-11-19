@@ -80,7 +80,21 @@ namespace Elts.Config
             return Parse(File.ReadAllBytes(path), id);
         }
 
-        /// <summary>Cache file validation for the picker. Intake always reloads the chosen file.</summary>
+        /// <summary>
+        /// A saved profile is optional at intake. Returns null when none is saved for
+        /// this ID (<paramref name="problem"/> is empty) or when the saved file cannot
+        /// be used (<paramref name="problem"/> says why, for the recording).
+        /// </summary>
+        public static ParticipantCalibration? LoadIfSaved(string directory, int id, out string problem)
+        {
+            problem = "";
+            if (!File.Exists(Path.Combine(directory, FileNameFor(id)))) return null;
+            try { return Load(directory, id); }
+            catch (Exception error) when (error is ArgumentException || error is IOException || error is UnauthorizedAccessException)
+            { problem = error.Message; return null; }
+        }
+
+        /// <summary>Cache file validation for the ID suggestions. Intake always reloads the chosen file.</summary>
         public sealed class Inventory
         {
             private Dictionary<string,(long Length, long Changed, ParticipantCalibration? Profile)> cached = new Dictionary<string,(long,long,ParticipantCalibration?)>();

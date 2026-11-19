@@ -5,3 +5,6 @@
 /test-results/
 /station-room.json
 /station-room.tmp
+/station-tracking.json
+/station-tracking.json.tmp
+/live-tracking.json

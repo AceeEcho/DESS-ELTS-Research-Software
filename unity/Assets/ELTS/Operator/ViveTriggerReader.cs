@@ -6,12 +6,14 @@ using Valve.VR;
 
 namespace Elts.Operator
 {
-    /// <summary>Read only the configured tracker. No poses, role changes, haptics,
+    /// <summary>Read only the gun tracker. No poses, role changes, haptics,
     /// compositor access or apparatus commands. Call from the Unity main thread.</summary>
     internal sealed class ViveTriggerReader : IDisposable
     {
         public const string SourceIdentity = "vive-tracker-trigger-v1";
-        private readonly string serial;
+        private string serial;
+        /// <summary>The gun tracker's serial can be found after start-up; see DevelopmentLiveTracking.</summary>
+        public void UseSerial(string value) { serial = value ?? ""; }
         private CVRSystem? system;
         private bool ownsRuntime;
         private double retryAt;
@@ -26,7 +28,7 @@ namespace Elts.Operator
         public void Poll(double seconds)
         {
             Available = false; Pressed = false; Buttons = 0; Packet = 0;
-            if (String.IsNullOrEmpty(serial)) { Status = "Mouse trigger"; return; }
+            if (String.IsNullOrEmpty(serial)) { Status = "Mouse trigger (no hand-held tracker found)"; return; }
             try
             {
                 if (system == null)

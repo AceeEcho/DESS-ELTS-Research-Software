@@ -47,6 +47,10 @@ for their inapplicable tracker serial. Polling is once per Unity update, so very
 short pulses between frames can be missed; timestamps are not hardware latency
 measurements. The calibration bridge samples independently at 60 Hz.
 
+Aiming from the trackers is a separate feature built on the same connection; see
+[live tracking](../../operator/live-tracking.md). Without a saved station
+calibration the paragraph below still applies.
+
 This change supplies physical **button input**. The main app's aiming/pose source
 remains its existing desktop/synthetic source, and recordings retain that
 provenance. It does not add live weapon-pose aiming or apparatus output. Automated

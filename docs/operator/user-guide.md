@@ -52,9 +52,14 @@ Close Settings using **×**. You can return to Settings during a session for dis
 
 ## 3. Create the participant recording
 
-Click **New participant** and choose the saved **Participant ID** from the list. ELTS shows whether its calibration is ready. Open **Calibration sources** to check the profile and room revisions. If the ID is missing, add it in the packaged rehearsal with **ADD-REHEARSAL-ID.cmd**. From source, open **START-CALIBRATION.cmd**, choose **Save calibration**, and use the digit picker or **Use next unused ID**. Click **Create recording** and wait for preparation to finish.
+Click **New participant** and type the **Participant ID**: any whole number from 0 to 999999. Nothing has to be saved beforehand. Click **Create recording** and wait for preparation to finish.
 
-![Participant entry with the numeric ID picker and Create recording button.](images/user-guide/texas-tech/04-participant.png)
+A calibration saved under that ID in the calibration workspace is optional. IDs that have one are offered as suggestions while you type. If one is saved, ELTS applies it and **Calibration sources** shows the profile and room revisions. If none is saved, or the saved file cannot be read, ELTS uses the station settings and the recording says so.
+
+![Participant entry with the Participant ID field and Create recording button.](images/user-guide/texas-tech/04-participant.png)
+
+> [!NOTE]
+> The 2026-11-18 rehearsal ZIP has the earlier entry, a list of saved IDs only. In that package, add an ID with **ADD-REHEARSAL-ID.cmd** first.
 
 If you have an assignment sheet, open **Check an assigned condition order** and paste the row containing the ID and four codes. ELTS compares the row with Settings. Correct a mismatch or choose a reason to keep the configured order. The recording retains both orders.
 
@@ -75,7 +80,7 @@ study overview. All 39 narration clips are bundled. See the
 
 With the walkthrough, the first test arms after the readiness message. The participant uses **Shoot to begin** once. The later tests start automatically after their breaks and transition announcements.
 
-**Manual mode.** To skip the walkthrough, click **Manual mode · skip walkthrough** instead of **Begin walkthrough** and confirm. The synthetic calibration fixture is saved for you and practice is skipped. This cannot be undone for that participant, and nothing arms or starts on its own. Check the condition and duration in **Current task** and click **ARM TEST** when the participant is ready.
+**Manual mode.** To skip the walkthrough, click **Skip walkthrough** and confirm. The button is there before **Begin walkthrough** and at every walkthrough step up to the first test, so a walkthrough that is stuck can be left part-way. The synthetic calibration fixture is saved for you and practice is skipped. This cannot be undone for that participant, and nothing arms or starts on its own. Check the condition and duration in **Current task** and click **ARM TEST** when the participant is ready.
 
 ![Ready test showing its condition, duration and the large ARM TEST button.](images/user-guide/texas-tech/07-arm.png)
 

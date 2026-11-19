@@ -46,6 +46,8 @@ namespace Elts.Operator
         private ISharedClock? clock;
         private SessionEventSequence? sequence;
         private MockEltsLink? mockLink;
+        private TrackerSender? trackerSimulation;
+        private Task? trackerWorker;
         private DevelopmentSessionScenario? scenario;
         private Task? operation;
         private string lastMessage = "", runId = "";
@@ -165,7 +167,7 @@ namespace Elts.Operator
                 // build-info.json. Editor recordings explicitly lack that identity.
                 string source=Application.isEditor?"editor-unversioned":"build-"+Application.version;
                 var provenance=new SessionProvenance(Application.version,source,
-                    config.EffectiveSha256,config.SourceRawSha256["scenario"],Hash(usingDesktopInput?DesktopTrackingSource.SourceIdentity:FixtureIdentity),true,clock.UtcStartupAnchor);
+                    config.EffectiveSha256,config.SourceRawSha256["scenario"],Hash(usingDesktopInput?(LiveTrackingActive?LiveSourceIdentity:DesktopTrackingSource.SourceIdentity):FixtureIdentity),true,clock.UtcStartupAnchor);
                 var limits=new LoggingConfiguration(config.Runtime.SampleQueueCapacity,config.Runtime.EventQueueCapacity,
                     TimeSpan.FromSeconds(config.Runtime.LogFlushSeconds));
                 recording=new SessionRecordingAdapter(dataRoot,provenance,limits);
@@ -178,6 +180,7 @@ namespace Elts.Operator
                     new SessionTiming(SeparateAdministrator?stationPracticeSeconds:config.Session.PracticeDurationSeconds,
                         SeparateAdministrator?stationBreakSeconds:config.Session.BreakDurationSeconds,true),
                     recording,sessionLink);
+                trackerSimulation?.ObserveSession(engine);
                 if(SeparateAdministrator)
                 {
                     foreach(var duration in stationDurations)engine.SetDevelopmentDuration(duration.Key,duration.Value);
@@ -305,7 +308,7 @@ namespace Elts.Operator
                     lastMessage=exception.Message;
                     engine.Abort("Scenario or logging failure: "+exception.Message);
                 }
-                if(view.SessionControlsVisible)view.SetSessionFrame(pair?.Head.Pose,pair?.Weapon.Pose,scenario?.Positions??visibleTargets,engine.CurrentActiveSeconds,scenario?.FixedPoses);
+                if(view.SessionControlsVisible)view.SetSessionFrame(LiveRenderHead(pair?.Head.Pose),pair?.Weapon.Pose,scenario?.Positions??visibleTargets,engine.CurrentActiveSeconds,scenario?.FixedPoses);
                 if(SeparateAdministrator)
                 {
                     try { SynchronizeTutorial();PresentTutorialInteraction(); }
@@ -344,7 +347,8 @@ namespace Elts.Operator
             root.Q<DropdownField>("neLinkMode").SetEnabled(!IsBusy && (engine==null || closing));
             root.Q<Button>("reconnectLink").SetEnabled(!IsBusy && engine!=null && !closing);
             Label("linkStatus", "Mock controller: " + (mockLink?.State.ToString()??"not created") +
-                " • simulated permission " + (mockLink?.LedPermission==true?"true":"false") + ". D-10 pending.");
+                " • simulated permission " + (mockLink?.LedPermission==true?"true":"false") + ". D-10 pending." +
+                (trackerSimulation == null ? "" : "\n"+trackerSimulation.Status));
             RefreshCalibrationControls();
             dashboard?.Refresh();
         }
@@ -355,9 +359,11 @@ namespace Elts.Operator
         }
         private async void OnDestroy()
         {
+            trackerSimulation?.RequestShutdown();
             if(destroyed) return;
             destroyed=true;
             viveTrigger?.Dispose();
+            liveReader?.Dispose();liveReader=null;liveHealth?.Dispose();liveHealth=null;
             tutorialNarration?.Dispose();tutorialNarration=null;
             desktop?.Dispose();
             dashboard?.Dispose();
@@ -380,7 +386,9 @@ namespace Elts.Operator
         }
         private bool OnWantsToQuit()
         {
-            if(quitAllowed || (acquisition==null && recording?.IsOpen!=true && operation==null && !removingDataset)) return true;
+            trackerSimulation?.RequestShutdown();
+            if(quitAllowed || (acquisition==null && recording?.IsOpen!=true && operation==null && !removingDataset &&
+                trackerWorker?.IsCompleted!=false)) return true;
             if(!quitInProgress) FlushBeforeQuit();
             return false;
         }
@@ -394,6 +402,7 @@ namespace Elts.Operator
                 if(removingDataset && collectionOperation!=null) await collectionOperation;
                 engine?.Abort("application_shutdown");
                 await CloseRecordingAsync();
+                if (trackerWorker != null) await Task.WhenAny(trackerWorker, Task.Delay(200));
                 quitAllowed=true;
                 Application.Quit();
             }
@@ -413,5 +422,21 @@ namespace Elts.Operator
             try { tutorialDemo?.Stop(); }
             catch(Exception exception) { Debug.LogError("ELTS_TUTORIAL_STOP_FAIL "+exception.Message); }
         }
+
+        // The test fixture supplies the only transport. The player has no port discovery or activation setting.
+        internal void UseTrackerSimulator(ITrackerByteTransport transport)
+        {
+            if (trackerSimulation != null || engine != null || destroyed || quitInProgress)
+                throw new InvalidOperationException("Attach the tracker simulator before creating a session.");
+            clock ??= new SharedMonotonicClock();
+            var sender = new TrackerSender(clock, transport);
+            trackerSimulation = sender;
+            trackerWorker = Task.Run(async () =>
+            {
+                while (sender.Pump()) await Task.Delay(5).ConfigureAwait(false);
+            });
+        }
+
+        internal string? TrackerSimulationStatus => trackerSimulation?.Status;
     }
 }

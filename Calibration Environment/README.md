@@ -5,6 +5,13 @@ editing mounting offsets, and inspecting head-position perspective.
 It does not launch Unity, edit ELTS configuration, create participant sessions, or
 send apparatus commands.
 
+> **Tracker calibration has moved into ELTS.** To aim with the real trackers,
+> follow [live tracking](../docs/operator/live-tracking.md): it needs no tape
+> measurements and nothing from this workspace. This workspace is still used
+> for the screen size, the station room and participant ID files, and for
+> looking at the setup in 3D. Its head-direction guide, position reset and
+> aim-at-dots zero below do not feed ELTS's live tracking.
+
 ## Start
 
 1. Double-click **START-CALIBRATION.cmd** in the project root. The first time on a PC it
@@ -37,10 +44,10 @@ SteamVR, internet connection, or build step. Three.js is bundled locally.
    Focus the 3D view and use arrow keys to orbit or +/− to zoom.
 
 The base station's position is not entered anywhere. SteamVR locates it itself,
-and the head-direction guide records how the tracking space lines up
+and the head-direction guide and aim zero record how the tracking space lines up
 with the screen. Place the station high with a clear view of both trackers,
 mount it firmly, and do not move it after calibrating; if it moves, run the
-head-direction guide again. Saved profiles still carry an
+head-direction guide and the aim zero again. Saved profiles still carry an
 unused `baseStations` entry so older files load unchanged.
 
 ## Head and weapon offsets
@@ -61,13 +68,15 @@ participant (−Z is forward).
 | --- | --- | --- |
 | Head | Where the tracker sits on the head | From the centre of the head to the centre of the tracker; plus the tracker's tilt on the head |
 | Head | Tracker centre → viewing eye | Directly from the tracker centre to the selected eye or the midpoint between the eyes, in feet and inches with a direction |
-| Weapon | Weapon tracker | Select the device for the schematic weapon preview. |
-| Weapon | Tracker mounting offset | Set the offset and orientation for the simulated model. |
-| Weapon | Muzzle & bore | Configure the schematic model and simulated ray. |
+| Weapon | 2 · Where the tracker sits on the gun | From the **muzzle tip** (where the bullet leaves) to the centre of the tracker, in feet and inches with a direction; plus the tracker's tilt on the gun. This is the measurement ELTS uses. |
+| Weapon | 3 · Barrel aim correction | A small rotation of the shot line, only if shots land consistently off the barrel's aim |
+| Weapon | Gun drawing (preview only) | Drawn length and the muzzle's position on the drawing. Moving the drawn muzzle keeps the tracker-to-muzzle measurement unchanged. |
 | Head | Participant height / body radius | Body preview only. Enter standing height in feet and inches. |
 
 Profiles store distances in **metres** and angles in **degrees**. The gun is still
-stored relative to the schematic model’s origin.
+stored relative to its drawing centre (`weapon.mount.position` and
+`weapon.muzzle`); the dashboard shows and edits their difference, so saved
+profiles and ELTS are unaffected by the change in wording.
 
 With the headband fitted, measure directly from the tracker centre to the viewing
 eye (or eye midpoint) under **Head → Viewing eye**. Directions follow the head,
@@ -182,6 +191,59 @@ acceptance. Distance, screen geometry and eye/mount translations still require
 measurement. It assumes SteamVR's standing-frame up axis is correct. Editable
 capture and gesture thresholds are in `web/head-calibration.js` (`DIRECTION_LIMITS`).
 
+### Zero the gun by aiming at dots
+
+Use **Weapon → 3 · Zero the aim → Aim at dots to zero the gun…** with Live input,
+both trackers selected, the screen geometry entered, the head tracker's mounting and
+viewing-eye offsets entered, and the head-direction guide already done (it sets the
+room's up direction). Enter **2 · Where the tracker sits on the gun** first.
+
+1. The screen window opens. Move it to the TV and press **F** for fullscreen; the
+   dots are drawn at their real positions on the configured screen.
+2. Wear the head tracker. Stand where participants stand, hold the gun the way you
+   normally shoot (stock in the shoulder), and aim through the sights at the centre
+   of each of the nine dots.
+3. Capture each dot by pulling the trigger, pressing **Space**, or holding steady
+   for 1.5 s (the ring fills). A trigger capture uses the pose from just before
+   the pull. **Backspace** redoes the previous dot, **R** restarts, **Esc** cancels.
+   A gun left resting on a table does not auto-capture.
+4. The dashboard applies the result and shows it under **3 · Zero the aim**.
+   **Undo last aim zero** restores the previous values. Save the calibration to
+   keep it.
+
+**What it solves.** When you aim, your eye, the rear and front sights and the dot
+are on one line. With the head tracker worn, each capture gives that sight line
+from the tracked eye to the dot, expressed in the gun tracker's own axes, so it
+does not matter how the gun is held: canted, angled in across the body, or with
+the cheek slightly forward or back. The result sets:
+
+- **Tracker tilt on the gun** so the gun's forward axis is the sight line and its
+  up is SteamVR's gravity up, averaged over the dots (a slight cant only tilts
+  the drawing).
+- **Barrel aim correction** so the shot, which starts at the muzzle, crosses the
+  sight line at the target distance — like zeroing a rifle at range. The distance
+  is the screen distance plus `zeroDepthBehindScreenM` (7.5 m, matching
+  `targetDistanceM` in `config/development/scenario.json`). Elsewhere the shot is
+  never further from the sight line than the sight height.
+
+It reports the sight height it found (many AR-style rifles are about 6–7 cm; a very
+different value usually means the muzzle or eye measurement needs checking), the
+average and worst disagreement between dots, and warnings for a dot more than 2°
+from the rest, an eye that moves more than 3 cm across the sight line, or a room
+registration tilted more than 2° from SteamVR's up.
+
+Without the head tracker the shot line is aimed from the muzzle through each dot
+instead. That zeroes it at the screen, so targets behind the screen land high by
+about the sight height × (target distance ÷ screen distance − 1) — roughly 30 cm at
+the default distances — and the result says so. Editable limits are in
+`web/aim-calibration.js` (`AIM_LIMITS`). This is a software alignment from your own
+aiming, not a measured accuracy check.
+
+**Tracker drawing.** The yellow tracker model uses SteamVR's raw tracker axes:
+the puck lies in its local X–Y plane with the domed face toward −Z and the screw
+mount toward +Z. This was checked on 2026-11-16 by pointing the gun (puck face
+toward the muzzle) straight up and confirming the tracker's −Z pointed up.
+
 ### Tracking setup troubleshooting
 
 - **Check without installing or editing settings:** from the project root run
@@ -254,9 +316,10 @@ it is not a scored shot or a simulated physical projectile.
   Select another ID to save. Profiles are ignored by Git.
 - When an operator starts that participant ID in the ELTS dashboard, ELTS reads
   this file and applies the participant's tracker-local
-  eye, muzzle and bore settings. No ELTS restart is needed after saving. ELTS
-  will not start an ID that has no saved calibration. The recording notes the
-  file name, SHA-256 and the settings used for that visit.
+  eye, muzzle and bore settings. No ELTS restart is needed after saving. A saved
+  calibration is optional: ELTS starts any numeric ID, and uses the station
+  settings when none is saved or the file cannot be read. The recording notes the
+  file name and SHA-256 when one applied, and the settings used for that visit.
 - The station stores each browser's unsaved draft under `profiles/`. The browser
   keeps its opaque draft ID. Refresh restores the draft and reconnects live input;
   choose Manual preview explicitly for hardware-free use.

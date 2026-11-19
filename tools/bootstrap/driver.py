@@ -329,6 +329,7 @@ def run(args) -> tuple[dict, Path]:
                         ("SessionRecordingAdapterChecks", " session recording adapter checks"),
                         ("SessionAcquisitionChecks", " session acquisition checks"),
                         ("CalibrationChecks", " calibration checks"),
+                        ("SightLineChecks", " sight-line checks"),
                         ("EltsLinkChecks", " synthetic ELTS-link checks"),
                         ("EltsSessionChecks", " ELTS session adapter checks"),
                     )

@@ -45,6 +45,30 @@ namespace Elts.Session
         public double ElapsedSeconds { get; private set; }
         public bool CueFinished { get; private set; }
         public int HeadCalibrationIndex { get; private set; }
+        /// <summary>
+        /// How many of the head steps this walkthrough uses. The mouse rehearsal
+        /// keeps all seven directions. Live tracking needs only the first, standing
+        /// step: the eye is placed from the gun's sight line during the aim step,
+        /// so the turning and side-stepping directions carry no information.
+        /// </summary>
+        public int HeadCalibrationCount { get; private set; } = 7;
+        public void UseHeadCalibrationSteps(int count)
+        {
+            if(Started)throw new InvalidOperationException("Choose the head steps before the walkthrough starts.");
+            if(count<1 || count>HeadCalibrationSteps.Count)throw new ArgumentOutOfRangeException(nameof(count));
+            HeadCalibrationCount=count;
+        }
+        /// <summary>
+        /// Live tracking is calibrated at the station before any participant arrives,
+        /// so its walkthrough has no head or gun calibration step: equipment check
+        /// leads to the holding position, and that leads straight to the target scene.
+        /// </summary>
+        public bool CalibrationStepsSkipped { get; private set; }
+        public void SkipCalibrationSteps()
+        {
+            if(Started)throw new InvalidOperationException("Choose the walkthrough's steps before it starts.");
+            CalibrationStepsSkipped=true;
+        }
         public bool HeadSequenceComplete { get; private set; }
         public bool HeadAccepted { get; private set; }
         public bool GunAccepted { get; private set; }
@@ -89,13 +113,15 @@ namespace Elts.Session
             CueFinished=Step.Script.Length==0 || ElapsedSeconds>=explanationSeconds;
             if(Step.Automatic && CueFinished)Move(Next(Stage),"TutorialExplanationFinished");
         }
-        /// <summary>Skips the guided walkthrough before it starts and waits at the first
-        /// scenario. The caller owns calibration and practice transitions; this only
-        /// records the choice and presents the ready screen.</summary>
+        /// <summary>The walkthrough can be skipped before it starts or at any step before the first scenario.</summary>
+        public bool CanSkipToFirstScenario => Stage<TutorialStage.FirstReady;
+        /// <summary>Skips the rest of the guided walkthrough (or all of it) and waits at
+        /// the first scenario. The caller owns calibration and practice transitions;
+        /// this only records the choice and presents the ready screen.</summary>
         public void StartManual(int revision)
         {
             RequireRevision(revision);
-            if(Started)throw new InvalidOperationException("Manual mode is available only before the walkthrough starts.");
+            if(!CanSkipToFirstScenario)throw new InvalidOperationException("The walkthrough can be skipped only before the first scenario.");
             Manual=true;
             Move(TutorialStage.FirstReady,"TutorialSkippedForManualMode");
         }
@@ -114,7 +140,7 @@ namespace Elts.Session
             if(Paused || !CueFinished || (Stage!=TutorialStage.HeadCalibration && Stage!=TutorialStage.GunCalibration))
                 throw new InvalidOperationException("No tutorial calibration review is waiting.");
             if(Stage==TutorialStage.HeadCalibration && !HeadSequenceComplete)
-                throw new InvalidOperationException("Capture all seven head directions before accepting the review.");
+                throw new InvalidOperationException("Capture every head step before accepting the review.");
             record?.Invoke("TutorialCalibrationAccepted",Stage);
             if(Stage==TutorialStage.HeadCalibration)HeadAccepted=true;
             else { if(!HeadAccepted)throw new InvalidOperationException("Review the head step first.");GunAccepted=true; }
@@ -145,7 +171,7 @@ namespace Elts.Session
             if(Stage!=TutorialStage.HeadCalibration || Paused || !CueFinished || HeadSequenceComplete)
                 throw new InvalidOperationException("Wait for this head instruction before capturing its pose.");
             record?.Invoke("TutorialHeadDirectionCaptured",Stage);
-            if(HeadCalibrationIndex==HeadCalibrationSteps.Count-1) { HeadSequenceComplete=true;Revision++; }
+            if(HeadCalibrationIndex==HeadCalibrationCount-1) { HeadSequenceComplete=true;Revision++; }
             else { HeadCalibrationIndex++;ElapsedSeconds=0;CueFinished=false;PresentationVersion++;Revision++; }
         }
         public void RestartHeadCalibration(int revision)
@@ -168,7 +194,8 @@ namespace Elts.Session
             RequireRevision(revision);
             if(Paused || !CueFinished || Stage!=TutorialStage.PracticeIntroduction)
                 throw new InvalidOperationException("Practice is not available at this step.");
-            if(!HeadAccepted || !GunAccepted || !Fired || !Reloaded)throw new InvalidOperationException("Complete setup and the controls demonstration first.");
+            if((!CalibrationStepsSkipped && (!HeadAccepted || !GunAccepted)) || !Fired || !Reloaded)
+                throw new InvalidOperationException("Complete setup and the controls demonstration first.");
             Move(TutorialStage.PracticeRunning,"TutorialPracticeStarted",true);
         }
         public void PracticeFinished()
@@ -265,11 +292,13 @@ namespace Elts.Session
             // hidden behind a stale practice or break-completion screen.
             if(stage>=TutorialStage.FirstReady || stage==TutorialStage.PracticeComplete)Paused=false;
         }
-        private static TutorialStage Next(TutorialStage stage) => stage switch {
+        private TutorialStage Next(TutorialStage stage) => stage switch {
             TutorialStage.Welcome=>TutorialStage.Questions, TutorialStage.Questions=>TutorialStage.ReadyForSetup,
             TutorialStage.ReadyForSetup=>TutorialStage.Equipment, TutorialStage.Equipment=>TutorialStage.Comfort,
-            TutorialStage.Comfort=>TutorialStage.EquipmentCheck, TutorialStage.EquipmentCheck=>TutorialStage.HeadCalibration,
-            TutorialStage.HeadCalibration=>TutorialStage.Holding, TutorialStage.Holding=>TutorialStage.GunCalibration,
+            TutorialStage.Comfort=>TutorialStage.EquipmentCheck,
+            TutorialStage.EquipmentCheck=>CalibrationStepsSkipped?TutorialStage.Holding:TutorialStage.HeadCalibration,
+            TutorialStage.HeadCalibration=>TutorialStage.Holding,
+            TutorialStage.Holding=>CalibrationStepsSkipped?TutorialStage.Targets:TutorialStage.GunCalibration,
             TutorialStage.GunCalibration=>TutorialStage.CalibrationComplete, TutorialStage.CalibrationComplete=>TutorialStage.Targets,
             TutorialStage.Targets=>TutorialStage.Aim, TutorialStage.Aim=>TutorialStage.Fire,
             TutorialStage.FireConfirmed=>TutorialStage.Reload, TutorialStage.ReloadConfirmed=>TutorialStage.PracticeReady,

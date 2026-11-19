@@ -53,7 +53,7 @@
         <p id="tutorialStatus" class="step-status" role="status"></p>
         <div class="step-actions">
           <button id="tutorialPrimary" class="primary-btn step-primary" disabled>Begin walkthrough</button>
-          <button id="tutorialManual" class="ghost-btn step-primary" hidden>Manual mode · skip walkthrough</button>
+          <button id="tutorialManual" class="ghost-btn step-primary" hidden>Skip walkthrough</button>
           <div class="step-controls">
             <button id="tutorialRedo" class="ghost-btn" hidden>Redo capture</button>
             <button id="tutorialPause" class="ghost-btn" hidden>Pause instruction</button>
@@ -92,7 +92,8 @@
       <button type="button" class="close-btn" id="closeDialog" aria-label="Close participant entry">×</button>
       <h2 id="intakeTitle">New participant</h2>
       <label class="field-label" for="participantPicker">Participant ID</label>
-      <select id="participantPicker" required aria-describedby="calibrationStatus"><option value="">Choose a participant ID</option></select>
+      <input id="participantPicker" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Whole number, for example 12" list="savedParticipantIds" required aria-describedby="calibrationStatus">
+      <datalist id="savedParticipantIds"></datalist>
       <p id="calibrationStatus" class="subtle calibration-status" role="status"></p>
       <details id="profileSources" hidden><summary>Calibration sources</summary><p id="sourceRevisions" class="subtle"></p></details>
       <details id="assignmentCheck">
@@ -125,6 +126,9 @@
       <h3>Saved setups</h3><label class="field-label">Preset name<input id="presetName" maxlength="60" placeholder="e.g. Morning rehearsal"></label><div class="secondary-actions wrap"><button id="savePreset" class="ghost-btn">Save setup</button><select id="presetSelect" aria-label="Saved setups"></select><button id="loadPreset" class="ghost-btn">Load</button><button id="deletePreset" class="ghost-btn">Delete</button></div>
       <h3>Participant window</h3>
       <div class="secondary-actions"><button id="displayCheck" class="ghost-btn">Check display &amp; audio</button></div>
+      <h3>Live tracking</h3>
+      <p id="liveStatus" class="subtle" role="status">Live tracking status appears here.</p>
+      <div class="secondary-actions wrap"><button id="liveRig" class="ghost-btn">Calibrate station</button><button id="liveCheck" class="ghost-btn">Quick aim check</button><button id="liveMarker" class="ghost-btn">Aim marker on/off</button><button id="liveInput" class="ghost-btn">Trackers / mouse</button></div>
       <label class="check-label"><input id="captions" type="checkbox"> Show narration captions</label><div class="secondary-actions"><button id="windowed" class="ghost-btn">Windowed</button><button id="fullscreen" class="ghost-btn">Fullscreen</button></div>
       <label class="field-label">Preview refresh rate<select id="previewRate"><option value="5">5 fps · lower load</option><option value="10" selected>10 fps · balanced</option><option value="20">20 fps · smoother preview</option><option value="30">30 fps · highest load</option></select></label>
       <label class="check-label"><input id="reduceMotion" type="checkbox"> Reduce interface motion</label>
@@ -151,7 +155,7 @@
     <section class="modal"><h2 id="stopTestTitle">Finish this test early?</h2><p class="modal-sub">Results so far will be saved. Choose Pause to resume later.</p><p id="stopTestError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button id="cancelStopTest" class="ghost-btn">Keep test</button><button id="confirmStopTest" class="primary-btn">Stop this test</button></div></section>
   </div>
   <div id="manualDialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="manualTitle" hidden>
-    <section class="modal"><h2 id="manualTitle">Use manual mode for this participant?</h2><p class="modal-sub">Skip the walkthrough and practice for this session. Calibration saves automatically. You’ll arm tests, start breaks and confirm the final form.</p><p id="manualError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button id="cancelManual" class="ghost-btn">Keep walkthrough</button><button id="confirmManual" class="primary-btn">Use manual mode</button></div></section>
+    <section class="modal"><h2 id="manualTitle">Skip the walkthrough for this participant?</h2><p class="modal-sub">Goes straight to the first test. Any walkthrough steps not done yet are skipped, including practice. Calibration saves automatically. You’ll arm tests, start breaks and confirm the final form.</p><p id="manualError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button id="cancelManual" class="ghost-btn">Keep walkthrough</button><button id="confirmManual" class="primary-btn">Skip walkthrough</button></div></section>
   </div>
   <div id="abortDialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="abortTitle" hidden><form id="abortForm" class="modal" novalidate><button type="button" class="close-btn" id="closeAbort" aria-label="Close abort confirmation">×</button><h2 id="abortTitle">Abort participant session?</h2><p class="modal-sub">Aborting ends this recording and cancels the remaining tests.</p><div id="abortError" class="form-error" role="alert" hidden></div><div class="modal-actions"><button type="button" class="ghost-btn" id="cancelAbort">Keep running</button><button id="confirmAbort" class="danger-btn" type="submit">Abort session</button></div></form></div>
   <div id="exceptionDialog" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="exceptionTitle"><form id="exceptionForm" class="modal"><h2 id="exceptionTitle">Skip this test?</h2><p id="exceptionHelp" class="modal-sub"></p><label id="repeatChoice" class="field-label" hidden>Test to repeat<select id="repeatCondition"></select></label><label class="field-label">Reason<textarea id="exceptionReason" required maxlength="256" rows="3" aria-describedby="reasonLength"></textarea></label><span class="subtle" id="reasonLength">256 characters available</span><p id="exceptionError" class="form-error" role="alert" hidden></p><div class="modal-actions"><button type="button" id="cancelException" class="ghost-btn">Cancel</button><button id="confirmException" class="primary-btn">Confirm</button></div></form></div>

@@ -11,7 +11,7 @@ Prerequisites and local tool discovery follow the repository setup guide.
 
 1. Run a session from the administrator dashboard as in the
    [user guide](../../operator/user-guide.md): **New participant**, then
-   **Begin walkthrough** or **Manual mode · skip walkthrough**.
+   **Begin walkthrough** or **Skip walkthrough**.
 2. Point at targets and click in the participant window. A shot occurs when the
    left button is released after a press inside the image during the same armed
    or running block. Each release fires at most one round. The HUD shows hits,

@@ -105,12 +105,23 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator('#startDialog').isVisible(), false, 'Participant entry must not block setup');
     await page.locator('#startParticipant').click();
     const picker = page.getByLabel('Participant ID', {exact: true});
-    assert.equal(await picker.evaluate(el => el.tagName), 'SELECT');
+    assert.equal(await picker.evaluate(el => el.tagName), 'INPUT');
     assert.equal(await page.locator('#createParticipant').isDisabled(), true);
-    await picker.selectOption('7');
+    // A partly numeric ID is refused, never trimmed to a number.
+    await picker.fill('12x');
+    assert.match(await page.locator('#calibrationStatus').textContent(), /digits only/i);
+    assert.equal(await page.locator('#createParticipant').isDisabled(), true);
+    // Any whole number starts a recording; a saved calibration is optional.
+    await picker.fill('41');
+    assert.match(await page.locator('#calibrationStatus').textContent(), /No saved calibration is needed/);
+    assert.equal(await page.locator('#profileSources').isVisible(), false);
+    assert.equal(await page.locator('#createParticipant').isEnabled(), true);
+    await picker.fill('7');
     assert.match(await page.locator('#calibrationStatus').textContent(), /cannot be read/);
-    assert.equal(await page.locator('#createParticipant').isDisabled(), true);
-    await picker.selectOption('0');
+    assert.equal(await page.locator('#createParticipant').isEnabled(), true);
+    // Saved IDs are offered as suggestions, and leading zeros name the same participant.
+    assert.deepEqual(await page.locator('#savedParticipantIds option').evaluateAll(options => options.map(o => o.value)), ['0', '7']);
+    await picker.fill('000');
     assert.match(await page.locator('#calibrationStatus').textContent(), /different screen settings/);
     await page.locator('#profileSources summary').click();
     assert.match(await page.locator('#sourceRevisions').textContent(), /participant-0\.json.*abcdef012345.*1234567890ab/);
@@ -269,7 +280,7 @@ const server = http.createServer(async (req, res) => {
     await page.waitForFunction(()=>!document.getElementById('tutorialPrimary').disabled);
     await page.locator('#tutorialPrimary').click();await wait(()=>current.tutorial.stage==='Reload');
     assert.equal(commands.find(c=>c.action==='tutorialContinue').tutorialRevision,2,'Completed action uses the correct step revision');
-    assert.equal(await page.locator('#tutorialManual').isHidden(),true,'Manual mode is offered only before the walkthrough starts');
+    assert.equal(await page.locator('#tutorialManual').isHidden(),true,'Skipping the walkthrough is offered only when the station allows it');
     Object.assign(current.tutorial,{started:false,stage:'NotStarted',step:'',revision:4,primaryAction:'tutorialBegin',
       primaryLabel:'Begin walkthrough',canPrimary:true,canManual:true});
     await page.locator('#tutorialManual').waitFor({state:'visible'});

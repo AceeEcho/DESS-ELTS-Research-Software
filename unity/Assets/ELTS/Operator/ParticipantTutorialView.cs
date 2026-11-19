@@ -89,11 +89,15 @@ namespace Elts.Operator
             if(saveStatus!=null)saveStatus.text=session.IsBusy?"Saving…":"Break next";
             if(illustration!=null && dot!=null)
             {
-                bool showDot=flow.Stage==TutorialStage.HeadCalibration || session.TutorialDotVisible;
-                illustration.EnableInClassList("tutorial-hidden",showDot);dot.EnableInClassList("tutorial-hidden",!showDot);
-                instruction.text=showDot && flow.Stage==TutorialStage.GunCalibration?"Keep aiming at the dot.":flow.Step.Instruction;
+                // Live tracking: once the aim dots are captured the participant can lower the replica.
+                bool liveDone=session.TutorialLiveZeroDone;
+                bool showDot=(flow.Stage==TutorialStage.HeadCalibration || session.TutorialDotVisible) && !liveDone;
+                illustration.EnableInClassList("tutorial-hidden",showDot || liveDone);dot.EnableInClassList("tutorial-hidden",!showDot);
+                instruction.text=liveDone?"Thank you. Please wait for the operator.":
+                    showDot && flow.Stage==TutorialStage.GunCalibration && !session.LiveTrackingActive?"Keep aiming at the dot.":flow.Step.Instruction;
             }
-            if(flow.Stage==TutorialStage.HeadCalibration && flow.HeadSequenceComplete)detail.text="All 7 steps captured · the operator is checking";
+            if(flow.Stage==TutorialStage.HeadCalibration && flow.HeadSequenceComplete)
+                detail.text=flow.HeadCalibrationCount==1?"Captured · the operator is checking":"All "+flow.HeadCalibrationCount+" steps captured · the operator is checking";
             if(flow.Stage==TutorialStage.Demonstration)
                 detail.text=flow.DemoFailed?"Demonstration interrupted · please wait":flow.DemoRequested?"Simulated ELTS demonstration":"";
             if(flow.Stage==TutorialStage.ScenarioEnded || flow.Stage==TutorialStage.FinalEnded)
@@ -227,7 +231,7 @@ namespace Elts.Operator
                 case TutorialStage.Targets:case TutorialStage.Aim:
                     targetOutline=Extra(new VisualElement(),"tutorial-target-outline");
                     targetLabel=Extra(new Label("Practice target"),"tutorial-target-label");
-                    if(stage==TutorialStage.Aim)detail.text="Desktop rehearsal · move the mouse";
+                    if(stage==TutorialStage.Aim)detail.text=session.LiveTrackingActive?"":"Desktop rehearsal · move the mouse";
                     break;
                 case TutorialStage.Fire:case TutorialStage.Reload: BuildControlLesson(stage);break;
                 case TutorialStage.FireConfirmed:case TutorialStage.ReloadConfirmed:BuildControlConfirmation();break;

@@ -31,6 +31,50 @@ namespace Elts.Operator.Tests
             public DesktopControlFrame Read(IPanel panel)
             {var value=Frame;Frame=new DesktopControlFrame(value.Focused,value.Pointer,value.Movement);return value;}
         }
+
+        [UnityTest]
+        public IEnumerator InjectedTrackerPeerFollowsAdministratorStationLifecycle()
+        {
+            var host = new GameObject("Tracker simulator station fixture");
+            host.AddComponent<DevelopmentView>();
+            var session = host.AddComponent<DevelopmentSessionPanel>();
+            var clock = new ManualSharedClock(DateTimeOffset.UnixEpoch);
+            typeof(DevelopmentSessionPanel).GetField("clock", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(session, clock);
+            var station = host.AddComponent<DevelopmentTestStation>();
+            station.OpenAdministratorAutomatically = false;
+            station.Controls = new Input();
+            var peer = new MockTrackerPeer();
+            session.UseTrackerSimulator(peer);
+            try
+            {
+                for (int i = 0; i < 5; i++) yield return null;
+                ParticipantCalibrationFixture.Save(session, 4196);
+                station.ApplyCommand(new JObject { ["action"] = "startParticipant", ["participant"] = "4196",
+                    ["conditionOrder"] = new JArray("WE_FT", "NE_FT", "WE_MT", "NE_MT") });
+                float limit = Time.realtimeSinceStartup + 20;
+                while (session.Tutorial.Stage != TutorialStage.FirstReady && Time.realtimeSinceStartup < limit)
+                { ReviewFixtureWhenReady(session, station); clock.Advance(TimeSpan.FromSeconds(.1)); yield return null; }
+                Assert.That(session.Engine?.State, Is.EqualTo(SessionState.BlockReady), session.StationMessage);
+                Assert.That(session.TrackerSimulationStatus, Is.EqualTo("Simulator idle"));
+                ParticipantTutorialTests.ArmAfterInstructions(session, station);
+                Assert.That(peer.Frames, Is.Empty, "Arming has no wire effect");
+                Assert.That(session.StationParticipantTrigger(), Is.True);
+                limit = Time.realtimeSinceStartup + 5;
+                while (!peer.Active && Time.realtimeSinceStartup < limit) yield return null;
+                Assert.That(peer.EnableCount, Is.EqualTo(1));
+                Assert.That(peer.Active, Is.True);
+                Assert.That(session.Engine.State, Is.EqualTo(SessionState.BlockRunning));
+
+                session.StationAbort();
+                limit = Time.realtimeSinceStartup + 10;
+                while ((peer.Active || session.IsBusy) && Time.realtimeSinceStartup < limit) yield return null;
+                Assert.That(peer.Active, Is.False);
+                Assert.That(peer.Frames.Select(line => (string)JObject.Parse(line)["type"]),
+                    Is.EqualTo(new[] { "HELLO", "START", "STOP" }));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(host); }
+        }
+
         [UnityTest]
         public IEnumerator PausedTestKeepsTargetsAndRecordingAndCanStopIndependently()
         {

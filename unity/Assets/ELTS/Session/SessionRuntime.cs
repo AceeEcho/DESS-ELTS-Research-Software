@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Elts.Clock;
 using Elts.Logging;
@@ -59,6 +60,7 @@ namespace Elts.Session
         public long ActiveTicks => accumulatedActiveTicks + (State == ScenarioBlockState.Running
             ? Math.Max(0, Math.Min(clock.Now.Ticks, deadline.Ticks) - startedAt.Ticks) : 0);
         public double RemainingSeconds => Math.Max(0, durationTicks - ActiveTicks) / (double)TimeSpan.TicksPerSecond;
+        internal MonotonicTimestamp Deadline => deadline;
 
         public IReadOnlyList<SessionEvent> Start()
         {
@@ -264,6 +266,26 @@ namespace Elts.Session
     }
     public interface ISessionRecordingLifecycle { Task<bool> ReserveAndStartAsync(string runId); Task<bool> CloseAsync(); }
 
+    /// <summary>A committed live segment. Each start and explicit resume has a new identity.</summary>
+    public sealed class SessionLiveSegment
+    {
+        private long observedTicks;
+
+        internal SessionLiveSegment(string condition, MonotonicTimestamp enteredAt, MonotonicTimestamp deadline)
+        {
+            Condition = condition;
+            EnteredAt = enteredAt;
+            Deadline = deadline;
+            observedTicks = enteredAt.Ticks;
+        }
+
+        public string Condition { get; }
+        public MonotonicTimestamp EnteredAt { get; }
+        public MonotonicTimestamp Deadline { get; }
+        public long ObservedTicks => Interlocked.Read(ref observedTicks);
+        internal void Observe(MonotonicTimestamp now) => Interlocked.Exchange(ref observedTicks, now.Ticks);
+    }
+
     /// <summary>
     /// Pure operator-driven session state machine. Sinks own I/O. Any event or
     /// link-delivery failure makes the engine terminal and disables an active WE link.
@@ -287,6 +309,7 @@ namespace Elts.Session
             ? Math.Max(0,((PracticePaused?practicePausedAt:clock.Now).Elapsed-phaseStarted.Elapsed).TotalSeconds-practicePausedSeconds) : 0;
         private readonly ISessionEventSink sink;
         private readonly ISessionLink? link;
+        private SessionLiveSegment? liveSegment;
         private ScenarioBlockController? block;
         private MonotonicTimestamp phaseStarted;
         private int blockIndex;
@@ -318,6 +341,7 @@ namespace Elts.Session
         public int RerunIndex => rerun;
         public string? Failure => failure;
         public bool TargetsActive => State == SessionState.BlockRunning;
+        public SessionLiveSegment? LiveSegment => Volatile.Read(ref liveSegment);
         public bool CurrentBlockStoppedEarly { get; private set; }
         public bool CurrentBlockSkipped { get; private set; }
         public bool CurrentBlockModifiedTiming => block?.HasModifiedTiming ?? false;
@@ -438,6 +462,7 @@ namespace Elts.Session
                 }
                 catch (Exception e) { Fail("ELTS link state check failed: " + e.Message); }
             }
+            LiveSegment?.Observe(clock.Now);
         }
 
         public void StartBlock()
@@ -477,6 +502,7 @@ namespace Elts.Session
             if (!Transition(SessionState.BlockRunning)) return;
             foreach (var item in block.Start())
                 if (!Record(item)) return;
+            PublishLiveSegment();
         }
 
         public void EndBlock()
@@ -492,6 +518,7 @@ namespace Elts.Session
             RequireDevelopmentControls(); Tick();
             if(State == SessionState.BlockEnded)return; // Deadline wins over a late pause.
             Require(SessionState.BlockRunning);
+            RevokeLiveSegment();
             foreach(var item in block!.Pause())if(!Record(item))return;
             if(!StopLink())return;
             if(block.State == ScenarioBlockState.Completed)finishedConditions.Add(CurrentCondition!);
@@ -514,7 +541,7 @@ namespace Elts.Session
             if(CurrentCondition!.StartsWith("WE_", StringComparison.Ordinal) && !TrySetLink(true))
             {Fail("WE link resume failed.");return;}
             foreach(var item in block!.Resume())if(!Record(item))return;
-            Transition(SessionState.BlockRunning);
+            if (Transition(SessionState.BlockRunning)) PublishLiveSegment();
         }
 
         public void StopDevelopmentBlock()
@@ -523,6 +550,7 @@ namespace Elts.Session
             if(State == SessionState.BlockEnded)return;
             if(State != SessionState.BlockRunning && State != SessionState.BlockPaused)
                 throw new InvalidOperationException("Only a running or paused test can stop.");
+            RevokeLiveSegment();
             if(!StopLink())return;
             foreach(var item in block!.Stop())if(!Record(item))return;
             CurrentBlockStoppedEarly = true;
@@ -683,6 +711,7 @@ namespace Elts.Session
         public void Abort(string reason = "Operator ended the session")
         {
             if (String.IsNullOrWhiteSpace(reason)) throw new ArgumentException("An abort reason is required.", nameof(reason));
+            RevokeLiveSegment();
             ExpireCurrentPhase();
             if (State == SessionState.Aborted || State == SessionState.Failed || State == SessionState.SessionComplete) return;
 
@@ -734,8 +763,14 @@ namespace Elts.Session
             fields.AddRange(extra);
             if (!Record(Event("SessionTransition", fields.ToArray()))) return false;
             State = next;
+            if (next != SessionState.BlockRunning) RevokeLiveSegment();
             return true;
         }
+
+        private void PublishLiveSegment() => Volatile.Write(ref liveSegment,
+            new SessionLiveSegment(CurrentCondition!, clock.Now, block!.Deadline));
+
+        private void RevokeLiveSegment() => Volatile.Write(ref liveSegment, null);
 
         private SessionEvent Event(string type, params LogField[] fields) => new SessionEvent(sequence.Next(), clock.Now, type, fields);
 
@@ -785,6 +820,7 @@ namespace Elts.Session
             SessionState previous = State;
             failure = message;
             State = SessionState.Failed;
+            RevokeLiveSegment();
             RecordFailureTransition(previous, message);
             if (!linkMayBeEnabled) return;
             try { link?.TrySetEnabled(false); }

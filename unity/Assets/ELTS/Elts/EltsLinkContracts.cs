@@ -168,20 +168,26 @@ public static class EltsCodec
         if (string.IsNullOrEmpty(newlineDelimitedJson) || newlineDelimitedJson.Length > EltsProtocolV1.MaximumLineCharacters ||
             !newlineDelimitedJson.EndsWith("\n", StringComparison.Ordinal) || newlineDelimitedJson.IndexOf('\n') != newlineDelimitedJson.Length - 1 || newlineDelimitedJson.IndexOf('\r') >= 0)
             throw new InvalidDataException("Protocol input must be one bounded LF-terminated JSON object.");
-        ValidateJsonSyntax(newlineDelimitedJson);
-        JObject value;
-        try
-        {
-            using var reader = new JsonTextReader(new StringReader(newlineDelimitedJson)) { DateParseHandling = DateParseHandling.None, FloatParseHandling = FloatParseHandling.Decimal };
-            value = JObject.Load(reader, new JsonLoadSettings { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error, CommentHandling = CommentHandling.Load });
-            if (reader.Read()) throw new InvalidDataException("Trailing JSON tokens are not allowed.");
-        }
-        catch (JsonException ex) { throw new InvalidDataException("Malformed protocol JSON.", ex); }
+        var value = ParseStrictJsonObject(newlineDelimitedJson);
         var protocolVersion = Text(value, "protocolVersion");
         if (protocolVersion != EltsProtocolV1.Version) throw new InvalidDataException("Unsupported protocolVersion.");
         var type = ParseType(Text(value, "messageType"));
         var sequence = Integer(value, "sequence");
         return DecodeByType(value, protocolVersion, type, sequence);
+    }
+
+    internal static JObject ParseStrictJsonObject(string json)
+    {
+        ValidateJsonSyntax(json);
+        JObject value;
+        try
+        {
+            using var reader = new JsonTextReader(new StringReader(json)) { DateParseHandling = DateParseHandling.None, FloatParseHandling = FloatParseHandling.Decimal };
+            value = JObject.Load(reader, new JsonLoadSettings { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error, CommentHandling = CommentHandling.Load });
+            if (reader.Read()) throw new InvalidDataException("Trailing JSON tokens are not allowed.");
+        }
+        catch (JsonException ex) { throw new InvalidDataException("Malformed protocol JSON.", ex); }
+        return value;
     }
     // Newtonsoft accepts JavaScript extensions. This grammar gate is shared in
     // concept with RecordedReplay: only RFC JSON reaches JObject.Load.

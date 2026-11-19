@@ -146,6 +146,13 @@ namespace Elts.Operator.Tests
                 Assert.That(session.PanelRoot.resolvedStyle.display,Is.EqualTo(DisplayStyle.None));
                 Assert.That(station.ParticipantRoot.Query<Button>().ToList(),Is.Empty,"Participant view must contain no administrator buttons");
                 var order=new JArray("WE_FT","WE_MT","NE_FT","NE_MT");
+                const int botLimit=6;
+                Assert.That((int)JObject.Parse(station.StateJson())["activeTargetCount"],Is.EqualTo(view.Configuration.Scenario.ActiveTargetCount));
+                Assert.Throws<ArgumentException>(()=>station.ApplyCommand(new JObject{["action"]="setActiveTargetCount",["count"]=6.5}));
+                Assert.Throws<ArgumentOutOfRangeException>(()=>station.ApplyCommand(new JObject{["action"]="setActiveTargetCount",["count"]=0}));
+                Assert.Throws<ArgumentOutOfRangeException>(()=>station.ApplyCommand(new JObject{["action"]="setActiveTargetCount",["count"]=31}));
+                station.ApplyCommand(new JObject{["action"]="setActiveTargetCount",["count"]=botLimit});
+                Assert.That((int)JObject.Parse(station.StateJson())["activeTargetCount"],Is.EqualTo(botLimit));
                 // Participant IDs are numeric and require a saved calibration; nothing starts otherwise.
                 Assert.Throws<ArgumentException>(()=>station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="station-test",["conditionOrder"]=order}));
                 Assert.Throws<FileNotFoundException>(()=>station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="4199",["conditionOrder"]=order}));
@@ -167,6 +174,7 @@ namespace Elts.Operator.Tests
                 { ReviewFixtureWhenReady(session,station);clock.Advance(TimeSpan.FromSeconds(0.1));yield return null; }
                 Assert.That(session.Engine?.State,Is.EqualTo(SessionState.BlockReady),session.StationMessage);
                 string run=session.StationRecordingPath;
+                Assert.Throws<InvalidOperationException>(()=>station.ApplyCommand(new JObject{["action"]="setActiveTargetCount",["count"]=botLimit+1}));
                 for(int block=0;block<4;block++)
                 {
                     Assert.That(session.StationParticipantTrigger(),Is.False,"Unarmed participant cannot begin");
@@ -198,7 +206,7 @@ namespace Elts.Operator.Tests
                     float poseDeadline=Time.realtimeSinceStartup+2;
                     while(scenario.Positions.Count==0 && Time.realtimeSinceStartup<poseDeadline)yield return null;
                     Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockRunning),session.StationMessage);
-                    Assert.That(scenario.Positions.Count,Is.GreaterThan(0),session.StationMessage);
+                    Assert.That(scenario.Positions.Count,Is.EqualTo(botLimit),session.Engine.CurrentCondition);
                     var point=TargetSurfaceTestPoints.Head(view,scenario.Positions.First().Key);
                     var viewport=view.ParticipantCamera.WorldToViewportPoint(point);
                     var bounds=station.ParticipantRoot.worldBound;
@@ -207,6 +215,8 @@ namespace Elts.Operator.Tests
                     input.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,pressed:true);yield return null;
                     input.Frame=new DesktopControlFrame(true,pointer,Vector3.zero,released:true);yield return null;
                     Assert.That(session.StationShots,Is.EqualTo(1));Assert.That(session.StationHits,Is.EqualTo(1));
+                    Assert.That(session.StationTargetKills,Is.EqualTo(1));
+                    Assert.That(scenario.Positions.Count,Is.EqualTo(botLimit),"A replacement refills the same limit");
                     clock.Advance(TimeSpan.FromSeconds(300));yield return null;
                     Assert.That(session.Engine.State,Is.EqualTo(SessionState.BlockEnded));
                     limit=Time.realtimeSinceStartup+15;
@@ -238,6 +248,9 @@ namespace Elts.Operator.Tests
                 Assert.That(events.Count(e=>(string)e["eventType"]=="TestArmed"),Is.EqualTo(4));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="ParticipantStartTrigger"),Is.EqualTo(4));
                 Assert.That(events.Count(e=>(string)e["eventType"]=="ShotFired"),Is.EqualTo(4));
+                var layouts=events.Where(e=>(string)e["eventType"]=="DevelopmentLayoutConfigured").ToArray();
+                Assert.That(layouts.Length,Is.EqualTo(4));
+                Assert.That(layouts.Select(e=>(int)e["payload"]["activeTargetCount"]),Is.All.EqualTo(botLimit));
                 foreach(var start in events.Where(e=>(string)e["eventType"]=="ParticipantStartTrigger"))
                 {
                     string blockId=(string)start["payload"]["blockId"];

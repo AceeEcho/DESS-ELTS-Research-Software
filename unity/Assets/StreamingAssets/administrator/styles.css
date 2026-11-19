@@ -425,6 +425,12 @@ button:focus-visible, [tabindex]:focus-visible { outline:2px solid var(--accent)
 .timing-settings > h3 { margin:0 0 12px; }
 .timing-group { padding:14px; border:1px solid var(--line); border-radius:8px; background:var(--bg3); }
 .timing-group h4 { margin:0 0 7px; font-size:15px; }
+#botLimitForm { margin-bottom:12px; }
+.bot-limit-controls { display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px; }
+.bot-limit-controls .field-label { margin:0; }
+#activeTargetCount { width:6em; }
+#botLimitForm p { margin:8px 0 0; color:var(--muted); font-size:12px; }
+#botLimitStatus:empty { margin:0; }
 .duration-editor { justify-self:end; display:grid; gap:2px; }
 .duration-editor input { width:6em; }
 .order-item strong small { display:block; font-weight:normal; color:var(--muted); }

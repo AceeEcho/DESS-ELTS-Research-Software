@@ -268,6 +268,10 @@ namespace Elts.Operator
                 case "stopTest": session.StationStop();CancelClick();break;
                 case "setDuration":
                     session.StationSetDuration((string?)command["condition"]??"",(double?)command["seconds"]??Double.NaN);break;
+                case "setActiveTargetCount":
+                    if(command["count"]?.Type!=JTokenType.Integer || !Int32.TryParse((string?)command["count"],out int count))
+                        throw new ArgumentException("Enter a whole number for the bot limit.");
+                    session.StationSetActiveTargetCount(count);break;
                 case "applySetup":
                     session.StationApplySetup(command["conditionOrder"]?.ToObject<string[]>()??Array.Empty<string>(),
                         command["durations"]?.ToObject<Dictionary<string,double>>()??new Dictionary<string,double>(),
@@ -449,6 +453,7 @@ namespace Elts.Operator
                 activeSeconds=engine?.CurrentActiveSeconds??0,durationSeconds=engine?.CurrentDurationSeconds??0,
                 testDurations=session.StationDurations,
                 editableDurations=session.StationOrder.Where(session.StationCanSetDuration).ToArray(),
+                activeTargetCount=session.StationActiveTargetCount,
                 busy=session.IsBusy,message=session.StationMessage,recordingPath=session.StationRecordingPath,
                 condition=engine?.CurrentCondition??"",blockId=engine?.CurrentBlockId??"",conditionOrder=session.StationOrder,blocks,
                 shots=session.StationShots,hits=session.StationHits,

@@ -27,6 +27,7 @@ let current = {
   roomRevision: 'synthetic-room-1234567890abcdef',
   participantCalibrations: [{ id: 0, available: true, screenMatches: false, revision: 'abcdef0123456789' }, { id: 7, available: false }],
   conditionOrder: conditions.slice(), testDurations: Object.fromEntries(conditions.map(c => [c, 300])),
+  activeTargetCount: 30,
   editableDurations: conditions.slice(), blocks: [], remainingSeconds: 0, activeSeconds: 0,
   tracking: {}, camera: { yaw: -32, pitch: 16, distance: 4.8 },
   data: {ready:true, busy:false, path:'collection data', message:'Local collection ready', profiles:[{id:'profile1',code:'P-001',sessions:'2',modifiedUtc:'2026-09-11T12:00:00Z'}]},
@@ -53,6 +54,7 @@ const server = http.createServer(async (req, res) => {
       current.tools.breakSeconds = command.breakSeconds; current.tools.practiceSeconds = command.practiceSeconds;
     }
     if (command.action === 'setDuration') current.testDurations[command.condition] = command.seconds;
+    if (command.action === 'setActiveTargetCount') current.activeTargetCount = command.count;
     if (command.action === 'tutorialBegin') Object.assign(current.tutorial, {started:true, stage:'Welcome', step:'01',
       title:'Welcome to the ELTS Project', instruction:'Thank you for being a participant.', revision:1,
       primaryLabel:'',canPrimary:false,canPause:true,canReplay:true});
@@ -158,9 +160,20 @@ const server = http.createServer(async (req, res) => {
       await page.locator('#previewRate').selectOption(String(fps));
       await wait(() => current.previewFps === fps);
     }
+    const botLimit = page.getByRole('spinbutton', { name: 'Max live bots' });
+    const saveBotLimit = page.getByRole('button', { name: 'Save bot limit' });
+    assert.equal(await botLimit.inputValue(), '30');
+    await botLimit.fill('6.5');
+    await saveBotLimit.click();
+    assert.equal(commands.some(c => c.action === 'setActiveTargetCount'), false, 'Fractional bot limits are rejected');
+    await botLimit.fill('6');
+    await saveBotLimit.click();
+    await wait(() => current.activeTargetCount === 6);
+    await page.waitForFunction(() => document.getElementById('botLimitStatus').textContent === 'Saved');
     await page.reload();
     await page.locator('#settingsButton').click();
     await page.waitForFunction(() => document.getElementById('previewRate').value === '30');
+    assert.equal(await botLimit.inputValue(), '6', 'The saved bot limit survives a dashboard reload');
     const wipes = () => commands.filter(c => c.action === 'wipeDataset');
     await page.locator('#openDatasetRemoval').click();
     for (const value of ['confirm', ' CONFIRM', 'CONFIRM ']) {
@@ -220,12 +233,19 @@ const server = http.createServer(async (req, res) => {
     await wait(() => current.testDurations.WE_FT === 240);
     await page.waitForFunction(() => document.getElementById('durationStatus-WE_FT').textContent === 'Saved');
     assert.equal(await page.locator('#durationStatus-WE_FT').textContent(), 'Saved', 'Test duration autosaves with confirmation');
+    await botLimit.scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(output, 'administrator-setup.png'), fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await botLimit.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: path.join(output, 'administrator-setup-mobile.png'), fullPage: true });
+    assert.ok(await page.locator('#settingsDialog .modal').evaluate(el => el.scrollWidth <= el.clientWidth), 'Settings fit on mobile');
+    await page.setViewportSize({ width: 1440, height: 1000 });
     Object.assign(current, { state: 'BlockRunning', condition: 'WE_FT', canStartParticipant: false, editableDurations: conditions.slice(1) });
     await page.waitForFunction(() => document.getElementById('durationStatus-WE_FT').textContent === 'Pause to edit');
     assert.equal(await page.locator('#duration-WE_FT').isDisabled(), true, 'The running test explains why editing is locked');
     assert.equal(await page.locator('#duration-WE_MT').isEnabled(), true, 'Upcoming tests stay editable');
     assert.equal(await page.locator('#orderLocked').isVisible(), true, 'Test order explains the session lock');
+    assert.equal(await botLimit.isDisabled(), true, 'The bot limit is shared by the entire participant run');
     Object.assign(current, { state: 'BlockPaused', editableDurations: conditions.slice() });
     await page.waitForFunction(() => !document.getElementById('duration-WE_FT').disabled);
     assert.equal(await page.locator('#durationStatus-WE_FT').textContent(), 'Saved', 'Paused tests can be edited again');

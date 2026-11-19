@@ -238,7 +238,8 @@ namespace Elts.Operator
         /// must drive the view's hit feedback (spark, flinch, fall); create scenarios only here.</summary>
         private void StartScenario()
         {
-            scenario=new DevelopmentSessionScenario(view.Configuration,clock!,engine!,recording!,sequence!,view.GameSettings,view);
+            scenario=new DevelopmentSessionScenario(view.Configuration,clock!,engine!,recording!,sequence!,view.GameSettings,view,
+                activeTargetCount:SeparateAdministrator?StationActiveTargetCount:null);
             scenario.TargetHit+=view.ShowTargetImpact;
         }
 

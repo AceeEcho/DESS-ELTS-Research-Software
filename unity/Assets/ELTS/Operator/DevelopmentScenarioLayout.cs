@@ -13,6 +13,7 @@ namespace Elts.Operator
     public sealed class DevelopmentGameSettings
     {
         public const int DefaultMagazineCapacity=20;
+        public const int MinimumActiveTargetCount=1, MaximumActiveTargetCount=30;
         public int magazineCapacity=DefaultMagazineCapacity;
         public int activeTargetCount=30, spawnPositionCount=50, pathSequenceLength=100000;
         // Scale the whole floor plan together so furniture and paths cannot drift apart.
@@ -42,7 +43,8 @@ namespace Elts.Operator
                 throw new ArgumentException("Fixed target pose settings are outside their synthetic ranges.");
             foreach(float angle in fixedYawDegrees)
                 if(!Finite(angle,-180,180))throw new ArgumentException("Fixed target yaw must be finite and within -180 to 180 degrees.");
-            if(activeTargetCount<1 || activeTargetCount>30 || (spawnPositionCount<31 || spawnPositionCount>50) || activeTargetCount>=spawnPositionCount ||
+            if(activeTargetCount<MinimumActiveTargetCount || activeTargetCount>MaximumActiveTargetCount ||
+                (spawnPositionCount<31 || spawnPositionCount>50) || activeTargetCount>=spawnPositionCount ||
                 pathSequenceLength<100000 || pathSequenceLength>1000000 ||
                 !Finite(libraryLayoutScale,.95f,1.15f) || !Finite(libraryMoveSpeedMps,1.5f,4.5f) ||
                 !Finite(libraryPauseSeconds,.08f,.65f) || magazineCapacity<1 || magazineCapacity>100 ||

@@ -27,6 +27,11 @@ while a participant is active. The dashboard stacks its panes on narrow windows;
 wider windows retain the draggable divider and keyboard resizing. Drag the outside
 view to orbit, scroll to zoom, or use arrow keys and +/- while the view has focus.
 
+**Settings → Session plan → Max live bots** sets one limit for all four scenarios.
+Enter a whole number from 1 to 30, then select **Save bot limit** before starting
+a participant. The value lasts until the station closes. Each scenario starts
+with that many live bots and spawns replacements as bots are destroyed.
+
 The outside preview captures at 1920 × 1200 with JPEG quality 90 by default,
 at 10 frames per second. `DevelopmentTestStation` exposes preview width, JPEG
 quality and cadence as serialized settings; height preserves the 16:10 aspect

@@ -17,6 +17,7 @@
   let abortRunId = "", settingsOpener = null;
   let testActionBusy = false, stopBlockId = '', stopRunId = '';
   const durationDrafts = new Set(), durationSaves = new Map(), durationFeedback = new Map();
+  let botLimitDirty = false, botLimitSaving = false;
   let state = null, order = conditions.slice(), pollBusy = false, viewVersion = null;
   let workflows, dataViewer;
   let profileCache = {revision:-1, items:[]};
@@ -107,6 +108,7 @@
   if (!intakeShown) { order = (state.conditionOrder?.length ? state.conditionOrder : conditions).slice(); intakeShown = true; }
   renderBlocks();
   renderDurations();
+  renderBotLimit();
   workflows?.render(state);
   renderTracking();
   if (!$('workspace').hidden) renderImage();
@@ -160,8 +162,37 @@
   render(); }
     catch (error) { setConnection(false);
   $('phaseText').textContent = 'Unavailable';
-  ['armButton','disarmButton','nextButton','abortButton','startParticipant','createParticipant','pauseButton','resumeButton','stopTestButton','confirmStopTest'].forEach(id => { $(id).disabled = true; }); workflows?.offline(); }
+  ['armButton','disarmButton','nextButton','abortButton','startParticipant','createParticipant','pauseButton','resumeButton','stopTestButton','confirmStopTest','activeTargetCount','saveBotLimit'].forEach(id => { $(id).disabled = true; }); workflows?.offline(); }
     finally { pollBusy = false; finishRefresh(); }
+  }
+  function renderBotLimit() {
+    const input = $('activeTargetCount');
+    if (!state?.canStartParticipant && botLimitDirty) {
+      botLimitDirty = false;
+      $('botLimitStatus').textContent = '';
+    }
+    if (!botLimitDirty) input.value = state?.activeTargetCount ?? '';
+    input.disabled = !state?.canStartParticipant || botLimitSaving;
+    $('saveBotLimit').disabled = input.disabled || !botLimitDirty;
+  }
+  async function saveBotLimit(event) {
+    event.preventDefault();
+    if ($('saveBotLimit').disabled) return;
+    const status = $('botLimitStatus');
+    botLimitSaving = true;
+    const count = Number($('activeTargetCount').value);
+    renderBotLimit();
+    status.textContent = 'Saving…';
+    try {
+      await command('setActiveTargetCount', { count });
+      botLimitDirty = false;
+      status.textContent = 'Saved';
+    } catch (error) {
+      status.textContent = error.message;
+    } finally {
+      botLimitSaving = false;
+      await refresh();
+    }
   }
   function createDurationEditor(condition) {
     const form = document.createElement('div'); form.className = 'duration-editor';
@@ -297,6 +328,12 @@
     workflows = window.createAdministratorWorkflows({ $, command, refresh, getState: () => state, getOrder: () => order,
       setOrder: value => { order = value; }, createDurationEditor, escapeHtml, formatTime });
     workflows.renderOrder();
+    $('botLimitForm').addEventListener('submit', saveBotLimit);
+    $('activeTargetCount').addEventListener('input', () => {
+      botLimitDirty = true;
+      $('botLimitStatus').textContent = 'Unsaved change';
+      renderBotLimit();
+    });
     $('displayCheck').addEventListener('click', () => command('displayCheck').catch(e => notifyError($('settingsError'), e)));
     $('captions').addEventListener('change', () => command('captions', {enabled:$('captions').checked}).catch(e => notifyError($('settingsError'), e)));
     $('pauseButton').addEventListener('click', () => testAction('pause').catch(() => {}));

@@ -2,12 +2,14 @@
 
 `ScenarioRuntime.cs` keeps synthetic target state in world coordinates (Unity-room meters), never in screen coordinates. `ScenarioDefinition` rejects default spawn volumes and non-finite numeric values. `ScenarioPopulation` owns the active target population: it preserves the configured count, expires targets, and applies the configured respawn delay before the seeded `MaintainCountSpawnRule` may create a visible replacement.
 
-The desktop development session uses a library with **50 positions and 30 active
+The desktop development session defaults to **50 positions and 30 active
 mannequins** in both fixed and moving conditions. These defaults are shared in
 `config/development/scenario.json` (`spawnPositionCount`, `activeTargetCount`,
-`pathSequenceLength`). Targets persist until killed or the block ends; the
-legacy generic target lifetime and spawn interval do not expire or delay library
-targets. A finishing shot records destruction before recording its replacement
+`pathSequenceLength`). The administrator's **Max live bots** setting overrides
+the default population count for every scenario in a recording. Targets persist
+until killed or the block ends; the legacy generic target lifetime and spawn
+interval do not expire or delay library targets. A finishing shot records
+destruction before recording its replacement
 on the shared acquisition clock. Pause and tracking-validity controls still apply.
 
 `SessionEventSequence` is supplied explicitly to the block controller and shot model, preserving one strict session event sequence. `ScenarioBlockController.Fire` refuses trigger observations at or after the deadline. The development `HumanoidShotModel` queries the presented mannequin's posed triangle surface and tests cover first when it is closer to the shooter. Every accepted shot records outcome, region, damage and remaining health. The target has three health; head/body/limb damage is 3/2/1. `TargetHit` records partial damage and `TargetDestroyed` records the health-zero transition. Empty-magazine attempts and manual reloads are separate events and do not count as shots. The generic `HitscanShotModel` remains for non-humanoid fixtures. `TargetsDestroyedCount` derives the primary score from logged destruction events within the monotonic half-open interval `[BlockStarted, BlockEnded)`; uninterrupted 300-second scoring requirements remain unchanged.
@@ -26,8 +28,9 @@ The library population is owned by `LibraryTargetPopulation`; generic population
 fixtures retain their existing lifetime/respawn behavior.
 
 Fixed targets hold an assigned pose at one of 50 numbered floor stations around the service area,
-collections, cross aisles and window-side reading area. Thirty positions are occupied at once. The replacement
-allocator walks the position list and skips occupied positions and positions
+collections, cross aisles and window-side reading area. The population limit
+determines how many positions are occupied. The replacement allocator walks the
+position list and skips occupied positions and positions
 vacated during that update, so a kill never puts the replacement straight back
 in the same spot. Surviving targets keep their positions. Open aisles, reading
 desks, low bookcases and offset cabinets provide open, partly covered and
@@ -45,9 +48,10 @@ peek crouch fraction and the yaw list. Per-target assignment events record the
 pose version, name, crouch, yaw, clip phase, stride flag and offsets. The current
 position-only replay viewer does not reconstruct these visual pose fields.
 
-Moving targets consume `library-routes-v3` in **spawn order**. The first 30
-assignments are routes 0–29; each kill assigns the next route. Every block,
-including each participant's repeat of a condition, restarts at route 0.
+Moving targets consume `library-routes-v3` in **spawn order**. The opening
+population takes consecutive routes starting at 0. Each kill assigns the next
+route. Every block, including each participant's repeat of a condition,
+restarts at route 0.
 `DevelopmentScenarioLayout.Route` is an indexable list of 100,000 entries
 (default), represented by a fixed integer recipe rather than a large duplicated
 waypoint file. It does not use participant IDs, timestamps or runtime randomness.
@@ -66,11 +70,10 @@ These are illustrative synthetic movements, not a validated model of human behav
 
 Routes are never relocated or skipped to accommodate a different kill order. If
 a destination is still occupied, that target waits outside its entry door until
-the destination becomes free. The 30-target limit includes entering, hidden and
-waiting targets: it is a maximum visible population, not a guarantee that all 30
-are visible at every instant. Different participants therefore share the same
-route prefix **by spawn number and route age**, while entry times and concurrently
-visible actors depend on which targets they kill. Kill order is not prescribed.
+the destination becomes free. Entering, hidden and waiting targets all count
+toward the limit, so fewer targets may be visible at any given time. Different
+participants share the same route prefix **by spawn number and route age**.
+Entry times and concurrently visible actors depend on which targets they kill.
 
 `DevelopmentGameSettings` on `DevelopmentView` holds the provisional magazine
 size, whole-plan scale, maximum travel speed, waypoint pause and crouch timing.

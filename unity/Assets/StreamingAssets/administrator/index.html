@@ -110,6 +110,14 @@
       <h2 id="settingsTitle">Settings</h2>
       <section class="timing-settings" aria-labelledby="timingSettingsTitle">
       <h3 id="timingSettingsTitle">Session plan</h3>
+      <form id="botLimitForm" class="timing-group">
+        <div class="bot-limit-controls">
+          <label class="field-label">Max live bots<input id="activeTargetCount" type="number" min="1" max="30" step="1" required disabled aria-describedby="botLimitHelp"></label>
+          <button id="saveBotLimit" class="ghost-btn" type="submit" disabled>Save bot limit</button>
+        </div>
+        <p id="botLimitHelp">Applies to every scenario. Set 1–30 before starting a participant.</p>
+        <p id="botLimitStatus" role="status"></p>
+      </form>
       <ol id="conditionOrder" class="order-list" aria-label="Test order"></ol><p id="orderStatus" class="subtle" role="status"></p>
       <p id="orderLocked" class="subtle" hidden>Order locked during this session.</p>
       <section class="timing-group" aria-labelledby="phaseDurationsTitle"><h4 id="phaseDurationsTitle">Practice &amp; breaks</h4><form id="phaseTimingForm"><div class="phase-fields"><label class="field-label">Practice (s)<input id="practiceSeconds" type="number" min="0" max="3600" step="1" required></label><label class="field-label">Every break (s)<input id="breakSeconds" type="number" min="0" max="3600" step="1" required></label></div><span id="phaseSaveStatus" class="subtle" role="status"></span></form></section>

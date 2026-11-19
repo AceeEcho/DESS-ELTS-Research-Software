@@ -29,6 +29,7 @@ namespace Elts.Operator
         // One visit spans the first recording and every repeat or continuation folder.
         private string stationVisitId = "";
         private double stationStartedAt;
+        private int? stationActiveTargetCount;
         private readonly Dictionary<string,double> stationDurations = new Dictionary<string,double>(StringComparer.Ordinal) {
             ["WE_FT"]=300,["WE_MT"]=300,["NE_FT"]=300,["NE_MT"]=300
         };
@@ -62,11 +63,22 @@ namespace Elts.Operator
         public string[] StationOrder => SeparateAdministrator ? preparedOrder : Field("conditionOrder").value.Split(',');
         public double StationElapsed => Math.Max(0,(clock?.Now.Elapsed.TotalSeconds ?? 0)-stationStartedAt);
         public IReadOnlyDictionary<string,double> StationDurations => stationDurations;
+        public int StationActiveTargetCount => stationActiveTargetCount ?? view.Configuration.Scenario.ActiveTargetCount;
         public bool StationCanPause => !IsBusy && !closing && engine?.State == SessionState.BlockRunning;
         public bool StationCanResume => !IsBusy && !closing && engine?.State == SessionState.BlockPaused;
         public bool StationCanStop => StationCanPause || StationCanResume;
         public bool StationCanSetDuration(string condition) => !IsBusy && stationDurations.ContainsKey(condition) &&
             (StationCanStartParticipant || (!closing && engine?.CanChangeDuration(condition) == true));
+
+        public void StationSetActiveTargetCount(int count)
+        {
+            if(!StationCanStartParticipant)
+                throw new InvalidOperationException("Finish the current participant before changing the bot limit.");
+            if(count<DevelopmentGameSettings.MinimumActiveTargetCount || count>DevelopmentGameSettings.MaximumActiveTargetCount)
+                throw new ArgumentOutOfRangeException(nameof(count),
+                    $"Enter a bot limit from {DevelopmentGameSettings.MinimumActiveTargetCount} to {DevelopmentGameSettings.MaximumActiveTargetCount}.");
+            stationActiveTargetCount=count;
+        }
 
         public void StationSetDuration(string condition, double seconds)
         {

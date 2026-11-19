@@ -65,12 +65,15 @@ namespace Elts.Operator
 
         public DevelopmentSessionScenario(DevelopmentConfiguration config, ISharedClock clock,
             SessionEngine engine, SessionRecordingAdapter recording, ISessionEventSequence sequence,
-            DevelopmentGameSettings? gameSettings=null,IHumanoidHitGeometry? hitGeometry=null)
+            DevelopmentGameSettings? gameSettings=null,IHumanoidHitGeometry? hitGeometry=null,int? activeTargetCount=null)
         {
             this.config=config;this.clock=clock;this.engine=engine;this.recording=recording;
             this.hitGeometry=hitGeometry;
             this.gameSettings=(gameSettings??new DevelopmentGameSettings()).Copy();
-            this.gameSettings.ApplyPopulation(config.Scenario);this.gameSettings.Validate();
+            this.gameSettings.ApplyPopulation(config.Scenario);
+            // Snapshot the station's limit for every block in this recording.
+            this.gameSettings.activeTargetCount=activeTargetCount??this.gameSettings.activeTargetCount;
+            this.gameSettings.Validate();
             magazine=new ManualMagazine(MagazineCapacity);
             eventSequence=sequence;
         }

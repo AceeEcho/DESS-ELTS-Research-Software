@@ -78,7 +78,9 @@ hide it when shooters must rely on the sights alone.
 
 ## 2 · Each participant (about twenty seconds, inside the walkthrough)
 
-Run the walkthrough as usual. With live tracking the calibration chapter is:
+Start the participant under **New participant** by typing any whole-number ID;
+nothing has to be saved in the calibration workspace first. Then run the
+walkthrough as usual. With live tracking the calibration chapter is:
 
 1. **Head step.** One capture while the participant stands on their mark looking
    at the dot. The dashboard then shows where ELTS places their eye (distance from

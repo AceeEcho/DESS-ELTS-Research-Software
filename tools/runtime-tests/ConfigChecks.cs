@@ -255,6 +255,11 @@ internal static class ConfigChecks
             try { ParticipantCalibration.Load(directory, 9); }
             catch (FileNotFoundException exception) { missing = exception.Message.StartsWith("No saved calibration for participant 9", StringComparison.Ordinal); }
             Assert(missing, "missing participant calibration explains what to do");
+            // Intake treats a saved profile as optional: any numeric ID can start a recording.
+            Assert(ParticipantCalibration.LoadIfSaved(directory, 9, out string absentProblem) == null && absentProblem == "", "an ID with no saved calibration starts without one");
+            Assert(ParticipantCalibration.LoadIfSaved(directory, 12, out string savedProblem)?.ParticipantId == 12 && savedProblem == "", "a saved calibration is still applied");
+            File.WriteAllText(Path.Combine(directory, "participant-8.json"), "{ not a calibration");
+            Assert(ParticipantCalibration.LoadIfSaved(directory, 8, out string unreadableProblem) == null && unreadableProblem.Length > 0, "an unreadable saved calibration is reported, not required");
         }
         finally { Directory.Delete(directory, true); }
 

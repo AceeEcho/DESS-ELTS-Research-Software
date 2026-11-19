@@ -26,6 +26,11 @@ namespace Elts.Operator
         private bool stationScreenDiffers;
         private const string ScreenDiffersMessage="The saved screen measurements differ from this ELTS build; " +
             "the build's screen is used. Restart START-ELTS to apply the latest saved screen.";
+        /// <summary>Why a saved profile for this ID was not used; empty when none is saved or it was applied.</summary>
+        private string stationCalibrationProblem = "";
+        // Session notes are limited to 256 characters; keep these short.
+        private const string NoProfileMessage="Calibration: no saved profile for this ID; station settings used.";
+        private const string UnreadableProfileMessage="Calibration: the saved profile for this ID could not be read; station settings used.";
         // One visit spans the first recording and every repeat or continuation folder.
         private string stationVisitId = "";
         private double stationStartedAt;
@@ -128,9 +133,11 @@ namespace Elts.Operator
         }
 
         /// <summary>
-        /// Starts a participant by numeric ID and applies the calibration saved for
-        /// that ID in the Calibration Environment. Nothing changes if the ID is not
-        /// numeric or no valid calibration is saved for it.
+        /// Starts a participant by numeric ID. Any whole number is accepted; nothing
+        /// changes if the ID is not numeric. A calibration saved for that ID in the
+        /// Calibration Environment is optional: when one is saved and readable its
+        /// offsets apply, otherwise the staged station offsets apply and the
+        /// walkthrough calibrates the participant. The recording says which.
         /// </summary>
         public void StationStartParticipant(string participant, IEnumerable<string> order, string? assignedId = null, string[]? assignment = null, string deviation = "")
         {
@@ -150,10 +157,13 @@ namespace Elts.Operator
                     throw new ArgumentException("Review the assignment and choose a reason for a different order.");
             }
             else if (assignedId != null || deviation.Length > 0) throw new ArgumentException("Assignment row is incomplete.");
-            var calibration=ParticipantCalibration.Load(CalibrationProfileDirectory,id);
-            stationScreenDiffers=!calibration.ScreenMatches(view.Configuration.Rig);
-            view.ApplyParticipantCalibration(calibration);
+            var calibration=ParticipantCalibration.LoadIfSaved(CalibrationProfileDirectory,id,out string profileProblem);
+            // Without a saved profile the previous participant's offsets must not carry over.
+            view.ClearParticipantCalibration();
+            stationScreenDiffers=calibration!=null && !calibration.ScreenMatches(view.Configuration.Rig);
+            if(calibration!=null)view.ApplyParticipantCalibration(calibration);
             stationCalibration=calibration;
+            stationCalibrationProblem=profileProblem;
             // Live tracking starts every participant from the station fit, not the last shooter's zero.
             ResetLiveForParticipant();
             assignedOrder=assignment?.ToArray(); orderDeviation=deviation;
@@ -186,10 +196,13 @@ namespace Elts.Operator
                         if(stationCalibration!=null)
                             RecordSessionDetail("Calibration: "+stationCalibration.FileName+" · SHA-256 "+stationCalibration.Sha256+
                                 " · synthetic, not measured.");
+                        else
+                            RecordSessionDetail(stationCalibrationProblem.Length>0 ? UnreadableProfileMessage : NoProfileMessage);
                         if(stationScreenDiffers)RecordSessionDetail(ScreenDiffersMessage);
                         AdvanceWithCalibration();
                         stationPreparing=false;
-                        lastMessage="Participant ready. Begin the tutorial / walkthrough."+(stationScreenDiffers?" "+ScreenDiffersMessage:"");
+                        lastMessage="Participant ready. Begin the tutorial / walkthrough."+(stationScreenDiffers?" "+ScreenDiffersMessage:"")+
+                            (stationCalibrationProblem.Length>0?" "+UnreadableProfileMessage:"");
                     }
                     if(engine?.State==SessionState.BlockReady)
                     { stationPreparing=false;lastMessage="Ready. Arm the test when the participant is ready."; }

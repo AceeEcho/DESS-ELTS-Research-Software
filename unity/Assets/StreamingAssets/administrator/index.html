@@ -92,7 +92,8 @@
       <button type="button" class="close-btn" id="closeDialog" aria-label="Close participant entry">×</button>
       <h2 id="intakeTitle">New participant</h2>
       <label class="field-label" for="participantPicker">Participant ID</label>
-      <select id="participantPicker" required aria-describedby="calibrationStatus"><option value="">Choose a participant ID</option></select>
+      <input id="participantPicker" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Whole number, for example 12" list="savedParticipantIds" required aria-describedby="calibrationStatus">
+      <datalist id="savedParticipantIds"></datalist>
       <p id="calibrationStatus" class="subtle calibration-status" role="status"></p>
       <details id="profileSources" hidden><summary>Calibration sources</summary><p id="sourceRevisions" class="subtle"></p></details>
       <details id="assignmentCheck">

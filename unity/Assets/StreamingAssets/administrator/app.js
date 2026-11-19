@@ -274,7 +274,7 @@
     if (!raw) return { valid: true, message: 'Paste the ID and four condition codes from the assignment sheet.' };
     const [id, ...assignedOrder] = raw.toUpperCase().split(/[\s,;]+/);
     if (!/^[0-9]{1,6}$/.test(id) || String(Number(id)) !== participant)
-      return { valid: false, message: 'The row must start with the selected participant ID.' };
+      return { valid: false, message: 'The row must start with the participant ID entered above.' };
     if (assignedOrder.length !== 4 || new Set(assignedOrder).size !== 4 ||
         !assignedOrder.every(code => conditions.includes(code)))
       return { valid: false, message: 'Include each of the four condition codes once.' };
@@ -285,36 +285,42 @@
         : 'Assignment matches Settings.' };
   }
   let pickerSignature = '';
+  // The typed ID with leading zeros dropped, or '' unless it is 1–6 digits. A
+  // partly numeric entry such as "12x" is refused, never trimmed to a number.
+  function participantId() {
+    const typed = $('participantPicker').value.trim();
+    return /^[0-9]{1,6}$/.test(typed) ? String(Number(typed)) : '';
+  }
+  // Any whole number starts a recording. IDs saved in the Calibration Environment
+  // are offered as suggestions; a saved calibration is optional, never required.
   function updateCalibrationLookup() {
-    const picker = $('participantPicker');
     const profiles = state?.participantCalibrations || [];
     const signature = JSON.stringify(profiles);
     if (signature !== pickerSignature) {
-      const selected = picker.value;
-      picker.replaceChildren(new Option('Choose a participant ID', ''));
-      for (const profile of profiles) picker.add(new Option(String(profile.id), String(profile.id)));
-      picker.value = profiles.some(profile => String(profile.id) === selected) ? selected : '';
+      $('savedParticipantIds').replaceChildren(...profiles.map(profile => new Option(String(profile.id), String(profile.id))));
       pickerSignature = signature;
     }
-    const profile = profiles.find(entry => String(entry.id) === picker.value);
-    const available = !!profile && profile.available !== false && !state.calibrationDirectoryUnavailable;
-    $('calibrationStatus').textContent = state?.calibrationDirectoryUnavailable
-      ? 'The calibration folder could not be read. Check access and try again.'
-      : profiles.length === 0 ? 'No saved IDs. Save an ID in the calibration workspace or run PREPARE-REHEARSAL.cmd in the development package.'
-      : !profile ? 'Select the ID saved in the Calibration Environment.'
-      : !available ? 'This calibration cannot be read. Choose another ID or review the saved profile in the calibration workspace.'
+    const typed = $('participantPicker').value.trim(), id = participantId();
+    const folderUnavailable = !!state?.calibrationDirectoryUnavailable;
+    const profile = id ? profiles.find(entry => String(entry.id) === id) : undefined;
+    const available = !!profile && profile.available !== false && !folderUnavailable;
+    $('calibrationStatus').textContent = !typed ? 'Type the participant ID: a whole number from 0 to 999999.'
+      : !id ? 'Use digits only: a whole number from 0 to 999999.'
+      : folderUnavailable ? 'The saved calibration folder could not be read. The station settings will be used.'
+      : !profile ? 'No saved calibration is needed. The station settings will be used.'
+      : !available ? 'The saved calibration for this ID cannot be read. The station settings will be used instead.'
       : profile.screenMatches === false ? 'This ID was saved with different screen settings. The station screen will be used.'
-      : 'Calibration ready.';
-    $('calibrationStatus').classList.toggle('is-missing', !!state?.calibrationDirectoryUnavailable || (!!profile && !available));
+      : 'Saved calibration found for this ID.';
+    $('calibrationStatus').classList.toggle('is-missing', !!typed && (!id || folderUnavailable || (!!profile && !available)));
     $('profileSources').hidden = !available || !profile.revision;
     if (!$('profileSources').hidden) {
       const room = (state.roomRevision || 'Unavailable').replace(/^synthetic-room-([0-9a-f]{12})[0-9a-f]+$/, 'Station room $1');
       $('sourceRevisions').textContent = `participant-${profile.id}.json · revision ${profile.revision.slice(0, 12)}. Room revision · ${room}.`;
     }
-    const checked = readAssignment(picker.value);
+    const checked = readAssignment(id);
     $('assignmentStatus').textContent = checked.message;
     $('deviationField').hidden = !checked.differs;
-    $('createParticipant').disabled = submitting || !available || !checked.valid || state?.canStartParticipant !== true;
+    $('createParticipant').disabled = submitting || !id || !checked.valid || state?.canStartParticipant !== true;
   }
   function openDialog() {
     renderOrder();
@@ -379,7 +385,7 @@
   $('cancelDialog').addEventListener('click', closeDialog);
   $('assignedRow').addEventListener('input', () => { $('deviationReason').value = ''; updateCalibrationLookup(); });
   $('deviationReason').addEventListener('change', updateCalibrationLookup);
-  $('participantPicker').addEventListener('change', () => {
+  $('participantPicker').addEventListener('input', () => {
     $('deviationReason').value = '';
     $('startError').hidden = true;
     updateCalibrationLookup();
@@ -388,7 +394,7 @@
     event.preventDefault();
     updateCalibrationLookup();
     if ($('createParticipant').disabled) return;
-    const participant = $('participantPicker').value;
+    const participant = participantId();
     submitting = true;
     $('createParticipant').disabled = true;
     try {

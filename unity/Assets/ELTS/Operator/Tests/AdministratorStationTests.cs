@@ -153,9 +153,10 @@ namespace Elts.Operator.Tests
                 Assert.Throws<ArgumentOutOfRangeException>(()=>station.ApplyCommand(new JObject{["action"]="setActiveTargetCount",["count"]=31}));
                 station.ApplyCommand(new JObject{["action"]="setActiveTargetCount",["count"]=botLimit});
                 Assert.That((int)JObject.Parse(station.StateJson())["activeTargetCount"],Is.EqualTo(botLimit));
-                // Participant IDs are numeric and require a saved calibration; nothing starts otherwise.
+                // Participant IDs are numeric; nothing starts otherwise. A partly numeric ID is never trimmed to a number.
                 Assert.Throws<ArgumentException>(()=>station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="station-test",["conditionOrder"]=order}));
-                Assert.Throws<FileNotFoundException>(()=>station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="4199",["conditionOrder"]=order}));
+                Assert.Throws<ArgumentException>(()=>station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="12x",["conditionOrder"]=order}));
+                Assert.Throws<ArgumentException>(()=>station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]="",["conditionOrder"]=order}));
                 Assert.That(session.Engine,Is.Null);
                 ParticipantCalibrationFixture.Save(session,4102,"Synthetic Test Alias",eye:new[]{0.01,-0.02,-0.09});
                 var saved=ParticipantCalibration.Load(session.CalibrationProfileDirectory,4102);
@@ -261,6 +262,43 @@ namespace Elts.Operator.Tests
                 var state=JObject.Parse(station.StateJson());Assert.That(state["blocks"].Count(),Is.EqualTo(4));
                 Assert.That(state["blocks"].All(row=>(string)row["status"]=="Completed"),Is.True);
                 File.WriteAllText(Path.GetFullPath(Path.Combine(Application.dataPath,"../../diagnostics/station-pipeline-run.txt")),run);
+            }
+            finally{UnityEngine.Object.DestroyImmediate(host);}
+        }
+
+        [UnityTest]
+        public IEnumerator ParticipantStartsWithoutAUsableSavedCalibration()
+        {
+            var host=new GameObject("Optional profile intake fixture");
+            var view=host.AddComponent<DevelopmentView>();var session=host.AddComponent<DevelopmentSessionPanel>();
+            var clock=new ManualSharedClock(DateTimeOffset.UtcNow);
+            typeof(DevelopmentSessionPanel).GetField("clock",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(session,clock);
+            var station=host.AddComponent<DevelopmentTestStation>();station.OpenAdministratorAutomatically=false;station.Controls=new Input();
+            try
+            {
+                for(int i=0;i<5;i++)yield return null;
+                string stagedCalibration=view.Configuration.Rig.CalibrationId;
+                var stagedEye=view.Configuration.Rig.HeadEyeOffsetM;
+                Directory.CreateDirectory(session.CalibrationProfileDirectory);
+                // 4198 has nothing saved; 4197 has a file that is not a calibration.
+                File.Delete(Path.Combine(session.CalibrationProfileDirectory,ParticipantCalibration.FileNameFor(4198)));
+                File.WriteAllText(Path.Combine(session.CalibrationProfileDirectory,ParticipantCalibration.FileNameFor(4197)),"{ not a calibration");
+                foreach(var (id,note) in new[]{("4198","no saved profile for this ID"),("4197","could not be read")})
+                {
+                    float limit=Time.realtimeSinceStartup+30;
+                    while(!session.StationCanStartParticipant && Time.realtimeSinceStartup<limit)yield return null;
+                    station.ApplyCommand(new JObject{["action"]="startParticipant",["participant"]=id});
+                    Assert.That(session.StationParticipant,Is.EqualTo(id));
+                    Assert.That(view.Configuration.Rig.CalibrationId,Is.EqualTo(stagedCalibration),"Station settings apply without a usable profile");
+                    Assert.That(view.Configuration.Rig.HeadEyeOffsetM,Is.EqualTo(stagedEye));
+                    while(session.Engine?.State!=SessionState.Calibration && Time.realtimeSinceStartup<limit)
+                    {clock.Advance(TimeSpan.FromSeconds(.1));yield return null;}
+                    Assert.That(session.Engine?.State,Is.EqualTo(SessionState.Calibration),session.StationMessage);
+                    string run=session.StationRecordingPath;
+                    session.StationAbort();yield return null;
+                    yield return WaitForSave(session);
+                    Assert.That(File.ReadAllText(Path.Combine(run,"events.ndjson")),Does.Contain(note),"The recording says which calibration applied");
+                }
             }
             finally{UnityEngine.Object.DestroyImmediate(host);}
         }

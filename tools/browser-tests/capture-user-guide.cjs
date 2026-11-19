@@ -107,8 +107,8 @@ const server = http.createServer(async (req, res) => {
     await shot('03-timing', '.timing-settings');
     await page.locator('#closeSettings').click();
     await page.locator('#startParticipant').click();
-    // The illustrated recording starts with a saved calibration ID.
-    await page.locator('#participantPicker').selectOption('1');
+    // The illustrated recording starts with a typed participant ID.
+    await page.locator('#participantPicker').fill('1');
     await shot('04-participant', '#startForm');
     await page.locator('#cancelDialog').click();
     Object.assign(current, { state: 'BlockReady', participant: '1', runId: '1-example',

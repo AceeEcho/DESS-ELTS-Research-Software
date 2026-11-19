@@ -316,9 +316,10 @@ it is not a scored shot or a simulated physical projectile.
   Select another ID to save. Profiles are ignored by Git.
 - When an operator starts that participant ID in the ELTS dashboard, ELTS reads
   this file and applies the participant's tracker-local
-  eye, muzzle and bore settings. No ELTS restart is needed after saving. ELTS
-  will not start an ID that has no saved calibration. The recording notes the
-  file name, SHA-256 and the settings used for that visit.
+  eye, muzzle and bore settings. No ELTS restart is needed after saving. A saved
+  calibration is optional: ELTS starts any numeric ID, and uses the station
+  settings when none is saved or the file cannot be read. The recording notes the
+  file name and SHA-256 when one applied, and the settings used for that visit.
 - The station stores each browser's unsaved draft under `profiles/`. The browser
   keeps its opaque draft ID. Refresh restores the draft and reconnects live input;
   choose Manual preview explicitly for hardware-free use.

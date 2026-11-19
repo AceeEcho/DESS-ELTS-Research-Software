@@ -14,11 +14,14 @@ See the [Texas Tech visual identity guide](https://www.ttu.edu/brand/visual-iden
 The `ELTSDesktop` player opens a browser administrator dashboard and a separate
 participant game window. A fresh station opens the dashboard without forcing
 participant entry. First use the gear icon to arrange tests and configure timing;
-then choose **New participant** and select the participant ID from the numeric picker.
-The inventory refreshes in the background and revalidates changed files. An unreadable
-calibration shows a recovery action. A screen mismatch is visible before recording.
-Intake revalidates the selected file and applies its participant settings. The run
-retains its pseudonymous ID, visit, calibration source digest and applied settings.
+then choose **New participant** and type the participant ID (digits only, 0–999999;
+a partly numeric entry is refused, never trimmed). Any ID starts a recording. A
+calibration saved under that ID is optional: the inventory of saved IDs refreshes in
+the background, revalidates changed files and is offered as suggestions. An unreadable
+calibration or a screen mismatch is shown before recording. Intake reloads a saved
+file and applies its participant settings; with none saved, or an unreadable one, the
+staged station settings apply and a session note says so. The run
+retains its pseudonymous ID, visit, calibration source digest (when one applied) and applied settings.
 Reloading the dashboard during a session does not create another recording.
 
 The gear icon opens settings for condition order, windowed/fullscreen mode, preview

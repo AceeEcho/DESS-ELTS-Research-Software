@@ -190,7 +190,7 @@ namespace Elts.Operator
             // again, and the old visit would still be eligible for a repeat.
             recording?.Dispose(); recording = null; engine = null; scenario = null;
             stationParticipant = stationVisitId = runId = "";
-            stationStartedAt = 0; assignedOrder = null; orderDeviation = ""; stationCalibration = null; stationScreenDiffers = false;
+            stationStartedAt = 0; assignedOrder = null; orderDeviation = ""; stationCalibration = null; stationScreenDiffers = false; stationCalibrationProblem = "";
             stationCheckpoints.Clear(); stationCheckpointId = "";
             stationAutomaticallyArmedBlock = null; stationSaveStatus = "No recording yet.";
             setupPending = closing = TestArmed = false;

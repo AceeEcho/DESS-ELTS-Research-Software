@@ -143,7 +143,7 @@ To reuse a setup, type a **Preset name** under **Saved setups** → **Save setup
 
 ### 3 · Create the participant recording
 
-Click **New participant**, choose a saved **Participant ID**, then click **Create recording**. In the Windows package, use **ADD-REHEARSAL-ID.cmd** to create another fictional ID. From source, use **START-CALIBRATION.cmd** to save the calibration under a numeric ID. The same ID groups that participant’s visits.
+Click **New participant**, type the **Participant ID** (any whole number from 0 to 999999), then click **Create recording**. Nothing has to be saved under the ID first; a calibration saved for it in the calibration workspace is applied when present. The same ID groups that participant’s visits. The 2026-11-18 Windows package still lists saved IDs only; there, use **ADD-REHEARSAL-ID.cmd** to create another fictional ID.
 
 ![Participant entry with the numeric ID picker and Create recording button.](docs/operator/images/user-guide/texas-tech/04-participant.png)
 

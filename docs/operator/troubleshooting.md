@@ -281,8 +281,8 @@ Workspace layout for the embedded Unity dashboard is `operator-workspace-v1.json
 | Message | Meaning |
 | --- | --- |
 | `Finish the current participant first.` | A session is still open. |
-| No saved IDs | Save a numbered participant in the Calibration Environment. |
-| This calibration cannot be read | Inspect or replace the selected calibration and reopen intake. |
+| `Enter the participant ID as a whole number from 0 to 999999.` | The ID had letters, spaces or more than six digits. A saved calibration is not required. |
+| The saved calibration for this ID cannot be read | A notice at intake, not a rejection. The session starts on the station settings; inspect or replace the saved file if it was meant to apply. |
 | `The participant changed. Review the current session and try again.` | Command `runId` does not match the open station, and the action is not a data action. |
 | `Order must be a permutation of the four conditions.` | `SessionPlan` requires each of `WE_MT`, `NE_MT`, `WE_FT`, and `NE_FT` once. |
 | `At least 2 GB free disk space is required.` | Free space on the drive of the resolved data root is under 2 GiB (`MinimumDiskBytes`, and the same text in `SessionReadinessReport`). |

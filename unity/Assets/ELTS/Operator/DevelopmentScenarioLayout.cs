@@ -15,6 +15,8 @@ namespace Elts.Operator
         public const int DefaultMagazineCapacity=20;
         public const int MinimumActiveTargetCount=1, MaximumActiveTargetCount=30;
         public int magazineCapacity=DefaultMagazineCapacity;
+        // Seconds of active block time an empty magazine waits before reloading itself.
+        public float autoReloadDelaySeconds=2.5f;
         public int activeTargetCount=30, spawnPositionCount=50, pathSequenceLength=100000;
         // Scale the whole floor plan together so furniture and paths cannot drift apart.
         public float libraryLayoutScale=1, libraryMoveSpeedMps=3.2f, libraryPauseSeconds=.18f;
@@ -48,7 +50,7 @@ namespace Elts.Operator
                 pathSequenceLength<100000 || pathSequenceLength>1000000 ||
                 !Finite(libraryLayoutScale,.95f,1.15f) || !Finite(libraryMoveSpeedMps,1.5f,4.5f) ||
                 !Finite(libraryPauseSeconds,.08f,.65f) || magazineCapacity<1 || magazineCapacity>100 ||
-                !Finite(crouchSeconds,.4f,1.2f))
+                !Finite(crouchSeconds,.4f,1.2f) || !Finite(autoReloadDelaySeconds,0,30))
                 throw new ArgumentException("Development game settings are outside their safe synthetic ranges.");
         }
         private static bool Finite(float value,float min,float max)=>!float.IsNaN(value) && !float.IsInfinity(value) && value>=min && value<=max;

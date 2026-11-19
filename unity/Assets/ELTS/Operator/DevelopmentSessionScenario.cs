@@ -46,6 +46,7 @@ namespace Elts.Operator
         public IReadOnlyDictionary<string,Vector3d> Positions => positions;
         private readonly Dictionary<string,DevelopmentFixedPose> fixedPoses = new Dictionary<string,DevelopmentFixedPose>();
         public IReadOnlyDictionary<string,DevelopmentFixedPose> FixedPoses => fixedPoses;
+        private double? emptySince; // active seconds when the magazine ran empty
         public string LastShot { get; private set; } = "No shot";
         public event Action<DevelopmentTargetImpact>? TargetHit;
         public int ShotCount { get; private set; }
@@ -95,6 +96,7 @@ namespace Elts.Operator
             if(population==null || definition==null) return;
             // Missing head data cannot invent visibility or a fresh spawn.
             if(!head.HasValue) return;
+            AutoReloadWhenEmpty();
             var previousPositions=positionsBeforeRefresh;
             population.Reconcile(engine.CurrentActiveSeconds,layoutCenter,config.Rig.VirtualFloorY);
             foreach(var target in population.History)
@@ -169,7 +171,7 @@ namespace Elts.Operator
             if(!engine.TargetsActive || population==null || shots==null) return;
             if(AmmoRemaining==0)
             {
-                DryFires++;LastShot="Magazine empty — press R to reload.";
+                DryFires++;LastShot="Magazine empty — reloading automatically.";
                 if(!recording.TryRecord(new SessionEvent(eventSequence.Next(),observedAt,"WeaponDryFire",new[]{
                     LogField.String("blockId",blockId!),LogField.NumberValue("magazineRemaining",0)})))
                     throw new InvalidOperationException("Dry-fire recording failed.");
@@ -221,6 +223,7 @@ namespace Elts.Operator
             blockId=engine.CurrentBlockId;
             nextAimAt=0;
             ShotCount=0;HitCount=0;HeadHits=0;BodyHits=0;LimbHits=0;CoverHits=0;MissCount=0;
+            emptySince=null;
             TargetKills=0;DamageDealt=0;DryFires=0;Reloads=0;magazine=new ManualMagazine(MagazineCapacity);
             LastShot="Click and release to fire. Press R to reload.";
             var center=DevelopmentScenarioLayout.Center(config);
@@ -264,7 +267,8 @@ namespace Elts.Operator
                 throw new InvalidOperationException("Scene layout recording failed.");
             if(!recording.TryRecord(new SessionEvent(eventSequence.Next(),clock.Now,"WeaponConfigured",new[]{
                 LogField.String("blockId",blockId!),LogField.NumberValue("magazineCapacity",MagazineCapacity),
-                LogField.Boolean("automaticReload",false),LogField.String("reloadAction","desktop-controls.reload")})))
+                LogField.Boolean("automaticReload",true),LogField.NumberValue("autoReloadDelaySeconds",gameSettings.autoReloadDelaySeconds),
+                LogField.String("reloadAction","desktop-controls.reload")})))
                 throw new InvalidOperationException("Weapon configuration recording failed.");
             recordedStates.Clear();recordedMotion.Clear();
         }
@@ -298,6 +302,16 @@ namespace Elts.Operator
             }
             if(!recording.TryRecord(new SessionEvent(eventSequence.Next(),clock.Now,"DevelopmentTargetAssigned",fields)))
                 throw new InvalidOperationException("Target route assignment recording failed.");
+        }
+
+        /// <summary>Reload an empty magazine after the configured delay. Uses active
+        /// block seconds, so pauses do not count toward the delay.</summary>
+        private void AutoReloadWhenEmpty()
+        {
+            if(AmmoRemaining>0){emptySince=null;return;}
+            double active=engine.CurrentActiveSeconds;
+            emptySince??=active;
+            if(active-emptySince.Value>=gameSettings.autoReloadDelaySeconds){emptySince=null;Reload();}
         }
 
         public bool Reload()

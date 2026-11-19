@@ -12,6 +12,7 @@ $script:open = $false
 $script:failSetup = $false
 $script:failBuild = $false
 $script:fingerprint = 'source-one'
+$script:expectedTrackerPort = $null
 $script:statuses = New-Object 'System.Collections.Generic.List[string]'
 function Set-EltsStartupStatus {
     param($Title, $Detail, $Result)
@@ -33,6 +34,12 @@ function Start-EltsVisibleApp {
         Assert ($fullscreenIndex -ge 0 -and $Arguments[$fullscreenIndex + 1] -eq '0') 'Player must start windowed before scene initialization'
         $logIndex = [Array]::IndexOf($Arguments, '-logFile')
         Assert ($logIndex -ge 0 -and $Arguments[$logIndex + 1] -like '*diagnostics*player-start-*.log') 'Each player needs an explicit startup log'
+        $trackerIndex = [Array]::IndexOf($Arguments, '-eltsTrackerSimulatorCom')
+        if ($script:expectedTrackerPort) {
+            Assert ($trackerIndex -ge 0 -and $Arguments[$trackerIndex + 1] -ceq $script:expectedTrackerPort) 'Explicit simulator port lost at launch'
+        } else {
+            Assert ($trackerIndex -lt 0) 'Ordinary startup must leave USB disabled'
+        }
         $script:calls.Add('dashboard')
         $process = New-Object PSObject
         $process | Add-Member ScriptMethod Dispose {}
@@ -73,6 +80,14 @@ try {
     Invoke-EltsDevelopmentStart
     Assert (($calls -join ',') -eq 'verify,dashboard') 'Repeat start must reuse the build without opening the Editor'
     Assert (($statuses -join ',') -eq 'Checking this computer,Checking application files,Verifying the saved app,Opening ELTS,Initializing the participant view') 'Cached launch must not claim to install or build'
+    $calls.Clear(); $script:expectedTrackerPort = 'COM4'
+    Invoke-EltsDevelopmentStart -TrackerSimulatorCom com4
+    Assert (($calls -join ',') -eq 'verify,dashboard') 'The simulator choice must reuse the same cached player'
+    $script:expectedTrackerPort = $null
+    $calls.Clear()
+    $blocked = $false
+    try { Invoke-EltsDevelopmentStart -TrackerSimulatorCom auto } catch { $blocked = $_.Exception.Message -match 'explicit Windows COM' }
+    Assert ($blocked -and $calls.Count -eq 0) 'An invalid simulator port must fail before startup'
     $calls.Clear(); $script:open = $true
     Invoke-EltsDevelopmentStart
     Assert (($calls -join ',') -eq 'verify,dashboard') 'Already-open editor duplicated'
@@ -112,7 +127,7 @@ try {
             Assert ((Get-EltsStartupFingerprint) -eq $changed) 'Local setup cache must not invalidate the build'
         } finally { $script:EltsRepositoryRoot = $fixture; $env:ELTS_STATION_HOME = $previousStation }
     }
-    Write-Host 'PASS: 7 startup scenarios without Git, including paths with spaces and failure propagation.'
+    Write-Host 'PASS: startup scenarios without Git, including optional simulator COM selection.'
 } finally {
     Set-Location $originalLocation
     # The only recursive deletion is the exact temporary fixture created above.

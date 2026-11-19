@@ -518,7 +518,7 @@ namespace Elts.Operator
                 damageDealt=session.StationDamageDealt,reloads=session.StationReloads,dryFires=session.StationDryFires,
                 ammo=session.StationAmmo,magazineCapacity=session.StationMagazineCapacity,
                 tracking=new{head=Pose(view.RawHead),weapon=Pose(view.RawWeapon)},
-                liveTracking=session.LiveTrackingState,
+                liveTracking=session.LiveTrackingState,trackerSimulator=session.TrackerSimulatorDisplay,
                 camera=new{yaw=orbitYaw,pitch=orbitPitch,distance=orbitDistance},viewVersion=imageVersion,
                 captions=tutorialView.ShowCaptions,fullscreen=Screen.fullScreen,previewFps=previewFramesPerSecond,
                 synthetic=true,canNext=!session.IsBusy && (engine?.State==SessionState.BlockEnded || (engine?.State==SessionState.Break && engine.RemainingSeconds<=0)),

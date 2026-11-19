@@ -1,7 +1,6 @@
-#if UNITY_EDITOR_WIN
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
 #nullable enable
 using System;
-using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -10,10 +9,10 @@ using System.Text.RegularExpressions;
 using Elts.EltsLink;
 using Microsoft.Win32.SafeHandles;
 
-namespace Elts.Operator.Tests
+namespace Elts.Operator
 {
-    /// <summary>USB CDC-ACM transport compiled into the Unity test assembly only.</summary>
-    internal sealed class WindowsTrackerBenchTransport : ITrackerByteTransport
+    /// <summary>USB CDC-ACM transport for an explicitly selected Jetson simulator.</summary>
+    internal sealed class WindowsTrackerSimulatorTransport : ITrackerByteTransport
     {
         private const uint PresentDeviceInterfaces = 0x12;
         private const int NoMoreItems = 259;
@@ -24,17 +23,32 @@ namespace Elts.Operator.Tests
             Id = 4
         };
         private readonly string selectedPort;
-        private readonly TrackerProtocol monitor = new TrackerProtocol();
+        private readonly Action<byte[], int>? observeRead;
         private readonly byte[] writeBuffer = new byte[513]; // Maximum JSON frame plus LF.
         private SafeFileHandle? handle;
         private string? boundInstance;
-        public readonly ConcurrentQueue<string> Acknowledgments = new ConcurrentQueue<string>();
-
-        public WindowsTrackerBenchTransport(string selectedPort)
+        public WindowsTrackerSimulatorTransport(string selectedPort, Action<byte[], int>? observeRead = null)
         {
-            if (!Regex.IsMatch(selectedPort, @"\ACOM[1-9][0-9]{0,4}\z"))
-                throw new ArgumentException("Select an explicit Windows COM port (for example COM4).", nameof(selectedPort));
-            this.selectedPort = selectedPort;
+            this.selectedPort = NormalizePort(selectedPort);
+            this.observeRead = observeRead;
+        }
+
+        internal static string? ReadSelectedPort(string[] arguments)
+        {
+            const string option = "-eltsTrackerSimulatorCom";
+            int index = Array.IndexOf(arguments, option);
+            if (index < 0) return null;
+            if (index + 1 >= arguments.Length || Array.LastIndexOf(arguments, option) != index)
+                throw new ArgumentException("Supply exactly one COM port with " + option + ".");
+            return NormalizePort(arguments[index + 1]);
+        }
+
+        private static string NormalizePort(string port)
+        {
+            string normalized = port.ToUpperInvariant();
+            if (!Regex.IsMatch(normalized, @"\ACOM[1-9][0-9]{0,4}\z"))
+                throw new ArgumentException("Select an explicit Windows COM port (for example COM4).");
+            return normalized;
         }
 
         internal static bool IsSimulatorInstance(string instance) =>
@@ -72,7 +86,6 @@ namespace Elts.Operator.Tests
                 Check(SetCommState(opened, ref settings), "Set 115200 8N1");
                 Check(SetCommTimeouts(opened, ref timeouts), "Set serial I/O timeouts");
                 Check(PurgeComm(opened, 0x0c), "Clear old serial buffers");
-                monitor.Reset();
                 handle = opened;
                 boundInstance = instance;
                 return true;
@@ -137,11 +150,7 @@ namespace Elts.Operator.Tests
         public int Read(byte[] buffer)
         {
             Check(ReadFile(Opened(), buffer, buffer.Length, out int count, IntPtr.Zero), "Read simulator");
-            monitor.Read(buffer, count, reply =>
-            {
-                if (reply.Command != null && Acknowledgments.Count < 64)
-                    Acknowledgments.Enqueue(reply.Command);
-            });
+            if (count > 0) observeRead?.Invoke(buffer, count);
             return count;
         }
 
@@ -157,7 +166,6 @@ namespace Elts.Operator.Tests
         {
             handle?.Dispose();
             handle = null;
-            monitor.Reset();
         }
 
         private SafeFileHandle Opened() => handle ?? throw new IOException("Simulator port is closed.");

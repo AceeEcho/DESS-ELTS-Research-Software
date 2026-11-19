@@ -48,6 +48,8 @@ namespace Elts.Operator
         private MockEltsLink? mockLink;
         private TrackerSender? trackerSimulation;
         private Task? trackerWorker;
+        private string? trackerSimulatorPort;
+        private string? trackerSimulatorLaunchError;
         private DevelopmentSessionScenario? scenario;
         private Task? operation;
         private string lastMessage = "", runId = "";
@@ -101,6 +103,7 @@ namespace Elts.Operator
             InitializeDashboard();
             InitializeDesktop();
             InitializeViveTrigger();
+            ConfigureTrackerSimulator();
             SetVisible(true);
             // The browser station reads engine state directly; its hidden workbench
             // must not rebuild labels and list presentation on every game frame.
@@ -423,7 +426,27 @@ namespace Elts.Operator
             catch(Exception exception) { Debug.LogError("ELTS_TUTORIAL_STOP_FAIL "+exception.Message); }
         }
 
-        // The test fixture supplies the only transport. The player has no port discovery or activation setting.
+        private void ConfigureTrackerSimulator()
+        {
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+            // Tests inject their own peer. Only an explicit launch of the development player can open USB.
+            if (Application.isEditor || !Debug.isDebugBuild) return;
+            try
+            {
+                var port = WindowsTrackerSimulatorTransport.ReadSelectedPort(Environment.GetCommandLineArgs());
+                if (port == null) return;
+                UseTrackerSimulator(new WindowsTrackerSimulatorTransport(port));
+                trackerSimulatorPort = port;
+                Debug.Log("ELTS USB tracker simulator requested on " + port);
+            }
+            catch (ArgumentException error)
+            {
+                trackerSimulatorLaunchError = "USB tracker simulator disabled. " + error.Message;
+                Debug.LogWarning(trackerSimulatorLaunchError);
+            }
+#endif
+        }
+
         internal void UseTrackerSimulator(ITrackerByteTransport transport)
         {
             if (trackerSimulation != null || engine != null || destroyed || quitInProgress)
@@ -438,5 +461,7 @@ namespace Elts.Operator
         }
 
         internal string? TrackerSimulationStatus => trackerSimulation?.Status;
+        internal string? TrackerSimulatorDisplay => trackerSimulatorLaunchError ??
+            (trackerSimulatorPort == null ? null : "USB tracker · " + trackerSimulatorPort + " · " + TrackerSimulationStatus);
     }
 }

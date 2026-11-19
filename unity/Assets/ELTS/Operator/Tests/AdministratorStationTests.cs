@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -51,23 +52,36 @@ namespace Elts.Operator.Tests
         [TestCase(@"USB\VID_0955&PID_70200\123", false)]
         [TestCase(@"ROOT\VID_0955&PID_7020\123", false)]
         public void WindowsTrackerBenchRequiresTheJetsonUsbIdentity(string id, bool expected)
-            => Assert.That(WindowsTrackerBenchTransport.IsSimulatorInstance(id), Is.EqualTo(expected));
+            => Assert.That(WindowsTrackerSimulatorTransport.IsSimulatorInstance(id), Is.EqualTo(expected));
+
+        [Test]
+        public void WindowsPlayerRequiresAnExplicitWellFormedSimulatorPort()
+        {
+            const string option = "-eltsTrackerSimulatorCom";
+            Assert.That(WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { "-eltsWindowed" }), Is.Null);
+            Assert.That(WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { option, "com4" }), Is.EqualTo("COM4"));
+            Assert.Throws<ArgumentException>(() => WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { option }));
+            Assert.Throws<ArgumentException>(() => WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { option, "auto" }));
+            Assert.Throws<ArgumentException>(() => WindowsTrackerSimulatorTransport.ReadSelectedPort(new[] { option, "COM4", option, "COM5" }));
+        }
 
         [UnityTest]
         public IEnumerator WindowsTrackerSimulatorBench()
         {
-            const string option = "-eltsTrackerSimulatorCom";
-            var arguments = Environment.GetCommandLineArgs();
-            int index = Array.IndexOf(arguments, option);
-            if (index < 0) Assert.Ignore("Run the isolated Jetson simulator, then explicitly select its verified COM port.");
-            Assert.That(index + 1, Is.LessThan(arguments.Length), "Supply a port after " + option);
-            Assert.That(arguments.Count(argument => argument == option), Is.EqualTo(1));
+            var selection = WindowsTrackerSimulatorTransport.ReadSelectedPort(Environment.GetCommandLineArgs());
+            if (selection == null) Assert.Ignore("Run the isolated Jetson simulator, then explicitly select its verified COM port.");
             Assert.That(Application.isBatchMode, Is.True, "Use batch mode so ELTS lab inputs remain detached.");
-            var port = new WindowsTrackerBenchTransport(arguments[index + 1]);
+            var acknowledgments = new ConcurrentQueue<string>();
+            var monitor = new TrackerProtocol();
+            var port = new WindowsTrackerSimulatorTransport(selection, (bytes, count) =>
+                monitor.Read(bytes, count, reply =>
+                {
+                    if (reply.Command != null && acknowledgments.Count < 64) acknowledgments.Enqueue(reply.Command);
+                }));
             if (!port.SimulatorPresent()) Assert.Inconclusive("The selected present Jetson CDC-ACM interface was not found.");
-            yield return ExerciseTrackerStation(port, port.Acknowledgments.Contains);
+            yield return ExerciseTrackerStation(port, acknowledgments.Contains);
             foreach (string command in new[] { "HELLO", "START", "HEARTBEAT", "STOP" })
-                Assert.That(port.Acknowledgments.Contains(command), Is.True, command + " ACK");
+                Assert.That(acknowledgments.Contains(command), Is.True, command + " ACK");
             Debug.Log("Tracker simulator ACKs: HELLO IDLE, START ACTIVE, HEARTBEAT ACTIVE, STOP IDLE.");
         }
 #endif

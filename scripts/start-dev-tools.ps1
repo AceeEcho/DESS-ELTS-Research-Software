@@ -102,6 +102,10 @@ function Wait-EltsPlayerReady {
 }
 
 function Invoke-EltsDevelopmentStart {
+    param([string]$TrackerSimulatorCom)
+    if ($TrackerSimulatorCom -and $TrackerSimulatorCom -notmatch '\ACOM[1-9][0-9]{0,4}\z') {
+        throw 'Select an explicit Windows COM port with -TrackerSimulatorCom, for example COM4.'
+    }
     Set-EltsStartupStatus 'Checking this computer' 'Checking the installed tools and saved setup report.'
     $root = $script:EltsRepositoryRoot
     Set-Location -LiteralPath $root
@@ -191,7 +195,9 @@ function Invoke-EltsDevelopmentStart {
     # Keep each attempt's Unity diagnostics, including failed scene initialization.
     $playerLog = Join-Path $root ('diagnostics/player-start-' + [Guid]::NewGuid().ToString('N') + '.log')
     Write-Host "Player log: $playerLog"
-    $process = Start-EltsVisibleApp $player @('-eltsWindowed','-screen-fullscreen','0','-screen-width','1280','-screen-height','720','-logFile',$playerLog) (Split-Path -Parent $player)
+    $playerArguments = @('-eltsWindowed','-screen-fullscreen','0','-screen-width','1280','-screen-height','720','-logFile',$playerLog)
+    if ($TrackerSimulatorCom) { $playerArguments += @('-eltsTrackerSimulatorCom', $TrackerSimulatorCom.ToUpperInvariant()) }
+    $process = Start-EltsVisibleApp $player $playerArguments (Split-Path -Parent $player)
     try {
         Set-EltsStartupStatus 'Initializing the participant view' 'Waiting for the game scene and administrator server. An initialization error will appear here; first launches may take longer.'
         Wait-EltsPlayerReady -Process $process -LogPath $playerLog

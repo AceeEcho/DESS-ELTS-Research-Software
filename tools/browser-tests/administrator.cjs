@@ -94,6 +94,13 @@ const server = http.createServer(async (req, res) => {
   try {
     await page.goto(`http://127.0.0.1:${server.address().port}/#fixture`);
     await page.waitForFunction(() => document.getElementById('connectionText').textContent === 'Connected');
+    const usbStatus = page.locator('#trackerSimulatorStatus');
+    assert.equal(await usbStatus.isVisible(), false, 'USB status is hidden on a normal launch');
+    current.trackerSimulator = 'USB tracker · COM4 · Simulator disconnected';
+    await usbStatus.waitFor({ state: 'visible' });
+    assert.equal(await usbStatus.textContent(), current.trackerSimulator);
+    delete current.trackerSimulator;
+    await usbStatus.waitFor({ state: 'hidden' });
     const textContract = JSON.parse(fs.readFileSync(path.join(root, 'tools/runtime-tests/fixtures/recording-text.json'), 'utf8'));
     const limit = await page.locator('#exceptionReason').evaluate(el => el.maxLength);
     assert.equal(limit, textContract.maxUtf16Units);

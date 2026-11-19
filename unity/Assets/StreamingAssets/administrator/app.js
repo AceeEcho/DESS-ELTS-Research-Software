@@ -78,6 +78,9 @@
   const running = /running|armed|ready|waiting/i.test(`${phase} ${state.state || ''}`);
   $('displayCheck').disabled = !state.canStartParticipant;
   renderLiveTracking(state.liveTracking);
+  const trackerSimulator = $('trackerSimulatorStatus');
+  trackerSimulator.hidden = !state.trackerSimulator;
+  trackerSimulator.textContent = state.trackerSimulator || '';
   $('captions').checked = !!state.captions;
   $('currentTask').hidden = !state.participant;
   if (state.previewFps != null && document.activeElement !== $('previewRate')) $('previewRate').value = String(state.previewFps);

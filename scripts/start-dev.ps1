@@ -1,6 +1,6 @@
 # One-click development startup. Study startup remains separately fail-closed.
 [CmdletBinding()]
-param()
+param([string]$TrackerSimulatorCom)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common.ps1')
 . (Join-Path $PSScriptRoot 'setup-tools.ps1')
@@ -22,7 +22,7 @@ try {
     # Progress is optional; console diagnostics still work if Windows UI is unavailable.
     try { Start-EltsStartupWindow -LogPath (Join-Path $diagnostics 'start-console.log') }
     catch { Write-Warning ('Startup window unavailable: ' + $_.Exception.Message) }
-    Invoke-EltsDevelopmentStart
+    Invoke-EltsDevelopmentStart -TrackerSimulatorCom $TrackerSimulatorCom
     Set-EltsStartupStatus 'ELTS initialized' 'The participant view and administrator server are ready. The dashboard opens in your browser after the intro.' -Result success
 } catch {
     Set-EltsStartupStatus 'ELTS could not start' $_.Exception.Message -Result failure

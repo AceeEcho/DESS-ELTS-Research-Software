@@ -42,12 +42,10 @@ The check verifies only the synthetic adapter and mock controller. It does not
 verify Unity-Jetson communication, physical output, E-stop behavior, timing, or
 the final WE/NE study decision.
 
-## Windows USB bench with the isolated Jetson simulator
+## Windows development player with the isolated Jetson simulator
 
-The USB bench is a Unity PlayMode test. The regular player has no COM activation
-setting. The bench uses the app's normal committed scenario entry with synthetic
-inputs and a temporary test recording. Keep the tracker movement outputs
-isolated for this test.
+The USB sender is off by default. Keep the tracker movement outputs isolated
+while the player talks to the simulated receiver.
 
 On cadet, start the mock receiver and wait for
 `Ready on /dev/ttyGS0 with simulated outputs`.
@@ -57,9 +55,24 @@ cd /home/cade/ELTS_Code && python3 -B -m usb_lifecycle_mock.pty_mock --usb
 ```
 
 On Windows, confirm the present CDC-ACM port belongs to USB VID `0955` and
-PID `7020`. Use `COM4` only if that is the current assignment. From the repository
-root, run the following with the project's pinned Unity editor and an idle
-copy of the project staged for synthetic tests.
+PID `7020`. Use `COM4` only if that is the current assignment. Start ELTS from
+the repository root with:
+
+```powershell
+.\START-ELTS.cmd -TrackerSimulatorCom COM4
+```
+
+For a Windows development build with this feature, pass `-eltsTrackerSimulatorCom COM4`
+to `ELTS-Synthetic.exe`. The administrator run panel shows the selected port and
+sender status. The port can be open while the tracker is idle. The sender
+negotiates a fresh run only on a live WE entry. A lost connection cannot resume
+that segment. Omit the launch option on the next startup to leave USB disabled.
+
+### Automated bench test
+
+The separate Unity PlayMode bench follows the same scenario lifecycle with
+synthetic inputs and a temporary test recording. Use an idle copy of the
+project staged for synthetic tests.
 
 ```powershell
 $unity = 'C:\Program Files\Unity\Hub\Editor\6000.3.23f1\Editor\Unity.exe'

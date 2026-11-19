@@ -828,3 +828,43 @@ dialog .primary {
     margin: 16px 0;
 }
 #direction-dialog [hidden] { display: none; }
+
+/* Aim-at-dots zero in the screen window. Dark and plain so the dot is the only
+   bright target; the dot is drawn to scale on the configured screen. */
+#aim-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: #0d1114;
+    color: #e8eef0;
+    cursor: none;
+}
+#aim-overlay[hidden] { display: none; }
+#aim-dot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+}
+#aim-dot[hidden] { display: none; }
+#aim-dot svg { width: 100%; height: 100%; overflow: visible; }
+#aim-dot circle { fill: none; stroke-width: 6; }
+#aim-dot .aim-track { stroke: #ff5a4a; fill: rgba(255, 90, 74, 0.25); }
+#aim-dot .aim-fill {
+    stroke: #6fe3a4;
+    stroke-dasharray: 0 100;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+#aim-dot line { stroke: #ffffff; stroke-width: 2; }
+#aim-panel {
+    position: absolute;
+    left: 24px;
+    bottom: 24px;
+    max-width: min(560px, calc(100% - 48px));
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    font: 15px/1.45 system-ui, sans-serif;
+}
+#aim-step { font-weight: 700; font-size: 18px; margin-bottom: 4px; }
+#aim-status { margin-top: 6px; color: #6fe3a4; }
+#aim-overlay .aim-keys { margin-top: 8px; font-size: 12px; color: #9aa7ad; }

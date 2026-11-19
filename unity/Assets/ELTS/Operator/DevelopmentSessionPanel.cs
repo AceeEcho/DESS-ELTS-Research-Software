@@ -165,7 +165,7 @@ namespace Elts.Operator
                 // build-info.json. Editor recordings explicitly lack that identity.
                 string source=Application.isEditor?"editor-unversioned":"build-"+Application.version;
                 var provenance=new SessionProvenance(Application.version,source,
-                    config.EffectiveSha256,config.SourceRawSha256["scenario"],Hash(usingDesktopInput?DesktopTrackingSource.SourceIdentity:FixtureIdentity),true,clock.UtcStartupAnchor);
+                    config.EffectiveSha256,config.SourceRawSha256["scenario"],Hash(usingDesktopInput?(LiveTrackingActive?LiveSourceIdentity:DesktopTrackingSource.SourceIdentity):FixtureIdentity),true,clock.UtcStartupAnchor);
                 var limits=new LoggingConfiguration(config.Runtime.SampleQueueCapacity,config.Runtime.EventQueueCapacity,
                     TimeSpan.FromSeconds(config.Runtime.LogFlushSeconds));
                 recording=new SessionRecordingAdapter(dataRoot,provenance,limits);
@@ -305,7 +305,7 @@ namespace Elts.Operator
                     lastMessage=exception.Message;
                     engine.Abort("Scenario or logging failure: "+exception.Message);
                 }
-                if(view.SessionControlsVisible)view.SetSessionFrame(pair?.Head.Pose,pair?.Weapon.Pose,scenario?.Positions??visibleTargets,engine.CurrentActiveSeconds,scenario?.FixedPoses);
+                if(view.SessionControlsVisible)view.SetSessionFrame(LiveRenderHead(pair?.Head.Pose),pair?.Weapon.Pose,scenario?.Positions??visibleTargets,engine.CurrentActiveSeconds,scenario?.FixedPoses);
                 if(SeparateAdministrator)
                 {
                     try { SynchronizeTutorial();PresentTutorialInteraction(); }
@@ -358,6 +358,7 @@ namespace Elts.Operator
             if(destroyed) return;
             destroyed=true;
             viveTrigger?.Dispose();
+            liveReader?.Dispose();liveReader=null;liveHealth?.Dispose();liveHealth=null;
             tutorialNarration?.Dispose();tutorialNarration=null;
             desktop?.Dispose();
             dashboard?.Dispose();

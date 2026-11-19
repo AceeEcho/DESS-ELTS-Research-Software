@@ -50,6 +50,9 @@ namespace Elts.Operator
         private VisualElement ui=null!,prompt=null!;
         private Label title=null!,subtitle=null!,reticle=null!,ammo=null!;
         private ParticipantTutorialView tutorialView=null!;
+        private LiveCalibrationOverlay liveOverlay=null!;
+        // Live tracking draws its own aim marker; the mouse reticle is hidden while trackers drive the aim.
+        private bool liveMarkerShown;
         private RenderTexture outsideTexture=null!;
         private Texture2D capture=null!;
         private bool held,wasArmed;
@@ -127,6 +130,7 @@ namespace Elts.Operator
             displayCheckLabel.style.display=DisplayStyle.None;
             ui.Q("participantSurface").Add(displayCheckLabel);
             tutorialView=new ParticipantTutorialView(ui,session,view);
+            liveOverlay=new LiveCalibrationOverlay(ui);
             session.StationPublishPose(session.Desktop.Model.Head,session.Desktop.Model.Weapon);
             if (Array.IndexOf(Environment.GetCommandLineArgs(), "-eltsMeasureStation") >= 0)
                 performance = new StationPerformance();
@@ -188,6 +192,7 @@ namespace Elts.Operator
             if(keyboard!=null && (keyboard.f11Key.wasPressedThisFrame ||
                 (keyboard.enterKey.wasPressedThisFrame && (keyboard.leftAltKey.isPressed || keyboard.rightAltKey.isPressed))))
                 SetFullscreen(!Screen.fullScreen);
+            if(keyboard!=null)ReadLiveTrackingKeys(keyboard);
             for(int i=0;i<8 && server.TryTakeCommand(out var command);i++)
             {
                 if(!command.TryBegin())continue;
@@ -205,6 +210,7 @@ namespace Elts.Operator
             // DevelopmentView.Update renders the latest pose later in this frame.
             // Avoid rebuilding scene presentation twice per participant frame.
             UpdateParticipantPrompt();UpdateRunRows();
+            liveOverlay.Refresh(session.LiveOverlay,session.LiveBanner);
             if(Time.unscaledTime>=nextState)
             {
                 nextState=Time.unscaledTime+1f/Mathf.Max(10,previewFramesPerSecond);
@@ -303,9 +309,37 @@ namespace Elts.Operator
                     if (displayCheck==null) displayCheck=StartCoroutine(CheckDisplayAndAudio());
                     break;
                 case "previewRate": previewFramesPerSecond=Mathf.Clamp((int)Finite(command,"fps",10),1,30);break;
+                case "liveRig":case "liveZero":case "liveCheck":case "liveCapture":case "liveAccept":
+                case "liveUndo":case "liveCancel":case "liveMarker":case "liveInput":
+                    session.StationLiveAction(action);CancelClick();break;
                 default:throw new ArgumentException("Unknown administrator action.");
             }
             session.SynchronizeTutorial();
+        }
+        /// <summary>
+        /// Operator keys on the participant window. F6 station calibration, F7 aim zero,
+        /// F8 quick check, F9 aim marker, F10 trackers or mouse. During a step: Space
+        /// captures, Backspace redoes the last dot, Enter saves, Esc cancels.
+        /// </summary>
+        private void ReadLiveTrackingKeys(Keyboard keyboard)
+        {
+            string? action=null;
+            bool alt=keyboard.leftAltKey.isPressed || keyboard.rightAltKey.isPressed;
+            if(keyboard.f6Key.wasPressedThisFrame)action=session.LiveProcedureRunning?"liveCancel":"liveRig";
+            else if(keyboard.f7Key.wasPressedThisFrame)action="liveZero";
+            else if(keyboard.f8Key.wasPressedThisFrame)action="liveCheck";
+            else if(keyboard.f9Key.wasPressedThisFrame)action="liveMarker";
+            else if(keyboard.f10Key.wasPressedThisFrame)action="liveInput";
+            else if(session.LiveProcedureRunning)
+            {
+                if(keyboard.escapeKey.wasPressedThisFrame)action="liveCancel";
+                else if(keyboard.spaceKey.wasPressedThisFrame)action="liveCapture";
+                else if(keyboard.backspaceKey.wasPressedThisFrame)action="liveUndo";
+                else if(keyboard.enterKey.wasPressedThisFrame && !alt)action="liveAccept";
+            }
+            if(action==null)return;
+            try{session.StationLiveAction(action);CancelClick();}
+            catch(Exception exception){session.LiveReport(exception.Message);}
         }
         private IEnumerator CheckDisplayAndAudio()
         {
@@ -348,6 +382,22 @@ namespace Elts.Operator
             // An intro click must never become a start trigger or a scored shot.
             if(TexasTechIntro.IsShowing){CancelClick();return;}
             var input=Controls.Read(ui.panel);var bounds=ui.worldBound;
+            if(session.LiveTrackingActive || session.LiveProcedureRunning)
+            {
+                // Tracked poses replace the mouse. A mouse click never fires here; the gun trigger does.
+                CancelClick();
+                if(input.Focused && !session.LiveProcedureRunning)
+                {
+                    if(input.Reload)session.StationReload();
+                    if(input.ReturnToAdministrator)SetFullscreen(false);
+                }
+                session.PublishLivePoses();
+                liveMarkerShown=session.LiveAim.valid && session.LiveMarkerVisible && !session.LiveProcedureRunning;
+                wasArmed=session.ParticipantStartEnabled;
+                if(!Application.isEditor)UnityEngine.Cursor.visible=!input.Focused;
+                return;
+            }
+            liveMarkerShown=false;
             bool inside=input.Focused && bounds.width>0 && bounds.height>0 && bounds.Contains(input.Pointer);
             bool armed=session.ParticipantStartEnabled;
             if(!input.Focused || armed!=wasArmed || heldBlock!=session.ParticipantInputPhase)CancelClick();
@@ -381,6 +431,12 @@ namespace Elts.Operator
             prompt.EnableInClassList("participant-hidden",running || tutorialVisible);
             bool interacting=session.Tutorial.LiveScene && session.Tutorial.Stage!=TutorialStage.Targets && session.Tutorial.Stage!=TutorialStage.PracticeReady;
             reticle.EnableInClassList("participant-hidden",!running && !interacting);
+            // Live tracking: the marker shows where the sights point, including before a participant
+            // starts, so the operator can check the aim. It stays off the walkthrough's slides.
+            bool live=session.LiveTrackingActive || session.LiveProcedureRunning;
+            if(live)reticle.EnableInClassList("participant-hidden",true);
+            var aim=session.LiveAim;
+            liveOverlay.SetMarker(live && liveMarkerShown && (running || interacting || !tutorialVisible),aim.u,aim.v);
             ammo.EnableInClassList("participant-hidden",!running && !interacting);
             string? reload=(Controls as IDesktopControlHints)?.ReloadHint;
             ammo.text="AMMO  "+session.ParticipantAmmo+" / "+session.StationMagazineCapacity+"   ·   "+
@@ -389,7 +445,7 @@ namespace Elts.Operator
             if(session.TestArmed)
             {
                 title.text="Shoot to begin";
-                detail="Click and release.";
+                detail=session.LiveTrackingActive?"Squeeze the trigger.":"Click and release.";
             }
             else switch(session.Engine?.State)
             {
@@ -462,6 +518,7 @@ namespace Elts.Operator
                 damageDealt=session.StationDamageDealt,reloads=session.StationReloads,dryFires=session.StationDryFires,
                 ammo=session.StationAmmo,magazineCapacity=session.StationMagazineCapacity,
                 tracking=new{head=Pose(view.RawHead),weapon=Pose(view.RawWeapon)},
+                liveTracking=session.LiveTrackingState,
                 camera=new{yaw=orbitYaw,pitch=orbitPitch,distance=orbitDistance},viewVersion=imageVersion,
                 captions=tutorialView.ShowCaptions,fullscreen=Screen.fullScreen,previewFps=previewFramesPerSecond,
                 synthetic=true,canNext=!session.IsBusy && (engine?.State==SessionState.BlockEnded || (engine?.State==SessionState.Break && engine.RemainingSeconds<=0)),

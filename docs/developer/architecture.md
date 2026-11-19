@@ -14,10 +14,11 @@ illustrative application, not a validated hardware model.
    See [configuration staging](modules/config-staging.md).
 2. **Clock and tracking** provide a shared process monotonic timestamp and explicit
    validity with converted room-frame poses. Invalid observations remain invalid;
-   logged data is not predicted or interpolated. Poses currently come from the
-   desktop/synthetic source; the gun tracker's trigger button is read through
-   OpenVR. See [tracking](modules/tracking.md), [desktop input](modules/desktop-input.md)
-   and [VIVE gun trigger](modules/vive-trigger.md).
+   logged data is not predicted or interpolated. Poses come from the mouse
+   rehearsal or, after an on-screen calibration, from the gun and head trackers
+   through the same pose pipeline; the gun tracker's trigger button is read
+   through OpenVR. See [tracking](modules/tracking.md), [desktop input](modules/desktop-input.md),
+   [VIVE gun trigger](modules/vive-trigger.md) and [live tracking](../operator/live-tracking.md).
    Cross-device timing remains subject to D-12; account for the
    [Pupil timing integration follow-up](../operator/pupil-time-synchronization.md)
    before the P8.4 synchronization rehearsal.

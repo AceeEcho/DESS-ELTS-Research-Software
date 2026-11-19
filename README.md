@@ -88,7 +88,9 @@ At the top of [this GitHub page](https://github.com/AceeEcho/DESS-ELTS-Research-
 2. In the calibration workspace, pick that tracker under **Weapon**, check that the trigger indicator above the 3D view shows **pressed** and **released**, then open **Save calibration** and choose **Save station room**.
 3. Double-click **START-ELTS.cmd**. It uses the tracker binding from the saved station room.
 
-Aiming still uses the desktop/synthetic pose source; the mouse keeps working. Details: [trigger setup](docs/developer/modules/vive-trigger.md).
+The mouse keeps working. Details: [trigger setup](docs/developer/modules/vive-trigger.md).
+
+**Aim with the trackers (optional).** With SteamVR running and both trackers on, press **F6** on the participant window and aim at the dots it shows. ELTS then aims from the gun and head trackers instead of the mouse; each participant adds a five-dot aim step in the walkthrough. No tape measurements or printed parts are needed. Steps and keys: [live tracking](docs/operator/live-tracking.md).
 
 **Updating a source installation.** With both apps closed, copy the station data to a stable folder and set `ELTS_STATION_HOME` for both launchers. Use that folder with the new source ZIP. [Move a station or restore a copy](docs/operator/user-guide.md#move-a-station-or-restore-a-copy)
 
@@ -239,6 +241,8 @@ The badge says **Listen** until the narration ends. Shots, reloads and captures 
 | Overview | Learns about 4 scenarios, time limits and breaks | Nothing; it leads straight into the study |
 
 > [!NOTE]
+> With [live tracking](docs/operator/live-tracking.md) the calibration part is shorter: one standing head capture, then five aim dots captured by the trigger. Its narration still describes the earlier steps.
+>
 > All 39 narration clips are recorded and bundled. The wording lives in the [tutorial script](docs/participant-tutorial/script.md) (a plain [reading copy](docs/participant-tutorial/reading-script.md) is generated from it). Visual settings such as dot positions are in `ParticipantTutorialSettings.json`. Full details: [walkthrough guide](docs/developer/modules/participant-tutorial.md).
 
 ---
@@ -317,7 +321,7 @@ Full reference: [administrator dashboard](docs/developer/modules/operator-dashbo
 | Procedure briefing and automatic scenario → break → form flow | ✅ In the development build |
 | ELTS introduction and demonstration | 🟡 Simulated only; real apparatus not connected |
 | ELTS integration and synchronization | 🟡 Protocol fixture and [simulated controller](docs/developer/modules/elts-link.md#controller-jetson-boundary) only; needs the controller's wire contract |
-| Physical participant controller (mock replica input) | 🟡 The gun tracker's trigger is read in software ([trigger setup](docs/developer/modules/vive-trigger.md)). The mock rifle is an airsoft platform with a printed pogo-pin tracker cradle ([connector designs](hardware/README.md)); its rail mount is in progress. Aiming from the gun tracker's pose is not connected yet |
+| Physical participant controller (mock replica input) | 🟡 The gun tracker's trigger is read in software ([trigger setup](docs/developer/modules/vive-trigger.md)). The mock rifle is an airsoft platform with a printed pogo-pin tracker cradle ([connector designs](hardware/README.md)); its rail mount is in progress. Aiming from the gun and head trackers works in the development build after an on-screen calibration ([live tracking](docs/operator/live-tracking.md)); it has not been checked against physical measurements |
 | Heart-rate, eye-tracker and NASA-TLX data alignment | ⬜ Not started |
 | Room survey: screen size and 5 / 6 / 7 ft floor marks | ✅ Screen size recorded (Samsung QB65R-B, the default in ELTS and the calibration workspace) and floor marks placed ([survey](docs/operator/hardware-follow-up.md#current-inventory-and-starter-room-survey)) |
 

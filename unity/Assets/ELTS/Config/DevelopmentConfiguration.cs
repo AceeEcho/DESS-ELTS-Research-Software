@@ -62,6 +62,14 @@ namespace Elts.Config
         public DevelopmentConfiguration WithParticipantCalibration(ParticipantCalibration calibration)
             => new DevelopmentConfiguration(this, (calibration ?? throw new ArgumentNullException(nameof(calibration))).ApplyTo(Rig));
 
+        /// <summary>
+        /// The same configuration with the eye placed in head-tracker axes (metres),
+        /// as found by live tracking. The weapon offsets are unchanged.
+        /// </summary>
+        public DevelopmentConfiguration WithHeadEyeOffset(Vector3d eye)
+            => new DevelopmentConfiguration(this, Rig.WithParticipantOffsets(eye, Rig.WeaponMuzzleOffsetM,
+                Rig.WeaponZero.Rotate(Rig.WeaponBoreLocalDirection).Normalized(), Rig.CalibrationId));
+
         public void RequireStudyReadiness()
         {
             throw new InvalidOperationException("Study mode is unavailable in this synthetic development build.");

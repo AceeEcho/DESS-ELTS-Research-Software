@@ -125,6 +125,9 @@
       <h3>Saved setups</h3><label class="field-label">Preset name<input id="presetName" maxlength="60" placeholder="e.g. Morning rehearsal"></label><div class="secondary-actions wrap"><button id="savePreset" class="ghost-btn">Save setup</button><select id="presetSelect" aria-label="Saved setups"></select><button id="loadPreset" class="ghost-btn">Load</button><button id="deletePreset" class="ghost-btn">Delete</button></div>
       <h3>Participant window</h3>
       <div class="secondary-actions"><button id="displayCheck" class="ghost-btn">Check display &amp; audio</button></div>
+      <h3>Live tracking</h3>
+      <p id="liveStatus" class="subtle" role="status">Live tracking status appears here.</p>
+      <div class="secondary-actions wrap"><button id="liveRig" class="ghost-btn">Calibrate station</button><button id="liveCheck" class="ghost-btn">Quick aim check</button><button id="liveMarker" class="ghost-btn">Aim marker on/off</button><button id="liveInput" class="ghost-btn">Trackers / mouse</button></div>
       <label class="check-label"><input id="captions" type="checkbox"> Show narration captions</label><div class="secondary-actions"><button id="windowed" class="ghost-btn">Windowed</button><button id="fullscreen" class="ghost-btn">Fullscreen</button></div>
       <label class="field-label">Preview refresh rate<select id="previewRate"><option value="5">5 fps · lower load</option><option value="10" selected>10 fps · balanced</option><option value="20">20 fps · smoother preview</option><option value="30">30 fps · highest load</option></select></label>
       <label class="check-label"><input id="reduceMotion" type="checkbox"> Reduce interface motion</label>

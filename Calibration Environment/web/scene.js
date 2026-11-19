@@ -46,18 +46,27 @@ function place(object, pose) {
     object.position.copy(pose.p);
     object.quaternion.copy(pose.q);
 }
+// VIVE Tracker drawn in SteamVR's raw tracker axes. Checked against a live
+// tracker (2026-11-16): with the puck face toward the muzzle and the barrel
+// pointed straight up, the tracker's −Z pointed up. So the puck lies in the
+// local XY plane, its domed face is toward −Z and the 1/4" screw mount toward +Z.
+// The origin's exact depth inside the puck is approximate in this drawing.
+const PUCK_THICKNESS_M = 0.035;
 function trackerModel() {
     const group = new T.Group();
-    box(group, [0.09, 0.035, 0.09], [0, 0, 0], COLORS.tracker);
+    const middle = -PUCK_THICKNESS_M / 2;
+    box(group, [0.09, 0.09, PUCK_THICKNESS_M], [0, 0, middle], COLORS.tracker);
+    // Screw-mount stub on the base side.
+    box(group, [0.016, 0.016, 0.012], [0, 0, 0.006], 0x3f4548);
     for (let i = 0; i < 3; i++) {
         const angle = (i * Math.PI * 2) / 3;
         const lug = box(
             group,
-            [0.035, 0.025, 0.045],
-            [Math.sin(angle) * 0.055, 0, Math.cos(angle) * 0.055],
+            [0.035, 0.045, 0.025],
+            [Math.sin(angle) * 0.055, Math.cos(angle) * 0.055, middle],
             0x3f4548,
         );
-        lug.rotation.y = angle;
+        lug.rotation.z = -angle;
     }
     group.add(new T.AxesHelper(0.19));
     return group;

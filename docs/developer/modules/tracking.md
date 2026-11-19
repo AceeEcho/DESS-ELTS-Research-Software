@@ -6,6 +6,34 @@
 
 `TrackingCoordinateConverter.Convert` is the only native OpenVR-to-Unity handedness conversion. It reflects native Z once and converts the orientation consistently, producing meters in the Unity room frame: +X right, +Y up, +Z forward. Downstream code receives only `RigidPose` and must not use native coordinates or apply another conversion. Tracker-local offsets and corrections remain Unity-convention values after this boundary. The contract is pure C# 9 and has no UnityEngine, OpenVR, device, or synthetic-motion dependency.
 
+## Live trackers
+
+`LiveTrackerReader` (Operator assembly) reads the gun and head trackers from
+SteamVR once per frame on the main thread. It asks for the **raw, uncalibrated**
+universe with zero added prediction, so a SteamVR room setup or "reset standing
+position" cannot move the frame under a saved calibration. A tracker counts as
+tracked only when SteamVR reports it connected, valid and `Running_OK`.
+
+`DevelopmentLiveTracking` turns those poses into the head pose and sight-line
+weapon pose described in [calibration](calibration.md#sight-line-calibration-for-live-tracking)
+and publishes them through `DesktopTrackingSource`, the same path the mouse uses.
+An untracked head or gun is published as unavailable. For the picture only, the
+last tracked head is kept for up to `renderHoldSeconds` (0.5 s by default) so a
+brief dropout does not blank the screen; the recorded sample for that moment
+stays unavailable and no shot is scored on it.
+
+`SteamVrHealthWatch` follows SteamVR's `vrserver.txt`, read-only. SteamVR has no
+API for the moments it re-sets its frame, resets a tracker, or sees the base
+station bumped; the log is the only place they appear. Each is written to the
+recording as a `LiveTrackingHealth` event and prompts the operator for a quick
+aim check. The log's wording is undocumented, so this advises and never gates
+data.
+
+Poses are sampled at the display frame rate, not at the 250 Hz recording rate,
+and the trigger is read once per frame. Neither is a hardware timing
+measurement. Nothing in this section has been checked against physical
+measurements.
+
 Run the deterministic checks with the installed .NET SDK:
 
 ```text

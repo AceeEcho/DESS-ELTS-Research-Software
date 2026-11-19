@@ -12,15 +12,19 @@ namespace Elts.Operator
         private readonly List<Material> owned;
         public readonly Material Oak, DarkOak, Metal, Paper, Fabric;
         private readonly Material[] bindings;
+        private readonly Dictionary<string, Mesh> models = new Dictionary<string, Mesh>();
+        private Material? bookBindings;
+
+        private Material BookBindings => bookBindings ??= PaintedSurface("library-palette", .16f);
 
         public LibraryInterior(List<Material> ownedMaterials)
         {
             owned=ownedMaterials;
             Oak=Surface(new Color(.83f,.76f,.65f),.3f,"oak_veneer_03");
             DarkOak=Surface(new Color(.40f,.35f,.29f),.22f,"oak_veneer_03");
-            Metal=Surface(new Color(.12f,.14f,.14f),.38f);
+            Metal=Surface(new Color(.27f,.29f,.29f),.38f);
             Paper=Surface(new Color(.76f,.72f,.62f),.08f);
-            Fabric=Surface(new Color(.25f,.32f,.30f),.05f,"dirty_carpet");
+            Fabric=Surface(new Color(.53f,.66f,.62f),.22f,"poly_wool_herringbone",new Vector2(.55f,.55f));
             var colors=new[]{new Color(.25f,.32f,.33f),new Color(.40f,.21f,.18f),new Color(.57f,.49f,.35f),
                 new Color(.24f,.28f,.36f),new Color(.42f,.44f,.38f),new Color(.63f,.59f,.49f),new Color(.28f,.20f,.20f)};
             bindings=new Material[colors.Length];
@@ -50,6 +54,31 @@ namespace Elts.Operator
             host.transform.localRotation=Quaternion.Euler(0,yaw,0);return host.transform;
         }
 
+        public Material PaintedSurface(string texture, float smoothness)
+        {
+            var material = Surface(Color.white, smoothness);
+            material.SetTexture("_BaseMap", Resources.Load<Texture2D>("ELTS/Library/" + texture));
+            return material;
+        }
+
+        // Reuse imported meshes directly. This avoids spawning colliders or a model hierarchy
+        // for every shelf row, chair cushion and tree in the library.
+        public GameObject Model(Transform parent, string name, string asset, Vector3 at, Vector3 scale, Material material)
+        {
+            if (!models.TryGetValue(asset, out var mesh))
+            {
+                var model = Resources.Load<GameObject>("ELTS/Library/" + asset);
+                if (model == null) throw new InvalidOperationException("Missing library model: " + asset);
+                mesh = model.GetComponentInChildren<MeshFilter>().sharedMesh;
+                models.Add(asset, mesh);
+            }
+            var part = Group(parent, name, at);
+            part.localScale = scale;
+            part.gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
+            part.gameObject.AddComponent<MeshRenderer>().sharedMaterial = material;
+            return part.gameObject;
+        }
+
         public static GameObject Box(Transform parent,string name,Vector3 position,Vector3 size,Material material,bool shadows=true)
         {
             var part=GameObject.CreatePrimitive(PrimitiveType.Cube);part.name=name;part.layer=DevelopmentView.StimulusLayer;
@@ -60,20 +89,29 @@ namespace Elts.Operator
             return part;
         }
 
-        public void Bookcase(Transform parent,float width,float height,float depth,int seed)
+        public void Bookcase(Transform parent,float width,float height,float depth,int seed,bool foreground=true)
         {
             const float board=.035f;
             Box(parent,"Recessed oak back",new Vector3(0,height/2,depth/2-.025f),new Vector3(width,height,.05f),DarkOak);
             foreach(float side in new[]{-1f,1f})
-                Box(parent,"Oak upright",new Vector3(side*(width-board)/2,height/2,0),new Vector3(board,height,depth),Oak);
-            Box(parent,"Recessed plinth",new Vector3(0,.05f,.02f),new Vector3(width-.06f,.1f,depth-.08f),DarkOak);
+                Box(parent,"Oak upright",new Vector3(side*(width-board)/2,(height+.09f)/2,0),new Vector3(board,height-.09f,depth),Oak);
+            Box(parent,"Recessed plinth",new Vector3(0,.05f,.04f),new Vector3(width-.12f,.1f,depth-.16f),DarkOak);
             int rows=Mathf.Max(2,Mathf.RoundToInt(height/.36f));
             for(int row=0;row<=rows;row++)
             {
                 float y=.1f+row*(height-.12f)/rows;
-                Box(parent,"Shelf edge",new Vector3(0,y,0),new Vector3(width,.025f,depth),Oak);
+                if (foreground && (row == rows || row == 0))
+                    Model(parent, "Bullnose shelf edge", "CounterLip", new Vector3(0,y,0),
+                        new Vector3(width/3.4f,.04f/.065f,depth/1.15f), Oak);
+                else Box(parent,"Shelf edge",new Vector3(0,y,0),new Vector3(width,.025f,depth),Oak);
                 if(row==rows)continue;
                 float gap=(height-.12f)/rows;
+                if (!foreground)
+                {
+                    Model(parent, "Collection row", "CollectionRow" + ((seed + row) % 3),
+                        new Vector3(0,y+.015f,-depth/2+.125f), new Vector3(width-.13f,gap*.89f,.21f), BookBindings);
+                    continue;
+                }
                 // Seeded variation changes only book dressing, never target choreography.
                 var random=new System.Random(seed*97+row*31);
                 float x=-width/2+.07f;
@@ -95,9 +133,8 @@ namespace Elts.Operator
         public void Chair(Transform parent,Vector3 position,float yaw=0)
         {
             var root=Group(parent,"Reading chair",position,yaw);
-            Box(root,"Upholstered seat",new Vector3(0,.45f,0),new Vector3(.43f,.07f,.43f),Fabric);
-            var back=Box(root,"Upholstered back",new Vector3(0,.70f,.19f),new Vector3(.43f,.43f,.065f),Fabric);
-            // Keep the solid back aligned with the shared shot-occlusion volume.
+            Model(root,"Upholstered seat","ChairSeat",new Vector3(0,.45f,0),Vector3.one,Fabric);
+            Model(root,"Upholstered back","ChairBack",new Vector3(0,.70f,.19f),Vector3.one,Fabric);
             foreach(float x in new[]{-.18f,.18f})foreach(float z in new[]{-.16f,.16f})
                 Box(root,"Chair leg",new Vector3(x,.21f,z),new Vector3(.028f,.42f,.028f),Metal);
         }
@@ -132,11 +169,11 @@ namespace Elts.Operator
                         for(int bay=0;bay<bays;bay++)
                         {
                             float x=-depth/2+(bay+.5f)*depth/bays;
-                            Bookcase(Group(root,"Collection front",new Vector3(x,0,-width/4)),depth/bays,height,width/2,seed+bay);
-                            Bookcase(Group(root,"Collection back",new Vector3(x,0,width/4),180),depth/bays,height,width/2,seed+bay+50);
+                            Bookcase(Group(root,"Collection front",new Vector3(x,0,-width/4)),depth/bays,height,width/2,seed+bay,foreground:false);
+                            Bookcase(Group(root,"Collection back",new Vector3(x,0,width/4),180),depth/bays,height,width/2,seed+bay+50,foreground:false);
                         }
                     }
-                    else Bookcase(root,width,height,depth,seed);
+                    else Bookcase(root,width,height,depth,seed,fixture.Id=="new-books");
                     break;
                 case LibraryFixtureKind.Table:
                     Box(root,"Oak tabletop",new Vector3(0,.7375f,0),new Vector3(width,.045f,depth),Oak);
@@ -147,10 +184,11 @@ namespace Elts.Operator
                     Chair(root,Vector3.zero,fixture.Facing);
                     break;
                 case LibraryFixtureKind.Counter:
-                    Box(root,"Counter cabinet",new Vector3(0,(height-.04f)/2,0),new Vector3(width,height-.04f,depth),DarkOak);
-                    Box(root,"Countertop",new Vector3(0,height-.02f,0),new Vector3(width,.04f,depth),Oak);
+                    Box(root,"Counter toe kick",new Vector3(0,.05f,.025f),new Vector3(width-.12f,.1f,depth-.14f),DarkOak);
+                    Box(root,"Counter cabinet",new Vector3(0,(height+.035f)/2,0),new Vector3(width-.09f,height-.165f,depth-.08f),DarkOak);
+                    Model(root,"Rolled oak countertop","CounterLip",new Vector3(0,height-.0325f,0),new Vector3(width/3.4f,1,depth/1.15f),Oak);
                     for(float x=-width/2+.12f;x<width/2;x+=.12f)
-                        Box(root,"Counter oak fluting",new Vector3(x,.50f,-depth/2-.002f),new Vector3(.035f,.90f,.008f),Oak,false);
+                        Box(root,"Counter oak fluting",new Vector3(x,.525f,-depth/2+.036f),new Vector3(.035f,.84f,.015f),Oak,false);
                     break;
                 case LibraryFixtureKind.Lounge:
                     Box(root,"Upholstered base",new Vector3(0,.25f,0),new Vector3(width,.5f,depth),Fabric);

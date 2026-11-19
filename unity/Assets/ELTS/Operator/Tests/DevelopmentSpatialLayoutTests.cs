@@ -24,6 +24,38 @@ namespace Elts.Operator.Tests
             =>(Vector3d)Layout.GetMethod("Position").Invoke(null,new object[]{target,center,moving,time,view.GameSettings,view.Configuration.Rig.VirtualFloorY,slot});
 
         [UnityTest]
+        public IEnumerator LibraryDressingKeepsForegroundDetailAndSwitchesWithPractice()
+        {
+            var host = new GameObject("Library dressing fixture");
+            try
+            {
+                var view = host.AddComponent<DevelopmentView>();
+                yield return null;
+                Assert.That(view.Ready, Is.True, view.Error);
+                var room = host.transform.Find("Library interior (virtual metres)");
+                var foreground = room.Find("Fixture · new-books").GetComponentsInChildren<MeshRenderer>();
+                var distant = room.Find("Fixture · literature-west").GetComponentsInChildren<MeshRenderer>();
+                Assert.That(foreground.Any(part => part.name == "Bound volume"), Is.True);
+                Assert.That(distant.Any(part => part.name == "Collection row"), Is.True);
+                Assert.That(distant.Any(part => part.name == "Bound volume" || part.name == "Spine label"), Is.False);
+
+                var seat = room.Find("Fixture · reading-table-1-chair--1--1/Reading chair/Upholstered seat");
+                Assert.That(seat.GetComponent<Renderer>().bounds.size.y, Is.EqualTo(.07f).Within(.002f),
+                    "The imported cushion must keep its size in virtual metres.");
+                var tree = room.Find("Library courtyard/Courtyard tree").GetComponent<MeshRenderer>();
+                var windowLights = room.Find(LibraryWindows.LightGroup).GetComponentsInChildren<Light>();
+                Assert.That(windowLights, Is.Not.Empty);
+                view.SetTutorialPresentation(true, "#23313F", "#68717B");
+                Assert.That(tree.enabled, Is.False);
+                Assert.That(windowLights.All(light => !light.isActiveAndEnabled), Is.True);
+                view.SetTutorialPresentation(false, "", "");
+                Assert.That(tree.enabled, Is.True);
+                Assert.That(windowLights.All(light => light.isActiveAndEnabled), Is.True);
+            }
+            finally { UnityEngine.Object.DestroyImmediate(host); }
+        }
+
+        [UnityTest]
         public IEnumerator FloorWindowPerspectiveAndSpatialClearanceAgree()
         {
             var host=new GameObject("Window geometry fixture");

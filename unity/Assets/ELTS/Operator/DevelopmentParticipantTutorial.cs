@@ -57,6 +57,8 @@ namespace Elts.Operator
             tutorialDemo?.Stop();tutorialDemo=null;tutorialInteraction=null;
             tutorialNarration?.Stop();
             tutorial=new ParticipantTutorial(RecordTutorialChange);
+            // Under live tracking the head step is one standing capture; see HeadCalibrationCount.
+            if(LiveTrackingActive)tutorial.UseHeadCalibrationSteps(1);
             tutorialHistory.Clear();tutorialPracticeAttempt=0;previousTutorialStage=TutorialStage.NotStarted;tutorialDotVisible=false;
         }
         private void RecordTutorialChange(string name,TutorialStage stage)
@@ -89,7 +91,9 @@ namespace Elts.Operator
             tutorial.Stage==TutorialStage.PracticeReady?"tutorialPractice":tutorial.Stage==TutorialStage.Form?"tutorialForm":"tutorialContinue";
         private string TutorialPrimaryLabel => !tutorial.Started?"Begin walkthrough":TutorialCalibrationStep?
             (calibration.State==CalibrationWizardState.Idle?(tutorial.Stage==TutorialStage.HeadCalibration?
-                "Capture direction "+(tutorial.HeadCalibrationIndex+1)+" of 7 · "+tutorial.Step.Title:"Check calibration"):
+                (tutorial.HeadCalibrationCount==1?"Capture standing position":
+                    "Capture direction "+(tutorial.HeadCalibrationIndex+1)+" of "+tutorial.HeadCalibrationCount+" · "+tutorial.Step.Title):
+                LiveTrackingActive?"Start aim dots":"Check calibration"):
                 "Accept review · continue"):tutorial.Step.OperatorAction;
         private bool TutorialPrimaryEnabled => !IsBusy && (TutorialCanBegin || TutorialCanCapture || TutorialCanAccept ||
             tutorial.CanContinue || (!tutorial.Paused && tutorial.CueFinished && tutorial.Stage==TutorialStage.PracticeReady) ||
@@ -121,7 +125,10 @@ namespace Elts.Operator
             if(!tutorial.CueFinished)return "Let the current narration and diagram finish. The action will become available afterward.";
             if(tutorial.Manual && tutorial.Stage!=TutorialStage.Form)
                 return "Manual mode: arm each test, start each break and arm the next test yourself.";
-            if(TutorialCalibrationStep)return "Synthetic fixture review only; this does not calibrate physical equipment.";
+            if(TutorialCalibrationStep)return LiveTrackingActive?
+                (LiveProcedureRunning?"The participant is aiming at the dots. Each trigger pull captures one.":
+                    "Live tracking: the aim step fits this participant's sights and eye. The fit reports agreement between captures, not physical accuracy."):
+                "Synthetic fixture review only; this does not calibrate physical equipment.";
             if(tutorial.Stage==TutorialStage.Fire)return tutorial.Fired?"Firing observed. Confirm understanding to continue.":"Waiting for a participant shot. A hit is not required.";
             if(tutorial.Stage==TutorialStage.Reload)return tutorial.Reloaded?"Reload observed. Confirm understanding to continue.":"Waiting for a reload. If the magazine is full, fire once first.";
             if(tutorial.Stage==TutorialStage.Demonstration)return tutorial.DemoFailed?"Simulation interrupted. Explicitly repeat the demonstration when ready.":
@@ -149,6 +156,12 @@ namespace Elts.Operator
                 case "tutorialCapture":
                     if(!TutorialCanCapture)throw new InvalidOperationException("Wait for the stationary dot, then capture this calibration fixture.");
                     if(tutorial.Stage==TutorialStage.HeadCalibration)CaptureTutorialHeadDirection(revision);
+                    else if(LiveTrackingActive)
+                    {
+                        // The participant aims at five dots and squeezes the trigger; the review
+                        // appears when the last dot is captured (CompleteTutorialLiveZero).
+                        BeginLiveProcedure("zero",true);RecordTutorialChange("TutorialLiveZeroStarted",tutorial.Stage);tutorial.InvalidateControls();
+                    }
                     else {CaptureCalibrationFixture();RecordTutorialChange("TutorialFixtureCaptured",tutorial.Stage);tutorial.InvalidateControls();}
                     break;
                 case "tutorialRedo":
@@ -228,6 +241,8 @@ namespace Elts.Operator
             // desktop observations, not physical tracker calibration results.
             if(acquisition==null || !acquisition.TryCaptureForTrigger(out var pair) || !pair.IsValid)
                 throw new InvalidOperationException("A valid recorded head pose is required for this direction.");
+            if(!pair.Head.HasValidPose)
+                throw new InvalidOperationException("The head tracker is not tracked. Check it is in view of the base station, then capture again.");
             var pose=pair.Head.Pose!.Value;
             RecordTutorialEvent(new SessionEvent(sequence!.Next(),pair.Timestamp,"TutorialHeadPoseCaptured",new[]{
                 LogField.NumberValue("directionIndex",tutorial.HeadCalibrationIndex),
@@ -236,11 +251,31 @@ namespace Elts.Operator
                 LogField.NumberValue("qx",pose.Orientation.X),LogField.NumberValue("qy",pose.Orientation.Y),
                 LogField.NumberValue("qz",pose.Orientation.Z),LogField.NumberValue("qw",pose.Orientation.W),
                 LogField.Boolean("synthetic",true)}));
-            if(tutorial.HeadCalibrationIndex==ParticipantTutorial.HeadCalibrationSteps.Count-1)
+            if(tutorial.HeadCalibrationIndex==tutorial.HeadCalibrationCount-1)
             {
                 CaptureCalibrationFixture();RecordTutorialChange("TutorialFixtureCaptured",tutorial.Stage);
+                if(LiveTrackingActive)
+                {
+                    // A reading the operator can check with a tape: where the software places the eye.
+                    var rig=view.Configuration.Rig;var eye=pose.TransformPoint(rig.HeadEyeOffsetM);
+                    double distance=Elts.Geometry.Vector3d.Dot(rig.Display.Origin-eye,rig.Display.Normal),height=eye.Y-rig.VirtualFloorY;
+                    Label("calibrationReview","Head tracker seen. Eye about "+distance.ToString("F2",System.Globalization.CultureInfo.InvariantCulture)+
+                        " m from the screen, "+height.ToString("F2",System.Globalization.CultureInfo.InvariantCulture)+
+                        " m above the floor (refined in the aim step). Compare with a tape if in doubt.");
+                }
             }
             tutorial.ConfirmHeadPose(revision);
+        }
+        /// <summary>The live aim zero finished during the gun step: hand its result to the operator's review.</summary>
+        private void CompleteTutorialLiveZero(string summary)
+        {
+            if(engine==null || tutorial.Stage!=TutorialStage.GunCalibration || calibration.State!=CalibrationWizardState.Idle)return;
+            try
+            {
+                CaptureCalibrationFixture();RecordTutorialChange("TutorialFixtureCaptured",tutorial.Stage);
+                Label("calibrationReview",summary);tutorial.InvalidateControls();
+            }
+            catch(Exception error){lastMessage=error.Message;}
         }
         private void ConfirmTutorialForm(int revision)
         {
@@ -321,7 +356,7 @@ namespace Elts.Operator
         {
             if(!SeparateAdministrator || tutorialInteraction==null || !tutorial.LiveScene)return;
             var pair=acquisition?.Snapshot;
-            view.SetSessionFrame(pair?.Head.Pose,pair?.Weapon.Pose,tutorialInteraction.Positions,0,tutorialInteraction.FixedPoses);
+            view.SetSessionFrame(LiveRenderHead(pair?.Head.Pose),pair?.Weapon.Pose,tutorialInteraction.Positions,0,tutorialInteraction.FixedPoses);
         }
         private bool SubmitTutorialTrigger(string source, string edge, string trackerSerial)
         {

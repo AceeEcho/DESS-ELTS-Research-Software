@@ -49,8 +49,12 @@ namespace Elts.Operator
                 LogField.String("coordinateFrame","room-metres"),LogField.String("triggerEdge","falling"),
                 LogField.String("physicalTriggerSource",String.IsNullOrEmpty(configuredTriggerSerial)?"disabled":ViveTriggerReader.SourceIdentity),
                 LogField.String("weaponTriggerSerial",String.IsNullOrEmpty(configuredTriggerSerial)?"none":configuredTriggerSerial),
-                LogField.String("desktopMuzzlePolicy",usingDesktopInput?"coincident-with-virtual-eye":"automated-fixture")})))
+                LogField.String("desktopMuzzlePolicy",usingDesktopInput?"coincident-with-virtual-eye":"automated-fixture"),
+                // With live trackers the same pose pipeline carries the tracked head and the sight-line ray.
+                LogField.String("poseInput",usingDesktopInput && LiveTrackingActive?LiveSourceIdentity:"none"),
+                LogField.Boolean("liveTracking",usingDesktopInput && LiveTrackingActive)})))
                 throw new InvalidOperationException("Input-source provenance could not be recorded.");
+            if(usingDesktopInput)RecordLiveCalibrationAtStart();
         }
 
         public void SubmitDesktopTrigger(string source = DesktopTrackingSource.SourceIdentity, string edge = "falling", string trackerSerial = "")

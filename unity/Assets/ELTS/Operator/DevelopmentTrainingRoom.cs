@@ -16,6 +16,11 @@ namespace Elts.Operator
         public Color daylight=new Color(1,.96f,.88f);
         public Vector3 directionToLight=new Vector3(.75f,1,-.4f);
         [Range(.5f,3)] public float lightIntensity=1.45f;
+        public Color windowBounce = new Color(.88f,.94f,1f);
+        [Range(0,30)] public float windowIntensity = 16;
+        [Range(2,18)] public float windowReach = 10;
+        [Range(0,1)] public float shadowStrength = .42f;
+        [Range(0,1)] public float ceilingGlow = .30f;
     }
 
     /// <summary>One coherent library: a service desk by the entrance, double-sided
@@ -32,10 +37,12 @@ namespace Elts.Operator
             var furniture=new LibraryInterior(ownedMaterials);
             var wall=furniture.Surface(settings.plaster,.12f,"white_plaster_02",new Vector2(8,2));
             var carpet=furniture.Surface(settings.floor,.05f,"poly_wool_herringbone",new Vector2(20,32));
-            var readingCarpet=furniture.Surface(new Color(.38f,.43f,.42f),.04f,"dirty_carpet",new Vector2(7,18));
+            var readingCarpet=furniture.Surface(new Color(.72f,.80f,.77f),.08f,"dirty_carpet",new Vector2(7,18));
             var ceiling=furniture.Surface(new Color(.84f,.84f,.80f),.04f);
-            var glass=furniture.Surface(new Color(.58f,.69f,.72f),.5f);
-            glass.EnableKeyword("_EMISSION");glass.SetColor("_EmissionColor",new Color(.20f,.25f,.27f));
+            var ceilingFinish=furniture.PaintedSurface("acoustic-ceiling",.05f);
+            ceilingFinish.EnableKeyword("_EMISSION");
+            ceilingFinish.SetTexture("_EmissionMap",ceilingFinish.GetTexture("_BaseMap"));
+            ceilingFinish.SetColor("_EmissionColor",Color.white*settings.ceilingGlow);
             var lightSurface=furniture.Surface(new Color(.96f,.92f,.81f));
             lightSurface.EnableKeyword("_EMISSION");lightSurface.SetColor("_EmissionColor",new Color(1.4f,1.3f,1.1f));
             const float front=-10.5f,back=28,height=3.8f,width=22;
@@ -48,11 +55,16 @@ namespace Elts.Operator
             // Cut it away only in that view, leaving the rest of the library visible.
             var nearWall=LibraryInterior.Box(root,"Near wall",new Vector3(0,height/2,front),new Vector3(width,height,.2f),wall,false);
             nearWall.layer=DevelopmentView.ParticipantBackdropLayer;
-            Box("Far wall",new Vector3(0,height/2,back),new Vector3(width,height,.2f),wall,false);
+            LibraryWindows.RearWall(root,back,width,height,furniture,wall);
             Box("Ceiling",new Vector3(0,height+.06f,(front+back)/2),new Vector3(width,.12f,back-front),ceiling,false);
-            // Use the identical segmented side walls/lintels as the hit-test plan.
+            var ceilingPanel=furniture.Model(root,"Acoustic ceiling finish","AcousticCeiling",new Vector3(0,height-.006f,(front+back)/2),
+                new Vector3(width,1,back-front),ceilingFinish);
+            ceilingPanel.GetComponent<Renderer>().shadowCastingMode=ShadowCastingMode.Off;
+            // Glazing occupies the same closed wall span. Only its visual surface is divided.
             foreach(var cover in LibraryFloorPlan.Covers(Vector3d.Zero,new DevelopmentGameSettings(),0))
-                if(cover.Id.StartsWith("wall-") || cover.Id.StartsWith("lintel-"))
+                if(cover.Id.StartsWith("wall-1-"))
+                    LibraryWindows.EastWall(root,cover.Id,Unity(cover.Center),Unity(cover.HalfSize*2),furniture,wall);
+                else if(cover.Id.StartsWith("wall-") || cover.Id.StartsWith("lintel-"))
                     Box(cover.Id,Unity(cover.Center),Unity(cover.HalfSize*2),wall,false);
 
             foreach(int side in new[]{-1,1})
@@ -70,15 +82,7 @@ namespace Elts.Operator
                         Box("Vestibule return",new Vector3(side*11.8f,1.15f,z+edge),new Vector3(1.6f,2.3f,.1f),wall,false);
                 }
             }
-            // Window bays, rather than identical windows wrapping every wall.
-            foreach(float z in new[]{6.8f,17.4f,26f})
-            {
-                Box("Window reveal",new Vector3(10.86f,2.02f,z),new Vector3(.20f,2.62f,4.3f),furniture.DarkOak,false);
-                Box("Daylight glazing",new Vector3(10.73f,2.05f,z),new Vector3(.035f,2.42f,4.05f),glass,false);
-                foreach(float edge in new[]{-2.08f,0,2.08f})
-                    Box("Window mullion",new Vector3(10.67f,2.05f,z+edge),new Vector3(.09f,2.5f,.055f),furniture.Metal,false);
-                Box("Window sill",new Vector3(10.60f,.79f,z),new Vector3(.45f,.08f,4.35f),furniture.Oak);
-            }
+            LibraryWindows.Courtyard(root,furniture,settings);
 
             int seed=0;
             foreach(var fixture in LibraryFloorPlan.Fixtures)furniture.Fixture(root,fixture,seed++);
@@ -113,7 +117,7 @@ namespace Elts.Operator
             var direction=settings.directionToLight.normalized;
             lightHost.transform.rotation=Quaternion.LookRotation(-direction);
             var sun=lightHost.AddComponent<Light>();sun.type=LightType.Directional;sun.color=settings.daylight;sun.intensity=settings.lightIntensity;
-            sun.shadows=LightShadows.Soft;sun.shadowStrength=.8f;sun.shadowBias=.02f;sun.shadowNormalBias=.06f;sun.cullingMask=1<<DevelopmentView.StimulusLayer;
+            sun.shadows=LightShadows.Soft;sun.shadowStrength=settings.shadowStrength;sun.shadowBias=.02f;sun.shadowNormalBias=.06f;sun.cullingMask=1<<DevelopmentView.StimulusLayer;
             var fillHost=new GameObject("Indirect library light");fillHost.transform.SetParent(root,false);
             fillHost.transform.rotation=Quaternion.Euler(-65,-25,0);
             var fill=fillHost.AddComponent<Light>();fill.type=LightType.Directional;fill.color=settings.bounceColor;

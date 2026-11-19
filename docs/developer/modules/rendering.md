@@ -107,25 +107,38 @@ damage/cover handling, and writes visual-versus-hit-surface comparisons under
 `test-results/hitboxes/`. The left panel is the rendered model; the right is the
 shot surface (amber head, teal body, purple limbs).
 
-`DevelopmentView` exposes `Training Room` settings in the Inspector: dimensions,
-surface colors, ambient fill, ceiling bounce and daylight direction/intensity.
-The enclosed 30 x 52 x 4.8 metre library uses scanned oak, woven carpet and plaster,
-three circulation aisles, perimeter study tables/chairs, a quiet-study alcove,
-framed glazing, detailed collections and suspended lights below acoustic rafts.
+`DevelopmentView` exposes surface colors, ambient fill, daylight direction,
+shadow strength, window fill and ceiling glow under **Virtual training room**.
+At layout scale 1 the library measures 22 by 38.5 virtual metres with a 3.8 metre
+ceiling. Deep window frames along the reading area and a high rear window look
+onto a shared 3D courtyard. The camera's existing off-axis projection produces
+parallax across the jambs, trees and garden walls as the eye moves.
 Poly Haven CC0 asset sources and hashes are in `licenses/PolyHaven-Library/README.md`
 and included with the player. The room is still procedural virtual scenery.
 
 URP renders soft directional shadows, ambient occlusion, a soft ceiling fill and
 neutral tonemapping with restrained bloom/color adjustment (`Resources/ELTS/LibraryColor`).
-The shell receives lighting but does not cast shadows: this is a daylight/bounce
-approximation, not baked or physically measured illumination. Existing scene lights
-are temporarily disabled and restored when the development view is destroyed.
-The old floor scaffold is hidden during runtime. All four walls and the ceiling
-are closed; decorative windows are luminous surfaces. Camera projection is unchanged.
+The ceiling finish includes a painted pool of reflected light above each pendant.
+Three local fill lights brighten the reading area and turn off during the tutorial.
+Existing scene lights are temporarily disabled and restored when the development
+view is destroyed. The low display shelf retains individual books. Each row in
+the other collections shares one of three meshes and a painted binding atlas.
+The chair cushions and rolled oak edges also reuse imported meshes.
+Run `py -3 tools/art/build_library_assets.py` to regenerate the original models
+and painted textures. The window bays retain the floor plan's closed wall bounds.
 The serialized `LibrarySurface` and `LibraryEmission` resource materials retain
 normal-map and emissive shader variants in player builds. Rebuild those templates
 with **ELTS > Development > Rebuild library material templates** if their source
 shader changes.
+
+To compare standalone scenery, start a development player with
+`-eltsWindowed -eltsNoAdminWindow -eltsLibraryProbe "<output directory>"`.
+The probe writes two 1600 × 900 PNGs with the synthetic eye centered and shifted
+0.40 m right and 0.15 m up. The player log records time from process launch
+to the desktop scene becoming ready, the room renderer count, and the median
+and 95th-percentile render times over 180 uncapped 1280 × 720 offscreen draws
+after 30 warm-up draws. Each sample includes a synchronized one-pixel readback.
+These figures describe the empty participant view on the machine running the probe.
 
 Reading desks have separate tabletop, support and modesty-panel hit volumes so
 the visible gap underneath remains open to shots. Bookcases retain closed backing.

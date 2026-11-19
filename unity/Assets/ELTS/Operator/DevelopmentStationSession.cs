@@ -123,6 +123,8 @@ namespace Elts.Operator
             root.style.display=DisplayStyle.None;
             // Keep the existing session-to-view feed alive while hiding its UI.
             view.SessionControlsVisible=true;
+            // Live tracking belongs to this two-window station; apply any saved station fit now.
+            ResetLiveForParticipant();
         }
 
         /// <summary>
@@ -152,6 +154,8 @@ namespace Elts.Operator
             stationScreenDiffers=!calibration.ScreenMatches(view.Configuration.Rig);
             view.ApplyParticipantCalibration(calibration);
             stationCalibration=calibration;
+            // Live tracking starts every participant from the station fit, not the last shooter's zero.
+            ResetLiveForParticipant();
             assignedOrder=assignment?.ToArray(); orderDeviation=deviation;
             stationParticipant=code;
             ResetTutorial();
@@ -175,7 +179,8 @@ namespace Elts.Operator
                 {
                     if(engine?.State==SessionState.SessionSetup)
                     {
-                        RecordSessionDetail("Participant ID: "+stationParticipant+"; desktop synthetic rehearsal.");
+                        RecordSessionDetail("Participant ID: "+stationParticipant+(LiveTrackingActive?
+                            "; live VIVE tracking, development build.":"; desktop synthetic rehearsal."));
                         // Identify exactly which saved calibration supplied the offsets.
                         // Notes are limited to 256 characters, so the screen warning is separate.
                         if(stationCalibration!=null)

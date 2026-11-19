@@ -468,6 +468,11 @@ Nothing in this section establishes physical validation of the equipment recorde
 
 ### Vive trackers
 
+> **Changed on 19 November 2026.** ELTS can now aim from the gun and head
+> trackers after an on-screen calibration. Start with
+> [live tracking](live-tracking.md), which has its own fault table. The notes
+> below describe a station that has no saved tracking calibration.
+
 **What the repo establishes.**
 
 - Two logical trackers, roles `head` and `weapon`, serial strings in `trackerSerials`. The synthetic template uses `SYNTHETIC-HEAD` and `SYNTHETIC-WEAPON`. They must be distinct non-empty strings. The desktop source stamps those strings onto mouse poses. It does not enumerate USB devices.

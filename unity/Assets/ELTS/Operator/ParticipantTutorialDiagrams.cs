@@ -70,7 +70,8 @@ namespace Elts.Operator
                 // drawn in outline only so the reference dot is the one dot.
                 string[] poses = { "head-center", "head-left", "head-right", "head-up", "step-left", "step-right", "step-center" };
                 Extra(new ParticipantTutorialArt(poses[index], settings), "tutorial-pose");
-                detail.text = "Step " + (index + 1) + " of " + poses.Length;
+                int steps = session.Tutorial.HeadCalibrationCount;
+                detail.text = steps == 1 ? "" : "Step " + (index + 1) + " of " + steps;
             }
             float size = settings.dotDiameter;
             dot.style.width = size; dot.style.height = size;

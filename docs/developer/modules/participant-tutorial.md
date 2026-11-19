@@ -14,6 +14,16 @@ dashboard. The participant screen contains no operator buttons.
    pose separately; review the synthetic fixture after the final capture. Redo
    restarts the directions. Confirm the holding demonstration,
    then capture and review the gun step. Each accepted fixture is saved separately.
+
+   **With live tracking** (a saved station calibration and trackers on) this
+   chapter is shorter. The head step is one standing capture
+   (`ParticipantTutorial.HeadCalibrationCount` is 1): the turning and
+   side-stepping directions carry no information once the eye is placed from
+   the gun's sight line. The gun step shows five dots; the participant aims at
+   each and squeezes the trigger, and the dashboard review shows the fit. See
+   [live tracking](../../operator/live-tracking.md). The recorded narration
+   still describes the earlier procedure and needs new takes under the
+   [audio workflow](../../participant-tutorial/audio-workflow.md).
 3. Introduce the real game target and confirm aiming. Firing requires an observed
    participant trigger; reloading requires an actual magazine refill. Neither
    requires a hit. An accepted shot opens “Well done”; an actual reload opens

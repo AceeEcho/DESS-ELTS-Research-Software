@@ -4,6 +4,7 @@ import { CalibrationScene } from "./scene.js";
 import { triggerIndicator } from "./trigger-indicator.js";
 import { installHeadCalibration } from "./head-calibration-ui.js";
 import { DIRECTION_LIMITS } from "./head-calibration.js";
+import { installAimScreen } from "./aim-calibration-ui.js";
 import {
     vec,
     rotation,
@@ -157,8 +158,24 @@ function check(path, label) {
 function section(title, body, help = "") {
     return `<section><h3>${title}</h3>${help ? `<p class="help">${help}</p>` : ""}${body}</section>`;
 }
+// Object-local axes shared by every offset: +X right, +Y up, +Z back toward
+// the participant (−Z is forward). Each pair lists the +, then − direction.
+const AXIS_DIRECTIONS = [
+    ["X · left / right", ["Right", "Left"]],
+    ["Y · up / down", ["Above", "Below"]],
+    ["Z · forward / back", ["Behind (toward you)", "In front"]],
+];
 const TILT_NAMES = ["Pitch · nose up", "Yaw · turn left", "Roll · twist"];
+// The gun is entered relative to the muzzle tip, the point the bullet leaves.
+// Stored values are unchanged: weapon.mount.position is still measured from the
+// drawing's centre, so the tracker-to-muzzle vector is mount.position − muzzle.
+const TRACKER_FROM_MUZZLE = "weapon.trackerFromMuzzle";
 const TRACKER_TO_EYE = "head.trackerToEye";
+function trackerFromMuzzle(i) {
+    return config.weapon.mount.position[i] - config.weapon.muzzle[i];
+}
+// Aim-at-dots zero: the screen window measures, the dashboard applies.
+let aimRun = null, aimUndo = null, aimSummary = "Not done yet for this setup.";
 function openScreen() {
     const opened = window.open(
         "/?screen=1&session=" + encodeURIComponent(session),
@@ -168,20 +185,48 @@ function openScreen() {
     syncScreen();
     return opened;
 }
-function mountSection(role) {
-    return section(
-        "Tracker mounting offset",
-        vector(role + ".mount.position", "Tracker centre on object") +
-            vector(
-                role + ".mount.rotation",
-                "Tracker orientation on object",
-                true,
-            ) +
-            `<button class="wide" data-action="align-${role}">Align ${role === "head" ? "head" : "gun"} forward to screen</button>`,
-        "Position is measured from the " +
-            (role === "head" ? "head centre" : "receiver centre") +
-            " to the tracker, in object-local axes. −Z is forward. Live object pose uses the inverse of this mounting transform.",
-    );
+function startAim() {
+    if (source !== "live") return notice("Aim zero needs Live SteamVR trackers (Tracking tab).");
+    if (!config.weapon.serial) return notice("Pick the gun tracker under 1 · Gun tracker first.");
+    if (!openScreen()) return notice("The browser blocked the screen window. Allow pop-ups for this page.");
+    const id = crypto.randomUUID();
+    aimRun = { id, acknowledged: false };
+    // Repeat until the screen window has loaded and acknowledged the request.
+    const started = performance.now();
+    const ask = () => {
+        if (aimRun?.id !== id || aimRun.acknowledged) return;
+        if (performance.now() - started > 15000)
+            return notice("The screen window did not respond. Open screen, then try again.");
+        channel.postMessage({ type: "aim-start", id });
+        setTimeout(ask, 400);
+    };
+    ask();
+    notice("Dots are showing in the screen window. Put it on the TV and press F for fullscreen.");
+}
+function applyAim(result) {
+    aimUndo = { rotation: [...config.weapon.mount.rotation], bore: [...config.weapon.bore], summary: aimSummary };
+    config.weapon.mount.rotation = result.mountRotation;
+    // The tilt points the gun's forward axis along the sight line; the small barrel
+    // correction makes the shot from the muzzle cross it at the target distance.
+    config.weapon.bore = result.boreRotation ?? [0, 0, 0];
+    aimSummary = `Last zero: average ${result.meanDeg.toFixed(2)}°, worst ${result.maxDeg.toFixed(2)}° (dot ${result.worstDot + 1}). ` +
+        (result.mode === "sight line"
+            ? `Sights ${(result.sightHeightM * 100).toFixed(1)} cm above the barrel (many AR-style rifles are about 6–7 cm; a very different value means the muzzle or eye measurement needs checking); zeroed at ${result.zeroDistanceM.toFixed(1)} m. `
+            : "") +
+        (result.warnings.join(" ") || "Applied. Save calibration to keep it.");
+    changed("weapon.mount.rotation");
+    renderSettings();
+    notice("Aim zero applied to the gun. Save calibration to keep it.");
+}
+function undoAim() {
+    if (!aimUndo) return;
+    config.weapon.mount.rotation = aimUndo.rotation;
+    config.weapon.bore = aimUndo.bore;
+    aimSummary = aimUndo.summary;
+    aimUndo = null;
+    changed("weapon.mount.rotation");
+    renderSettings();
+    notice("Previous gun tilt and aim correction restored.");
 }
 function mountTilt(role) {
     return vector(role + ".mount.rotation", "Tracker tilt on the " + (role === "head" ? "head" : "gun"), true, TILT_NAMES) +
@@ -257,20 +302,33 @@ function renderSettings() {
         html += manualSection("head");
     } else if (tab === "weapon") {
         html += section(
-            "Weapon tracker",
+            "1 · Gun tracker",
             binding("weapon"),
-            "The gun is a schematic rifle. Its origin is the receiver centre and its forward axis is −Z.",
+            "Pick the tracker fixed to the gun. It must differ from the head tracker.",
         );
-        html += mountSection("weapon");
         html += section(
-            "Muzzle &amp; bore",
-            vector("weapon.muzzle", "Muzzle from receiver centre") +
-                vector("weapon.bore", "Bore angular correction", true) +
-                field("weapon.length", "Visual model length", {
-                    min: 0.1,
-                    max: 2.5,
-                }),
-            "The aim ray starts at the configured muzzle. Model length changes only the drawing; measure the muzzle and mount offsets separately.",
+            "2 · Where the tracker sits on the gun",
+            `<div class="field-title">Muzzle tip → centre of the tracker</div>` +
+                AXIS_DIRECTIONS.map(([label, directions], i) =>
+                    distanceFields(`${TRACKER_FROM_MUZZLE}.${i}`, label, trackerFromMuzzle(i), directions)).join("") +
+                mountTilt("weapon"),
+            "Measure from the muzzle tip (where the bullet leaves) straight along the barrel and across it to the centre of the tracker. A tracker mounted back along the barrel is Behind. ELTS uses exactly this measurement. Tilt is how the tracker is turned relative to the barrel; use Align with the gun level and aimed at the screen.",
+        );
+        html += section(
+            "3 · Zero the aim",
+            `<button class="wide primary" data-action="aim-start">Aim at dots to zero the gun…</button>` +
+                (aimUndo ? `<button class="wide" data-action="aim-undo">Undo last aim zero</button>` : "") +
+                `<p class="help" id="aim-result">${aimSummary}</p>` +
+                `<details><summary>Manual barrel aim correction</summary>${vector("weapon.bore", "Turn the shot line", true, TILT_NAMES)}</details>`,
+            "Opens the screen window with dots. Wear the head tracker, make the window fullscreen on the TV, and aim through the sights at each dot, holding the gun the way you normally shoot. Your eye and each dot give the sight line, so the hold does not matter. This sets the tracker tilt and a small barrel correction so shots land on the sights at the target distance. Do Where the tracker sits and the head setup first.",
+        );
+        html += section(
+            "Gun drawing (preview only)",
+            `<details><summary>Model size and centre</summary>` +
+                vector("weapon.muzzle", "Muzzle tip from drawing centre") +
+                field("weapon.length", "Drawn length", { min: 0.1, max: 2.5 }) +
+                `</details>`,
+            "These only change the 3D drawing. The tracker-to-muzzle measurement above stays the same when you move the muzzle here.",
         );
         html += manualSection("weapon");
     } else {
@@ -575,6 +633,13 @@ $("settings").addEventListener("change", (event) => {
             return notice("Height must be between 0.5 and 2.7 m and at least twice the body radius.");
         if (Math.abs(metres) > 100)
             return notice("The distance must be within 100 metres of the origin.");
+        if (path.startsWith(TRACKER_FROM_MUZZLE + ".")) {
+            // Store as the drawing-centre mount position the profile format uses.
+            const i = Number(path.slice(TRACKER_FROM_MUZZLE.length + 1));
+            config.weapon.mount.position[i] = metres + config.weapon.muzzle[i];
+            changed("weapon.mount.position");
+            return;
+        }
         if (path.startsWith(TRACKER_TO_EYE + ".")) {
             const i = Number(path.slice(TRACKER_TO_EYE.length + 1));
             config.head.eye[i] = config.head.mount.position[i] + metres;
@@ -606,6 +671,13 @@ $("settings").addEventListener("change", (event) => {
         input.value = before;
         return notice("Check clipping distances and person dimensions.");
     }
+    // Moving the drawn muzzle keeps the measured tracker-to-muzzle offset.
+    const muzzleAxis = path.match(/^weapon\.muzzle\.(\d)$/);
+    if (muzzleAxis) {
+        config.weapon.mount.position[muzzleAxis[1]] += value - before;
+        changed("weapon.mount.position");
+        return;
+    }
     const headMountAxis = path.match(/^head\.mount\.position\.(\d)$/);
     if (headMountAxis) {
         // Re-express the same measured eye location after moving the head-centre
@@ -628,6 +700,8 @@ $("settings").addEventListener("click", async (event) => {
             changed("screen");
             renderSettings();
         } else if (action?.startsWith("align-")) alignMount(action.slice(6));
+        else if (action === "aim-start") startAim();
+        else if (action === "aim-undo") undoAim();
         else if (action === "connect") {
             setSource("live");
             if ($("source-select")) $("source-select").value = "live";
@@ -915,12 +989,21 @@ $("fullscreen").onclick = () =>
     document.fullscreenElement
         ? document.exitFullscreen()
         : document.body.requestFullscreen();
+const aimScreen = isScreen
+    ? installAimScreen({ readState: () => ({ config, source, frame: currentFrame() }), send: (m) => channel.postMessage(m) })
+    : null;
 channel.onmessage = (event) => {
     if (isScreen && event.data.config) {
         config = event.data.config;
         source = event.data.source;
         lastScreenState = performance.now();
         scene?.configure(config);
+    }
+    if (isScreen && event.data.type === "aim-start" && config) aimScreen.start(event.data.id);
+    if (!isScreen && event.data.id && event.data.id === aimRun?.id) {
+        if (event.data.type === "aim-ack") aimRun.acknowledged = true;
+        else if (event.data.type === "aim-result") { aimRun = null; applyAim(event.data.result); }
+        else if (event.data.type === "aim-cancel") { aimRun = null; notice(event.data.message || "Aim zero cancelled."); }
     }
 };
 function resizePreview() {

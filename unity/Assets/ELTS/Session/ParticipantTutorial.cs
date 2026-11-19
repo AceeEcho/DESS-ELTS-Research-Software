@@ -45,6 +45,19 @@ namespace Elts.Session
         public double ElapsedSeconds { get; private set; }
         public bool CueFinished { get; private set; }
         public int HeadCalibrationIndex { get; private set; }
+        /// <summary>
+        /// How many of the head steps this walkthrough uses. The mouse rehearsal
+        /// keeps all seven directions. Live tracking needs only the first, standing
+        /// step: the eye is placed from the gun's sight line during the aim step,
+        /// so the turning and side-stepping directions carry no information.
+        /// </summary>
+        public int HeadCalibrationCount { get; private set; } = 7;
+        public void UseHeadCalibrationSteps(int count)
+        {
+            if(Started)throw new InvalidOperationException("Choose the head steps before the walkthrough starts.");
+            if(count<1 || count>HeadCalibrationSteps.Count)throw new ArgumentOutOfRangeException(nameof(count));
+            HeadCalibrationCount=count;
+        }
         public bool HeadSequenceComplete { get; private set; }
         public bool HeadAccepted { get; private set; }
         public bool GunAccepted { get; private set; }
@@ -114,7 +127,7 @@ namespace Elts.Session
             if(Paused || !CueFinished || (Stage!=TutorialStage.HeadCalibration && Stage!=TutorialStage.GunCalibration))
                 throw new InvalidOperationException("No tutorial calibration review is waiting.");
             if(Stage==TutorialStage.HeadCalibration && !HeadSequenceComplete)
-                throw new InvalidOperationException("Capture all seven head directions before accepting the review.");
+                throw new InvalidOperationException("Capture every head step before accepting the review.");
             record?.Invoke("TutorialCalibrationAccepted",Stage);
             if(Stage==TutorialStage.HeadCalibration)HeadAccepted=true;
             else { if(!HeadAccepted)throw new InvalidOperationException("Review the head step first.");GunAccepted=true; }
@@ -145,7 +158,7 @@ namespace Elts.Session
             if(Stage!=TutorialStage.HeadCalibration || Paused || !CueFinished || HeadSequenceComplete)
                 throw new InvalidOperationException("Wait for this head instruction before capturing its pose.");
             record?.Invoke("TutorialHeadDirectionCaptured",Stage);
-            if(HeadCalibrationIndex==HeadCalibrationSteps.Count-1) { HeadSequenceComplete=true;Revision++; }
+            if(HeadCalibrationIndex==HeadCalibrationCount-1) { HeadSequenceComplete=true;Revision++; }
             else { HeadCalibrationIndex++;ElapsedSeconds=0;CueFinished=false;PresentationVersion++;Revision++; }
         }
         public void RestartHeadCalibration(int revision)

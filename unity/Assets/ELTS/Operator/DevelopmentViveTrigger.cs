@@ -22,14 +22,20 @@ namespace Elts.Operator
             if (String.IsNullOrEmpty(serial)) return;
             viveTrigger = new ViveTriggerReader(serial);
             vivePressGate = new TriggerPressGate(TimeSpan.FromSeconds(view.Configuration.Runtime.TriggerLockoutSeconds));
+            // The same tracker's pose drives live aiming; see DevelopmentLiveTracking.
+            InitializeLiveTracking();
         }
 
         private void PollViveTrigger()
         {
             if (viveTrigger == null || vivePressGate == null) return;
+            // Poses first: the pose reader then owns the SteamVR connection that the trigger reader shares.
+            PollLiveTrackers();
             viveTrigger.Poll(Time.realtimeSinceStartupAsDouble);
+            UpdateLiveTracking();
             string context = runId + ":" + engine?.State + ":" + ParticipantInputPhase;
-            bool allowed = !IsBusy && !closing && engine != null &&
+            // A pull that captures a calibration dot must never also start a test or fire a shot.
+            bool allowed = !IsBusy && !closing && engine != null && liveProcedure == null &&
                 (TutorialCanInteract || (TestArmed && engine.State == SessionState.BlockReady && tutorial.CanStartScenario)
                  || CanDesktopFire);
             long ticks = clock?.Now.Ticks ?? 0;
@@ -48,6 +54,8 @@ namespace Elts.Operator
                 else lastViveObservation = observation;
             }
             if (!vivePressGate.Observe(viveTrigger.Available, viveTrigger.Pressed, allowed, context, ticks)) return;
+            // Keep the raw tracker poses that belong to this pull beside the shot they produce.
+            LogLiveTrackerPoses(Time.realtimeSinceStartupAsDouble, "trigger");
             if (SeparateAdministrator)
                 StationParticipantTrigger(ViveTriggerReader.SourceIdentity, "rising", view.Configuration.Machine.WeaponTriggerSerial);
             else

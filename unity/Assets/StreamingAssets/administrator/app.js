@@ -51,12 +51,33 @@
     const finished = blocks.filter(block => ['Completed', 'Stopped early', 'Skipped'].includes(block.status)).length;
     $('blockSummary').textContent = `${finished}/${planned} finished`;
   }
+  // Live tracker status and controls. The participant window offers the same actions on F6 to F10.
+  const liveActions = ['liveRig', 'liveCheck', 'liveMarker', 'liveInput'];
+  function renderLiveTracking(live) {
+    const status = $('liveStatus');
+    if (!status) return;
+    const available = !!(live && live.available);
+    if (!available) {
+      status.textContent = 'Live tracking is off. Set weaponTriggerSerial in config/local.json, start SteamVR and restart ELTS.';
+    } else {
+      const parts = [live.active ? 'Trackers are driving the aim' : !live.enabled ? 'Mouse is driving the aim' : live.calibrated ? 'Trackers ready' : 'Station not calibrated'];
+      parts.push(`SteamVR: ${live.steamVr}`, `gun ${live.gun}`, `head ${live.head}`);
+      if (live.calibrated && live.rmsDegrees != null && live.maxDegrees != null)
+        parts.push(`station fit ${Number(live.rmsDegrees).toFixed(2)}° typical, ${Number(live.maxDegrees).toFixed(2)}° worst over ${live.captures} dots`);
+      if (live.health) parts.push(live.health);
+      else if (live.notice) parts.push(live.notice);
+      if (live.procedure) parts.push('An aim step is running on the participant screen');
+      status.textContent = parts.join(' · ');
+    }
+    for (const id of liveActions) { const button = $(id); if (button) button.disabled = !available; }
+  }
   function render() {
     if (!state) return;
     dataViewer?.render(state);
   const phase = state.phase || state.state || 'idle';
   const running = /running|armed|ready|waiting/i.test(`${phase} ${state.state || ''}`);
   $('displayCheck').disabled = !state.canStartParticipant;
+  renderLiveTracking(state.liveTracking);
   $('captions').checked = !!state.captions;
   $('currentTask').hidden = !state.participant;
   if (state.previewFps != null && document.activeElement !== $('previewRate')) $('previewRate').value = String(state.previewFps);
@@ -335,6 +356,10 @@
       renderBotLimit();
     });
     $('displayCheck').addEventListener('click', () => command('displayCheck').catch(e => notifyError($('settingsError'), e)));
+    for (const id of liveActions) {
+      const button = $(id);
+      if (button) button.addEventListener('click', () => command(id).catch(e => notifyError($('settingsError'), e)));
+    }
     $('captions').addEventListener('change', () => command('captions', {enabled:$('captions').checked}).catch(e => notifyError($('settingsError'), e)));
     $('pauseButton').addEventListener('click', () => testAction('pause').catch(() => {}));
     $('resumeButton').addEventListener('click', () => testAction('resume').catch(() => {}));
